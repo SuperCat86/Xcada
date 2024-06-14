@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/configuration/common/configuration.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nexport const IConfigurationService = createDecorator('configurationService');\nexport function toValuesTree(properties, conflictReporter) {\n    const root = Object.create(null);\n    for (let key in properties) {\n        addToValueTree(root, key, properties[key], conflictReporter);\n    }\n    return root;\n}\nexport function addToValueTree(settingsTreeRoot, key, value, conflictReporter) {\n    const segments = key.split('.');\n    const last = segments.pop();\n    let curr = settingsTreeRoot;\n    for (let i = 0; i < segments.length; i++) {\n        let s = segments[i];\n        let obj = curr[s];\n        switch (typeof obj) {\n            case 'undefined':\n                obj = curr[s] = Object.create(null);\n                break;\n            case 'object':\n                break;\n            default:\n                conflictReporter(`Ignoring ${key} as ${segments.slice(0, i + 1).join('.')} is ${JSON.stringify(obj)}`);\n                return;\n        }\n        curr = obj;\n    }\n    if (typeof curr === 'object' && curr !== null) {\n        try {\n            curr[last] = value; // workaround https://github.com/microsoft/vscode/issues/13606\n        }\n        catch (e) {\n            conflictReporter(`Ignoring ${key} as ${segments.join('.')} is ${JSON.stringify(curr)}`);\n        }\n    }\n    else {\n        conflictReporter(`Ignoring ${key} as ${segments.join('.')} is ${JSON.stringify(curr)}`);\n    }\n}\nexport function removeFromValueTree(valueTree, key) {\n    const segments = key.split('.');\n    doRemoveFromValueTree(valueTree, segments);\n}\nfunction doRemoveFromValueTree(valueTree, segments) {\n    const first = segments.shift();\n    if (segments.length === 0) {\n        // Reached last segment\n        delete valueTree[first];\n        return;\n    }\n    if (Object.keys(valueTree).indexOf(first) !== -1) {\n        const value = valueTree[first];\n        if (typeof value === 'object' && !Array.isArray(value)) {\n            doRemoveFromValueTree(value, segments);\n            if (Object.keys(value).length === 0) {\n                delete valueTree[first];\n            }\n        }\n    }\n}\n/**\n * A helper function to get the configuration value with a specific settings path (e.g. config.some.setting)\n */\nexport function getConfigurationValue(config, settingPath, defaultValue) {\n    function accessSetting(config, path) {\n        let current = config;\n        for (const component of path) {\n            if (typeof current !== 'object' || current === null) {\n                return undefined;\n            }\n            current = current[component];\n        }\n        return current;\n    }\n    const path = settingPath.split('.');\n    const result = accessSetting(config, path);\n    return typeof result === 'undefined' ? defaultValue : result;\n}\n",
+      "start": 1711096855018,
+      "end": 1711096855089,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855090,
+      "end": 1711096855090,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855090,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/assets/css/index.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "* {\r\n    padding: 0;\r\n    margin: 0;\r\n    box-sizing: border-box;\r\n}\r\n\r\n.index {\r\n    position: absolute;\r\n    left: 0;\r\n    top: 0;\r\n    height: 4100px;\r\n    width: 100%;\r\n    background: #000;\r\n}\r\n\r\nvideo {\r\n    position: absolute;    \r\n    left: 0;\r\n    top: 0;\r\n    height: 835px;\r\n    width: 100%;\r\n    object-fit: cover;\r\n}\r\n\r\n.introduce {\r\n    position: absolute;\r\n    left: 10%;\r\n    top: 450px;\r\n    width: 55%;\r\n    height: 10%;\r\n    margin-top: 4%;\r\n    color: #fff;\r\n    font-size: 70px;\r\n}\r\n\r\n.advertise1 {\r\n    position: absolute;\r\n    top: 900px;\r\n    left: 10%;\r\n    color: #fff;\r\n    font-size: 25px;\r\n    font-weight: 600;\r\n}\r\n.advertise2 {\r\n    position: absolute;\r\n    top: 900px;\r\n    left: 40%;\r\n    color: #fff;\r\n    font-size: 25px;\r\n    font-weight: 600;\r\n}\r\n.advertise3 {\r\n    position: absolute;\r\n    top: 900px;\r\n    left: 75%;\r\n    color: #fff;\r\n    font-size: 25px;\r\n    font-weight: 600;\r\n}\r\n\r\n.hr1 {\r\n    position: absolute;\r\n    top: 1000px;\r\n    color: #fff;\r\n    width: 100%;\r\n    align-items: center;\r\n}\r\n\r\n.ads1 {\r\n    position: absolute;\r\n    top: 1200px;\r\n    left: 5%;\r\n    width: 480px;\r\n    color: #fff;\r\n    font-size: 35px;\r\n    font-weight: 600;\r\n}\r\n\r\n.ads1 img {\r\n    position: absolute;\r\n    top: -50px;\r\n    left: 115%;\r\n    width: 150%;\r\n}\r\n\r\n.ads1 .publicize {\r\n    position: relative;\r\n    top: 20px;\r\n    color: #fff;\r\n    font-size: 20px;\r\n    font-weight: 450;    \r\n}\r\n\r\n.ads1 .publicize li {\r\n    margin-bottom: 20px;\r\n}\r\n\r\n.hr2 {\r\n    position: absolute;\r\n    top: 1750px;\r\n    color: #fff;\r\n    width: 100%;\r\n    align-items: center;\r\n}\r\n\r\n.ads2 {\r\n    position: absolute;\r\n    top: 1900px;\r\n    left: 50%;\r\n    width: 480px;\r\n    color: #fff;\r\n    font-size: 35px;\r\n    font-weight: 600;\r\n}\r\n\r\n.ads2 img {\r\n    position: absolute;\r\n    top: -80px;\r\n    left: -125%;\r\n    width: 450px;\r\n    height: 600px;\r\n}\r\n\r\n.ads2 .publicize {\r\n    position: relative;\r\n    top: 20px;\r\n    color: #fff;\r\n    font-size: 20px;\r\n    font-weight: 450;    \r\n}\r\n\r\n.ads2 .publicize li {\r\n    margin-bottom: 20px;\r\n}\r\n\r\n.hr3 {\r\n    position: absolute;\r\n    top: 2500px;\r\n    color: #fff;\r\n    width: 100%;\r\n    align-items: center;\r\n}\r\n\r\n.advertise4 {\r\n    position: absolute;\r\n    top: 2550px;\r\n    width: 100%;\r\n    display: flex;\r\n    text-align: center;\r\n    justify-content: center;\r\n    color: #fff;\r\n    font-size: 28px;\r\n    font-weight: 600;\r\n}\r\n\r\n.advertise5 {\r\n    position: absolute;\r\n    top: 2650px;\r\n    width: 100%;\r\n    display: flex;\r\n    text-align: center;\r\n    justify-content: center;\r\n    color: #fff;\r\n    font-size: 28px;\r\n    font-weight: 600;\r\n}\r\n\r\n.bottom_img img{\r\n    position: absolute;\r\n    top: 2750px;\r\n    height: 957px;\r\n    width: 1440px;\r\n}\r\n\r\n.advertise6 {\r\n    position: absolute;\r\n    top: 3800px;\r\n    width: 100%;\r\n    display: flex;\r\n    text-align: center;\r\n    justify-content: center;\r\n    color: #fff;\r\n    font-size: 28px;\r\n    font-weight: 600;\r\n}\r\n\r\n/* 底部导航栏 */\r\nfooter {\r\n    position: absolute;\r\n    color: #fff;\r\n    font-size: 16px;\r\n    font-weight: 500;   \r\n    top: 3950px;\r\n    left: 35%;\r\n    height: 150px;\r\n    letter-spacing: 2px;\r\n}\r\n\r\nfooter li {\r\n    color: #fff;\r\n    font-size: 16px;\r\n    font-weight: 300;  \r\n    list-style: none;\r\n}\r\n\r\n.bg-primary {\r\n    background-color: #000;\r\n    width: 100%;\r\n}\r\n",
+      "start": 1711096853284,
+      "end": 1711096853384,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853384,
+      "end": 1711096853384,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853384,
+      "end": 1711096853384,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853384,
+      "end": 1711096853384,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": "*{box-sizing:border-box;margin:0;padding:0}.index{background:#000;height:4100px}.index,video{left:0;position:absolute;top:0;width:100%}video{height:835px;-o-object-fit:cover;object-fit:cover}.introduce{color:#fff;font-size:70px;height:10%;left:10%;margin-top:4%;position:absolute;top:450px;width:55%}.advertise1{left:10%}.advertise1,.advertise2{color:#fff;font-size:25px;font-weight:600;position:absolute;top:900px}.advertise2{left:40%}.advertise3{font-size:25px;font-weight:600;left:75%;top:900px}.advertise3,.hr1{color:#fff;position:absolute}.hr1{align-items:center;top:1000px;width:100%}.ads1{color:#fff;font-size:35px;font-weight:600;left:5%;top:1200px;width:480px}.ads1,.ads1 img{position:absolute}.ads1 img{left:115%;top:-50px;width:150%}.ads1 .publicize{color:#fff;font-size:20px;font-weight:450;position:relative;top:20px}.ads1 .publicize li{margin-bottom:20px}.hr2{align-items:center;top:1750px;width:100%}.ads2,.hr2{color:#fff;position:absolute}.ads2{font-size:35px;font-weight:600;left:50%;top:1900px;width:480px}.ads2 img{height:600px;left:-125%;position:absolute;top:-80px;width:450px}.ads2 .publicize{color:#fff;font-size:20px;font-weight:450;position:relative;top:20px}.ads2 .publicize li{margin-bottom:20px}.hr3{align-items:center;color:#fff;position:absolute;top:2500px;width:100%}.advertise4{top:2550px}.advertise4,.advertise5{color:#fff;display:flex;font-size:28px;font-weight:600;justify-content:center;position:absolute;text-align:center;width:100%}.advertise5{top:2650px}.bottom_img img{height:957px;position:absolute;top:2750px;width:1440px}.advertise6{display:flex;font-size:28px;font-weight:600;justify-content:center;text-align:center;top:3800px;width:100%}.advertise6,footer{color:#fff;position:absolute}footer{font-size:16px;font-weight:500;height:150px;left:35%;letter-spacing:2px;top:3950px}footer li{color:#fff;font-size:16px;font-weight:300;list-style:none}.bg-primary{background-color:#000;width:100%}",
+      "start": 1711096853384,
+      "end": 1711096853564,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853564,
+      "end": 1711096853564,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853564,
+      "end": 1711096853564,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853564,
+      "end": 1711096853564,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096853575,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853576,
+      "end": 1711096853576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853577,
+      "end": 1711096853577,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853578,
+      "end": 1711096853578,
+      "order": "normal"
+    }
+  ]
+}

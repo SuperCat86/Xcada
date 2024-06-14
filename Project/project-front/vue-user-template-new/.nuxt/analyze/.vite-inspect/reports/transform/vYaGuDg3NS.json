@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/contextview/contextview.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { BrowserFeatures } from '../../canIUse.js';\nimport * as DOM from '../../dom.js';\nimport { Disposable, DisposableStore, toDisposable } from '../../../common/lifecycle.js';\nimport * as platform from '../../../common/platform.js';\nimport { Range } from '../../../common/range.js';\nimport './contextview.css';\nexport var LayoutAnchorMode;\n(function (LayoutAnchorMode) {\n    LayoutAnchorMode[LayoutAnchorMode[\"AVOID\"] = 0] = \"AVOID\";\n    LayoutAnchorMode[LayoutAnchorMode[\"ALIGN\"] = 1] = \"ALIGN\";\n})(LayoutAnchorMode || (LayoutAnchorMode = {}));\n/**\n * Lays out a one dimensional view next to an anchor in a viewport.\n *\n * @returns The view offset within the viewport.\n */\nexport function layout(viewportSize, viewSize, anchor) {\n    const layoutAfterAnchorBoundary = anchor.mode === LayoutAnchorMode.ALIGN ? anchor.offset : anchor.offset + anchor.size;\n    const layoutBeforeAnchorBoundary = anchor.mode === LayoutAnchorMode.ALIGN ? anchor.offset + anchor.size : anchor.offset;\n    if (anchor.position === 0 /* Before */) {\n        if (viewSize <= viewportSize - layoutAfterAnchorBoundary) {\n            return layoutAfterAnchorBoundary; // happy case, lay it out after the anchor\n        }\n        if (viewSize <= layoutBeforeAnchorBoundary) {\n            return layoutBeforeAnchorBoundary - viewSize; // ok case, lay it out before the anchor\n        }\n        return Math.max(viewportSize - viewSize, 0); // sad case, lay it over the anchor\n    }\n    else {\n        if (viewSize <= layoutBeforeAnchorBoundary) {\n            return layoutBeforeAnchorBoundary - viewSize; // happy case, lay it out before the anchor\n        }\n        if (viewSize <= viewportSize - layoutAfterAnchorBoundary) {\n            return layoutAfterAnchorBoundary; // ok case, lay it out after the anchor\n        }\n        return 0; // sad case, lay it over the anchor\n    }\n}\nexport class ContextView extends Disposable {\n    constructor(container, domPosition) {\n        super();\n        this.container = null;\n        this.delegate = null;\n        this.toDisposeOnClean = Disposable.None;\n        this.toDisposeOnSetContainer = Disposable.None;\n        this.shadowRoot = null;\n        this.shadowRootHostElement = null;\n        this.view = DOM.$('.context-view');\n        this.useFixedPosition = false;\n        this.useShadowDOM = false;\n        DOM.hide(this.view);\n        this.setContainer(container, domPosition);\n        this._register(toDisposable(() => this.setContainer(null, 1 /* ABSOLUTE */)));\n    }\n    setContainer(container, domPosition) {\n        var _a;\n        if (this.container) {\n            this.toDisposeOnSetContainer.dispose();\n            if (this.shadowRoot) {\n                this.shadowRoot.removeChild(this.view);\n                this.shadowRoot = null;\n                (_a = this.shadowRootHostElement) === null || _a === void 0 ? void 0 : _a.remove();\n                this.shadowRootHostElement = null;\n            }\n            else {\n                this.container.removeChild(this.view);\n            }\n            this.container = null;\n        }\n        if (container) {\n            this.container = container;\n            this.useFixedPosition = domPosition !== 1 /* ABSOLUTE */;\n            this.useShadowDOM = domPosition === 3 /* FIXED_SHADOW */;\n            if (this.useShadowDOM) {\n                this.shadowRootHostElement = DOM.$('.shadow-root-host');\n                this.container.appendChild(this.shadowRootHostElement);\n                this.shadowRoot = this.shadowRootHostElement.attachShadow({ mode: 'open' });\n                const style = document.createElement('style');\n                style.textContent = SHADOW_ROOT_CSS;\n                this.shadowRoot.appendChild(style);\n                this.shadowRoot.appendChild(this.view);\n                this.shadowRoot.appendChild(DOM.$('slot'));\n            }\n            else {\n                this.container.appendChild(this.view);\n            }\n            const toDisposeOnSetContainer = new DisposableStore();\n            ContextView.BUBBLE_UP_EVENTS.forEach(event => {\n                toDisposeOnSetContainer.add(DOM.addStandardDisposableListener(this.container, event, (e) => {\n                    this.onDOMEvent(e, false);\n                }));\n            });\n            ContextView.BUBBLE_DOWN_EVENTS.forEach(event => {\n                toDisposeOnSetContainer.add(DOM.addStandardDisposableListener(this.container, event, (e) => {\n                    this.onDOMEvent(e, true);\n                }, true));\n            });\n            this.toDisposeOnSetContainer = toDisposeOnSetContainer;\n        }\n    }\n    show(delegate) {\n        if (this.isVisible()) {\n            this.hide();\n        }\n        // Show static box\n        DOM.clearNode(this.view);\n        this.view.className = 'context-view';\n        this.view.style.top = '0px';\n        this.view.style.left = '0px';\n        this.view.style.zIndex = '2500';\n        this.view.style.position = this.useFixedPosition ? 'fixed' : 'absolute';\n        DOM.show(this.view);\n        // Render content\n        this.toDisposeOnClean = delegate.render(this.view) || Disposable.None;\n        // Set active delegate\n        this.delegate = delegate;\n        // Layout\n        this.doLayout();\n        // Focus\n        if (this.delegate.focus) {\n            this.delegate.focus();\n        }\n    }\n    getViewElement() {\n        return this.view;\n    }\n    layout() {\n        if (!this.isVisible()) {\n            return;\n        }\n        if (this.delegate.canRelayout === false && !(platform.isIOS && BrowserFeatures.pointerEvents)) {\n            this.hide();\n            return;\n        }\n        if (this.delegate.layout) {\n            this.delegate.layout();\n        }\n        this.doLayout();\n    }\n    doLayout() {\n        // Check that we still have a delegate - this.delegate.layout may have hidden\n        if (!this.isVisible()) {\n            return;\n        }\n        // Get anchor\n        let anchor = this.delegate.getAnchor();\n        // Compute around\n        let around;\n        // Get the element's position and size (to anchor the view)\n        if (DOM.isHTMLElement(anchor)) {\n            let elementPosition = DOM.getDomNodePagePosition(anchor);\n            around = {\n                top: elementPosition.top,\n                left: elementPosition.left,\n                width: elementPosition.width,\n                height: elementPosition.height\n            };\n        }\n        else {\n            around = {\n                top: anchor.y,\n                left: anchor.x,\n                width: anchor.width || 1,\n                height: anchor.height || 2\n            };\n        }\n        const viewSizeWidth = DOM.getTotalWidth(this.view);\n        const viewSizeHeight = DOM.getTotalHeight(this.view);\n        const anchorPosition = this.delegate.anchorPosition || 0 /* BELOW */;\n        const anchorAlignment = this.delegate.anchorAlignment || 0 /* LEFT */;\n        const anchorAxisAlignment = this.delegate.anchorAxisAlignment || 0 /* VERTICAL */;\n        let top;\n        let left;\n        if (anchorAxisAlignment === 0 /* VERTICAL */) {\n            const verticalAnchor = { offset: around.top - window.pageYOffset, size: around.height, position: anchorPosition === 0 /* BELOW */ ? 0 /* Before */ : 1 /* After */ };\n            const horizontalAnchor = { offset: around.left, size: around.width, position: anchorAlignment === 0 /* LEFT */ ? 0 /* Before */ : 1 /* After */, mode: LayoutAnchorMode.ALIGN };\n            top = layout(window.innerHeight, viewSizeHeight, verticalAnchor) + window.pageYOffset;\n            // if view intersects vertically with anchor,  we must avoid the anchor\n            if (Range.intersects({ start: top, end: top + viewSizeHeight }, { start: verticalAnchor.offset, end: verticalAnchor.offset + verticalAnchor.size })) {\n                horizontalAnchor.mode = LayoutAnchorMode.AVOID;\n            }\n            left = layout(window.innerWidth, viewSizeWidth, horizontalAnchor);\n        }\n        else {\n            const horizontalAnchor = { offset: around.left, size: around.width, position: anchorAlignment === 0 /* LEFT */ ? 0 /* Before */ : 1 /* After */ };\n            const verticalAnchor = { offset: around.top, size: around.height, position: anchorPosition === 0 /* BELOW */ ? 0 /* Before */ : 1 /* After */, mode: LayoutAnchorMode.ALIGN };\n            left = layout(window.innerWidth, viewSizeWidth, horizontalAnchor);\n            // if view intersects horizontally with anchor, we must avoid the anchor\n            if (Range.intersects({ start: left, end: left + viewSizeWidth }, { start: horizontalAnchor.offset, end: horizontalAnchor.offset + horizontalAnchor.size })) {\n                verticalAnchor.mode = LayoutAnchorMode.AVOID;\n            }\n            top = layout(window.innerHeight, viewSizeHeight, verticalAnchor) + window.pageYOffset;\n        }\n        this.view.classList.remove('top', 'bottom', 'left', 'right');\n        this.view.classList.add(anchorPosition === 0 /* BELOW */ ? 'bottom' : 'top');\n        this.view.classList.add(anchorAlignment === 0 /* LEFT */ ? 'left' : 'right');\n        this.view.classList.toggle('fixed', this.useFixedPosition);\n        const containerPosition = DOM.getDomNodePagePosition(this.container);\n        this.view.style.top = `${top - (this.useFixedPosition ? DOM.getDomNodePagePosition(this.view).top : containerPosition.top)}px`;\n        this.view.style.left = `${left - (this.useFixedPosition ? DOM.getDomNodePagePosition(this.view).left : containerPosition.left)}px`;\n        this.view.style.width = 'initial';\n    }\n    hide(data) {\n        const delegate = this.delegate;\n        this.delegate = null;\n        if (delegate === null || delegate === void 0 ? void 0 : delegate.onHide) {\n            delegate.onHide(data);\n        }\n        this.toDisposeOnClean.dispose();\n        DOM.hide(this.view);\n    }\n    isVisible() {\n        return !!this.delegate;\n    }\n    onDOMEvent(e, onCapture) {\n        if (this.delegate) {\n            if (this.delegate.onDOMEvent) {\n                this.delegate.onDOMEvent(e, document.activeElement);\n            }\n            else if (onCapture && !DOM.isAncestor(e.target, this.container)) {\n                this.hide();\n            }\n        }\n    }\n    dispose() {\n        this.hide();\n        super.dispose();\n    }\n}\nContextView.BUBBLE_UP_EVENTS = ['click', 'keydown', 'focus', 'blur'];\nContextView.BUBBLE_DOWN_EVENTS = ['click'];\nlet SHADOW_ROOT_CSS = /* css */ `\n\t:host {\n\t\tall: initial; /* 1st rule so subsequent properties are reset. */\n\t}\n\n\t@font-face {\n\t\tfont-family: \"codicon\";\n\t\tfont-display: block;\n\t\tsrc: url(\"./codicon.ttf?5d4d76ab2ce5108968ad644d591a16a6\") format(\"truetype\");\n\t}\n\n\t.codicon[class*='codicon-'] {\n\t\tfont: normal normal normal 16px/1 codicon;\n\t\tdisplay: inline-block;\n\t\ttext-decoration: none;\n\t\ttext-rendering: auto;\n\t\ttext-align: center;\n\t\t-webkit-font-smoothing: antialiased;\n\t\t-moz-osx-font-smoothing: grayscale;\n\t\tuser-select: none;\n\t\t-webkit-user-select: none;\n\t\t-ms-user-select: none;\n\t}\n\n\t:host {\n\t\tfont-family: -apple-system, BlinkMacSystemFont, \"Segoe WPC\", \"Segoe UI\", \"HelveticaNeue-Light\", system-ui, \"Ubuntu\", \"Droid Sans\", sans-serif;\n\t}\n\n\t:host-context(.mac) { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }\n\t:host-context(.mac:lang(zh-Hans)) { font-family: -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Hiragino Sans GB\", sans-serif; }\n\t:host-context(.mac:lang(zh-Hant)) { font-family: -apple-system, BlinkMacSystemFont, \"PingFang TC\", sans-serif; }\n\t:host-context(.mac:lang(ja)) { font-family: -apple-system, BlinkMacSystemFont, \"Hiragino Kaku Gothic Pro\", sans-serif; }\n\t:host-context(.mac:lang(ko)) { font-family: -apple-system, BlinkMacSystemFont, \"Nanum Gothic\", \"Apple SD Gothic Neo\", \"AppleGothic\", sans-serif; }\n\n\t:host-context(.windows) { font-family: \"Segoe WPC\", \"Segoe UI\", sans-serif; }\n\t:host-context(.windows:lang(zh-Hans)) { font-family: \"Segoe WPC\", \"Segoe UI\", \"Microsoft YaHei\", sans-serif; }\n\t:host-context(.windows:lang(zh-Hant)) { font-family: \"Segoe WPC\", \"Segoe UI\", \"Microsoft Jhenghei\", sans-serif; }\n\t:host-context(.windows:lang(ja)) { font-family: \"Segoe WPC\", \"Segoe UI\", \"Yu Gothic UI\", \"Meiryo UI\", sans-serif; }\n\t:host-context(.windows:lang(ko)) { font-family: \"Segoe WPC\", \"Segoe UI\", \"Malgun Gothic\", \"Dotom\", sans-serif; }\n\n\t:host-context(.linux) { font-family: system-ui, \"Ubuntu\", \"Droid Sans\", sans-serif; }\n\t:host-context(.linux:lang(zh-Hans)) { font-family: system-ui, \"Ubuntu\", \"Droid Sans\", \"Source Han Sans SC\", \"Source Han Sans CN\", \"Source Han Sans\", sans-serif; }\n\t:host-context(.linux:lang(zh-Hant)) { font-family: system-ui, \"Ubuntu\", \"Droid Sans\", \"Source Han Sans TC\", \"Source Han Sans TW\", \"Source Han Sans\", sans-serif; }\n\t:host-context(.linux:lang(ja)) { font-family: system-ui, \"Ubuntu\", \"Droid Sans\", \"Source Han Sans J\", \"Source Han Sans JP\", \"Source Han Sans\", sans-serif; }\n\t:host-context(.linux:lang(ko)) { font-family: system-ui, \"Ubuntu\", \"Droid Sans\", \"Source Han Sans K\", \"Source Han Sans JR\", \"Source Han Sans\", \"UnDotum\", \"FBaekmuk Gulim\", sans-serif; }\n`;\n",
+      "start": 1711096857058,
+      "end": 1711096857155,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857155,
+      "end": 1711096857155,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857155,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    }
+  ]
+}

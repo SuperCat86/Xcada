@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/findinput/findInput.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n/* ---------- Find input ---------- */\n\n.monaco-findInput {\n\tposition: relative;\n}\n\n.monaco-findInput .monaco-inputbox {\n\tfont-size: 13px;\n\twidth: 100%;\n}\n\n.monaco-findInput > .controls {\n\tposition: absolute;\n\ttop: 3px;\n\tright: 2px;\n}\n\n.vs .monaco-findInput.disabled {\n\tbackground-color: #E1E1E1;\n}\n\n/* Theming */\n.vs-dark .monaco-findInput.disabled {\n\tbackground-color: #333;\n}\n\n/* Highlighting */\n.monaco-findInput.highlight-0 .controls {\n\tanimation: monaco-findInput-highlight-0 100ms linear 0s;\n}\n.monaco-findInput.highlight-1 .controls {\n\tanimation: monaco-findInput-highlight-1 100ms linear 0s;\n}\n.hc-black .monaco-findInput.highlight-0 .controls,\n.vs-dark  .monaco-findInput.highlight-0 .controls {\n\tanimation: monaco-findInput-highlight-dark-0 100ms linear 0s;\n}\n.hc-black .monaco-findInput.highlight-1 .controls,\n.vs-dark  .monaco-findInput.highlight-1 .controls {\n\tanimation: monaco-findInput-highlight-dark-1 100ms linear 0s;\n}\n\n@keyframes monaco-findInput-highlight-0 {\n\t0% { background: rgba(253, 255, 0, 0.8); }\n\t100% { background: transparent; }\n}\n@keyframes monaco-findInput-highlight-1 {\n\t0% { background: rgba(253, 255, 0, 0.8); }\n\t/* Made intentionally different such that the CSS minifier does not collapse the two animations into a single one*/\n\t99% { background: transparent; }\n}\n\n@keyframes monaco-findInput-highlight-dark-0 {\n\t0% { background: rgba(255, 255, 255, 0.44); }\n\t100% { background: transparent; }\n}\n@keyframes monaco-findInput-highlight-dark-1 {\n\t0% { background: rgba(255, 255, 255, 0.44); }\n\t/* Made intentionally different such that the CSS minifier does not collapse the two animations into a single one*/\n\t99% { background: transparent; }\n}",
+      "start": 1711096857655,
+      "end": 1711096857719,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857719,
+      "end": 1711096857719,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857719,
+      "end": 1711096857719,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857719,
+      "end": 1711096857719,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-findInput{position:relative}.monaco-findInput .monaco-inputbox{font-size:13px;width:100%}.monaco-findInput>.controls{position:absolute;right:2px;top:3px}.vs .monaco-findInput.disabled{background-color:#e1e1e1}.vs-dark .monaco-findInput.disabled{background-color:#333}.monaco-findInput.highlight-0 .controls{animation:monaco-findInput-highlight-0 .1s linear 0s}.monaco-findInput.highlight-1 .controls{animation:monaco-findInput-highlight-1 .1s linear 0s}.hc-black .monaco-findInput.highlight-0 .controls,.vs-dark .monaco-findInput.highlight-0 .controls{animation:monaco-findInput-highlight-dark-0 .1s linear 0s}.hc-black .monaco-findInput.highlight-1 .controls,.vs-dark .monaco-findInput.highlight-1 .controls{animation:monaco-findInput-highlight-dark-1 .1s linear 0s}@keyframes monaco-findInput-highlight-0{0%{background:rgba(253,255,0,.8)}to{background:transparent}}@keyframes monaco-findInput-highlight-1{0%{background:rgba(253,255,0,.8)}99%{background:transparent}}@keyframes monaco-findInput-highlight-dark-0{0%{background:hsla(0,0%,100%,.44)}to{background:transparent}}@keyframes monaco-findInput-highlight-dark-1{0%{background:hsla(0,0%,100%,.44)}99%{background:transparent}}",
+      "start": 1711096857719,
+      "end": 1711096857726,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857726,
+      "end": 1711096857726,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857726,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857727,
+      "end": 1711096857727,
+      "order": "normal"
+    }
+  ]
+}

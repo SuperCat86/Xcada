@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/list/listPaging.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { range } from '../../../common/arrays.js';\nimport { CancellationTokenSource } from '../../../common/cancellation.js';\nimport { Event } from '../../../common/event.js';\nimport { Disposable } from '../../../common/lifecycle.js';\nimport './list.css';\nimport { List } from './listWidget.js';\nclass PagedRenderer {\n    constructor(renderer, modelProvider) {\n        this.renderer = renderer;\n        this.modelProvider = modelProvider;\n    }\n    get templateId() { return this.renderer.templateId; }\n    renderTemplate(container) {\n        const data = this.renderer.renderTemplate(container);\n        return { data, disposable: Disposable.None };\n    }\n    renderElement(index, _, data, height) {\n        if (data.disposable) {\n            data.disposable.dispose();\n        }\n        if (!data.data) {\n            return;\n        }\n        const model = this.modelProvider();\n        if (model.isResolved(index)) {\n            return this.renderer.renderElement(model.get(index), index, data.data, height);\n        }\n        const cts = new CancellationTokenSource();\n        const promise = model.resolve(index, cts.token);\n        data.disposable = { dispose: () => cts.cancel() };\n        this.renderer.renderPlaceholder(index, data.data);\n        promise.then(entry => this.renderer.renderElement(entry, index, data.data, height));\n    }\n    disposeTemplate(data) {\n        if (data.disposable) {\n            data.disposable.dispose();\n            data.disposable = undefined;\n        }\n        if (data.data) {\n            this.renderer.disposeTemplate(data.data);\n            data.data = undefined;\n        }\n    }\n}\nclass PagedAccessibilityProvider {\n    constructor(modelProvider, accessibilityProvider) {\n        this.modelProvider = modelProvider;\n        this.accessibilityProvider = accessibilityProvider;\n    }\n    getWidgetAriaLabel() {\n        return this.accessibilityProvider.getWidgetAriaLabel();\n    }\n    getAriaLabel(index) {\n        const model = this.modelProvider();\n        if (!model.isResolved(index)) {\n            return null;\n        }\n        return this.accessibilityProvider.getAriaLabel(model.get(index));\n    }\n}\nfunction fromPagedListOptions(modelProvider, options) {\n    return Object.assign(Object.assign({}, options), { accessibilityProvider: options.accessibilityProvider && new PagedAccessibilityProvider(modelProvider, options.accessibilityProvider) });\n}\nexport class PagedList {\n    constructor(user, container, virtualDelegate, renderers, options = {}) {\n        const modelProvider = () => this.model;\n        const pagedRenderers = renderers.map(r => new PagedRenderer(r, modelProvider));\n        this.list = new List(user, container, virtualDelegate, pagedRenderers, fromPagedListOptions(modelProvider, options));\n    }\n    updateOptions(options) {\n        this.list.updateOptions(options);\n    }\n    getHTMLElement() {\n        return this.list.getHTMLElement();\n    }\n    get onDidFocus() {\n        return this.list.onDidFocus;\n    }\n    get onDidDispose() {\n        return this.list.onDidDispose;\n    }\n    get onMouseDblClick() {\n        return Event.map(this.list.onMouseDblClick, ({ element, index, browserEvent }) => ({ element: element === undefined ? undefined : this._model.get(element), index, browserEvent }));\n    }\n    get onPointer() {\n        return Event.map(this.list.onPointer, ({ element, index, browserEvent }) => ({ element: element === undefined ? undefined : this._model.get(element), index, browserEvent }));\n    }\n    get onDidChangeSelection() {\n        return Event.map(this.list.onDidChangeSelection, ({ elements, indexes, browserEvent }) => ({ elements: elements.map(e => this._model.get(e)), indexes, browserEvent }));\n    }\n    get model() {\n        return this._model;\n    }\n    set model(model) {\n        this._model = model;\n        this.list.splice(0, this.list.length, range(model.length));\n    }\n    getFocus() {\n        return this.list.getFocus();\n    }\n    getSelection() {\n        return this.list.getSelection();\n    }\n    getSelectedElements() {\n        return this.getSelection().map(i => this.model.get(i));\n    }\n    style(styles) {\n        this.list.style(styles);\n    }\n    dispose() {\n        this.list.dispose();\n    }\n}\n",
+      "start": 1711096856900,
+      "end": 1711096857070,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857070,
+      "end": 1711096857071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857071,
+      "end": 1711096857071,
+      "order": "normal"
+    }
+  ]
+}

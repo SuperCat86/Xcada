@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/currentLineHighlight/currentLineHighlight.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './currentLineHighlight.css';\nimport { DynamicViewOverlay } from '../../view/dynamicViewOverlay.js';\nimport { editorLineHighlight, editorLineHighlightBorder } from '../../../common/core/editorColorRegistry.js';\nimport * as arrays from '../../../../base/common/arrays.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { Selection } from '../../../common/core/selection.js';\nexport class AbstractLineHighlightOverlay extends DynamicViewOverlay {\n    constructor(context) {\n        super();\n        this._context = context;\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._renderLineHighlight = options.get(85 /* renderLineHighlight */);\n        this._renderLineHighlightOnlyWhenFocus = options.get(86 /* renderLineHighlightOnlyWhenFocus */);\n        this._contentLeft = layoutInfo.contentLeft;\n        this._contentWidth = layoutInfo.contentWidth;\n        this._selectionIsEmpty = true;\n        this._focused = false;\n        this._cursorLineNumbers = [1];\n        this._selections = [new Selection(1, 1, 1, 1)];\n        this._renderData = null;\n        this._context.addEventHandler(this);\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        super.dispose();\n    }\n    _readFromSelections() {\n        let hasChanged = false;\n        const cursorsLineNumbers = this._selections.map(s => s.positionLineNumber);\n        cursorsLineNumbers.sort((a, b) => a - b);\n        if (!arrays.equals(this._cursorLineNumbers, cursorsLineNumbers)) {\n            this._cursorLineNumbers = cursorsLineNumbers;\n            hasChanged = true;\n        }\n        const selectionIsEmpty = this._selections.every(s => s.isEmpty());\n        if (this._selectionIsEmpty !== selectionIsEmpty) {\n            this._selectionIsEmpty = selectionIsEmpty;\n            hasChanged = true;\n        }\n        return hasChanged;\n    }\n    // --- begin event handlers\n    onThemeChanged(e) {\n        return this._readFromSelections();\n    }\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._renderLineHighlight = options.get(85 /* renderLineHighlight */);\n        this._renderLineHighlightOnlyWhenFocus = options.get(86 /* renderLineHighlightOnlyWhenFocus */);\n        this._contentLeft = layoutInfo.contentLeft;\n        this._contentWidth = layoutInfo.contentWidth;\n        return true;\n    }\n    onCursorStateChanged(e) {\n        this._selections = e.selections;\n        return this._readFromSelections();\n    }\n    onFlushed(e) {\n        return true;\n    }\n    onLinesDeleted(e) {\n        return true;\n    }\n    onLinesInserted(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollWidthChanged || e.scrollTopChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    onFocusChanged(e) {\n        if (!this._renderLineHighlightOnlyWhenFocus) {\n            return false;\n        }\n        this._focused = e.isFocused;\n        return true;\n    }\n    // --- end event handlers\n    prepareRender(ctx) {\n        if (!this._shouldRenderThis()) {\n            this._renderData = null;\n            return;\n        }\n        const renderedLine = this._renderOne(ctx);\n        const visibleStartLineNumber = ctx.visibleRange.startLineNumber;\n        const visibleEndLineNumber = ctx.visibleRange.endLineNumber;\n        const len = this._cursorLineNumbers.length;\n        let index = 0;\n        const renderData = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - visibleStartLineNumber;\n            while (index < len && this._cursorLineNumbers[index] < lineNumber) {\n                index++;\n            }\n            if (index < len && this._cursorLineNumbers[index] === lineNumber) {\n                renderData[lineIndex] = renderedLine;\n            }\n            else {\n                renderData[lineIndex] = '';\n            }\n        }\n        this._renderData = renderData;\n    }\n    render(startLineNumber, lineNumber) {\n        if (!this._renderData) {\n            return '';\n        }\n        const lineIndex = lineNumber - startLineNumber;\n        if (lineIndex >= this._renderData.length) {\n            return '';\n        }\n        return this._renderData[lineIndex];\n    }\n    _shouldRenderInMargin() {\n        return ((this._renderLineHighlight === 'gutter' || this._renderLineHighlight === 'all')\n            && (!this._renderLineHighlightOnlyWhenFocus || this._focused));\n    }\n    _shouldRenderInContent() {\n        return ((this._renderLineHighlight === 'line' || this._renderLineHighlight === 'all')\n            && this._selectionIsEmpty\n            && (!this._renderLineHighlightOnlyWhenFocus || this._focused));\n    }\n}\nexport class CurrentLineHighlightOverlay extends AbstractLineHighlightOverlay {\n    _renderOne(ctx) {\n        const className = 'current-line' + (this._shouldRenderOther() ? ' current-line-both' : '');\n        return `<div class=\"${className}\" style=\"width:${Math.max(ctx.scrollWidth, this._contentWidth)}px; height:${this._lineHeight}px;\"></div>`;\n    }\n    _shouldRenderThis() {\n        return this._shouldRenderInContent();\n    }\n    _shouldRenderOther() {\n        return this._shouldRenderInMargin();\n    }\n}\nexport class CurrentLineMarginHighlightOverlay extends AbstractLineHighlightOverlay {\n    _renderOne(ctx) {\n        const className = 'current-line' + (this._shouldRenderInMargin() ? ' current-line-margin' : '') + (this._shouldRenderOther() ? ' current-line-margin-both' : '');\n        return `<div class=\"${className}\" style=\"width:${this._contentLeft}px; height:${this._lineHeight}px;\"></div>`;\n    }\n    _shouldRenderThis() {\n        return true;\n    }\n    _shouldRenderOther() {\n        return this._shouldRenderInContent();\n    }\n}\nregisterThemingParticipant((theme, collector) => {\n    const lineHighlight = theme.getColor(editorLineHighlight);\n    if (lineHighlight) {\n        collector.addRule(`.monaco-editor .view-overlays .current-line { background-color: ${lineHighlight}; }`);\n        collector.addRule(`.monaco-editor .margin-view-overlays .current-line-margin { background-color: ${lineHighlight}; border: none; }`);\n    }\n    if (!lineHighlight || lineHighlight.isTransparent() || theme.defines(editorLineHighlightBorder)) {\n        const lineHighlightBorder = theme.getColor(editorLineHighlightBorder);\n        if (lineHighlightBorder) {\n            collector.addRule(`.monaco-editor .view-overlays .current-line { border: 2px solid ${lineHighlightBorder}; }`);\n            collector.addRule(`.monaco-editor .margin-view-overlays .current-line-margin { border: 2px solid ${lineHighlightBorder}; }`);\n            if (theme.type === 'hc') {\n                collector.addRule(`.monaco-editor .view-overlays .current-line { border-width: 1px; }`);\n                collector.addRule(`.monaco-editor .margin-view-overlays .current-line-margin { border-width: 1px; }`);\n            }\n        }\n    }\n});\n",
+      "start": 1711096856366,
+      "end": 1711096856438,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856438,
+      "end": 1711096856438,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856438,
+      "end": 1711096856439,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856439,
+      "end": 1711096856439,
+      "order": "normal"
+    }
+  ]
+}

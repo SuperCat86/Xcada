@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/lineNumbers/lineNumbers.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './lineNumbers.css';\nimport * as platform from '../../../../base/common/platform.js';\nimport { DynamicViewOverlay } from '../../view/dynamicViewOverlay.js';\nimport { Position } from '../../../common/core/position.js';\nimport { editorActiveLineNumber, editorLineNumbers } from '../../../common/core/editorColorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nexport class LineNumbersOverlay extends DynamicViewOverlay {\n    constructor(context) {\n        super();\n        this._context = context;\n        this._readConfig();\n        this._lastCursorModelPosition = new Position(1, 1);\n        this._renderResult = null;\n        this._activeLineNumber = 1;\n        this._context.addEventHandler(this);\n    }\n    _readConfig() {\n        const options = this._context.configuration.options;\n        this._lineHeight = options.get(59 /* lineHeight */);\n        const lineNumbers = options.get(60 /* lineNumbers */);\n        this._renderLineNumbers = lineNumbers.renderType;\n        this._renderCustomLineNumbers = lineNumbers.renderFn;\n        this._renderFinalNewline = options.get(84 /* renderFinalNewline */);\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineNumbersLeft = layoutInfo.lineNumbersLeft;\n        this._lineNumbersWidth = layoutInfo.lineNumbersWidth;\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        this._renderResult = null;\n        super.dispose();\n    }\n    // --- begin event handlers\n    onConfigurationChanged(e) {\n        this._readConfig();\n        return true;\n    }\n    onCursorStateChanged(e) {\n        const primaryViewPosition = e.selections[0].getPosition();\n        this._lastCursorModelPosition = this._context.viewModel.coordinatesConverter.convertViewPositionToModelPosition(primaryViewPosition);\n        let shouldRender = false;\n        if (this._activeLineNumber !== primaryViewPosition.lineNumber) {\n            this._activeLineNumber = primaryViewPosition.lineNumber;\n            shouldRender = true;\n        }\n        if (this._renderLineNumbers === 2 /* Relative */ || this._renderLineNumbers === 3 /* Interval */) {\n            shouldRender = true;\n        }\n        return shouldRender;\n    }\n    onFlushed(e) {\n        return true;\n    }\n    onLinesChanged(e) {\n        return true;\n    }\n    onLinesDeleted(e) {\n        return true;\n    }\n    onLinesInserted(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollTopChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    // --- end event handlers\n    _getLineRenderLineNumber(viewLineNumber) {\n        const modelPosition = this._context.viewModel.coordinatesConverter.convertViewPositionToModelPosition(new Position(viewLineNumber, 1));\n        if (modelPosition.column !== 1) {\n            return '';\n        }\n        const modelLineNumber = modelPosition.lineNumber;\n        if (this._renderCustomLineNumbers) {\n            return this._renderCustomLineNumbers(modelLineNumber);\n        }\n        if (this._renderLineNumbers === 2 /* Relative */) {\n            const diff = Math.abs(this._lastCursorModelPosition.lineNumber - modelLineNumber);\n            if (diff === 0) {\n                return '<span class=\"relative-current-line-number\">' + modelLineNumber + '</span>';\n            }\n            return String(diff);\n        }\n        if (this._renderLineNumbers === 3 /* Interval */) {\n            if (this._lastCursorModelPosition.lineNumber === modelLineNumber) {\n                return String(modelLineNumber);\n            }\n            if (modelLineNumber % 10 === 0) {\n                return String(modelLineNumber);\n            }\n            return '';\n        }\n        return String(modelLineNumber);\n    }\n    prepareRender(ctx) {\n        if (this._renderLineNumbers === 0 /* Off */) {\n            this._renderResult = null;\n            return;\n        }\n        const lineHeightClassName = (platform.isLinux ? (this._lineHeight % 2 === 0 ? ' lh-even' : ' lh-odd') : '');\n        const visibleStartLineNumber = ctx.visibleRange.startLineNumber;\n        const visibleEndLineNumber = ctx.visibleRange.endLineNumber;\n        const common = '<div class=\"' + LineNumbersOverlay.CLASS_NAME + lineHeightClassName + '\" style=\"left:' + this._lineNumbersLeft + 'px;width:' + this._lineNumbersWidth + 'px;\">';\n        const lineCount = this._context.viewModel.getLineCount();\n        const output = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - visibleStartLineNumber;\n            if (!this._renderFinalNewline) {\n                if (lineNumber === lineCount && this._context.viewModel.getLineLength(lineNumber) === 0) {\n                    // Do not render last (empty) line\n                    output[lineIndex] = '';\n                    continue;\n                }\n            }\n            const renderLineNumber = this._getLineRenderLineNumber(lineNumber);\n            if (renderLineNumber) {\n                if (lineNumber === this._activeLineNumber) {\n                    output[lineIndex] = ('<div class=\"active-line-number ' + LineNumbersOverlay.CLASS_NAME + lineHeightClassName + '\" style=\"left:' + this._lineNumbersLeft + 'px;width:' + this._lineNumbersWidth + 'px;\">'\n                        + renderLineNumber\n                        + '</div>');\n                }\n                else {\n                    output[lineIndex] = (common\n                        + renderLineNumber\n                        + '</div>');\n                }\n            }\n            else {\n                output[lineIndex] = '';\n            }\n        }\n        this._renderResult = output;\n    }\n    render(startLineNumber, lineNumber) {\n        if (!this._renderResult) {\n            return '';\n        }\n        const lineIndex = lineNumber - startLineNumber;\n        if (lineIndex < 0 || lineIndex >= this._renderResult.length) {\n            return '';\n        }\n        return this._renderResult[lineIndex];\n    }\n}\nLineNumbersOverlay.CLASS_NAME = 'line-numbers';\n// theming\nregisterThemingParticipant((theme, collector) => {\n    const lineNumbers = theme.getColor(editorLineNumbers);\n    if (lineNumbers) {\n        collector.addRule(`.monaco-editor .line-numbers { color: ${lineNumbers}; }`);\n    }\n    const activeLineNumber = theme.getColor(editorActiveLineNumber);\n    if (activeLineNumber) {\n        collector.addRule(`.monaco-editor .line-numbers.active-line-number { color: ${activeLineNumber}; }`);\n    }\n});\n",
+      "start": 1711096856373,
+      "end": 1711096856447,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856447,
+      "end": 1711096856448,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856448,
+      "end": 1711096856448,
+      "order": "normal"
+    }
+  ]
+}

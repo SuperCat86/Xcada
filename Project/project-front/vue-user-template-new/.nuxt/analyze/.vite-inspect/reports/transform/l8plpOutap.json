@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/contextmenu/browser/contextmenu.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { ActionViewItem } from '../../../../base/browser/ui/actionbar/actionViewItems.js';\nimport { Separator, SubmenuAction } from '../../../../base/common/actions.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { isIOS } from '../../../../base/common/platform.js';\nimport { EditorAction, registerEditorAction, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport * as nls from '../../../../nls.js';\nimport { IMenuService, MenuId, SubmenuItemAction } from '../../../../platform/actions/common/actions.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IContextMenuService, IContextViewService } from '../../../../platform/contextview/browser/contextView.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nlet ContextMenuController = class ContextMenuController {\n    constructor(editor, _contextMenuService, _contextViewService, _contextKeyService, _keybindingService, _menuService) {\n        this._contextMenuService = _contextMenuService;\n        this._contextViewService = _contextViewService;\n        this._contextKeyService = _contextKeyService;\n        this._keybindingService = _keybindingService;\n        this._menuService = _menuService;\n        this._toDispose = new DisposableStore();\n        this._contextMenuIsBeingShownCount = 0;\n        this._editor = editor;\n        this._toDispose.add(this._editor.onContextMenu((e) => this._onContextMenu(e)));\n        this._toDispose.add(this._editor.onMouseWheel((e) => {\n            if (this._contextMenuIsBeingShownCount > 0) {\n                const view = this._contextViewService.getContextViewElement();\n                const target = e.srcElement;\n                // Event triggers on shadow root host first\n                // Check if the context view is under this host before hiding it #103169\n                if (!(target.shadowRoot && dom.getShadowRoot(view) === target.shadowRoot)) {\n                    this._contextViewService.hideContextView();\n                }\n            }\n        }));\n        this._toDispose.add(this._editor.onKeyDown((e) => {\n            if (e.keyCode === 58 /* ContextMenu */) {\n                // Chrome is funny like that\n                e.preventDefault();\n                e.stopPropagation();\n                this.showContextMenu();\n            }\n        }));\n    }\n    static get(editor) {\n        return editor.getContribution(ContextMenuController.ID);\n    }\n    _onContextMenu(e) {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        if (!this._editor.getOption(20 /* contextmenu */)) {\n            this._editor.focus();\n            // Ensure the cursor is at the position of the mouse click\n            if (e.target.position && !this._editor.getSelection().containsPosition(e.target.position)) {\n                this._editor.setPosition(e.target.position);\n            }\n            return; // Context menu is turned off through configuration\n        }\n        if (e.target.type === 12 /* OVERLAY_WIDGET */) {\n            return; // allow native menu on widgets to support right click on input field for example in find\n        }\n        if (e.target.type === 6 /* CONTENT_TEXT */ && e.target.detail.injectedText) {\n            return; // allow native menu on injected text\n        }\n        e.event.preventDefault();\n        e.event.stopPropagation();\n        if (e.target.type !== 6 /* CONTENT_TEXT */ && e.target.type !== 7 /* CONTENT_EMPTY */ && e.target.type !== 1 /* TEXTAREA */) {\n            return; // only support mouse click into text or native context menu key for now\n        }\n        // Ensure the editor gets focus if it hasn't, so the right events are being sent to other contributions\n        this._editor.focus();\n        // Ensure the cursor is at the position of the mouse click\n        if (e.target.position) {\n            let hasSelectionAtPosition = false;\n            for (const selection of this._editor.getSelections()) {\n                if (selection.containsPosition(e.target.position)) {\n                    hasSelectionAtPosition = true;\n                    break;\n                }\n            }\n            if (!hasSelectionAtPosition) {\n                this._editor.setPosition(e.target.position);\n            }\n        }\n        // Unless the user triggerd the context menu through Shift+F10, use the mouse position as menu position\n        let anchor = null;\n        if (e.target.type !== 1 /* TEXTAREA */) {\n            anchor = { x: e.event.posx - 1, width: 2, y: e.event.posy - 1, height: 2 };\n        }\n        // Show the context menu\n        this.showContextMenu(anchor);\n    }\n    showContextMenu(anchor) {\n        if (!this._editor.getOption(20 /* contextmenu */)) {\n            return; // Context menu is turned off through configuration\n        }\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        if (!this._contextMenuService) {\n            this._editor.focus();\n            return; // We need the context menu service to function\n        }\n        // Find actions available for menu\n        const menuActions = this._getMenuActions(this._editor.getModel(), this._editor.isSimpleWidget ? MenuId.SimpleEditorContext : MenuId.EditorContext);\n        // Show menu if we have actions to show\n        if (menuActions.length > 0) {\n            this._doShowContextMenu(menuActions, anchor);\n        }\n    }\n    _getMenuActions(model, menuId) {\n        const result = [];\n        // get menu groups\n        const menu = this._menuService.createMenu(menuId, this._contextKeyService);\n        const groups = menu.getActions({ arg: model.uri });\n        menu.dispose();\n        // translate them into other actions\n        for (let group of groups) {\n            const [, actions] = group;\n            let addedItems = 0;\n            for (const action of actions) {\n                if (action instanceof SubmenuItemAction) {\n                    const subActions = this._getMenuActions(model, action.item.submenu);\n                    if (subActions.length > 0) {\n                        result.push(new SubmenuAction(action.id, action.label, subActions));\n                        addedItems++;\n                    }\n                }\n                else {\n                    result.push(action);\n                    addedItems++;\n                }\n            }\n            if (addedItems) {\n                result.push(new Separator());\n            }\n        }\n        if (result.length) {\n            result.pop(); // remove last separator\n        }\n        return result;\n    }\n    _doShowContextMenu(actions, anchor = null) {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        // Disable hover\n        const oldHoverSetting = this._editor.getOption(53 /* hover */);\n        this._editor.updateOptions({\n            hover: {\n                enabled: false\n            }\n        });\n        if (!anchor) {\n            // Ensure selection is visible\n            this._editor.revealPosition(this._editor.getPosition(), 1 /* Immediate */);\n            this._editor.render();\n            const cursorCoords = this._editor.getScrolledVisiblePosition(this._editor.getPosition());\n            // Translate to absolute editor position\n            const editorCoords = dom.getDomNodePagePosition(this._editor.getDomNode());\n            const posx = editorCoords.left + cursorCoords.left;\n            const posy = editorCoords.top + cursorCoords.top + cursorCoords.height;\n            anchor = { x: posx, y: posy };\n        }\n        const useShadowDOM = this._editor.getOption(115 /* useShadowDOM */) && !isIOS; // Do not use shadow dom on IOS #122035\n        // Show menu\n        this._contextMenuIsBeingShownCount++;\n        this._contextMenuService.showContextMenu({\n            domForShadowRoot: useShadowDOM ? this._editor.getDomNode() : undefined,\n            getAnchor: () => anchor,\n            getActions: () => actions,\n            getActionViewItem: (action) => {\n                const keybinding = this._keybindingFor(action);\n                if (keybinding) {\n                    return new ActionViewItem(action, action, { label: true, keybinding: keybinding.getLabel(), isMenu: true });\n                }\n                const customActionViewItem = action;\n                if (typeof customActionViewItem.getActionViewItem === 'function') {\n                    return customActionViewItem.getActionViewItem();\n                }\n                return new ActionViewItem(action, action, { icon: true, label: true, isMenu: true });\n            },\n            getKeyBinding: (action) => {\n                return this._keybindingFor(action);\n            },\n            onHide: (wasCancelled) => {\n                this._contextMenuIsBeingShownCount--;\n                this._editor.focus();\n                this._editor.updateOptions({\n                    hover: oldHoverSetting\n                });\n            }\n        });\n    }\n    _keybindingFor(action) {\n        return this._keybindingService.lookupKeybinding(action.id);\n    }\n    dispose() {\n        if (this._contextMenuIsBeingShownCount > 0) {\n            this._contextViewService.hideContextView();\n        }\n        this._toDispose.dispose();\n    }\n};\nContextMenuController.ID = 'editor.contrib.contextmenu';\nContextMenuController = __decorate([\n    __param(1, IContextMenuService),\n    __param(2, IContextViewService),\n    __param(3, IContextKeyService),\n    __param(4, IKeybindingService),\n    __param(5, IMenuService)\n], ContextMenuController);\nexport { ContextMenuController };\nclass ShowContextMenu extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.showContextMenu',\n            label: nls.localize('action.showContextMenu.label', \"Show Editor Context Menu\"),\n            alias: 'Show Editor Context Menu',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.textInputFocus,\n                primary: 1024 /* Shift */ | 68 /* F10 */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        var _a;\n        (_a = ContextMenuController.get(editor)) === null || _a === void 0 ? void 0 : _a.showContextMenu();\n    }\n}\nregisterEditorContribution(ContextMenuController.ID, ContextMenuController);\nregisterEditorAction(ShowContextMenu);\n",
+      "start": 1711096854401,
+      "end": 1711096854504,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854505,
+      "end": 1711096854505,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854505,
+      "end": 1711096854506,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854506,
+      "end": 1711096854506,
+      "order": "normal"
+    }
+  ]
+}

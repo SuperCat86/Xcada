@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/electricCharacter.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { distinct } from '../../../../base/common/arrays.js';\nimport { ignoreBracketsInToken } from '../supports.js';\nimport { BracketsUtils } from './richEditBrackets.js';\nexport class BracketElectricCharacterSupport {\n    constructor(richEditBrackets) {\n        this._richEditBrackets = richEditBrackets;\n    }\n    getElectricCharacters() {\n        const result = [];\n        if (this._richEditBrackets) {\n            for (const bracket of this._richEditBrackets.brackets) {\n                for (const close of bracket.close) {\n                    const lastChar = close.charAt(close.length - 1);\n                    result.push(lastChar);\n                }\n            }\n        }\n        return distinct(result);\n    }\n    onElectricCharacter(character, context, column) {\n        if (!this._richEditBrackets || this._richEditBrackets.brackets.length === 0) {\n            return null;\n        }\n        const tokenIndex = context.findTokenIndexAtOffset(column - 1);\n        if (ignoreBracketsInToken(context.getStandardTokenType(tokenIndex))) {\n            return null;\n        }\n        const reversedBracketRegex = this._richEditBrackets.reversedRegex;\n        const text = context.getLineContent().substring(0, column - 1) + character;\n        const r = BracketsUtils.findPrevBracketInRange(reversedBracketRegex, 1, text, 0, text.length);\n        if (!r) {\n            return null;\n        }\n        const bracketText = text.substring(r.startColumn - 1, r.endColumn - 1).toLowerCase();\n        const isOpen = this._richEditBrackets.textIsOpenBracket[bracketText];\n        if (isOpen) {\n            return null;\n        }\n        const textBeforeBracket = context.getActualLineContentBefore(r.startColumn - 1);\n        if (!/^\\s*$/.test(textBeforeBracket)) {\n            // There is other text on the line before the bracket\n            return null;\n        }\n        return {\n            matchOpenBracket: bracketText\n        };\n    }\n}\n",
+      "start": 1711096856183,
+      "end": 1711096856272,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856272,
+      "end": 1711096856272,
+      "order": "normal"
+    }
+  ]
+}

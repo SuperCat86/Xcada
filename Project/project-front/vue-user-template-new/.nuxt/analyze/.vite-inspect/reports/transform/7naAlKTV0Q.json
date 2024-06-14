@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-editor .iPadShowKeyboard {\n\twidth: 58px;\n\tmin-width: 0;\n\theight: 36px;\n\tmin-height: 0;\n\tmargin: 0;\n\tpadding: 0;\n\tposition: absolute;\n\tresize: none;\n\toverflow: hidden;\n\tbackground: url(\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTMiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCA1MyAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNDguMDM2NCA0LjAxMDQySDQuMDA3NzlMNC4wMDc3OSAzMi4wMjg2SDQ4LjAzNjRWNC4wMTA0MlpNNC4wMDc3OSAwLjAwNzgxMjVDMS43OTcyMSAwLjAwNzgxMjUgMC4wMDUxODc5OSAxLjc5OTg0IDAuMDA1MTg3OTkgNC4wMTA0MlYzMi4wMjg2QzAuMDA1MTg3OTkgMzQuMjM5MiAxLjc5NzIxIDM2LjAzMTIgNC4wMDc3OSAzNi4wMzEySDQ4LjAzNjRDNTAuMjQ3IDM2LjAzMTIgNTIuMDM5IDM0LjIzOTIgNTIuMDM5IDMyLjAyODZWNC4wMTA0MkM1Mi4wMzkgMS43OTk4NCA1MC4yNDcgMC4wMDc4MTI1IDQ4LjAzNjQgMC4wMDc4MTI1SDQuMDA3NzlaTTguMDEwNDIgOC4wMTMwMkgxMi4wMTNWMTIuMDE1Nkg4LjAxMDQyVjguMDEzMDJaTTIwLjAxODIgOC4wMTMwMkgxNi4wMTU2VjEyLjAxNTZIMjAuMDE4MlY4LjAxMzAyWk0yNC4wMjA4IDguMDEzMDJIMjguMDIzNFYxMi4wMTU2SDI0LjAyMDhWOC4wMTMwMlpNMzYuMDI4NiA4LjAxMzAySDMyLjAyNlYxMi4wMTU2SDM2LjAyODZWOC4wMTMwMlpNNDAuMDMxMiA4LjAxMzAySDQ0LjAzMzlWMTIuMDE1Nkg0MC4wMzEyVjguMDEzMDJaTTE2LjAxNTYgMTYuMDE4Mkg4LjAxMDQyVjIwLjAyMDhIMTYuMDE1NlYxNi4wMTgyWk0yMC4wMTgyIDE2LjAxODJIMjQuMDIwOFYyMC4wMjA4SDIwLjAxODJWMTYuMDE4MlpNMzIuMDI2IDE2LjAxODJIMjguMDIzNFYyMC4wMjA4SDMyLjAyNlYxNi4wMTgyWk00NC4wMzM5IDE2LjAxODJWMjAuMDIwOEgzNi4wMjg2VjE2LjAxODJINDQuMDMzOVpNMTIuMDEzIDI0LjAyMzRIOC4wMTA0MlYyOC4wMjZIMTIuMDEzVjI0LjAyMzRaTTE2LjAxNTYgMjQuMDIzNEgzNi4wMjg2VjI4LjAyNkgxNi4wMTU2VjI0LjAyMzRaTTQ0LjAzMzkgMjQuMDIzNEg0MC4wMzEyVjI4LjAyNkg0NC4wMzM5VjI0LjAyMzRaIiBmaWxsPSIjNDI0MjQyIi8+CjwvZz4KPGRlZnM+CjxjbGlwUGF0aCBpZD0iY2xpcDAiPgo8cmVjdCB3aWR0aD0iNTMiIGhlaWdodD0iMzYiIGZpbGw9IndoaXRlIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==\") center center no-repeat;\n\tborder: 4px solid #F6F6F6;\n\tborder-radius: 4px;\n}\n\n.monaco-editor.vs-dark .iPadShowKeyboard {\n\tbackground: url(\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTMiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCA1MyAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNDguMDM2NCA0LjAxMDQySDQuMDA3NzlMNC4wMDc3OSAzMi4wMjg2SDQ4LjAzNjRWNC4wMTA0MlpNNC4wMDc3OSAwLjAwNzgxMjVDMS43OTcyMSAwLjAwNzgxMjUgMC4wMDUxODc5OSAxLjc5OTg0IDAuMDA1MTg3OTkgNC4wMTA0MlYzMi4wMjg2QzAuMDA1MTg3OTkgMzQuMjM5MiAxLjc5NzIxIDM2LjAzMTIgNC4wMDc3OSAzNi4wMzEySDQ4LjAzNjRDNTAuMjQ3IDM2LjAzMTIgNTIuMDM5IDM0LjIzOTIgNTIuMDM5IDMyLjAyODZWNC4wMTA0MkM1Mi4wMzkgMS43OTk4NCA1MC4yNDcgMC4wMDc4MTI1IDQ4LjAzNjQgMC4wMDc4MTI1SDQuMDA3NzlaTTguMDEwNDIgOC4wMTMwMkgxMi4wMTNWMTIuMDE1Nkg4LjAxMDQyVjguMDEzMDJaTTIwLjAxODIgOC4wMTMwMkgxNi4wMTU2VjEyLjAxNTZIMjAuMDE4MlY4LjAxMzAyWk0yNC4wMjA4IDguMDEzMDJIMjguMDIzNFYxMi4wMTU2SDI0LjAyMDhWOC4wMTMwMlpNMzYuMDI4NiA4LjAxMzAySDMyLjAyNlYxMi4wMTU2SDM2LjAyODZWOC4wMTMwMlpNNDAuMDMxMiA4LjAxMzAySDQ0LjAzMzlWMTIuMDE1Nkg0MC4wMzEyVjguMDEzMDJaTTE2LjAxNTYgMTYuMDE4Mkg4LjAxMDQyVjIwLjAyMDhIMTYuMDE1NlYxNi4wMTgyWk0yMC4wMTgyIDE2LjAxODJIMjQuMDIwOFYyMC4wMjA4SDIwLjAxODJWMTYuMDE4MlpNMzIuMDI2IDE2LjAxODJIMjguMDIzNFYyMC4wMjA4SDMyLjAyNlYxNi4wMTgyWk00NC4wMzM5IDE2LjAxODJWMjAuMDIwOEgzNi4wMjg2VjE2LjAxODJINDQuMDMzOVpNMTIuMDEzIDI0LjAyMzRIOC4wMTA0MlYyOC4wMjZIMTIuMDEzVjI0LjAyMzRaTTE2LjAxNTYgMjQuMDIzNEgzNi4wMjg2VjI4LjAyNkgxNi4wMTU2VjI0LjAyMzRaTTQ0LjAzMzkgMjQuMDIzNEg0MC4wMzEyVjI4LjAyNkg0NC4wMzM5VjI0LjAyMzRaIiBmaWxsPSIjQzVDNUM1Ii8+CjwvZz4KPGRlZnM+CjxjbGlwUGF0aCBpZD0iY2xpcDAiPgo8cmVjdCB3aWR0aD0iNTMiIGhlaWdodD0iMzYiIGZpbGw9IndoaXRlIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==\") center center no-repeat;\n\tborder: 4px solid #252526;\n}",
+      "start": 1711096854840,
+      "end": 1711096854960,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .iPadShowKeyboard{background:url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MyIgaGVpZ2h0PSIzNiIgZmlsbD0ibm9uZSI+PGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj48cGF0aCBmaWxsPSIjNDI0MjQyIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik00OC4wMzYgNC4wMUg0LjAwOFYzMi4wM2g0NC4wMjh6TTQuMDA4LjAwOEE0LjAwMyA0LjAwMyAwIDAgMCAuMDA1IDQuMDFWMzIuMDNhNC4wMDMgNC4wMDMgMCAwIDAgNC4wMDMgNC4wMDJoNDQuMDI4YTQuMDAzIDQuMDAzIDAgMCAwIDQuMDAzLTQuMDAyVjQuMDFBNC4wMDMgNC4wMDMgMCAwIDAgNDguMDM2LjAwOHpNOC4wMSA4LjAxM2g0LjAwM3Y0LjAwM0g4LjAxem0xMi4wMDggMGgtNC4wMDJ2NC4wMDNoNC4wMDJ6bTQuMDAzIDBoNC4wMDJ2NC4wMDNoLTQuMDAyem0xMi4wMDggMGgtNC4wMDN2NC4wMDNoNC4wMDN6bTQuMDAyIDBoNC4wMDN2NC4wMDNINDAuMDN6bS0yNC4wMTUgOC4wMDVIOC4wMXY0LjAwM2g4LjAwNnptNC4wMDIgMGg0LjAwM3Y0LjAwM2gtNC4wMDN6bTEyLjAwOCAwaC00LjAwM3Y0LjAwM2g0LjAwM3ptMTIuMDA4IDB2NC4wMDNoLTguMDA1di00LjAwM3ptLTMyLjAyMSA4LjAwNUg4LjAxdjQuMDAzaDQuMDAzem00LjAwMyAwaDIwLjAxM3Y0LjAwM0gxNi4wMTZ6bTI4LjAxOCAwSDQwLjAzdjQuMDAzaDQuMDAzeiIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9nPjxkZWZzPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGg1M3YzNkgweiIvPjwvY2xpcFBhdGg+PC9kZWZzPjwvc3ZnPg==\") 50% no-repeat;border:4px solid #f6f6f6;border-radius:4px;height:36px;margin:0;min-height:0;min-width:0;overflow:hidden;padding:0;position:absolute;resize:none;width:58px}.monaco-editor.vs-dark .iPadShowKeyboard{background:url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MyIgaGVpZ2h0PSIzNiIgZmlsbD0ibm9uZSI+PGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj48cGF0aCBmaWxsPSIjQzVDNUM1IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik00OC4wMzYgNC4wMUg0LjAwOFYzMi4wM2g0NC4wMjh6TTQuMDA4LjAwOEE0LjAwMyA0LjAwMyAwIDAgMCAuMDA1IDQuMDFWMzIuMDNhNC4wMDMgNC4wMDMgMCAwIDAgNC4wMDMgNC4wMDJoNDQuMDI4YTQuMDAzIDQuMDAzIDAgMCAwIDQuMDAzLTQuMDAyVjQuMDFBNC4wMDMgNC4wMDMgMCAwIDAgNDguMDM2LjAwOHpNOC4wMSA4LjAxM2g0LjAwM3Y0LjAwM0g4LjAxem0xMi4wMDggMGgtNC4wMDJ2NC4wMDNoNC4wMDJ6bTQuMDAzIDBoNC4wMDJ2NC4wMDNoLTQuMDAyem0xMi4wMDggMGgtNC4wMDN2NC4wMDNoNC4wMDN6bTQuMDAyIDBoNC4wMDN2NC4wMDNINDAuMDN6bS0yNC4wMTUgOC4wMDVIOC4wMXY0LjAwM2g4LjAwNnptNC4wMDIgMGg0LjAwM3Y0LjAwM2gtNC4wMDN6bTEyLjAwOCAwaC00LjAwM3Y0LjAwM2g0LjAwM3ptMTIuMDA4IDB2NC4wMDNoLTguMDA1di00LjAwM3ptLTMyLjAyMSA4LjAwNUg4LjAxdjQuMDAzaDQuMDAzem00LjAwMyAwaDIwLjAxM3Y0LjAwM0gxNi4wMTZ6bTI4LjAxOCAwSDQwLjAzdjQuMDAzaDQuMDAzeiIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9nPjxkZWZzPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGg1M3YzNkgweiIvPjwvY2xpcFBhdGg+PC9kZWZzPjwvc3ZnPg==\") 50% no-repeat;border:4px solid #252526}",
+      "start": 1711096854960,
+      "end": 1711096855007,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855007,
+      "end": 1711096855007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855007,
+      "end": 1711096855007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855007,
+      "end": 1711096855007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855008,
+      "end": 1711096855008,
+      "order": "normal"
+    }
+  ]
+}

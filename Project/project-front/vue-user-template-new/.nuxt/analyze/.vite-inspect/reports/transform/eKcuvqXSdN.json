@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/hover.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { KeyChord } from '../../../../base/common/keyCodes.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { EditorAction, registerEditorAction, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { GotoDefinitionAtPositionEditorContribution } from '../../gotoSymbol/browser/link/goToDefinitionAtPosition.js';\nimport { ContentHoverWidget, ContentHoverController } from './contentHover.js';\nimport { MarginHoverWidget } from './marginHover.js';\nimport * as nls from '../../../../nls.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { editorHoverBackground, editorHoverBorder, editorHoverForeground, editorHoverHighlight, editorHoverStatusBarBackground, textCodeBlockBackground, textLinkActiveForeground, textLinkForeground } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { HoverParticipantRegistry } from './hoverTypes.js';\nimport { MarkdownHoverParticipant } from './markdownHoverParticipant.js';\nimport { MarkerHoverParticipant } from './markerHoverParticipant.js';\nlet ModesHoverController = class ModesHoverController {\n    constructor(_editor, _instantiationService, _openerService, _languageService, _contextKeyService) {\n        this._editor = _editor;\n        this._instantiationService = _instantiationService;\n        this._openerService = _openerService;\n        this._languageService = _languageService;\n        this._toUnhook = new DisposableStore();\n        this._isMouseDown = false;\n        this._hoverClicked = false;\n        this._contentWidget = null;\n        this._glyphWidget = null;\n        this._hookEvents();\n        this._didChangeConfigurationHandler = this._editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(53 /* hover */)) {\n                this._unhookEvents();\n                this._hookEvents();\n            }\n        });\n    }\n    static get(editor) {\n        return editor.getContribution(ModesHoverController.ID);\n    }\n    _hookEvents() {\n        const hideWidgetsEventHandler = () => this._hideWidgets();\n        const hoverOpts = this._editor.getOption(53 /* hover */);\n        this._isHoverEnabled = hoverOpts.enabled;\n        this._isHoverSticky = hoverOpts.sticky;\n        if (this._isHoverEnabled) {\n            this._toUnhook.add(this._editor.onMouseDown((e) => this._onEditorMouseDown(e)));\n            this._toUnhook.add(this._editor.onMouseUp((e) => this._onEditorMouseUp(e)));\n            this._toUnhook.add(this._editor.onMouseMove((e) => this._onEditorMouseMove(e)));\n            this._toUnhook.add(this._editor.onKeyDown((e) => this._onKeyDown(e)));\n        }\n        else {\n            this._toUnhook.add(this._editor.onMouseMove((e) => this._onEditorMouseMove(e)));\n            this._toUnhook.add(this._editor.onKeyDown((e) => this._onKeyDown(e)));\n        }\n        this._toUnhook.add(this._editor.onMouseLeave(hideWidgetsEventHandler));\n        this._toUnhook.add(this._editor.onDidChangeModel(hideWidgetsEventHandler));\n        this._toUnhook.add(this._editor.onDidScrollChange((e) => this._onEditorScrollChanged(e)));\n    }\n    _unhookEvents() {\n        this._toUnhook.clear();\n    }\n    _onEditorScrollChanged(e) {\n        if (e.scrollTopChanged || e.scrollLeftChanged) {\n            this._hideWidgets();\n        }\n    }\n    _onEditorMouseDown(mouseEvent) {\n        this._isMouseDown = true;\n        const target = mouseEvent.target;\n        if (target.type === 9 /* CONTENT_WIDGET */ && target.detail === ContentHoverWidget.ID) {\n            this._hoverClicked = true;\n            // mouse down on top of content hover widget\n            return;\n        }\n        if (target.type === 12 /* OVERLAY_WIDGET */ && target.detail === MarginHoverWidget.ID) {\n            // mouse down on top of overlay hover widget\n            return;\n        }\n        if (target.type !== 12 /* OVERLAY_WIDGET */) {\n            this._hoverClicked = false;\n        }\n        this._hideWidgets();\n    }\n    _onEditorMouseUp(mouseEvent) {\n        this._isMouseDown = false;\n    }\n    _onEditorMouseMove(mouseEvent) {\n        var _a, _b, _c, _d, _e;\n        const target = mouseEvent.target;\n        if (this._isMouseDown && this._hoverClicked) {\n            return;\n        }\n        if (this._isHoverSticky && target.type === 9 /* CONTENT_WIDGET */ && target.detail === ContentHoverWidget.ID) {\n            // mouse moved on top of content hover widget\n            return;\n        }\n        if (this._isHoverSticky && !((_b = (_a = mouseEvent.event.browserEvent.view) === null || _a === void 0 ? void 0 : _a.getSelection()) === null || _b === void 0 ? void 0 : _b.isCollapsed)) {\n            // selected text within content hover widget\n            return;\n        }\n        if (!this._isHoverSticky && target.type === 9 /* CONTENT_WIDGET */ && target.detail === ContentHoverWidget.ID\n            && ((_c = this._contentWidget) === null || _c === void 0 ? void 0 : _c.isColorPickerVisible())) {\n            // though the hover is not sticky, the color picker needs to.\n            return;\n        }\n        if (this._isHoverSticky && target.type === 12 /* OVERLAY_WIDGET */ && target.detail === MarginHoverWidget.ID) {\n            // mouse moved on top of overlay hover widget\n            return;\n        }\n        if (!this._isHoverEnabled) {\n            this._hideWidgets();\n            return;\n        }\n        const contentWidget = this._getOrCreateContentWidget();\n        if (contentWidget.maybeShowAt(mouseEvent)) {\n            (_d = this._glyphWidget) === null || _d === void 0 ? void 0 : _d.hide();\n            return;\n        }\n        if (target.type === 2 /* GUTTER_GLYPH_MARGIN */ && target.position) {\n            (_e = this._contentWidget) === null || _e === void 0 ? void 0 : _e.hide();\n            if (!this._glyphWidget) {\n                this._glyphWidget = new MarginHoverWidget(this._editor, this._languageService, this._openerService);\n            }\n            this._glyphWidget.startShowingAt(target.position.lineNumber);\n            return;\n        }\n        this._hideWidgets();\n    }\n    _onKeyDown(e) {\n        if (e.keyCode !== 5 /* Ctrl */ && e.keyCode !== 6 /* Alt */ && e.keyCode !== 57 /* Meta */ && e.keyCode !== 4 /* Shift */) {\n            // Do not hide hover when a modifier key is pressed\n            this._hideWidgets();\n        }\n    }\n    _hideWidgets() {\n        var _a, _b, _c;\n        if ((this._isMouseDown && this._hoverClicked && ((_a = this._contentWidget) === null || _a === void 0 ? void 0 : _a.isColorPickerVisible()))) {\n            return;\n        }\n        this._hoverClicked = false;\n        (_b = this._glyphWidget) === null || _b === void 0 ? void 0 : _b.hide();\n        (_c = this._contentWidget) === null || _c === void 0 ? void 0 : _c.hide();\n    }\n    _getOrCreateContentWidget() {\n        if (!this._contentWidget) {\n            this._contentWidget = this._instantiationService.createInstance(ContentHoverController, this._editor);\n        }\n        return this._contentWidget;\n    }\n    isColorPickerVisible() {\n        var _a;\n        return ((_a = this._contentWidget) === null || _a === void 0 ? void 0 : _a.isColorPickerVisible()) || false;\n    }\n    showContentHover(range, mode, focus) {\n        this._getOrCreateContentWidget().startShowingAtRange(range, mode, focus);\n    }\n    dispose() {\n        var _a, _b;\n        this._unhookEvents();\n        this._toUnhook.dispose();\n        this._didChangeConfigurationHandler.dispose();\n        (_a = this._glyphWidget) === null || _a === void 0 ? void 0 : _a.dispose();\n        (_b = this._contentWidget) === null || _b === void 0 ? void 0 : _b.dispose();\n    }\n};\nModesHoverController.ID = 'editor.contrib.hover';\nModesHoverController = __decorate([\n    __param(1, IInstantiationService),\n    __param(2, IOpenerService),\n    __param(3, ILanguageService),\n    __param(4, IContextKeyService)\n], ModesHoverController);\nexport { ModesHoverController };\nclass ShowHoverAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.showHover',\n            label: nls.localize({\n                key: 'showHover',\n                comment: [\n                    'Label for action that will trigger the showing of a hover in the editor.',\n                    'This allows for users to show the hover without using the mouse.'\n                ]\n            }, \"Show Hover\"),\n            alias: 'Show Hover',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, 2048 /* CtrlCmd */ | 39 /* KeyI */),\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        if (!editor.hasModel()) {\n            return;\n        }\n        let controller = ModesHoverController.get(editor);\n        if (!controller) {\n            return;\n        }\n        const position = editor.getPosition();\n        const range = new Range(position.lineNumber, position.column, position.lineNumber, position.column);\n        const focus = editor.getOption(2 /* accessibilitySupport */) === 2 /* Enabled */;\n        controller.showContentHover(range, 1 /* Immediate */, focus);\n    }\n}\nclass ShowDefinitionPreviewHoverAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.showDefinitionPreviewHover',\n            label: nls.localize({\n                key: 'showDefinitionPreviewHover',\n                comment: [\n                    'Label for action that will trigger the showing of definition preview hover in the editor.',\n                    'This allows for users to show the definition preview hover without using the mouse.'\n                ]\n            }, \"Show Definition Preview Hover\"),\n            alias: 'Show Definition Preview Hover',\n            precondition: undefined\n        });\n    }\n    run(accessor, editor) {\n        const controller = ModesHoverController.get(editor);\n        if (!controller) {\n            return;\n        }\n        const position = editor.getPosition();\n        if (!position) {\n            return;\n        }\n        const range = new Range(position.lineNumber, position.column, position.lineNumber, position.column);\n        const goto = GotoDefinitionAtPositionEditorContribution.get(editor);\n        if (!goto) {\n            return;\n        }\n        const promise = goto.startFindDefinitionFromCursor(position);\n        promise.then(() => {\n            controller.showContentHover(range, 1 /* Immediate */, true);\n        });\n    }\n}\nregisterEditorContribution(ModesHoverController.ID, ModesHoverController);\nregisterEditorAction(ShowHoverAction);\nregisterEditorAction(ShowDefinitionPreviewHoverAction);\nHoverParticipantRegistry.register(MarkdownHoverParticipant);\nHoverParticipantRegistry.register(MarkerHoverParticipant);\n// theming\nregisterThemingParticipant((theme, collector) => {\n    const editorHoverHighlightColor = theme.getColor(editorHoverHighlight);\n    if (editorHoverHighlightColor) {\n        collector.addRule(`.monaco-editor .hoverHighlight { background-color: ${editorHoverHighlightColor}; }`);\n    }\n    const hoverBackground = theme.getColor(editorHoverBackground);\n    if (hoverBackground) {\n        collector.addRule(`.monaco-editor .monaco-hover { background-color: ${hoverBackground}; }`);\n    }\n    const hoverBorder = theme.getColor(editorHoverBorder);\n    if (hoverBorder) {\n        collector.addRule(`.monaco-editor .monaco-hover { border: 1px solid ${hoverBorder}; }`);\n        collector.addRule(`.monaco-editor .monaco-hover .hover-row:not(:first-child):not(:empty) { border-top: 1px solid ${hoverBorder.transparent(0.5)}; }`);\n        collector.addRule(`.monaco-editor .monaco-hover hr { border-top: 1px solid ${hoverBorder.transparent(0.5)}; }`);\n        collector.addRule(`.monaco-editor .monaco-hover hr { border-bottom: 0px solid ${hoverBorder.transparent(0.5)}; }`);\n    }\n    const link = theme.getColor(textLinkForeground);\n    if (link) {\n        collector.addRule(`.monaco-editor .monaco-hover a { color: ${link}; }`);\n    }\n    const linkHover = theme.getColor(textLinkActiveForeground);\n    if (linkHover) {\n        collector.addRule(`.monaco-editor .monaco-hover a:hover { color: ${linkHover}; }`);\n    }\n    const hoverForeground = theme.getColor(editorHoverForeground);\n    if (hoverForeground) {\n        collector.addRule(`.monaco-editor .monaco-hover { color: ${hoverForeground}; }`);\n    }\n    const actionsBackground = theme.getColor(editorHoverStatusBarBackground);\n    if (actionsBackground) {\n        collector.addRule(`.monaco-editor .monaco-hover .hover-row .actions { background-color: ${actionsBackground}; }`);\n    }\n    const codeBackground = theme.getColor(textCodeBlockBackground);\n    if (codeBackground) {\n        collector.addRule(`.monaco-editor .monaco-hover code { background-color: ${codeBackground}; }`);\n    }\n});\n",
+      "start": 1711096854493,
+      "end": 1711096854633,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854634,
+      "end": 1711096854634,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854634,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    }
+  ]
+}

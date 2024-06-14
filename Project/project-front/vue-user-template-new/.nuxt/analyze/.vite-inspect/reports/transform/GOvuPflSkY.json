@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/ghostTextModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable, MutableDisposable } from '../../../../base/common/lifecycle.js';\nimport { Position } from '../../../common/core/position.js';\nimport { InlineCompletionTriggerKind } from '../../../common/languages.js';\nimport { InlineCompletionsModel, SynchronizedInlineCompletionsCache } from './inlineCompletionsModel.js';\nimport { SuggestWidgetPreviewModel } from './suggestWidgetPreviewModel.js';\nimport { createDisposableRef } from './utils.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nexport class DelegatingModel extends Disposable {\n    constructor() {\n        super(...arguments);\n        this.onDidChangeEmitter = new Emitter();\n        this.onDidChange = this.onDidChangeEmitter.event;\n        this.hasCachedGhostText = false;\n        this.currentModelRef = this._register(new MutableDisposable());\n    }\n    get targetModel() {\n        var _a;\n        return (_a = this.currentModelRef.value) === null || _a === void 0 ? void 0 : _a.object;\n    }\n    setTargetModel(model) {\n        var _a;\n        if (((_a = this.currentModelRef.value) === null || _a === void 0 ? void 0 : _a.object) === model) {\n            return;\n        }\n        this.currentModelRef.clear();\n        this.currentModelRef.value = model ? createDisposableRef(model, model.onDidChange(() => {\n            this.hasCachedGhostText = false;\n            this.onDidChangeEmitter.fire();\n        })) : undefined;\n        this.hasCachedGhostText = false;\n        this.onDidChangeEmitter.fire();\n    }\n    get ghostText() {\n        var _a, _b;\n        if (!this.hasCachedGhostText) {\n            this.cachedGhostText = (_b = (_a = this.currentModelRef.value) === null || _a === void 0 ? void 0 : _a.object) === null || _b === void 0 ? void 0 : _b.ghostText;\n            this.hasCachedGhostText = true;\n        }\n        return this.cachedGhostText;\n    }\n    setExpanded(expanded) {\n        var _a;\n        (_a = this.targetModel) === null || _a === void 0 ? void 0 : _a.setExpanded(expanded);\n    }\n    get minReservedLineCount() {\n        return this.targetModel ? this.targetModel.minReservedLineCount : 0;\n    }\n}\n/**\n * A ghost text model that is both driven by inline completions and the suggest widget.\n*/\nlet GhostTextModel = class GhostTextModel extends DelegatingModel {\n    constructor(editor, instantiationService) {\n        super();\n        this.editor = editor;\n        this.instantiationService = instantiationService;\n        this.sharedCache = this._register(new SharedInlineCompletionCache());\n        this.suggestWidgetAdapterModel = this._register(this.instantiationService.createInstance(SuggestWidgetPreviewModel, this.editor, this.sharedCache));\n        this.inlineCompletionsModel = this._register(this.instantiationService.createInstance(InlineCompletionsModel, this.editor, this.sharedCache));\n        this._register(this.suggestWidgetAdapterModel.onDidChange(() => {\n            this.updateModel();\n        }));\n        this.updateModel();\n    }\n    get activeInlineCompletionsModel() {\n        if (this.targetModel === this.inlineCompletionsModel) {\n            return this.inlineCompletionsModel;\n        }\n        return undefined;\n    }\n    updateModel() {\n        this.setTargetModel(this.suggestWidgetAdapterModel.isActive\n            ? this.suggestWidgetAdapterModel\n            : this.inlineCompletionsModel);\n        this.inlineCompletionsModel.setActive(this.targetModel === this.inlineCompletionsModel);\n    }\n    shouldShowHoverAt(hoverRange) {\n        var _a;\n        const ghostText = (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.ghostText;\n        if (ghostText) {\n            return ghostText.parts.some(p => hoverRange.containsPosition(new Position(ghostText.lineNumber, p.column)));\n        }\n        return false;\n    }\n    triggerInlineCompletion() {\n        var _a;\n        (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.trigger(InlineCompletionTriggerKind.Explicit);\n    }\n    commitInlineCompletion() {\n        var _a;\n        (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.commitCurrentSuggestion();\n    }\n    hideInlineCompletion() {\n        var _a;\n        (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.hide();\n    }\n    showNextInlineCompletion() {\n        var _a;\n        (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.showNext();\n    }\n    showPreviousInlineCompletion() {\n        var _a;\n        (_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.showPrevious();\n    }\n    hasMultipleInlineCompletions() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            const result = yield ((_a = this.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.hasMultipleInlineCompletions());\n            return result !== undefined ? result : false;\n        });\n    }\n};\nGhostTextModel = __decorate([\n    __param(1, IInstantiationService)\n], GhostTextModel);\nexport { GhostTextModel };\nexport class SharedInlineCompletionCache extends Disposable {\n    constructor() {\n        super(...arguments);\n        this.onDidChangeEmitter = new Emitter();\n        this.onDidChange = this.onDidChangeEmitter.event;\n        this.cache = this._register(new MutableDisposable());\n    }\n    get value() {\n        return this.cache.value;\n    }\n    setValue(editor, completionsSource, triggerKind) {\n        this.cache.value = new SynchronizedInlineCompletionsCache(editor, completionsSource, () => this.onDidChangeEmitter.fire(), triggerKind);\n    }\n    clearAndLeak() {\n        return this.cache.clearAndLeak();\n    }\n    clear() {\n        this.cache.clear();\n    }\n}\n",
+      "start": 1711096856702,
+      "end": 1711096856810,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856810,
+      "end": 1711096856810,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856810,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856811,
+      "end": 1711096856811,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    }
+  ]
+}

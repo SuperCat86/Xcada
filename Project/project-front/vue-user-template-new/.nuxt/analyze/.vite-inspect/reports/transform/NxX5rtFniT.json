@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/controller/mouseHandler.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../base/browser/dom.js';\nimport { StandardWheelEvent } from '../../../base/browser/mouseEvent.js';\nimport { TimeoutTimer } from '../../../base/common/async.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport * as platform from '../../../base/common/platform.js';\nimport { HitTestContext, MouseTarget, MouseTargetFactory } from './mouseTarget.js';\nimport { ClientCoordinates, EditorMouseEventFactory, GlobalEditorMouseMoveMonitor, createEditorPagePosition, createCoordinatesRelativeToEditor } from '../editorDom.js';\nimport { EditorZoom } from '../../common/config/editorZoom.js';\nimport { Position } from '../../common/core/position.js';\nimport { Selection } from '../../common/core/selection.js';\nimport { ViewEventHandler } from '../../common/viewEventHandler.js';\n/**\n * Merges mouse events when mouse move events are throttled\n */\nexport function createMouseMoveEventMerger(mouseTargetFactory) {\n    return function (lastEvent, currentEvent) {\n        let targetIsWidget = false;\n        if (mouseTargetFactory) {\n            targetIsWidget = mouseTargetFactory.mouseTargetIsWidget(currentEvent);\n        }\n        if (!targetIsWidget) {\n            currentEvent.preventDefault();\n        }\n        return currentEvent;\n    };\n}\nexport class MouseHandler extends ViewEventHandler {\n    constructor(context, viewController, viewHelper) {\n        super();\n        this._context = context;\n        this.viewController = viewController;\n        this.viewHelper = viewHelper;\n        this.mouseTargetFactory = new MouseTargetFactory(this._context, viewHelper);\n        this._mouseDownOperation = this._register(new MouseDownOperation(this._context, this.viewController, this.viewHelper, (e, testEventTarget) => this._createMouseTarget(e, testEventTarget), (e) => this._getMouseColumn(e)));\n        this.lastMouseLeaveTime = -1;\n        this._height = this._context.configuration.options.get(131 /* layoutInfo */).height;\n        const mouseEvents = new EditorMouseEventFactory(this.viewHelper.viewDomNode);\n        this._register(mouseEvents.onContextMenu(this.viewHelper.viewDomNode, (e) => this._onContextMenu(e, true)));\n        this._register(mouseEvents.onMouseMoveThrottled(this.viewHelper.viewDomNode, (e) => this._onMouseMove(e), createMouseMoveEventMerger(this.mouseTargetFactory), MouseHandler.MOUSE_MOVE_MINIMUM_TIME));\n        this._register(mouseEvents.onMouseUp(this.viewHelper.viewDomNode, (e) => this._onMouseUp(e)));\n        this._register(mouseEvents.onMouseLeave(this.viewHelper.viewDomNode, (e) => this._onMouseLeave(e)));\n        this._register(mouseEvents.onMouseDown(this.viewHelper.viewDomNode, (e) => this._onMouseDown(e)));\n        const onMouseWheel = (browserEvent) => {\n            this.viewController.emitMouseWheel(browserEvent);\n            if (!this._context.configuration.options.get(68 /* mouseWheelZoom */)) {\n                return;\n            }\n            const e = new StandardWheelEvent(browserEvent);\n            const doMouseWheelZoom = (platform.isMacintosh\n                // on macOS we support cmd + two fingers scroll (`metaKey` set)\n                // and also the two fingers pinch gesture (`ctrKey` set)\n                ? ((browserEvent.metaKey || browserEvent.ctrlKey) && !browserEvent.shiftKey && !browserEvent.altKey)\n                : (browserEvent.ctrlKey && !browserEvent.metaKey && !browserEvent.shiftKey && !browserEvent.altKey));\n            if (doMouseWheelZoom) {\n                const zoomLevel = EditorZoom.getZoomLevel();\n                const delta = e.deltaY > 0 ? 1 : -1;\n                EditorZoom.setZoomLevel(zoomLevel + delta);\n                e.preventDefault();\n                e.stopPropagation();\n            }\n        };\n        this._register(dom.addDisposableListener(this.viewHelper.viewDomNode, dom.EventType.MOUSE_WHEEL, onMouseWheel, { capture: true, passive: false }));\n        this._context.addEventHandler(this);\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        super.dispose();\n    }\n    // --- begin event handlers\n    onConfigurationChanged(e) {\n        if (e.hasChanged(131 /* layoutInfo */)) {\n            // layout change\n            const height = this._context.configuration.options.get(131 /* layoutInfo */).height;\n            if (this._height !== height) {\n                this._height = height;\n                this._mouseDownOperation.onHeightChanged();\n            }\n        }\n        return false;\n    }\n    onCursorStateChanged(e) {\n        this._mouseDownOperation.onCursorStateChanged(e);\n        return false;\n    }\n    onFocusChanged(e) {\n        return false;\n    }\n    onScrollChanged(e) {\n        this._mouseDownOperation.onScrollChanged();\n        return false;\n    }\n    // --- end event handlers\n    getTargetAtClientPoint(clientX, clientY) {\n        const clientPos = new ClientCoordinates(clientX, clientY);\n        const pos = clientPos.toPageCoordinates();\n        const editorPos = createEditorPagePosition(this.viewHelper.viewDomNode);\n        if (pos.y < editorPos.y || pos.y > editorPos.y + editorPos.height || pos.x < editorPos.x || pos.x > editorPos.x + editorPos.width) {\n            return null;\n        }\n        const relativePos = createCoordinatesRelativeToEditor(this.viewHelper.viewDomNode, editorPos, pos);\n        return this.mouseTargetFactory.createMouseTarget(this.viewHelper.getLastRenderData(), editorPos, pos, relativePos, null);\n    }\n    _createMouseTarget(e, testEventTarget) {\n        let target = e.target;\n        if (!this.viewHelper.viewDomNode.contains(target)) {\n            const shadowRoot = dom.getShadowRoot(this.viewHelper.viewDomNode);\n            if (shadowRoot) {\n                target = shadowRoot.elementsFromPoint(e.posx, e.posy).find((el) => this.viewHelper.viewDomNode.contains(el));\n            }\n        }\n        return this.mouseTargetFactory.createMouseTarget(this.viewHelper.getLastRenderData(), e.editorPos, e.pos, e.relativePos, testEventTarget ? target : null);\n    }\n    _getMouseColumn(e) {\n        return this.mouseTargetFactory.getMouseColumn(e.relativePos);\n    }\n    _onContextMenu(e, testEventTarget) {\n        this.viewController.emitContextMenu({\n            event: e,\n            target: this._createMouseTarget(e, testEventTarget)\n        });\n    }\n    _onMouseMove(e) {\n        if (this._mouseDownOperation.isActive()) {\n            // In selection/drag operation\n            return;\n        }\n        const actualMouseMoveTime = e.timestamp;\n        if (actualMouseMoveTime < this.lastMouseLeaveTime) {\n            // Due to throttling, this event occurred before the mouse left the editor, therefore ignore it.\n            return;\n        }\n        this.viewController.emitMouseMove({\n            event: e,\n            target: this._createMouseTarget(e, true)\n        });\n    }\n    _onMouseLeave(e) {\n        this.lastMouseLeaveTime = (new Date()).getTime();\n        this.viewController.emitMouseLeave({\n            event: e,\n            target: null\n        });\n    }\n    _onMouseUp(e) {\n        this.viewController.emitMouseUp({\n            event: e,\n            target: this._createMouseTarget(e, true)\n        });\n    }\n    _onMouseDown(e) {\n        const t = this._createMouseTarget(e, true);\n        const targetIsContent = (t.type === 6 /* CONTENT_TEXT */ || t.type === 7 /* CONTENT_EMPTY */);\n        const targetIsGutter = (t.type === 2 /* GUTTER_GLYPH_MARGIN */ || t.type === 3 /* GUTTER_LINE_NUMBERS */ || t.type === 4 /* GUTTER_LINE_DECORATIONS */);\n        const targetIsLineNumbers = (t.type === 3 /* GUTTER_LINE_NUMBERS */);\n        const selectOnLineNumbers = this._context.configuration.options.get(98 /* selectOnLineNumbers */);\n        const targetIsViewZone = (t.type === 8 /* CONTENT_VIEW_ZONE */ || t.type === 5 /* GUTTER_VIEW_ZONE */);\n        const targetIsWidget = (t.type === 9 /* CONTENT_WIDGET */);\n        let shouldHandle = e.leftButton || e.middleButton;\n        if (platform.isMacintosh && e.leftButton && e.ctrlKey) {\n            shouldHandle = false;\n        }\n        const focus = () => {\n            e.preventDefault();\n            this.viewHelper.focusTextArea();\n        };\n        if (shouldHandle && (targetIsContent || (targetIsLineNumbers && selectOnLineNumbers))) {\n            focus();\n            this._mouseDownOperation.start(t.type, e);\n        }\n        else if (targetIsGutter) {\n            // Do not steal focus\n            e.preventDefault();\n        }\n        else if (targetIsViewZone) {\n            const viewZoneData = t.detail;\n            if (this.viewHelper.shouldSuppressMouseDownOnViewZone(viewZoneData.viewZoneId)) {\n                focus();\n                this._mouseDownOperation.start(t.type, e);\n                e.preventDefault();\n            }\n        }\n        else if (targetIsWidget && this.viewHelper.shouldSuppressMouseDownOnWidget(t.detail)) {\n            focus();\n            e.preventDefault();\n        }\n        this.viewController.emitMouseDown({\n            event: e,\n            target: t\n        });\n    }\n}\nMouseHandler.MOUSE_MOVE_MINIMUM_TIME = 100; // ms\nclass MouseDownOperation extends Disposable {\n    constructor(context, viewController, viewHelper, createMouseTarget, getMouseColumn) {\n        super();\n        this._context = context;\n        this._viewController = viewController;\n        this._viewHelper = viewHelper;\n        this._createMouseTarget = createMouseTarget;\n        this._getMouseColumn = getMouseColumn;\n        this._mouseMoveMonitor = this._register(new GlobalEditorMouseMoveMonitor(this._viewHelper.viewDomNode));\n        this._onScrollTimeout = this._register(new TimeoutTimer());\n        this._mouseState = new MouseDownState();\n        this._currentSelection = new Selection(1, 1, 1, 1);\n        this._isActive = false;\n        this._lastMouseEvent = null;\n    }\n    dispose() {\n        super.dispose();\n    }\n    isActive() {\n        return this._isActive;\n    }\n    _onMouseDownThenMove(e) {\n        this._lastMouseEvent = e;\n        this._mouseState.setModifiers(e);\n        const position = this._findMousePosition(e, true);\n        if (!position) {\n            // Ignoring because position is unknown\n            return;\n        }\n        if (this._mouseState.isDragAndDrop) {\n            this._viewController.emitMouseDrag({\n                event: e,\n                target: position\n            });\n        }\n        else {\n            this._dispatchMouse(position, true);\n        }\n    }\n    start(targetType, e) {\n        this._lastMouseEvent = e;\n        this._mouseState.setStartedOnLineNumbers(targetType === 3 /* GUTTER_LINE_NUMBERS */);\n        this._mouseState.setStartButtons(e);\n        this._mouseState.setModifiers(e);\n        const position = this._findMousePosition(e, true);\n        if (!position || !position.position) {\n            // Ignoring because position is unknown\n            return;\n        }\n        this._mouseState.trySetCount(e.detail, position.position);\n        // Overwrite the detail of the MouseEvent, as it will be sent out in an event and contributions might rely on it.\n        e.detail = this._mouseState.count;\n        const options = this._context.configuration.options;\n        if (!options.get(81 /* readOnly */)\n            && options.get(31 /* dragAndDrop */)\n            && !options.get(18 /* columnSelection */)\n            && !this._mouseState.altKey // we don't support multiple mouse\n            && e.detail < 2 // only single click on a selection can work\n            && !this._isActive // the mouse is not down yet\n            && !this._currentSelection.isEmpty() // we don't drag single cursor\n            && (position.type === 6 /* CONTENT_TEXT */) // single click on text\n            && position.position && this._currentSelection.containsPosition(position.position) // single click on a selection\n        ) {\n            this._mouseState.isDragAndDrop = true;\n            this._isActive = true;\n            this._mouseMoveMonitor.startMonitoring(e.target, e.buttons, createMouseMoveEventMerger(null), (e) => this._onMouseDownThenMove(e), (browserEvent) => {\n                const position = this._findMousePosition(this._lastMouseEvent, true);\n                if (browserEvent && browserEvent instanceof KeyboardEvent) {\n                    // cancel\n                    this._viewController.emitMouseDropCanceled();\n                }\n                else {\n                    this._viewController.emitMouseDrop({\n                        event: this._lastMouseEvent,\n                        target: (position ? this._createMouseTarget(this._lastMouseEvent, true) : null) // Ignoring because position is unknown, e.g., Content View Zone\n                    });\n                }\n                this._stop();\n            });\n            return;\n        }\n        this._mouseState.isDragAndDrop = false;\n        this._dispatchMouse(position, e.shiftKey);\n        if (!this._isActive) {\n            this._isActive = true;\n            this._mouseMoveMonitor.startMonitoring(e.target, e.buttons, createMouseMoveEventMerger(null), (e) => this._onMouseDownThenMove(e), () => this._stop());\n        }\n    }\n    _stop() {\n        this._isActive = false;\n        this._onScrollTimeout.cancel();\n    }\n    onHeightChanged() {\n        this._mouseMoveMonitor.stopMonitoring();\n    }\n    onScrollChanged() {\n        if (!this._isActive) {\n            return;\n        }\n        this._onScrollTimeout.setIfNotSet(() => {\n            if (!this._lastMouseEvent) {\n                return;\n            }\n            const position = this._findMousePosition(this._lastMouseEvent, false);\n            if (!position) {\n                // Ignoring because position is unknown\n                return;\n            }\n            if (this._mouseState.isDragAndDrop) {\n                // Ignoring because users are dragging the text\n                return;\n            }\n            this._dispatchMouse(position, true);\n        }, 10);\n    }\n    onCursorStateChanged(e) {\n        this._currentSelection = e.selections[0];\n    }\n    _getPositionOutsideEditor(e) {\n        const editorContent = e.editorPos;\n        const model = this._context.viewModel;\n        const viewLayout = this._context.viewLayout;\n        const mouseColumn = this._getMouseColumn(e);\n        if (e.posy < editorContent.y) {\n            const verticalOffset = Math.max(viewLayout.getCurrentScrollTop() - (editorContent.y - e.posy), 0);\n            const viewZoneData = HitTestContext.getZoneAtCoord(this._context, verticalOffset);\n            if (viewZoneData) {\n                const newPosition = this._helpPositionJumpOverViewZone(viewZoneData);\n                if (newPosition) {\n                    return MouseTarget.createOutsideEditor(mouseColumn, newPosition);\n                }\n            }\n            const aboveLineNumber = viewLayout.getLineNumberAtVerticalOffset(verticalOffset);\n            return MouseTarget.createOutsideEditor(mouseColumn, new Position(aboveLineNumber, 1));\n        }\n        if (e.posy > editorContent.y + editorContent.height) {\n            const verticalOffset = viewLayout.getCurrentScrollTop() + e.relativePos.y;\n            const viewZoneData = HitTestContext.getZoneAtCoord(this._context, verticalOffset);\n            if (viewZoneData) {\n                const newPosition = this._helpPositionJumpOverViewZone(viewZoneData);\n                if (newPosition) {\n                    return MouseTarget.createOutsideEditor(mouseColumn, newPosition);\n                }\n            }\n            const belowLineNumber = viewLayout.getLineNumberAtVerticalOffset(verticalOffset);\n            return MouseTarget.createOutsideEditor(mouseColumn, new Position(belowLineNumber, model.getLineMaxColumn(belowLineNumber)));\n        }\n        const possibleLineNumber = viewLayout.getLineNumberAtVerticalOffset(viewLayout.getCurrentScrollTop() + e.relativePos.y);\n        if (e.posx < editorContent.x) {\n            return MouseTarget.createOutsideEditor(mouseColumn, new Position(possibleLineNumber, 1));\n        }\n        if (e.posx > editorContent.x + editorContent.width) {\n            return MouseTarget.createOutsideEditor(mouseColumn, new Position(possibleLineNumber, model.getLineMaxColumn(possibleLineNumber)));\n        }\n        return null;\n    }\n    _findMousePosition(e, testEventTarget) {\n        const positionOutsideEditor = this._getPositionOutsideEditor(e);\n        if (positionOutsideEditor) {\n            return positionOutsideEditor;\n        }\n        const t = this._createMouseTarget(e, testEventTarget);\n        const hintedPosition = t.position;\n        if (!hintedPosition) {\n            return null;\n        }\n        if (t.type === 8 /* CONTENT_VIEW_ZONE */ || t.type === 5 /* GUTTER_VIEW_ZONE */) {\n            const newPosition = this._helpPositionJumpOverViewZone(t.detail);\n            if (newPosition) {\n                return MouseTarget.createViewZone(t.type, t.element, t.mouseColumn, newPosition, t.detail);\n            }\n        }\n        return t;\n    }\n    _helpPositionJumpOverViewZone(viewZoneData) {\n        // Force position on view zones to go above or below depending on where selection started from\n        const selectionStart = new Position(this._currentSelection.selectionStartLineNumber, this._currentSelection.selectionStartColumn);\n        const positionBefore = viewZoneData.positionBefore;\n        const positionAfter = viewZoneData.positionAfter;\n        if (positionBefore && positionAfter) {\n            if (positionBefore.isBefore(selectionStart)) {\n                return positionBefore;\n            }\n            else {\n                return positionAfter;\n            }\n        }\n        return null;\n    }\n    _dispatchMouse(position, inSelectionMode) {\n        if (!position.position) {\n            return;\n        }\n        this._viewController.dispatchMouse({\n            position: position.position,\n            mouseColumn: position.mouseColumn,\n            startedOnLineNumbers: this._mouseState.startedOnLineNumbers,\n            inSelectionMode: inSelectionMode,\n            mouseDownCount: this._mouseState.count,\n            altKey: this._mouseState.altKey,\n            ctrlKey: this._mouseState.ctrlKey,\n            metaKey: this._mouseState.metaKey,\n            shiftKey: this._mouseState.shiftKey,\n            leftButton: this._mouseState.leftButton,\n            middleButton: this._mouseState.middleButton,\n            onInjectedText: position.type === 6 /* CONTENT_TEXT */ && position.detail.injectedText !== null\n        });\n    }\n}\nclass MouseDownState {\n    constructor() {\n        this._altKey = false;\n        this._ctrlKey = false;\n        this._metaKey = false;\n        this._shiftKey = false;\n        this._leftButton = false;\n        this._middleButton = false;\n        this._startedOnLineNumbers = false;\n        this._lastMouseDownPosition = null;\n        this._lastMouseDownPositionEqualCount = 0;\n        this._lastMouseDownCount = 0;\n        this._lastSetMouseDownCountTime = 0;\n        this.isDragAndDrop = false;\n    }\n    get altKey() { return this._altKey; }\n    get ctrlKey() { return this._ctrlKey; }\n    get metaKey() { return this._metaKey; }\n    get shiftKey() { return this._shiftKey; }\n    get leftButton() { return this._leftButton; }\n    get middleButton() { return this._middleButton; }\n    get startedOnLineNumbers() { return this._startedOnLineNumbers; }\n    get count() {\n        return this._lastMouseDownCount;\n    }\n    setModifiers(source) {\n        this._altKey = source.altKey;\n        this._ctrlKey = source.ctrlKey;\n        this._metaKey = source.metaKey;\n        this._shiftKey = source.shiftKey;\n    }\n    setStartButtons(source) {\n        this._leftButton = source.leftButton;\n        this._middleButton = source.middleButton;\n    }\n    setStartedOnLineNumbers(startedOnLineNumbers) {\n        this._startedOnLineNumbers = startedOnLineNumbers;\n    }\n    trySetCount(setMouseDownCount, newMouseDownPosition) {\n        // a. Invalidate multiple clicking if too much time has passed (will be hit by IE because the detail field of mouse events contains garbage in IE10)\n        const currentTime = (new Date()).getTime();\n        if (currentTime - this._lastSetMouseDownCountTime > MouseDownState.CLEAR_MOUSE_DOWN_COUNT_TIME) {\n            setMouseDownCount = 1;\n        }\n        this._lastSetMouseDownCountTime = currentTime;\n        // b. Ensure that we don't jump from single click to triple click in one go (will be hit by IE because the detail field of mouse events contains garbage in IE10)\n        if (setMouseDownCount > this._lastMouseDownCount + 1) {\n            setMouseDownCount = this._lastMouseDownCount + 1;\n        }\n        // c. Invalidate multiple clicking if the logical position is different\n        if (this._lastMouseDownPosition && this._lastMouseDownPosition.equals(newMouseDownPosition)) {\n            this._lastMouseDownPositionEqualCount++;\n        }\n        else {\n            this._lastMouseDownPositionEqualCount = 1;\n        }\n        this._lastMouseDownPosition = newMouseDownPosition;\n        // Finally set the lastMouseDownCount\n        this._lastMouseDownCount = Math.min(setMouseDownCount, this._lastMouseDownPositionEqualCount);\n    }\n}\nMouseDownState.CLEAR_MOUSE_DOWN_COUNT_TIME = 400; // ms\n",
+      "start": 1711096857100,
+      "end": 1711096857202,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857202,
+      "end": 1711096857202,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857202,
+      "end": 1711096857204,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857204,
+      "end": 1711096857204,
+      "order": "normal"
+    }
+  ]
+}

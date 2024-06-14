@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsLocations.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { Action, Separator } from '../../../../base/common/actions.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { EditorExtensionsRegistry } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ITextModelService } from '../../../common/services/resolverService.js';\nimport { DefinitionAction, SymbolNavigationAction, SymbolNavigationAnchor } from '../../gotoSymbol/browser/goToCommands.js';\nimport { PeekContext } from '../../peekView/browser/peekView.js';\nimport { isIMenuItem, MenuId, MenuRegistry } from '../../../../platform/actions/common/actions.js';\nimport { ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';\nexport function showGoToContextMenu(accessor, editor, anchor, part) {\n    var _a;\n    return __awaiter(this, void 0, void 0, function* () {\n        const resolverService = accessor.get(ITextModelService);\n        const contextMenuService = accessor.get(IContextMenuService);\n        const commandService = accessor.get(ICommandService);\n        const instaService = accessor.get(IInstantiationService);\n        const notificationService = accessor.get(INotificationService);\n        yield part.item.resolve(CancellationToken.None);\n        if (!part.part.location) {\n            return;\n        }\n        const location = part.part.location;\n        const menuActions = [];\n        // from all registered (not active) context menu actions select those\n        // that are a symbol navigation action\n        const filter = new Set(MenuRegistry.getMenuItems(MenuId.EditorContext)\n            .map(item => isIMenuItem(item) ? item.command.id : ''));\n        for (const delegate of EditorExtensionsRegistry.getEditorActions()) {\n            if (delegate instanceof SymbolNavigationAction && filter.has(delegate.id)) {\n                menuActions.push(new Action(delegate.id, delegate.label, undefined, true, () => __awaiter(this, void 0, void 0, function* () {\n                    const ref = yield resolverService.createModelReference(location.uri);\n                    try {\n                        yield instaService.invokeFunction(delegate.run.bind(delegate), editor, new SymbolNavigationAnchor(ref.object.textEditorModel, Range.getStartPosition(location.range)));\n                    }\n                    finally {\n                        ref.dispose();\n                    }\n                })));\n            }\n        }\n        if (part.part.command) {\n            const { command } = part.part;\n            menuActions.push(new Separator());\n            menuActions.push(new Action(command.id, command.title, undefined, true, () => __awaiter(this, void 0, void 0, function* () {\n                var _b;\n                try {\n                    yield commandService.executeCommand(command.id, ...((_b = command.arguments) !== null && _b !== void 0 ? _b : []));\n                }\n                catch (err) {\n                    notificationService.notify({\n                        severity: Severity.Error,\n                        source: part.item.provider.displayName,\n                        message: err\n                    });\n                }\n            })));\n        }\n        // show context menu\n        const useShadowDOM = editor.getOption(115 /* useShadowDOM */);\n        contextMenuService.showContextMenu({\n            domForShadowRoot: useShadowDOM ? (_a = editor.getDomNode()) !== null && _a !== void 0 ? _a : undefined : undefined,\n            getAnchor: () => {\n                const box = dom.getDomNodePagePosition(anchor);\n                return { x: box.left, y: box.top + box.height + 8 };\n            },\n            getActions: () => menuActions,\n            onHide: () => {\n                editor.focus();\n            },\n            autoSelectFirstItem: true,\n        });\n    });\n}\nexport function goToDefinitionWithLocation(accessor, event, editor, location) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const resolverService = accessor.get(ITextModelService);\n        const ref = yield resolverService.createModelReference(location.uri);\n        yield editor.invokeWithinContext((accessor) => __awaiter(this, void 0, void 0, function* () {\n            const openToSide = event.hasSideBySideModifier;\n            const contextKeyService = accessor.get(IContextKeyService);\n            const isInPeek = PeekContext.inPeekEditor.getValue(contextKeyService);\n            const canPeek = !openToSide && editor.getOption(78 /* definitionLinkOpensInPeek */) && !isInPeek;\n            const action = new DefinitionAction({ openToSide, openInPeek: canPeek, muteMessage: true }, { alias: '', label: '', id: '', precondition: undefined });\n            return action.run(accessor, editor, { model: ref.object.textEditorModel, position: Range.getStartPosition(location.range) });\n        }));\n        ref.dispose();\n    });\n}\n",
+      "start": 1711096856797,
+      "end": 1711096856892,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856892,
+      "end": 1711096856892,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856892,
+      "end": 1711096856892,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856892,
+      "end": 1711096856892,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856893,
+      "end": 1711096856893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856894,
+      "end": 1711096856894,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856894,
+      "end": 1711096856894,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856894,
+      "end": 1711096856894,
+      "order": "normal"
+    }
+  ]
+}

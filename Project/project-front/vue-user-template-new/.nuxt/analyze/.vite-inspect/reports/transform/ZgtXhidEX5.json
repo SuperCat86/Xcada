@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/viewZones/viewZones.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { ViewPart } from '../../view/viewPart.js';\nimport { Position } from '../../../common/core/position.js';\nconst invalidFunc = () => { throw new Error(`Invalid change accessor`); };\nexport class ViewZones extends ViewPart {\n    constructor(context) {\n        super(context);\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._contentWidth = layoutInfo.contentWidth;\n        this._contentLeft = layoutInfo.contentLeft;\n        this.domNode = createFastDomNode(document.createElement('div'));\n        this.domNode.setClassName('view-zones');\n        this.domNode.setPosition('absolute');\n        this.domNode.setAttribute('role', 'presentation');\n        this.domNode.setAttribute('aria-hidden', 'true');\n        this.marginDomNode = createFastDomNode(document.createElement('div'));\n        this.marginDomNode.setClassName('margin-view-zones');\n        this.marginDomNode.setPosition('absolute');\n        this.marginDomNode.setAttribute('role', 'presentation');\n        this.marginDomNode.setAttribute('aria-hidden', 'true');\n        this._zones = {};\n    }\n    dispose() {\n        super.dispose();\n        this._zones = {};\n    }\n    // ---- begin view event handlers\n    _recomputeWhitespacesProps() {\n        const whitespaces = this._context.viewLayout.getWhitespaces();\n        const oldWhitespaces = new Map();\n        for (const whitespace of whitespaces) {\n            oldWhitespaces.set(whitespace.id, whitespace);\n        }\n        let hadAChange = false;\n        this._context.viewModel.changeWhitespace((whitespaceAccessor) => {\n            const keys = Object.keys(this._zones);\n            for (let i = 0, len = keys.length; i < len; i++) {\n                const id = keys[i];\n                const zone = this._zones[id];\n                const props = this._computeWhitespaceProps(zone.delegate);\n                zone.isInHiddenArea = props.isInHiddenArea;\n                const oldWhitespace = oldWhitespaces.get(id);\n                if (oldWhitespace && (oldWhitespace.afterLineNumber !== props.afterViewLineNumber || oldWhitespace.height !== props.heightInPx)) {\n                    whitespaceAccessor.changeOneWhitespace(id, props.afterViewLineNumber, props.heightInPx);\n                    this._safeCallOnComputedHeight(zone.delegate, props.heightInPx);\n                    hadAChange = true;\n                }\n            }\n        });\n        return hadAChange;\n    }\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._contentWidth = layoutInfo.contentWidth;\n        this._contentLeft = layoutInfo.contentLeft;\n        if (e.hasChanged(59 /* lineHeight */)) {\n            this._recomputeWhitespacesProps();\n        }\n        return true;\n    }\n    onLineMappingChanged(e) {\n        return this._recomputeWhitespacesProps();\n    }\n    onLinesDeleted(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollTopChanged || e.scrollWidthChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    onLinesInserted(e) {\n        return true;\n    }\n    // ---- end view event handlers\n    _getZoneOrdinal(zone) {\n        if (typeof zone.afterColumn !== 'undefined') {\n            return zone.afterColumn;\n        }\n        return 10000;\n    }\n    _computeWhitespaceProps(zone) {\n        if (zone.afterLineNumber === 0) {\n            return {\n                isInHiddenArea: false,\n                afterViewLineNumber: 0,\n                heightInPx: this._heightInPixels(zone),\n                minWidthInPx: this._minWidthInPixels(zone)\n            };\n        }\n        let zoneAfterModelPosition;\n        if (typeof zone.afterColumn !== 'undefined') {\n            zoneAfterModelPosition = this._context.viewModel.model.validatePosition({\n                lineNumber: zone.afterLineNumber,\n                column: zone.afterColumn\n            });\n        }\n        else {\n            const validAfterLineNumber = this._context.viewModel.model.validatePosition({\n                lineNumber: zone.afterLineNumber,\n                column: 1\n            }).lineNumber;\n            zoneAfterModelPosition = new Position(validAfterLineNumber, this._context.viewModel.model.getLineMaxColumn(validAfterLineNumber));\n        }\n        let zoneBeforeModelPosition;\n        if (zoneAfterModelPosition.column === this._context.viewModel.model.getLineMaxColumn(zoneAfterModelPosition.lineNumber)) {\n            zoneBeforeModelPosition = this._context.viewModel.model.validatePosition({\n                lineNumber: zoneAfterModelPosition.lineNumber + 1,\n                column: 1\n            });\n        }\n        else {\n            zoneBeforeModelPosition = this._context.viewModel.model.validatePosition({\n                lineNumber: zoneAfterModelPosition.lineNumber,\n                column: zoneAfterModelPosition.column + 1\n            });\n        }\n        const viewPosition = this._context.viewModel.coordinatesConverter.convertModelPositionToViewPosition(zoneAfterModelPosition, zone.afterColumnAffinity);\n        const isVisible = this._context.viewModel.coordinatesConverter.modelPositionIsVisible(zoneBeforeModelPosition);\n        return {\n            isInHiddenArea: !isVisible,\n            afterViewLineNumber: viewPosition.lineNumber,\n            heightInPx: (isVisible ? this._heightInPixels(zone) : 0),\n            minWidthInPx: this._minWidthInPixels(zone)\n        };\n    }\n    changeViewZones(callback) {\n        let zonesHaveChanged = false;\n        this._context.viewModel.changeWhitespace((whitespaceAccessor) => {\n            const changeAccessor = {\n                addZone: (zone) => {\n                    zonesHaveChanged = true;\n                    return this._addZone(whitespaceAccessor, zone);\n                },\n                removeZone: (id) => {\n                    if (!id) {\n                        return;\n                    }\n                    zonesHaveChanged = this._removeZone(whitespaceAccessor, id) || zonesHaveChanged;\n                },\n                layoutZone: (id) => {\n                    if (!id) {\n                        return;\n                    }\n                    zonesHaveChanged = this._layoutZone(whitespaceAccessor, id) || zonesHaveChanged;\n                }\n            };\n            safeInvoke1Arg(callback, changeAccessor);\n            // Invalidate changeAccessor\n            changeAccessor.addZone = invalidFunc;\n            changeAccessor.removeZone = invalidFunc;\n            changeAccessor.layoutZone = invalidFunc;\n        });\n        return zonesHaveChanged;\n    }\n    _addZone(whitespaceAccessor, zone) {\n        const props = this._computeWhitespaceProps(zone);\n        const whitespaceId = whitespaceAccessor.insertWhitespace(props.afterViewLineNumber, this._getZoneOrdinal(zone), props.heightInPx, props.minWidthInPx);\n        const myZone = {\n            whitespaceId: whitespaceId,\n            delegate: zone,\n            isInHiddenArea: props.isInHiddenArea,\n            isVisible: false,\n            domNode: createFastDomNode(zone.domNode),\n            marginDomNode: zone.marginDomNode ? createFastDomNode(zone.marginDomNode) : null\n        };\n        this._safeCallOnComputedHeight(myZone.delegate, props.heightInPx);\n        myZone.domNode.setPosition('absolute');\n        myZone.domNode.domNode.style.width = '100%';\n        myZone.domNode.setDisplay('none');\n        myZone.domNode.setAttribute('monaco-view-zone', myZone.whitespaceId);\n        this.domNode.appendChild(myZone.domNode);\n        if (myZone.marginDomNode) {\n            myZone.marginDomNode.setPosition('absolute');\n            myZone.marginDomNode.domNode.style.width = '100%';\n            myZone.marginDomNode.setDisplay('none');\n            myZone.marginDomNode.setAttribute('monaco-view-zone', myZone.whitespaceId);\n            this.marginDomNode.appendChild(myZone.marginDomNode);\n        }\n        this._zones[myZone.whitespaceId] = myZone;\n        this.setShouldRender();\n        return myZone.whitespaceId;\n    }\n    _removeZone(whitespaceAccessor, id) {\n        if (this._zones.hasOwnProperty(id)) {\n            const zone = this._zones[id];\n            delete this._zones[id];\n            whitespaceAccessor.removeWhitespace(zone.whitespaceId);\n            zone.domNode.removeAttribute('monaco-visible-view-zone');\n            zone.domNode.removeAttribute('monaco-view-zone');\n            zone.domNode.domNode.parentNode.removeChild(zone.domNode.domNode);\n            if (zone.marginDomNode) {\n                zone.marginDomNode.removeAttribute('monaco-visible-view-zone');\n                zone.marginDomNode.removeAttribute('monaco-view-zone');\n                zone.marginDomNode.domNode.parentNode.removeChild(zone.marginDomNode.domNode);\n            }\n            this.setShouldRender();\n            return true;\n        }\n        return false;\n    }\n    _layoutZone(whitespaceAccessor, id) {\n        if (this._zones.hasOwnProperty(id)) {\n            const zone = this._zones[id];\n            const props = this._computeWhitespaceProps(zone.delegate);\n            zone.isInHiddenArea = props.isInHiddenArea;\n            // const newOrdinal = this._getZoneOrdinal(zone.delegate);\n            whitespaceAccessor.changeOneWhitespace(zone.whitespaceId, props.afterViewLineNumber, props.heightInPx);\n            // TODO@Alex: change `newOrdinal` too\n            this._safeCallOnComputedHeight(zone.delegate, props.heightInPx);\n            this.setShouldRender();\n            return true;\n        }\n        return false;\n    }\n    shouldSuppressMouseDownOnViewZone(id) {\n        if (this._zones.hasOwnProperty(id)) {\n            const zone = this._zones[id];\n            return Boolean(zone.delegate.suppressMouseDown);\n        }\n        return false;\n    }\n    _heightInPixels(zone) {\n        if (typeof zone.heightInPx === 'number') {\n            return zone.heightInPx;\n        }\n        if (typeof zone.heightInLines === 'number') {\n            return this._lineHeight * zone.heightInLines;\n        }\n        return this._lineHeight;\n    }\n    _minWidthInPixels(zone) {\n        if (typeof zone.minWidthInPx === 'number') {\n            return zone.minWidthInPx;\n        }\n        return 0;\n    }\n    _safeCallOnComputedHeight(zone, height) {\n        if (typeof zone.onComputedHeight === 'function') {\n            try {\n                zone.onComputedHeight(height);\n            }\n            catch (e) {\n                onUnexpectedError(e);\n            }\n        }\n    }\n    _safeCallOnDomNodeTop(zone, top) {\n        if (typeof zone.onDomNodeTop === 'function') {\n            try {\n                zone.onDomNodeTop(top);\n            }\n            catch (e) {\n                onUnexpectedError(e);\n            }\n        }\n    }\n    prepareRender(ctx) {\n        // Nothing to read\n    }\n    render(ctx) {\n        const visibleWhitespaces = ctx.viewportData.whitespaceViewportData;\n        const visibleZones = {};\n        let hasVisibleZone = false;\n        for (const visibleWhitespace of visibleWhitespaces) {\n            if (this._zones[visibleWhitespace.id].isInHiddenArea) {\n                continue;\n            }\n            visibleZones[visibleWhitespace.id] = visibleWhitespace;\n            hasVisibleZone = true;\n        }\n        const keys = Object.keys(this._zones);\n        for (let i = 0, len = keys.length; i < len; i++) {\n            const id = keys[i];\n            const zone = this._zones[id];\n            let newTop = 0;\n            let newHeight = 0;\n            let newDisplay = 'none';\n            if (visibleZones.hasOwnProperty(id)) {\n                newTop = visibleZones[id].verticalOffset - ctx.bigNumbersDelta;\n                newHeight = visibleZones[id].height;\n                newDisplay = 'block';\n                // zone is visible\n                if (!zone.isVisible) {\n                    zone.domNode.setAttribute('monaco-visible-view-zone', 'true');\n                    zone.isVisible = true;\n                }\n                this._safeCallOnDomNodeTop(zone.delegate, ctx.getScrolledTopFromAbsoluteTop(visibleZones[id].verticalOffset));\n            }\n            else {\n                if (zone.isVisible) {\n                    zone.domNode.removeAttribute('monaco-visible-view-zone');\n                    zone.isVisible = false;\n                }\n                this._safeCallOnDomNodeTop(zone.delegate, ctx.getScrolledTopFromAbsoluteTop(-1000000));\n            }\n            zone.domNode.setTop(newTop);\n            zone.domNode.setHeight(newHeight);\n            zone.domNode.setDisplay(newDisplay);\n            if (zone.marginDomNode) {\n                zone.marginDomNode.setTop(newTop);\n                zone.marginDomNode.setHeight(newHeight);\n                zone.marginDomNode.setDisplay(newDisplay);\n            }\n        }\n        if (hasVisibleZone) {\n            this.domNode.setWidth(Math.max(ctx.scrollWidth, this._contentWidth));\n            this.marginDomNode.setWidth(this._contentLeft);\n        }\n    }\n}\nfunction safeInvoke1Arg(func, arg1) {\n    try {\n        return func(arg1);\n    }\n    catch (e) {\n        onUnexpectedError(e);\n    }\n}\n",
+      "start": 1711096856423,
+      "end": 1711096856509,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856509,
+      "end": 1711096856509,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856509,
+      "end": 1711096856510,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856510,
+      "end": 1711096856510,
+      "order": "normal"
+    }
+  ]
+}

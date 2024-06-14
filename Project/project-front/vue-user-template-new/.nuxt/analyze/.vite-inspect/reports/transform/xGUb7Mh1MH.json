@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/aria/aria.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { isMacintosh } from '../../../common/platform.js';\nimport './aria.css';\n// Use a max length since we are inserting the whole msg in the DOM and that can cause browsers to freeze for long messages #94233\nconst MAX_MESSAGE_LENGTH = 20000;\nlet ariaContainer;\nlet alertContainer;\nlet alertContainer2;\nlet statusContainer;\nlet statusContainer2;\nexport function setARIAContainer(parent) {\n    ariaContainer = document.createElement('div');\n    ariaContainer.className = 'monaco-aria-container';\n    const createAlertContainer = () => {\n        const element = document.createElement('div');\n        element.className = 'monaco-alert';\n        element.setAttribute('role', 'alert');\n        element.setAttribute('aria-atomic', 'true');\n        ariaContainer.appendChild(element);\n        return element;\n    };\n    alertContainer = createAlertContainer();\n    alertContainer2 = createAlertContainer();\n    const createStatusContainer = () => {\n        const element = document.createElement('div');\n        element.className = 'monaco-status';\n        element.setAttribute('role', 'complementary');\n        element.setAttribute('aria-live', 'polite');\n        element.setAttribute('aria-atomic', 'true');\n        ariaContainer.appendChild(element);\n        return element;\n    };\n    statusContainer = createStatusContainer();\n    statusContainer2 = createStatusContainer();\n    parent.appendChild(ariaContainer);\n}\n/**\n * Given the provided message, will make sure that it is read as alert to screen readers.\n */\nexport function alert(msg) {\n    if (!ariaContainer) {\n        return;\n    }\n    // Use alternate containers such that duplicated messages get read out by screen readers #99466\n    if (alertContainer.textContent !== msg) {\n        dom.clearNode(alertContainer2);\n        insertMessage(alertContainer, msg);\n    }\n    else {\n        dom.clearNode(alertContainer);\n        insertMessage(alertContainer2, msg);\n    }\n}\n/**\n * Given the provided message, will make sure that it is read as status to screen readers.\n */\nexport function status(msg) {\n    if (!ariaContainer) {\n        return;\n    }\n    if (isMacintosh) {\n        alert(msg); // VoiceOver does not seem to support status role\n    }\n    else {\n        if (statusContainer.textContent !== msg) {\n            dom.clearNode(statusContainer2);\n            insertMessage(statusContainer, msg);\n        }\n        else {\n            dom.clearNode(statusContainer);\n            insertMessage(statusContainer2, msg);\n        }\n    }\n}\nfunction insertMessage(target, msg) {\n    dom.clearNode(target);\n    if (msg.length > MAX_MESSAGE_LENGTH) {\n        msg = msg.substr(0, MAX_MESSAGE_LENGTH);\n    }\n    target.textContent = msg;\n    // See https://www.paciellogroup.com/blog/2012/06/html5-accessibility-chops-aria-rolealert-browser-support/\n    target.style.visibility = 'hidden';\n    target.style.visibility = 'visible';\n}\n",
+      "start": 1711096854650,
+      "end": 1711096854855,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854855,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/resizable.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Dimension } from '../../../../base/browser/dom.js';\nimport { OrthogonalEdge, Sash } from '../../../../base/browser/ui/sash/sash.js';\nimport { Emitter, Event } from '../../../../base/common/event.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nexport class ResizableHTMLElement {\n    constructor() {\n        this._onDidWillResize = new Emitter();\n        this.onDidWillResize = this._onDidWillResize.event;\n        this._onDidResize = new Emitter();\n        this.onDidResize = this._onDidResize.event;\n        this._sashListener = new DisposableStore();\n        this._size = new Dimension(0, 0);\n        this._minSize = new Dimension(0, 0);\n        this._maxSize = new Dimension(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);\n        this.domNode = document.createElement('div');\n        this._eastSash = new Sash(this.domNode, { getVerticalSashLeft: () => this._size.width }, { orientation: 0 /* VERTICAL */ });\n        this._westSash = new Sash(this.domNode, { getVerticalSashLeft: () => 0 }, { orientation: 0 /* VERTICAL */ });\n        this._northSash = new Sash(this.domNode, { getHorizontalSashTop: () => 0 }, { orientation: 1 /* HORIZONTAL */, orthogonalEdge: OrthogonalEdge.North });\n        this._southSash = new Sash(this.domNode, { getHorizontalSashTop: () => this._size.height }, { orientation: 1 /* HORIZONTAL */, orthogonalEdge: OrthogonalEdge.South });\n        this._northSash.orthogonalStartSash = this._westSash;\n        this._northSash.orthogonalEndSash = this._eastSash;\n        this._southSash.orthogonalStartSash = this._westSash;\n        this._southSash.orthogonalEndSash = this._eastSash;\n        let currentSize;\n        let deltaY = 0;\n        let deltaX = 0;\n        this._sashListener.add(Event.any(this._northSash.onDidStart, this._eastSash.onDidStart, this._southSash.onDidStart, this._westSash.onDidStart)(() => {\n            if (currentSize === undefined) {\n                this._onDidWillResize.fire();\n                currentSize = this._size;\n                deltaY = 0;\n                deltaX = 0;\n            }\n        }));\n        this._sashListener.add(Event.any(this._northSash.onDidEnd, this._eastSash.onDidEnd, this._southSash.onDidEnd, this._westSash.onDidEnd)(() => {\n            if (currentSize !== undefined) {\n                currentSize = undefined;\n                deltaY = 0;\n                deltaX = 0;\n                this._onDidResize.fire({ dimension: this._size, done: true });\n            }\n        }));\n        this._sashListener.add(this._eastSash.onDidChange(e => {\n            if (currentSize) {\n                deltaX = e.currentX - e.startX;\n                this.layout(currentSize.height + deltaY, currentSize.width + deltaX);\n                this._onDidResize.fire({ dimension: this._size, done: false, east: true });\n            }\n        }));\n        this._sashListener.add(this._westSash.onDidChange(e => {\n            if (currentSize) {\n                deltaX = -(e.currentX - e.startX);\n                this.layout(currentSize.height + deltaY, currentSize.width + deltaX);\n                this._onDidResize.fire({ dimension: this._size, done: false, west: true });\n            }\n        }));\n        this._sashListener.add(this._northSash.onDidChange(e => {\n            if (currentSize) {\n                deltaY = -(e.currentY - e.startY);\n                this.layout(currentSize.height + deltaY, currentSize.width + deltaX);\n                this._onDidResize.fire({ dimension: this._size, done: false, north: true });\n            }\n        }));\n        this._sashListener.add(this._southSash.onDidChange(e => {\n            if (currentSize) {\n                deltaY = e.currentY - e.startY;\n                this.layout(currentSize.height + deltaY, currentSize.width + deltaX);\n                this._onDidResize.fire({ dimension: this._size, done: false, south: true });\n            }\n        }));\n        this._sashListener.add(Event.any(this._eastSash.onDidReset, this._westSash.onDidReset)(e => {\n            if (this._preferredSize) {\n                this.layout(this._size.height, this._preferredSize.width);\n                this._onDidResize.fire({ dimension: this._size, done: true });\n            }\n        }));\n        this._sashListener.add(Event.any(this._northSash.onDidReset, this._southSash.onDidReset)(e => {\n            if (this._preferredSize) {\n                this.layout(this._preferredSize.height, this._size.width);\n                this._onDidResize.fire({ dimension: this._size, done: true });\n            }\n        }));\n    }\n    dispose() {\n        this._northSash.dispose();\n        this._southSash.dispose();\n        this._eastSash.dispose();\n        this._westSash.dispose();\n        this._sashListener.dispose();\n        this._onDidResize.dispose();\n        this._onDidWillResize.dispose();\n        this.domNode.remove();\n    }\n    enableSashes(north, east, south, west) {\n        this._northSash.state = north ? 3 /* Enabled */ : 0 /* Disabled */;\n        this._eastSash.state = east ? 3 /* Enabled */ : 0 /* Disabled */;\n        this._southSash.state = south ? 3 /* Enabled */ : 0 /* Disabled */;\n        this._westSash.state = west ? 3 /* Enabled */ : 0 /* Disabled */;\n    }\n    layout(height = this.size.height, width = this.size.width) {\n        const { height: minHeight, width: minWidth } = this._minSize;\n        const { height: maxHeight, width: maxWidth } = this._maxSize;\n        height = Math.max(minHeight, Math.min(maxHeight, height));\n        width = Math.max(minWidth, Math.min(maxWidth, width));\n        const newSize = new Dimension(width, height);\n        if (!Dimension.equals(newSize, this._size)) {\n            this.domNode.style.height = height + 'px';\n            this.domNode.style.width = width + 'px';\n            this._size = newSize;\n            this._northSash.layout();\n            this._eastSash.layout();\n            this._southSash.layout();\n            this._westSash.layout();\n        }\n    }\n    clearSashHoverState() {\n        this._eastSash.clearSashHoverState();\n        this._westSash.clearSashHoverState();\n        this._northSash.clearSashHoverState();\n        this._southSash.clearSashHoverState();\n    }\n    get size() {\n        return this._size;\n    }\n    set maxSize(value) {\n        this._maxSize = value;\n    }\n    get maxSize() {\n        return this._maxSize;\n    }\n    set minSize(value) {\n        this._minSize = value;\n    }\n    get minSize() {\n        return this._minSize;\n    }\n    set preferredSize(value) {\n        this._preferredSize = value;\n    }\n    get preferredSize() {\n        return this._preferredSize;\n    }\n}\n",
+      "start": 1711096856846,
+      "end": 1711096856950,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856950,
+      "end": 1711096856951,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856951,
+      "end": 1711096856951,
+      "order": "normal"
+    }
+  ]
+}

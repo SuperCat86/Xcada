@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollableElement.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { getZoomFactor } from '../../browser.js';\nimport * as dom from '../../dom.js';\nimport { createFastDomNode } from '../../fastDomNode.js';\nimport { StandardWheelEvent } from '../../mouseEvent.js';\nimport { HorizontalScrollbar } from './horizontalScrollbar.js';\nimport { VerticalScrollbar } from './verticalScrollbar.js';\nimport { Widget } from '../widget.js';\nimport { TimeoutTimer } from '../../../common/async.js';\nimport { Emitter } from '../../../common/event.js';\nimport { dispose } from '../../../common/lifecycle.js';\nimport * as platform from '../../../common/platform.js';\nimport { Scrollable } from '../../../common/scrollable.js';\nimport './media/scrollbars.css';\nconst HIDE_TIMEOUT = 500;\nconst SCROLL_WHEEL_SENSITIVITY = 50;\nconst SCROLL_WHEEL_SMOOTH_SCROLL_ENABLED = true;\nclass MouseWheelClassifierItem {\n    constructor(timestamp, deltaX, deltaY) {\n        this.timestamp = timestamp;\n        this.deltaX = deltaX;\n        this.deltaY = deltaY;\n        this.score = 0;\n    }\n}\nexport class MouseWheelClassifier {\n    constructor() {\n        this._capacity = 5;\n        this._memory = [];\n        this._front = -1;\n        this._rear = -1;\n    }\n    isPhysicalMouseWheel() {\n        if (this._front === -1 && this._rear === -1) {\n            // no elements\n            return false;\n        }\n        // 0.5 * last + 0.25 * 2nd last + 0.125 * 3rd last + ...\n        let remainingInfluence = 1;\n        let score = 0;\n        let iteration = 1;\n        let index = this._rear;\n        do {\n            const influence = (index === this._front ? remainingInfluence : Math.pow(2, -iteration));\n            remainingInfluence -= influence;\n            score += this._memory[index].score * influence;\n            if (index === this._front) {\n                break;\n            }\n            index = (this._capacity + index - 1) % this._capacity;\n            iteration++;\n        } while (true);\n        return (score <= 0.5);\n    }\n    accept(timestamp, deltaX, deltaY) {\n        const item = new MouseWheelClassifierItem(timestamp, deltaX, deltaY);\n        item.score = this._computeScore(item);\n        if (this._front === -1 && this._rear === -1) {\n            this._memory[0] = item;\n            this._front = 0;\n            this._rear = 0;\n        }\n        else {\n            this._rear = (this._rear + 1) % this._capacity;\n            if (this._rear === this._front) {\n                // Drop oldest\n                this._front = (this._front + 1) % this._capacity;\n            }\n            this._memory[this._rear] = item;\n        }\n    }\n    /**\n     * A score between 0 and 1 for `item`.\n     *  - a score towards 0 indicates that the source appears to be a physical mouse wheel\n     *  - a score towards 1 indicates that the source appears to be a touchpad or magic mouse, etc.\n     */\n    _computeScore(item) {\n        if (Math.abs(item.deltaX) > 0 && Math.abs(item.deltaY) > 0) {\n            // both axes exercised => definitely not a physical mouse wheel\n            return 1;\n        }\n        let score = 0.5;\n        const prev = (this._front === -1 && this._rear === -1 ? null : this._memory[this._rear]);\n        if (prev) {\n            // const deltaT = item.timestamp - prev.timestamp;\n            // if (deltaT < 1000 / 30) {\n            // \t// sooner than X times per second => indicator that this is not a physical mouse wheel\n            // \tscore += 0.25;\n            // }\n            // if (item.deltaX === prev.deltaX && item.deltaY === prev.deltaY) {\n            // \t// equal amplitude => indicator that this is a physical mouse wheel\n            // \tscore -= 0.25;\n            // }\n        }\n        if (!this._isAlmostInt(item.deltaX) || !this._isAlmostInt(item.deltaY)) {\n            // non-integer deltas => indicator that this is not a physical mouse wheel\n            score += 0.25;\n        }\n        return Math.min(Math.max(score, 0), 1);\n    }\n    _isAlmostInt(value) {\n        const delta = Math.abs(Math.round(value) - value);\n        return (delta < 0.01);\n    }\n}\nMouseWheelClassifier.INSTANCE = new MouseWheelClassifier();\nexport class AbstractScrollableElement extends Widget {\n    constructor(element, options, scrollable) {\n        super();\n        this._onScroll = this._register(new Emitter());\n        this.onScroll = this._onScroll.event;\n        this._onWillScroll = this._register(new Emitter());\n        element.style.overflow = 'hidden';\n        this._options = resolveOptions(options);\n        this._scrollable = scrollable;\n        this._register(this._scrollable.onScroll((e) => {\n            this._onWillScroll.fire(e);\n            this._onDidScroll(e);\n            this._onScroll.fire(e);\n        }));\n        const scrollbarHost = {\n            onMouseWheel: (mouseWheelEvent) => this._onMouseWheel(mouseWheelEvent),\n            onDragStart: () => this._onDragStart(),\n            onDragEnd: () => this._onDragEnd(),\n        };\n        this._verticalScrollbar = this._register(new VerticalScrollbar(this._scrollable, this._options, scrollbarHost));\n        this._horizontalScrollbar = this._register(new HorizontalScrollbar(this._scrollable, this._options, scrollbarHost));\n        this._domNode = document.createElement('div');\n        this._domNode.className = 'monaco-scrollable-element ' + this._options.className;\n        this._domNode.setAttribute('role', 'presentation');\n        this._domNode.style.position = 'relative';\n        this._domNode.style.overflow = 'hidden';\n        this._domNode.appendChild(element);\n        this._domNode.appendChild(this._horizontalScrollbar.domNode.domNode);\n        this._domNode.appendChild(this._verticalScrollbar.domNode.domNode);\n        if (this._options.useShadows) {\n            this._leftShadowDomNode = createFastDomNode(document.createElement('div'));\n            this._leftShadowDomNode.setClassName('shadow');\n            this._domNode.appendChild(this._leftShadowDomNode.domNode);\n            this._topShadowDomNode = createFastDomNode(document.createElement('div'));\n            this._topShadowDomNode.setClassName('shadow');\n            this._domNode.appendChild(this._topShadowDomNode.domNode);\n            this._topLeftShadowDomNode = createFastDomNode(document.createElement('div'));\n            this._topLeftShadowDomNode.setClassName('shadow');\n            this._domNode.appendChild(this._topLeftShadowDomNode.domNode);\n        }\n        else {\n            this._leftShadowDomNode = null;\n            this._topShadowDomNode = null;\n            this._topLeftShadowDomNode = null;\n        }\n        this._listenOnDomNode = this._options.listenOnDomNode || this._domNode;\n        this._mouseWheelToDispose = [];\n        this._setListeningToMouseWheel(this._options.handleMouseWheel);\n        this.onmouseover(this._listenOnDomNode, (e) => this._onMouseOver(e));\n        this.onnonbubblingmouseout(this._listenOnDomNode, (e) => this._onMouseOut(e));\n        this._hideTimeout = this._register(new TimeoutTimer());\n        this._isDragging = false;\n        this._mouseIsOver = false;\n        this._shouldRender = true;\n        this._revealOnScroll = true;\n    }\n    get options() {\n        return this._options;\n    }\n    dispose() {\n        this._mouseWheelToDispose = dispose(this._mouseWheelToDispose);\n        super.dispose();\n    }\n    /**\n     * Get the generated 'scrollable' dom node\n     */\n    getDomNode() {\n        return this._domNode;\n    }\n    getOverviewRulerLayoutInfo() {\n        return {\n            parent: this._domNode,\n            insertBefore: this._verticalScrollbar.domNode.domNode,\n        };\n    }\n    /**\n     * Delegate a mouse down event to the vertical scrollbar.\n     * This is to help with clicking somewhere else and having the scrollbar react.\n     */\n    delegateVerticalScrollbarMouseDown(browserEvent) {\n        this._verticalScrollbar.delegateMouseDown(browserEvent);\n    }\n    getScrollDimensions() {\n        return this._scrollable.getScrollDimensions();\n    }\n    setScrollDimensions(dimensions) {\n        this._scrollable.setScrollDimensions(dimensions, false);\n    }\n    /**\n     * Update the class name of the scrollable element.\n     */\n    updateClassName(newClassName) {\n        this._options.className = newClassName;\n        // Defaults are different on Macs\n        if (platform.isMacintosh) {\n            this._options.className += ' mac';\n        }\n        this._domNode.className = 'monaco-scrollable-element ' + this._options.className;\n    }\n    /**\n     * Update configuration options for the scrollbar.\n     */\n    updateOptions(newOptions) {\n        if (typeof newOptions.handleMouseWheel !== 'undefined') {\n            this._options.handleMouseWheel = newOptions.handleMouseWheel;\n            this._setListeningToMouseWheel(this._options.handleMouseWheel);\n        }\n        if (typeof newOptions.mouseWheelScrollSensitivity !== 'undefined') {\n            this._options.mouseWheelScrollSensitivity = newOptions.mouseWheelScrollSensitivity;\n        }\n        if (typeof newOptions.fastScrollSensitivity !== 'undefined') {\n            this._options.fastScrollSensitivity = newOptions.fastScrollSensitivity;\n        }\n        if (typeof newOptions.scrollPredominantAxis !== 'undefined') {\n            this._options.scrollPredominantAxis = newOptions.scrollPredominantAxis;\n        }\n        if (typeof newOptions.horizontal !== 'undefined') {\n            this._options.horizontal = newOptions.horizontal;\n        }\n        if (typeof newOptions.vertical !== 'undefined') {\n            this._options.vertical = newOptions.vertical;\n        }\n        if (typeof newOptions.horizontalScrollbarSize !== 'undefined') {\n            this._options.horizontalScrollbarSize = newOptions.horizontalScrollbarSize;\n        }\n        if (typeof newOptions.verticalScrollbarSize !== 'undefined') {\n            this._options.verticalScrollbarSize = newOptions.verticalScrollbarSize;\n        }\n        if (typeof newOptions.scrollByPage !== 'undefined') {\n            this._options.scrollByPage = newOptions.scrollByPage;\n        }\n        this._horizontalScrollbar.updateOptions(this._options);\n        this._verticalScrollbar.updateOptions(this._options);\n        if (!this._options.lazyRender) {\n            this._render();\n        }\n    }\n    // -------------------- mouse wheel scrolling --------------------\n    _setListeningToMouseWheel(shouldListen) {\n        const isListening = (this._mouseWheelToDispose.length > 0);\n        if (isListening === shouldListen) {\n            // No change\n            return;\n        }\n        // Stop listening (if necessary)\n        this._mouseWheelToDispose = dispose(this._mouseWheelToDispose);\n        // Start listening (if necessary)\n        if (shouldListen) {\n            const onMouseWheel = (browserEvent) => {\n                this._onMouseWheel(new StandardWheelEvent(browserEvent));\n            };\n            this._mouseWheelToDispose.push(dom.addDisposableListener(this._listenOnDomNode, dom.EventType.MOUSE_WHEEL, onMouseWheel, { passive: false }));\n        }\n    }\n    _onMouseWheel(e) {\n        const classifier = MouseWheelClassifier.INSTANCE;\n        if (SCROLL_WHEEL_SMOOTH_SCROLL_ENABLED) {\n            const osZoomFactor = window.devicePixelRatio / getZoomFactor();\n            if (platform.isWindows || platform.isLinux) {\n                // On Windows and Linux, the incoming delta events are multiplied with the OS zoom factor.\n                // The OS zoom factor can be reverse engineered by using the device pixel ratio and the configured zoom factor into account.\n                classifier.accept(Date.now(), e.deltaX / osZoomFactor, e.deltaY / osZoomFactor);\n            }\n            else {\n                classifier.accept(Date.now(), e.deltaX, e.deltaY);\n            }\n        }\n        // console.log(`${Date.now()}, ${e.deltaY}, ${e.deltaX}`);\n        let didScroll = false;\n        if (e.deltaY || e.deltaX) {\n            let deltaY = e.deltaY * this._options.mouseWheelScrollSensitivity;\n            let deltaX = e.deltaX * this._options.mouseWheelScrollSensitivity;\n            if (this._options.scrollPredominantAxis) {\n                if (Math.abs(deltaY) >= Math.abs(deltaX)) {\n                    deltaX = 0;\n                }\n                else {\n                    deltaY = 0;\n                }\n            }\n            if (this._options.flipAxes) {\n                [deltaY, deltaX] = [deltaX, deltaY];\n            }\n            // Convert vertical scrolling to horizontal if shift is held, this\n            // is handled at a higher level on Mac\n            const shiftConvert = !platform.isMacintosh && e.browserEvent && e.browserEvent.shiftKey;\n            if ((this._options.scrollYToX || shiftConvert) && !deltaX) {\n                deltaX = deltaY;\n                deltaY = 0;\n            }\n            if (e.browserEvent && e.browserEvent.altKey) {\n                // fastScrolling\n                deltaX = deltaX * this._options.fastScrollSensitivity;\n                deltaY = deltaY * this._options.fastScrollSensitivity;\n            }\n            const futureScrollPosition = this._scrollable.getFutureScrollPosition();\n            let desiredScrollPosition = {};\n            if (deltaY) {\n                const deltaScrollTop = SCROLL_WHEEL_SENSITIVITY * deltaY;\n                // Here we convert values such as -0.3 to -1 or 0.3 to 1, otherwise low speed scrolling will never scroll\n                const desiredScrollTop = futureScrollPosition.scrollTop - (deltaScrollTop < 0 ? Math.floor(deltaScrollTop) : Math.ceil(deltaScrollTop));\n                this._verticalScrollbar.writeScrollPosition(desiredScrollPosition, desiredScrollTop);\n            }\n            if (deltaX) {\n                const deltaScrollLeft = SCROLL_WHEEL_SENSITIVITY * deltaX;\n                // Here we convert values such as -0.3 to -1 or 0.3 to 1, otherwise low speed scrolling will never scroll\n                const desiredScrollLeft = futureScrollPosition.scrollLeft - (deltaScrollLeft < 0 ? Math.floor(deltaScrollLeft) : Math.ceil(deltaScrollLeft));\n                this._horizontalScrollbar.writeScrollPosition(desiredScrollPosition, desiredScrollLeft);\n            }\n            // Check that we are scrolling towards a location which is valid\n            desiredScrollPosition = this._scrollable.validateScrollPosition(desiredScrollPosition);\n            if (futureScrollPosition.scrollLeft !== desiredScrollPosition.scrollLeft || futureScrollPosition.scrollTop !== desiredScrollPosition.scrollTop) {\n                const canPerformSmoothScroll = (SCROLL_WHEEL_SMOOTH_SCROLL_ENABLED\n                    && this._options.mouseWheelSmoothScroll\n                    && classifier.isPhysicalMouseWheel());\n                if (canPerformSmoothScroll) {\n                    this._scrollable.setScrollPositionSmooth(desiredScrollPosition);\n                }\n                else {\n                    this._scrollable.setScrollPositionNow(desiredScrollPosition);\n                }\n                didScroll = true;\n            }\n        }\n        let consumeMouseWheel = didScroll;\n        if (!consumeMouseWheel && this._options.alwaysConsumeMouseWheel) {\n            consumeMouseWheel = true;\n        }\n        if (!consumeMouseWheel && this._options.consumeMouseWheelIfScrollbarIsNeeded && (this._verticalScrollbar.isNeeded() || this._horizontalScrollbar.isNeeded())) {\n            consumeMouseWheel = true;\n        }\n        if (consumeMouseWheel) {\n            e.preventDefault();\n            e.stopPropagation();\n        }\n    }\n    _onDidScroll(e) {\n        this._shouldRender = this._horizontalScrollbar.onDidScroll(e) || this._shouldRender;\n        this._shouldRender = this._verticalScrollbar.onDidScroll(e) || this._shouldRender;\n        if (this._options.useShadows) {\n            this._shouldRender = true;\n        }\n        if (this._revealOnScroll) {\n            this._reveal();\n        }\n        if (!this._options.lazyRender) {\n            this._render();\n        }\n    }\n    /**\n     * Render / mutate the DOM now.\n     * Should be used together with the ctor option `lazyRender`.\n     */\n    renderNow() {\n        if (!this._options.lazyRender) {\n            throw new Error('Please use `lazyRender` together with `renderNow`!');\n        }\n        this._render();\n    }\n    _render() {\n        if (!this._shouldRender) {\n            return;\n        }\n        this._shouldRender = false;\n        this._horizontalScrollbar.render();\n        this._verticalScrollbar.render();\n        if (this._options.useShadows) {\n            const scrollState = this._scrollable.getCurrentScrollPosition();\n            const enableTop = scrollState.scrollTop > 0;\n            const enableLeft = scrollState.scrollLeft > 0;\n            const leftClassName = (enableLeft ? ' left' : '');\n            const topClassName = (enableTop ? ' top' : '');\n            const topLeftClassName = (enableLeft || enableTop ? ' top-left-corner' : '');\n            this._leftShadowDomNode.setClassName(`shadow${leftClassName}`);\n            this._topShadowDomNode.setClassName(`shadow${topClassName}`);\n            this._topLeftShadowDomNode.setClassName(`shadow${topLeftClassName}${topClassName}${leftClassName}`);\n        }\n    }\n    // -------------------- fade in / fade out --------------------\n    _onDragStart() {\n        this._isDragging = true;\n        this._reveal();\n    }\n    _onDragEnd() {\n        this._isDragging = false;\n        this._hide();\n    }\n    _onMouseOut(e) {\n        this._mouseIsOver = false;\n        this._hide();\n    }\n    _onMouseOver(e) {\n        this._mouseIsOver = true;\n        this._reveal();\n    }\n    _reveal() {\n        this._verticalScrollbar.beginReveal();\n        this._horizontalScrollbar.beginReveal();\n        this._scheduleHide();\n    }\n    _hide() {\n        if (!this._mouseIsOver && !this._isDragging) {\n            this._verticalScrollbar.beginHide();\n            this._horizontalScrollbar.beginHide();\n        }\n    }\n    _scheduleHide() {\n        if (!this._mouseIsOver && !this._isDragging) {\n            this._hideTimeout.cancelAndSet(() => this._hide(), HIDE_TIMEOUT);\n        }\n    }\n}\nexport class ScrollableElement extends AbstractScrollableElement {\n    constructor(element, options) {\n        options = options || {};\n        options.mouseWheelSmoothScroll = false;\n        const scrollable = new Scrollable({\n            forceIntegerValues: true,\n            smoothScrollDuration: 0,\n            scheduleAtNextAnimationFrame: (callback) => dom.scheduleAtNextAnimationFrame(callback)\n        });\n        super(element, options, scrollable);\n        this._register(scrollable);\n    }\n    setScrollPosition(update) {\n        this._scrollable.setScrollPositionNow(update);\n    }\n}\nexport class SmoothScrollableElement extends AbstractScrollableElement {\n    constructor(element, options, scrollable) {\n        super(element, options, scrollable);\n    }\n    setScrollPosition(update) {\n        if (update.reuseAnimation) {\n            this._scrollable.setScrollPositionSmooth(update, update.reuseAnimation);\n        }\n        else {\n            this._scrollable.setScrollPositionNow(update);\n        }\n    }\n    getScrollPosition() {\n        return this._scrollable.getCurrentScrollPosition();\n    }\n}\nexport class DomScrollableElement extends AbstractScrollableElement {\n    constructor(element, options) {\n        options = options || {};\n        options.mouseWheelSmoothScroll = false;\n        const scrollable = new Scrollable({\n            forceIntegerValues: false,\n            smoothScrollDuration: 0,\n            scheduleAtNextAnimationFrame: (callback) => dom.scheduleAtNextAnimationFrame(callback)\n        });\n        super(element, options, scrollable);\n        this._register(scrollable);\n        this._element = element;\n        this.onScroll((e) => {\n            if (e.scrollTopChanged) {\n                this._element.scrollTop = e.scrollTop;\n            }\n            if (e.scrollLeftChanged) {\n                this._element.scrollLeft = e.scrollLeft;\n            }\n        });\n        this.scanDomNode();\n    }\n    setScrollPosition(update) {\n        this._scrollable.setScrollPositionNow(update);\n    }\n    getScrollPosition() {\n        return this._scrollable.getCurrentScrollPosition();\n    }\n    scanDomNode() {\n        // width, scrollLeft, scrollWidth, height, scrollTop, scrollHeight\n        this.setScrollDimensions({\n            width: this._element.clientWidth,\n            scrollWidth: this._element.scrollWidth,\n            height: this._element.clientHeight,\n            scrollHeight: this._element.scrollHeight\n        });\n        this.setScrollPosition({\n            scrollLeft: this._element.scrollLeft,\n            scrollTop: this._element.scrollTop,\n        });\n    }\n}\nfunction resolveOptions(opts) {\n    const result = {\n        lazyRender: (typeof opts.lazyRender !== 'undefined' ? opts.lazyRender : false),\n        className: (typeof opts.className !== 'undefined' ? opts.className : ''),\n        useShadows: (typeof opts.useShadows !== 'undefined' ? opts.useShadows : true),\n        handleMouseWheel: (typeof opts.handleMouseWheel !== 'undefined' ? opts.handleMouseWheel : true),\n        flipAxes: (typeof opts.flipAxes !== 'undefined' ? opts.flipAxes : false),\n        consumeMouseWheelIfScrollbarIsNeeded: (typeof opts.consumeMouseWheelIfScrollbarIsNeeded !== 'undefined' ? opts.consumeMouseWheelIfScrollbarIsNeeded : false),\n        alwaysConsumeMouseWheel: (typeof opts.alwaysConsumeMouseWheel !== 'undefined' ? opts.alwaysConsumeMouseWheel : false),\n        scrollYToX: (typeof opts.scrollYToX !== 'undefined' ? opts.scrollYToX : false),\n        mouseWheelScrollSensitivity: (typeof opts.mouseWheelScrollSensitivity !== 'undefined' ? opts.mouseWheelScrollSensitivity : 1),\n        fastScrollSensitivity: (typeof opts.fastScrollSensitivity !== 'undefined' ? opts.fastScrollSensitivity : 5),\n        scrollPredominantAxis: (typeof opts.scrollPredominantAxis !== 'undefined' ? opts.scrollPredominantAxis : true),\n        mouseWheelSmoothScroll: (typeof opts.mouseWheelSmoothScroll !== 'undefined' ? opts.mouseWheelSmoothScroll : true),\n        arrowSize: (typeof opts.arrowSize !== 'undefined' ? opts.arrowSize : 11),\n        listenOnDomNode: (typeof opts.listenOnDomNode !== 'undefined' ? opts.listenOnDomNode : null),\n        horizontal: (typeof opts.horizontal !== 'undefined' ? opts.horizontal : 1 /* Auto */),\n        horizontalScrollbarSize: (typeof opts.horizontalScrollbarSize !== 'undefined' ? opts.horizontalScrollbarSize : 10),\n        horizontalSliderSize: (typeof opts.horizontalSliderSize !== 'undefined' ? opts.horizontalSliderSize : 0),\n        horizontalHasArrows: (typeof opts.horizontalHasArrows !== 'undefined' ? opts.horizontalHasArrows : false),\n        vertical: (typeof opts.vertical !== 'undefined' ? opts.vertical : 1 /* Auto */),\n        verticalScrollbarSize: (typeof opts.verticalScrollbarSize !== 'undefined' ? opts.verticalScrollbarSize : 10),\n        verticalHasArrows: (typeof opts.verticalHasArrows !== 'undefined' ? opts.verticalHasArrows : false),\n        verticalSliderSize: (typeof opts.verticalSliderSize !== 'undefined' ? opts.verticalSliderSize : 0),\n        scrollByPage: (typeof opts.scrollByPage !== 'undefined' ? opts.scrollByPage : false)\n    };\n    result.horizontalSliderSize = (typeof opts.horizontalSliderSize !== 'undefined' ? opts.horizontalSliderSize : result.horizontalScrollbarSize);\n    result.verticalSliderSize = (typeof opts.verticalSliderSize !== 'undefined' ? opts.verticalSliderSize : result.verticalScrollbarSize);\n    // Defaults are different on Macs\n    if (platform.isMacintosh) {\n        result.className += ' mac';\n    }\n    return result;\n}\n",
+      "start": 1711096856509,
+      "end": 1711096856591,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856591,
+      "end": 1711096856593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856593,
+      "end": 1711096856593,
+      "order": "normal"
+    }
+  ]
+}

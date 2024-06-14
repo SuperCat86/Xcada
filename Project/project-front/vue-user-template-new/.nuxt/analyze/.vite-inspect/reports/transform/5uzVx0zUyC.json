@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inPlaceReplace/browser/inPlaceReplace.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { createCancelablePromise, timeout } from '../../../../base/common/async.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { EditorState } from '../../editorState/browser/editorState.js';\nimport { EditorAction, registerEditorAction, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { IEditorWorkerService } from '../../../common/services/editorWorker.js';\nimport { editorBracketMatchBorder } from '../../../common/core/editorColorRegistry.js';\nimport * as nls from '../../../../nls.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { InPlaceReplaceCommand } from './inPlaceReplaceCommand.js';\nlet InPlaceReplaceController = class InPlaceReplaceController {\n    constructor(editor, editorWorkerService) {\n        this.decorationIds = [];\n        this.editor = editor;\n        this.editorWorkerService = editorWorkerService;\n    }\n    static get(editor) {\n        return editor.getContribution(InPlaceReplaceController.ID);\n    }\n    dispose() {\n    }\n    run(source, up) {\n        // cancel any pending request\n        if (this.currentRequest) {\n            this.currentRequest.cancel();\n        }\n        const editorSelection = this.editor.getSelection();\n        const model = this.editor.getModel();\n        if (!model || !editorSelection) {\n            return undefined;\n        }\n        let selection = editorSelection;\n        if (selection.startLineNumber !== selection.endLineNumber) {\n            // Can't accept multiline selection\n            return undefined;\n        }\n        const state = new EditorState(this.editor, 1 /* Value */ | 4 /* Position */);\n        const modelURI = model.uri;\n        if (!this.editorWorkerService.canNavigateValueSet(modelURI)) {\n            return Promise.resolve(undefined);\n        }\n        this.currentRequest = createCancelablePromise(token => this.editorWorkerService.navigateValueSet(modelURI, selection, up));\n        return this.currentRequest.then(result => {\n            if (!result || !result.range || !result.value) {\n                // No proper result\n                return;\n            }\n            if (!state.validate(this.editor)) {\n                // state has changed\n                return;\n            }\n            // Selection\n            let editRange = Range.lift(result.range);\n            let highlightRange = result.range;\n            let diff = result.value.length - (selection.endColumn - selection.startColumn);\n            // highlight\n            highlightRange = {\n                startLineNumber: highlightRange.startLineNumber,\n                startColumn: highlightRange.startColumn,\n                endLineNumber: highlightRange.endLineNumber,\n                endColumn: highlightRange.startColumn + result.value.length\n            };\n            if (diff > 1) {\n                selection = new Selection(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn + diff - 1);\n            }\n            // Insert new text\n            const command = new InPlaceReplaceCommand(editRange, selection, result.value);\n            this.editor.pushUndoStop();\n            this.editor.executeCommand(source, command);\n            this.editor.pushUndoStop();\n            // add decoration\n            this.decorationIds = this.editor.deltaDecorations(this.decorationIds, [{\n                    range: highlightRange,\n                    options: InPlaceReplaceController.DECORATION\n                }]);\n            // remove decoration after delay\n            if (this.decorationRemover) {\n                this.decorationRemover.cancel();\n            }\n            this.decorationRemover = timeout(350);\n            this.decorationRemover.then(() => this.decorationIds = this.editor.deltaDecorations(this.decorationIds, [])).catch(onUnexpectedError);\n        }).catch(onUnexpectedError);\n    }\n};\nInPlaceReplaceController.ID = 'editor.contrib.inPlaceReplaceController';\nInPlaceReplaceController.DECORATION = ModelDecorationOptions.register({\n    description: 'in-place-replace',\n    className: 'valueSetReplacement'\n});\nInPlaceReplaceController = __decorate([\n    __param(1, IEditorWorkerService)\n], InPlaceReplaceController);\nclass InPlaceReplaceUp extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.inPlaceReplace.up',\n            label: nls.localize('InPlaceReplaceAction.previous.label', \"Replace with Previous Value\"),\n            alias: 'Replace with Previous Value',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 82 /* Comma */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        const controller = InPlaceReplaceController.get(editor);\n        if (!controller) {\n            return Promise.resolve(undefined);\n        }\n        return controller.run(this.id, true);\n    }\n}\nclass InPlaceReplaceDown extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.inPlaceReplace.down',\n            label: nls.localize('InPlaceReplaceAction.next.label', \"Replace with Next Value\"),\n            alias: 'Replace with Next Value',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 84 /* Period */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        const controller = InPlaceReplaceController.get(editor);\n        if (!controller) {\n            return Promise.resolve(undefined);\n        }\n        return controller.run(this.id, false);\n    }\n}\nregisterEditorContribution(InPlaceReplaceController.ID, InPlaceReplaceController);\nregisterEditorAction(InPlaceReplaceUp);\nregisterEditorAction(InPlaceReplaceDown);\nregisterThemingParticipant((theme, collector) => {\n    const border = theme.getColor(editorBracketMatchBorder);\n    if (border) {\n        collector.addRule(`.monaco-editor.vs .valueSetReplacement { outline: solid 2px ${border}; }`);\n    }\n});\n",
+      "start": 1711096854497,
+      "end": 1711096854643,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854643,
+      "end": 1711096854643,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854643,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    }
+  ]
+}

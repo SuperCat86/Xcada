@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { HighlightedLabel } from '../highlightedlabel/highlightedLabel.js';\nimport { setupCustomHover, setupNativeHover } from './iconLabelHover.js';\nimport { Disposable } from '../../../common/lifecycle.js';\nimport { equals } from '../../../common/objects.js';\nimport { Range } from '../../../common/range.js';\nimport './iconlabel.css';\nclass FastLabelNode {\n    constructor(_element) {\n        this._element = _element;\n    }\n    get element() {\n        return this._element;\n    }\n    set textContent(content) {\n        if (this.disposed || content === this._textContent) {\n            return;\n        }\n        this._textContent = content;\n        this._element.textContent = content;\n    }\n    set className(className) {\n        if (this.disposed || className === this._className) {\n            return;\n        }\n        this._className = className;\n        this._element.className = className;\n    }\n    set empty(empty) {\n        if (this.disposed || empty === this._empty) {\n            return;\n        }\n        this._empty = empty;\n        this._element.style.marginLeft = empty ? '0' : '';\n    }\n    dispose() {\n        this.disposed = true;\n    }\n}\nexport class IconLabel extends Disposable {\n    constructor(container, options) {\n        super();\n        this.customHovers = new Map();\n        this.domNode = this._register(new FastLabelNode(dom.append(container, dom.$('.monaco-icon-label'))));\n        this.labelContainer = dom.append(this.domNode.element, dom.$('.monaco-icon-label-container'));\n        const nameContainer = dom.append(this.labelContainer, dom.$('span.monaco-icon-name-container'));\n        this.descriptionContainer = this._register(new FastLabelNode(dom.append(this.labelContainer, dom.$('span.monaco-icon-description-container'))));\n        if ((options === null || options === void 0 ? void 0 : options.supportHighlights) || (options === null || options === void 0 ? void 0 : options.supportIcons)) {\n            this.nameNode = new LabelWithHighlights(nameContainer, !!options.supportIcons);\n        }\n        else {\n            this.nameNode = new Label(nameContainer);\n        }\n        if (options === null || options === void 0 ? void 0 : options.supportDescriptionHighlights) {\n            this.descriptionNodeFactory = () => new HighlightedLabel(dom.append(this.descriptionContainer.element, dom.$('span.label-description')), { supportIcons: !!options.supportIcons });\n        }\n        else {\n            this.descriptionNodeFactory = () => this._register(new FastLabelNode(dom.append(this.descriptionContainer.element, dom.$('span.label-description'))));\n        }\n        this.hoverDelegate = options === null || options === void 0 ? void 0 : options.hoverDelegate;\n    }\n    get element() {\n        return this.domNode.element;\n    }\n    setLabel(label, description, options) {\n        const classes = ['monaco-icon-label'];\n        if (options) {\n            if (options.extraClasses) {\n                classes.push(...options.extraClasses);\n            }\n            if (options.italic) {\n                classes.push('italic');\n            }\n            if (options.strikethrough) {\n                classes.push('strikethrough');\n            }\n        }\n        this.domNode.className = classes.join(' ');\n        this.setupHover((options === null || options === void 0 ? void 0 : options.descriptionTitle) ? this.labelContainer : this.element, options === null || options === void 0 ? void 0 : options.title);\n        this.nameNode.setLabel(label, options);\n        if (description || this.descriptionNode) {\n            if (!this.descriptionNode) {\n                this.descriptionNode = this.descriptionNodeFactory(); // description node is created lazily on demand\n            }\n            if (this.descriptionNode instanceof HighlightedLabel) {\n                this.descriptionNode.set(description || '', options ? options.descriptionMatches : undefined);\n                this.setupHover(this.descriptionNode.element, options === null || options === void 0 ? void 0 : options.descriptionTitle);\n            }\n            else {\n                this.descriptionNode.textContent = description || '';\n                this.setupHover(this.descriptionNode.element, (options === null || options === void 0 ? void 0 : options.descriptionTitle) || '');\n                this.descriptionNode.empty = !description;\n            }\n        }\n    }\n    setupHover(htmlElement, tooltip) {\n        const previousCustomHover = this.customHovers.get(htmlElement);\n        if (previousCustomHover) {\n            previousCustomHover.dispose();\n            this.customHovers.delete(htmlElement);\n        }\n        if (!tooltip) {\n            htmlElement.removeAttribute('title');\n            return;\n        }\n        if (!this.hoverDelegate) {\n            setupNativeHover(htmlElement, tooltip);\n        }\n        else {\n            const hoverDisposable = setupCustomHover(this.hoverDelegate, htmlElement, tooltip);\n            if (hoverDisposable) {\n                this.customHovers.set(htmlElement, hoverDisposable);\n            }\n        }\n    }\n    dispose() {\n        super.dispose();\n        for (const disposable of this.customHovers.values()) {\n            disposable.dispose();\n        }\n        this.customHovers.clear();\n    }\n}\nclass Label {\n    constructor(container) {\n        this.container = container;\n        this.label = undefined;\n        this.singleLabel = undefined;\n    }\n    setLabel(label, options) {\n        if (this.label === label && equals(this.options, options)) {\n            return;\n        }\n        this.label = label;\n        this.options = options;\n        if (typeof label === 'string') {\n            if (!this.singleLabel) {\n                this.container.innerText = '';\n                this.container.classList.remove('multiple');\n                this.singleLabel = dom.append(this.container, dom.$('a.label-name', { id: options === null || options === void 0 ? void 0 : options.domId }));\n            }\n            this.singleLabel.textContent = label;\n        }\n        else {\n            this.container.innerText = '';\n            this.container.classList.add('multiple');\n            this.singleLabel = undefined;\n            for (let i = 0; i < label.length; i++) {\n                const l = label[i];\n                const id = (options === null || options === void 0 ? void 0 : options.domId) && `${options === null || options === void 0 ? void 0 : options.domId}_${i}`;\n                dom.append(this.container, dom.$('a.label-name', { id, 'data-icon-label-count': label.length, 'data-icon-label-index': i, 'role': 'treeitem' }, l));\n                if (i < label.length - 1) {\n                    dom.append(this.container, dom.$('span.label-separator', undefined, (options === null || options === void 0 ? void 0 : options.separator) || '/'));\n                }\n            }\n        }\n    }\n}\nfunction splitMatches(labels, separator, matches) {\n    if (!matches) {\n        return undefined;\n    }\n    let labelStart = 0;\n    return labels.map(label => {\n        const labelRange = { start: labelStart, end: labelStart + label.length };\n        const result = matches\n            .map(match => Range.intersect(labelRange, match))\n            .filter(range => !Range.isEmpty(range))\n            .map(({ start, end }) => ({ start: start - labelStart, end: end - labelStart }));\n        labelStart = labelRange.end + separator.length;\n        return result;\n    });\n}\nclass LabelWithHighlights {\n    constructor(container, supportIcons) {\n        this.container = container;\n        this.supportIcons = supportIcons;\n        this.label = undefined;\n        this.singleLabel = undefined;\n    }\n    setLabel(label, options) {\n        if (this.label === label && equals(this.options, options)) {\n            return;\n        }\n        this.label = label;\n        this.options = options;\n        if (typeof label === 'string') {\n            if (!this.singleLabel) {\n                this.container.innerText = '';\n                this.container.classList.remove('multiple');\n                this.singleLabel = new HighlightedLabel(dom.append(this.container, dom.$('a.label-name', { id: options === null || options === void 0 ? void 0 : options.domId })), { supportIcons: this.supportIcons });\n            }\n            this.singleLabel.set(label, options === null || options === void 0 ? void 0 : options.matches, undefined, options === null || options === void 0 ? void 0 : options.labelEscapeNewLines);\n        }\n        else {\n            this.container.innerText = '';\n            this.container.classList.add('multiple');\n            this.singleLabel = undefined;\n            const separator = (options === null || options === void 0 ? void 0 : options.separator) || '/';\n            const matches = splitMatches(label, separator, options === null || options === void 0 ? void 0 : options.matches);\n            for (let i = 0; i < label.length; i++) {\n                const l = label[i];\n                const m = matches ? matches[i] : undefined;\n                const id = (options === null || options === void 0 ? void 0 : options.domId) && `${options === null || options === void 0 ? void 0 : options.domId}_${i}`;\n                const name = dom.$('a.label-name', { id, 'data-icon-label-count': label.length, 'data-icon-label-index': i, 'role': 'treeitem' });\n                const highlightedLabel = new HighlightedLabel(dom.append(this.container, name), { supportIcons: this.supportIcons });\n                highlightedLabel.set(l, m, undefined, options === null || options === void 0 ? void 0 : options.labelEscapeNewLines);\n                if (i < label.length - 1) {\n                    dom.append(name, dom.$('span.label-separator', undefined, separator));\n                }\n            }\n        }\n    }\n}\n",
+      "start": 1711096857387,
+      "end": 1711096857515,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857515,
+      "end": 1711096857515,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857515,
+      "end": 1711096857516,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857516,
+      "end": 1711096857516,
+      "order": "normal"
+    }
+  ]
+}

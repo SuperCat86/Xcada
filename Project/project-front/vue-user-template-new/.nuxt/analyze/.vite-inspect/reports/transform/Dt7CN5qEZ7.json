@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/theme/common/styler.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, listActiveSelectionBackground, listActiveSelectionForeground, listActiveSelectionIconForeground, listDropBackground, listFilterWidgetBackground, listFilterWidgetNoMatchesOutline, listFilterWidgetOutline, listFocusBackground, listFocusForeground, listFocusOutline, listHoverBackground, listHoverForeground, listInactiveFocusBackground, listInactiveFocusOutline, listInactiveSelectionBackground, listInactiveSelectionForeground, listInactiveSelectionIconForeground, menuBackground, menuBorder, menuForeground, menuSelectionBackground, menuSelectionBorder, menuSelectionForeground, menuSeparatorBackground, resolveColorValue, scrollbarShadow, scrollbarSliderActiveBackground, scrollbarSliderBackground, scrollbarSliderHoverBackground, tableColumnsBorder, tableOddRowsBackgroundColor, treeIndentGuidesStroke, widgetShadow } from './colorRegistry.js';\nexport function computeStyles(theme, styleMap) {\n    const styles = Object.create(null);\n    for (let key in styleMap) {\n        const value = styleMap[key];\n        if (value) {\n            styles[key] = resolveColorValue(value, theme);\n        }\n    }\n    return styles;\n}\nexport function attachStyler(themeService, styleMap, widgetOrCallback) {\n    function applyStyles() {\n        const styles = computeStyles(themeService.getColorTheme(), styleMap);\n        if (typeof widgetOrCallback === 'function') {\n            widgetOrCallback(styles);\n        }\n        else {\n            widgetOrCallback.style(styles);\n        }\n    }\n    applyStyles();\n    return themeService.onDidColorThemeChange(applyStyles);\n}\nexport function attachBadgeStyler(widget, themeService, style) {\n    return attachStyler(themeService, {\n        badgeBackground: (style === null || style === void 0 ? void 0 : style.badgeBackground) || badgeBackground,\n        badgeForeground: (style === null || style === void 0 ? void 0 : style.badgeForeground) || badgeForeground,\n        badgeBorder: contrastBorder\n    }, widget);\n}\nexport function attachListStyler(widget, themeService, overrides) {\n    return attachStyler(themeService, Object.assign(Object.assign({}, defaultListStyles), (overrides || {})), widget);\n}\nexport const defaultListStyles = {\n    listFocusBackground,\n    listFocusForeground,\n    listFocusOutline,\n    listActiveSelectionBackground,\n    listActiveSelectionForeground,\n    listActiveSelectionIconForeground,\n    listFocusAndSelectionBackground: listActiveSelectionBackground,\n    listFocusAndSelectionForeground: listActiveSelectionForeground,\n    listInactiveSelectionBackground,\n    listInactiveSelectionIconForeground,\n    listInactiveSelectionForeground,\n    listInactiveFocusBackground,\n    listInactiveFocusOutline,\n    listHoverBackground,\n    listHoverForeground,\n    listDropBackground,\n    listSelectionOutline: activeContrastBorder,\n    listHoverOutline: activeContrastBorder,\n    listFilterWidgetBackground,\n    listFilterWidgetOutline,\n    listFilterWidgetNoMatchesOutline,\n    listMatchesShadow: widgetShadow,\n    treeIndentGuidesStroke,\n    tableColumnsBorder,\n    tableOddRowsBackgroundColor\n};\nexport const defaultMenuStyles = {\n    shadowColor: widgetShadow,\n    borderColor: menuBorder,\n    foregroundColor: menuForeground,\n    backgroundColor: menuBackground,\n    selectionForegroundColor: menuSelectionForeground,\n    selectionBackgroundColor: menuSelectionBackground,\n    selectionBorderColor: menuSelectionBorder,\n    separatorColor: menuSeparatorBackground,\n    scrollbarShadow: scrollbarShadow,\n    scrollbarSliderBackground: scrollbarSliderBackground,\n    scrollbarSliderHoverBackground: scrollbarSliderHoverBackground,\n    scrollbarSliderActiveBackground: scrollbarSliderActiveBackground\n};\nexport function attachMenuStyler(widget, themeService, style) {\n    return attachStyler(themeService, Object.assign(Object.assign({}, defaultMenuStyles), style), widget);\n}\n",
+      "start": 1711096856841,
+      "end": 1711096856949,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856949,
+      "end": 1711096856949,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856949,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856950,
+      "end": 1711096856950,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/links/browser/getLinks.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { coalesce } from '../../../../base/common/arrays.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { DisposableStore, isDisposable } from '../../../../base/common/lifecycle.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { Range } from '../../../common/core/range.js';\nimport { IModelService } from '../../../common/services/model.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nexport class Link {\n    constructor(link, provider) {\n        this._link = link;\n        this._provider = provider;\n    }\n    toJSON() {\n        return {\n            range: this.range,\n            url: this.url,\n            tooltip: this.tooltip\n        };\n    }\n    get range() {\n        return this._link.range;\n    }\n    get url() {\n        return this._link.url;\n    }\n    get tooltip() {\n        return this._link.tooltip;\n    }\n    resolve(token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (this._link.url) {\n                return this._link.url;\n            }\n            if (typeof this._provider.resolveLink === 'function') {\n                return Promise.resolve(this._provider.resolveLink(this._link, token)).then(value => {\n                    this._link = value || this._link;\n                    if (this._link.url) {\n                        // recurse\n                        return this.resolve(token);\n                    }\n                    return Promise.reject(new Error('missing'));\n                });\n            }\n            return Promise.reject(new Error('missing'));\n        });\n    }\n}\nexport class LinksList {\n    constructor(tuples) {\n        this._disposables = new DisposableStore();\n        let links = [];\n        for (const [list, provider] of tuples) {\n            // merge all links\n            const newLinks = list.links.map(link => new Link(link, provider));\n            links = LinksList._union(links, newLinks);\n            // register disposables\n            if (isDisposable(list)) {\n                this._disposables.add(list);\n            }\n        }\n        this.links = links;\n    }\n    dispose() {\n        this._disposables.dispose();\n        this.links.length = 0;\n    }\n    static _union(oldLinks, newLinks) {\n        // reunite oldLinks with newLinks and remove duplicates\n        let result = [];\n        let oldIndex;\n        let oldLen;\n        let newIndex;\n        let newLen;\n        for (oldIndex = 0, newIndex = 0, oldLen = oldLinks.length, newLen = newLinks.length; oldIndex < oldLen && newIndex < newLen;) {\n            const oldLink = oldLinks[oldIndex];\n            const newLink = newLinks[newIndex];\n            if (Range.areIntersectingOrTouching(oldLink.range, newLink.range)) {\n                // Remove the oldLink\n                oldIndex++;\n                continue;\n            }\n            const comparisonResult = Range.compareRangesUsingStarts(oldLink.range, newLink.range);\n            if (comparisonResult < 0) {\n                // oldLink is before\n                result.push(oldLink);\n                oldIndex++;\n            }\n            else {\n                // newLink is before\n                result.push(newLink);\n                newIndex++;\n            }\n        }\n        for (; oldIndex < oldLen; oldIndex++) {\n            result.push(oldLinks[oldIndex]);\n        }\n        for (; newIndex < newLen; newIndex++) {\n            result.push(newLinks[newIndex]);\n        }\n        return result;\n    }\n}\nexport function getLinks(providers, model, token) {\n    const lists = [];\n    // ask all providers for links in parallel\n    const promises = providers.ordered(model).reverse().map((provider, i) => {\n        return Promise.resolve(provider.provideLinks(model, token)).then(result => {\n            if (result) {\n                lists[i] = [result, provider];\n            }\n        }, onUnexpectedExternalError);\n    });\n    return Promise.all(promises).then(() => {\n        const result = new LinksList(coalesce(lists));\n        if (!token.isCancellationRequested) {\n            return result;\n        }\n        result.dispose();\n        return new LinksList([]);\n    });\n}\nCommandsRegistry.registerCommand('_executeLinkProvider', (accessor, ...args) => __awaiter(void 0, void 0, void 0, function* () {\n    let [uri, resolveCount] = args;\n    assertType(uri instanceof URI);\n    if (typeof resolveCount !== 'number') {\n        resolveCount = 0;\n    }\n    const { linkProvider } = accessor.get(ILanguageFeaturesService);\n    const model = accessor.get(IModelService).getModel(uri);\n    if (!model) {\n        return [];\n    }\n    const list = yield getLinks(linkProvider, model, CancellationToken.None);\n    if (!list) {\n        return [];\n    }\n    // resolve links\n    for (let i = 0; i < Math.min(resolveCount, list.links.length); i++) {\n        yield list.links[i].resolve(CancellationToken.None);\n    }\n    const result = list.links.slice(0);\n    list.dispose();\n    return result;\n}));\n",
+      "start": 1711096855845,
+      "end": 1711096855973,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855974,
+      "end": 1711096855974,
+      "order": "normal"
+    }
+  ]
+}

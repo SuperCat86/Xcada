@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/prefixSumComputer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { arrayInsert } from '../../../base/common/arrays.js';\nimport { toUint32 } from '../../../base/common/uint.js';\nexport class PrefixSumComputer {\n    constructor(values) {\n        this.values = values;\n        this.prefixSum = new Uint32Array(values.length);\n        this.prefixSumValidIndex = new Int32Array(1);\n        this.prefixSumValidIndex[0] = -1;\n    }\n    insertValues(insertIndex, insertValues) {\n        insertIndex = toUint32(insertIndex);\n        const oldValues = this.values;\n        const oldPrefixSum = this.prefixSum;\n        const insertValuesLen = insertValues.length;\n        if (insertValuesLen === 0) {\n            return false;\n        }\n        this.values = new Uint32Array(oldValues.length + insertValuesLen);\n        this.values.set(oldValues.subarray(0, insertIndex), 0);\n        this.values.set(oldValues.subarray(insertIndex), insertIndex + insertValuesLen);\n        this.values.set(insertValues, insertIndex);\n        if (insertIndex - 1 < this.prefixSumValidIndex[0]) {\n            this.prefixSumValidIndex[0] = insertIndex - 1;\n        }\n        this.prefixSum = new Uint32Array(this.values.length);\n        if (this.prefixSumValidIndex[0] >= 0) {\n            this.prefixSum.set(oldPrefixSum.subarray(0, this.prefixSumValidIndex[0] + 1));\n        }\n        return true;\n    }\n    setValue(index, value) {\n        index = toUint32(index);\n        value = toUint32(value);\n        if (this.values[index] === value) {\n            return false;\n        }\n        this.values[index] = value;\n        if (index - 1 < this.prefixSumValidIndex[0]) {\n            this.prefixSumValidIndex[0] = index - 1;\n        }\n        return true;\n    }\n    removeValues(startIndex, count) {\n        startIndex = toUint32(startIndex);\n        count = toUint32(count);\n        const oldValues = this.values;\n        const oldPrefixSum = this.prefixSum;\n        if (startIndex >= oldValues.length) {\n            return false;\n        }\n        const maxCount = oldValues.length - startIndex;\n        if (count >= maxCount) {\n            count = maxCount;\n        }\n        if (count === 0) {\n            return false;\n        }\n        this.values = new Uint32Array(oldValues.length - count);\n        this.values.set(oldValues.subarray(0, startIndex), 0);\n        this.values.set(oldValues.subarray(startIndex + count), startIndex);\n        this.prefixSum = new Uint32Array(this.values.length);\n        if (startIndex - 1 < this.prefixSumValidIndex[0]) {\n            this.prefixSumValidIndex[0] = startIndex - 1;\n        }\n        if (this.prefixSumValidIndex[0] >= 0) {\n            this.prefixSum.set(oldPrefixSum.subarray(0, this.prefixSumValidIndex[0] + 1));\n        }\n        return true;\n    }\n    getTotalSum() {\n        if (this.values.length === 0) {\n            return 0;\n        }\n        return this._getPrefixSum(this.values.length - 1);\n    }\n    /**\n     * Returns the sum of the first `index + 1` many items.\n     * @returns `SUM(0 <= j <= index, values[j])`.\n     */\n    getPrefixSum(index) {\n        if (index < 0) {\n            return 0;\n        }\n        index = toUint32(index);\n        return this._getPrefixSum(index);\n    }\n    _getPrefixSum(index) {\n        if (index <= this.prefixSumValidIndex[0]) {\n            return this.prefixSum[index];\n        }\n        let startIndex = this.prefixSumValidIndex[0] + 1;\n        if (startIndex === 0) {\n            this.prefixSum[0] = this.values[0];\n            startIndex++;\n        }\n        if (index >= this.values.length) {\n            index = this.values.length - 1;\n        }\n        for (let i = startIndex; i <= index; i++) {\n            this.prefixSum[i] = this.prefixSum[i - 1] + this.values[i];\n        }\n        this.prefixSumValidIndex[0] = Math.max(this.prefixSumValidIndex[0], index);\n        return this.prefixSum[index];\n    }\n    getIndexOf(sum) {\n        sum = Math.floor(sum);\n        // Compute all sums (to get a fully valid prefixSum)\n        this.getTotalSum();\n        let low = 0;\n        let high = this.values.length - 1;\n        let mid = 0;\n        let midStop = 0;\n        let midStart = 0;\n        while (low <= high) {\n            mid = low + ((high - low) / 2) | 0;\n            midStop = this.prefixSum[mid];\n            midStart = midStop - this.values[mid];\n            if (sum < midStart) {\n                high = mid - 1;\n            }\n            else if (sum >= midStop) {\n                low = mid + 1;\n            }\n            else {\n                break;\n            }\n        }\n        return new PrefixSumIndexOfResult(mid, sum - midStart);\n    }\n}\n/**\n * {@link getIndexOf} has an amortized runtime complexity of O(1).\n *\n * ({@link PrefixSumComputer.getIndexOf} is just  O(log n))\n*/\nexport class ConstantTimePrefixSumComputer {\n    constructor(values) {\n        this._values = values;\n        this._isValid = false;\n        this._validEndIndex = -1;\n        this._prefixSum = [];\n        this._indexBySum = [];\n    }\n    /**\n     * @returns SUM(0 <= j < values.length, values[j])\n     */\n    getTotalSum() {\n        this._ensureValid();\n        return this._indexBySum.length;\n    }\n    /**\n     * Returns the sum of the first `count` many items.\n     * @returns `SUM(0 <= j < count, values[j])`.\n     */\n    getPrefixSum(count) {\n        this._ensureValid();\n        if (count === 0) {\n            return 0;\n        }\n        return this._prefixSum[count - 1];\n    }\n    /**\n     * @returns `result`, such that `getPrefixSum(result.index) + result.remainder = sum`\n     */\n    getIndexOf(sum) {\n        this._ensureValid();\n        const idx = this._indexBySum[sum];\n        const viewLinesAbove = idx > 0 ? this._prefixSum[idx - 1] : 0;\n        return new PrefixSumIndexOfResult(idx, sum - viewLinesAbove);\n    }\n    removeValues(start, deleteCount) {\n        this._values.splice(start, deleteCount);\n        this._invalidate(start);\n    }\n    insertValues(insertIndex, insertArr) {\n        this._values = arrayInsert(this._values, insertIndex, insertArr);\n        this._invalidate(insertIndex);\n    }\n    _invalidate(index) {\n        this._isValid = false;\n        this._validEndIndex = Math.min(this._validEndIndex, index - 1);\n    }\n    _ensureValid() {\n        if (this._isValid) {\n            return;\n        }\n        for (let i = this._validEndIndex + 1, len = this._values.length; i < len; i++) {\n            const value = this._values[i];\n            const sumAbove = i > 0 ? this._prefixSum[i - 1] : 0;\n            this._prefixSum[i] = sumAbove + value;\n            for (let j = 0; j < value; j++) {\n                this._indexBySum[sumAbove + j] = i;\n            }\n        }\n        // trim things\n        this._prefixSum.length = this._values.length;\n        this._indexBySum.length = this._prefixSum[this._prefixSum.length - 1];\n        // mark as valid\n        this._isValid = true;\n        this._validEndIndex = this._values.length - 1;\n    }\n    setValue(index, value) {\n        if (this._values[index] === value) {\n            // no change\n            return;\n        }\n        this._values[index] = value;\n        this._invalidate(index);\n    }\n}\nexport class PrefixSumIndexOfResult {\n    constructor(index, remainder) {\n        this.index = index;\n        this.remainder = remainder;\n        this._prefixSumIndexOfResultBrand = undefined;\n        this.index = index;\n        this.remainder = remainder;\n    }\n}\n",
+      "start": 1711096857258,
+      "end": 1711096857337,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857337,
+      "end": 1711096857337,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857337,
+      "end": 1711096857338,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857338,
+      "end": 1711096857338,
+      "order": "normal"
+    }
+  ]
+}

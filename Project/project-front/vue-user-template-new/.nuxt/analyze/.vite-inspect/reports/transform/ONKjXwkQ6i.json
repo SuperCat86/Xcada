@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/theme/common/themeService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { CSSIcon } from '../../../base/common/codicons.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable, toDisposable } from '../../../base/common/lifecycle.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nimport * as platform from '../../registry/common/platform.js';\nimport { ColorScheme } from './theme.js';\nexport const IThemeService = createDecorator('themeService');\nexport var ThemeColor;\n(function (ThemeColor) {\n    function isThemeColor(obj) {\n        return obj && typeof obj === 'object' && typeof obj.id === 'string';\n    }\n    ThemeColor.isThemeColor = isThemeColor;\n})(ThemeColor || (ThemeColor = {}));\nexport function themeColorFromId(id) {\n    return { id };\n}\nexport var ThemeIcon;\n(function (ThemeIcon) {\n    function isThemeIcon(obj) {\n        return obj && typeof obj === 'object' && typeof obj.id === 'string' && (typeof obj.color === 'undefined' || ThemeColor.isThemeColor(obj.color));\n    }\n    ThemeIcon.isThemeIcon = isThemeIcon;\n    const _regexFromString = new RegExp(`^\\\\$\\\\((${CSSIcon.iconNameExpression}(?:${CSSIcon.iconModifierExpression})?)\\\\)$`);\n    function fromString(str) {\n        const match = _regexFromString.exec(str);\n        if (!match) {\n            return undefined;\n        }\n        let [, name] = match;\n        return { id: name };\n    }\n    ThemeIcon.fromString = fromString;\n    function fromId(id) {\n        return { id };\n    }\n    ThemeIcon.fromId = fromId;\n    function modify(icon, modifier) {\n        let id = icon.id;\n        const tildeIndex = id.lastIndexOf('~');\n        if (tildeIndex !== -1) {\n            id = id.substring(0, tildeIndex);\n        }\n        if (modifier) {\n            id = `${id}~${modifier}`;\n        }\n        return { id };\n    }\n    ThemeIcon.modify = modify;\n    function getModifier(icon) {\n        const tildeIndex = icon.id.lastIndexOf('~');\n        if (tildeIndex !== -1) {\n            return icon.id.substring(tildeIndex + 1);\n        }\n        return undefined;\n    }\n    ThemeIcon.getModifier = getModifier;\n    function isEqual(ti1, ti2) {\n        var _a, _b;\n        return ti1.id === ti2.id && ((_a = ti1.color) === null || _a === void 0 ? void 0 : _a.id) === ((_b = ti2.color) === null || _b === void 0 ? void 0 : _b.id);\n    }\n    ThemeIcon.isEqual = isEqual;\n    function asThemeIcon(codicon, color) {\n        return { id: codicon.id, color: color ? themeColorFromId(color) : undefined };\n    }\n    ThemeIcon.asThemeIcon = asThemeIcon;\n    ThemeIcon.asClassNameArray = CSSIcon.asClassNameArray;\n    ThemeIcon.asClassName = CSSIcon.asClassName;\n    ThemeIcon.asCSSSelector = CSSIcon.asCSSSelector;\n})(ThemeIcon || (ThemeIcon = {}));\nexport function getThemeTypeSelector(type) {\n    switch (type) {\n        case ColorScheme.DARK: return 'vs-dark';\n        case ColorScheme.HIGH_CONTRAST: return 'hc-black';\n        default: return 'vs';\n    }\n}\n// static theming participant\nexport const Extensions = {\n    ThemingContribution: 'base.contributions.theming'\n};\nclass ThemingRegistry {\n    constructor() {\n        this.themingParticipants = [];\n        this.themingParticipants = [];\n        this.onThemingParticipantAddedEmitter = new Emitter();\n    }\n    onColorThemeChange(participant) {\n        this.themingParticipants.push(participant);\n        this.onThemingParticipantAddedEmitter.fire(participant);\n        return toDisposable(() => {\n            const idx = this.themingParticipants.indexOf(participant);\n            this.themingParticipants.splice(idx, 1);\n        });\n    }\n    getThemingParticipants() {\n        return this.themingParticipants;\n    }\n}\nlet themingRegistry = new ThemingRegistry();\nplatform.Registry.add(Extensions.ThemingContribution, themingRegistry);\nexport function registerThemingParticipant(participant) {\n    return themingRegistry.onColorThemeChange(participant);\n}\n/**\n * Utility base class for all themable components.\n */\nexport class Themable extends Disposable {\n    constructor(themeService) {\n        super();\n        this.themeService = themeService;\n        this.theme = themeService.getColorTheme();\n        // Hook up to theme changes\n        this._register(this.themeService.onDidColorThemeChange(theme => this.onThemeChange(theme)));\n    }\n    onThemeChange(theme) {\n        this.theme = theme;\n        this.updateStyles();\n    }\n    updateStyles() {\n        // Subclasses to override\n    }\n}\n",
+      "start": 1711096854833,
+      "end": 1711096854958,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854958,
+      "end": 1711096854958,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854958,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854959,
+      "end": 1711096854959,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854959,
+      "end": 1711096854960,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854960,
+      "end": 1711096854960,
+      "order": "normal"
+    }
+  ]
+}

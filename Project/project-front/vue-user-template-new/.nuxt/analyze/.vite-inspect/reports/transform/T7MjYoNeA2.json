@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/keybinding/common/baseResolvedKeybinding.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { illegalArgument } from '../../../base/common/errors.js';\nimport { AriaLabelProvider, ElectronAcceleratorLabelProvider, UILabelProvider } from '../../../base/common/keybindingLabels.js';\nimport { ResolvedKeybinding, ResolvedKeybindingPart } from '../../../base/common/keybindings.js';\nexport class BaseResolvedKeybinding extends ResolvedKeybinding {\n    constructor(os, parts) {\n        super();\n        if (parts.length === 0) {\n            throw illegalArgument(`parts`);\n        }\n        this._os = os;\n        this._parts = parts;\n    }\n    getLabel() {\n        return UILabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getLabel(keybinding));\n    }\n    getAriaLabel() {\n        return AriaLabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getAriaLabel(keybinding));\n    }\n    getElectronAccelerator() {\n        if (this._parts.length > 1) {\n            // [Electron Accelerators] Electron cannot handle chords\n            return null;\n        }\n        if (this._parts[0].isDuplicateModifierCase()) {\n            // [Electron Accelerators] Electron cannot handle modifier only keybindings\n            // e.g. \"shift shift\"\n            return null;\n        }\n        return ElectronAcceleratorLabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getElectronAccelerator(keybinding));\n    }\n    isChord() {\n        return (this._parts.length > 1);\n    }\n    getParts() {\n        return this._parts.map((keybinding) => this._getPart(keybinding));\n    }\n    _getPart(keybinding) {\n        return new ResolvedKeybindingPart(keybinding.ctrlKey, keybinding.shiftKey, keybinding.altKey, keybinding.metaKey, this._getLabel(keybinding), this._getAriaLabel(keybinding));\n    }\n    getDispatchParts() {\n        return this._parts.map((keybinding) => this._getDispatchPart(keybinding));\n    }\n    getSingleModifierDispatchParts() {\n        return this._parts.map((keybinding) => this._getSingleModifierDispatchPart(keybinding));\n    }\n}\n",
+      "start": 1711096857046,
+      "end": 1711096857153,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857153,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857154,
+      "end": 1711096857154,
+      "order": "normal"
+    }
+  ]
+}

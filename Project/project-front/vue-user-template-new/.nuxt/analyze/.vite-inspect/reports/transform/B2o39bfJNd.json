@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/services/semanticTokensProviderStyling.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { TokenMetadata } from '../languages.js';\nimport { IThemeService } from '../../../platform/theme/common/themeService.js';\nimport { ILogService, LogLevel } from '../../../platform/log/common/log.js';\nimport { SparseMultilineTokens } from '../tokens/sparseMultilineTokens.js';\nimport { ILanguageService } from '../languages/language.js';\nlet SemanticTokensProviderStyling = class SemanticTokensProviderStyling {\n    constructor(_legend, _themeService, _languageService, _logService) {\n        this._legend = _legend;\n        this._themeService = _themeService;\n        this._languageService = _languageService;\n        this._logService = _logService;\n        this._hashTable = new HashTable();\n        this._hasWarnedOverlappingTokens = false;\n    }\n    getMetadata(tokenTypeIndex, tokenModifierSet, languageId) {\n        const encodedLanguageId = this._languageService.languageIdCodec.encodeLanguageId(languageId);\n        const entry = this._hashTable.get(tokenTypeIndex, tokenModifierSet, encodedLanguageId);\n        let metadata;\n        if (entry) {\n            metadata = entry.metadata;\n            if (this._logService.getLevel() === LogLevel.Trace) {\n                this._logService.trace(`SemanticTokensProviderStyling [CACHED] ${tokenTypeIndex} / ${tokenModifierSet}: foreground ${TokenMetadata.getForeground(metadata)}, fontStyle ${TokenMetadata.getFontStyle(metadata).toString(2)}`);\n            }\n        }\n        else {\n            let tokenType = this._legend.tokenTypes[tokenTypeIndex];\n            const tokenModifiers = [];\n            if (tokenType) {\n                let modifierSet = tokenModifierSet;\n                for (let modifierIndex = 0; modifierSet > 0 && modifierIndex < this._legend.tokenModifiers.length; modifierIndex++) {\n                    if (modifierSet & 1) {\n                        tokenModifiers.push(this._legend.tokenModifiers[modifierIndex]);\n                    }\n                    modifierSet = modifierSet >> 1;\n                }\n                if (modifierSet > 0 && this._logService.getLevel() === LogLevel.Trace) {\n                    this._logService.trace(`SemanticTokensProviderStyling: unknown token modifier index: ${tokenModifierSet.toString(2)} for legend: ${JSON.stringify(this._legend.tokenModifiers)}`);\n                    tokenModifiers.push('not-in-legend');\n                }\n                const tokenStyle = this._themeService.getColorTheme().getTokenStyleMetadata(tokenType, tokenModifiers, languageId);\n                if (typeof tokenStyle === 'undefined') {\n                    metadata = 2147483647 /* NO_STYLING */;\n                }\n                else {\n                    metadata = 0;\n                    if (typeof tokenStyle.italic !== 'undefined') {\n                        const italicBit = (tokenStyle.italic ? 1 /* Italic */ : 0) << 10 /* FONT_STYLE_OFFSET */;\n                        metadata |= italicBit | 1 /* SEMANTIC_USE_ITALIC */;\n                    }\n                    if (typeof tokenStyle.bold !== 'undefined') {\n                        const boldBit = (tokenStyle.bold ? 2 /* Bold */ : 0) << 10 /* FONT_STYLE_OFFSET */;\n                        metadata |= boldBit | 2 /* SEMANTIC_USE_BOLD */;\n                    }\n                    if (typeof tokenStyle.underline !== 'undefined') {\n                        const underlineBit = (tokenStyle.underline ? 4 /* Underline */ : 0) << 10 /* FONT_STYLE_OFFSET */;\n                        metadata |= underlineBit | 4 /* SEMANTIC_USE_UNDERLINE */;\n                    }\n                    if (typeof tokenStyle.strikethrough !== 'undefined') {\n                        const strikethroughBit = (tokenStyle.strikethrough ? 8 /* Strikethrough */ : 0) << 10 /* FONT_STYLE_OFFSET */;\n                        metadata |= strikethroughBit | 8 /* SEMANTIC_USE_STRIKETHROUGH */;\n                    }\n                    if (tokenStyle.foreground) {\n                        const foregroundBits = (tokenStyle.foreground) << 14 /* FOREGROUND_OFFSET */;\n                        metadata |= foregroundBits | 16 /* SEMANTIC_USE_FOREGROUND */;\n                    }\n                    if (metadata === 0) {\n                        // Nothing!\n                        metadata = 2147483647 /* NO_STYLING */;\n                    }\n                }\n            }\n            else {\n                if (this._logService.getLevel() === LogLevel.Trace) {\n                    this._logService.trace(`SemanticTokensProviderStyling: unknown token type index: ${tokenTypeIndex} for legend: ${JSON.stringify(this._legend.tokenTypes)}`);\n                }\n                metadata = 2147483647 /* NO_STYLING */;\n                tokenType = 'not-in-legend';\n            }\n            this._hashTable.add(tokenTypeIndex, tokenModifierSet, encodedLanguageId, metadata);\n            if (this._logService.getLevel() === LogLevel.Trace) {\n                this._logService.trace(`SemanticTokensProviderStyling ${tokenTypeIndex} (${tokenType}) / ${tokenModifierSet} (${tokenModifiers.join(' ')}): foreground ${TokenMetadata.getForeground(metadata)}, fontStyle ${TokenMetadata.getFontStyle(metadata).toString(2)}`);\n            }\n        }\n        return metadata;\n    }\n    warnOverlappingSemanticTokens(lineNumber, startColumn) {\n        if (!this._hasWarnedOverlappingTokens) {\n            this._hasWarnedOverlappingTokens = true;\n            console.warn(`Overlapping semantic tokens detected at lineNumber ${lineNumber}, column ${startColumn}`);\n        }\n    }\n};\nSemanticTokensProviderStyling = __decorate([\n    __param(1, IThemeService),\n    __param(2, ILanguageService),\n    __param(3, ILogService)\n], SemanticTokensProviderStyling);\nexport { SemanticTokensProviderStyling };\nexport function toMultilineTokens2(tokens, styling, languageId) {\n    const srcData = tokens.data;\n    const tokenCount = (tokens.data.length / 5) | 0;\n    const tokensPerArea = Math.max(Math.ceil(tokenCount / 1024 /* DesiredMaxAreas */), 400 /* DesiredTokensPerArea */);\n    const result = [];\n    let tokenIndex = 0;\n    let lastLineNumber = 1;\n    let lastStartCharacter = 0;\n    while (tokenIndex < tokenCount) {\n        const tokenStartIndex = tokenIndex;\n        let tokenEndIndex = Math.min(tokenStartIndex + tokensPerArea, tokenCount);\n        // Keep tokens on the same line in the same area...\n        if (tokenEndIndex < tokenCount) {\n            let smallTokenEndIndex = tokenEndIndex;\n            while (smallTokenEndIndex - 1 > tokenStartIndex && srcData[5 * smallTokenEndIndex] === 0) {\n                smallTokenEndIndex--;\n            }\n            if (smallTokenEndIndex - 1 === tokenStartIndex) {\n                // there are so many tokens on this line that our area would be empty, we must now go right\n                let bigTokenEndIndex = tokenEndIndex;\n                while (bigTokenEndIndex + 1 < tokenCount && srcData[5 * bigTokenEndIndex] === 0) {\n                    bigTokenEndIndex++;\n                }\n                tokenEndIndex = bigTokenEndIndex;\n            }\n            else {\n                tokenEndIndex = smallTokenEndIndex;\n            }\n        }\n        let destData = new Uint32Array((tokenEndIndex - tokenStartIndex) * 4);\n        let destOffset = 0;\n        let areaLine = 0;\n        let prevLineNumber = 0;\n        let prevStartCharacter = 0;\n        let prevEndCharacter = 0;\n        while (tokenIndex < tokenEndIndex) {\n            const srcOffset = 5 * tokenIndex;\n            const deltaLine = srcData[srcOffset];\n            const deltaCharacter = srcData[srcOffset + 1];\n            // Casting both `lineNumber` and `startCharacter` here to uint32 using `|0`\n            // to do checks below with the actual value that will be inserted in the Uint32Array result\n            const lineNumber = (lastLineNumber + deltaLine) | 0;\n            const startCharacter = (deltaLine === 0 ? (lastStartCharacter + deltaCharacter) | 0 : deltaCharacter);\n            const length = srcData[srcOffset + 2];\n            const tokenTypeIndex = srcData[srcOffset + 3];\n            const tokenModifierSet = srcData[srcOffset + 4];\n            const metadata = styling.getMetadata(tokenTypeIndex, tokenModifierSet, languageId);\n            if (metadata !== 2147483647 /* NO_STYLING */) {\n                if (areaLine === 0) {\n                    areaLine = lineNumber;\n                }\n                if (prevLineNumber === lineNumber && prevEndCharacter > startCharacter) {\n                    styling.warnOverlappingSemanticTokens(lineNumber, startCharacter + 1);\n                    if (prevStartCharacter < startCharacter) {\n                        // the previous token survives after the overlapping one\n                        destData[destOffset - 4 + 2] = startCharacter;\n                    }\n                    else {\n                        // the previous token is entirely covered by the overlapping one\n                        destOffset -= 4;\n                    }\n                }\n                destData[destOffset] = lineNumber - areaLine;\n                destData[destOffset + 1] = startCharacter;\n                destData[destOffset + 2] = startCharacter + length;\n                destData[destOffset + 3] = metadata;\n                destOffset += 4;\n                prevLineNumber = lineNumber;\n                prevStartCharacter = startCharacter;\n                prevEndCharacter = startCharacter + length;\n            }\n            lastLineNumber = lineNumber;\n            lastStartCharacter = startCharacter;\n            tokenIndex++;\n        }\n        if (destOffset !== destData.length) {\n            destData = destData.subarray(0, destOffset);\n        }\n        const tokens = SparseMultilineTokens.create(areaLine, destData);\n        result.push(tokens);\n    }\n    return result;\n}\nclass HashTableEntry {\n    constructor(tokenTypeIndex, tokenModifierSet, languageId, metadata) {\n        this.tokenTypeIndex = tokenTypeIndex;\n        this.tokenModifierSet = tokenModifierSet;\n        this.languageId = languageId;\n        this.metadata = metadata;\n        this.next = null;\n    }\n}\nclass HashTable {\n    constructor() {\n        this._elementsCount = 0;\n        this._currentLengthIndex = 0;\n        this._currentLength = HashTable._SIZES[this._currentLengthIndex];\n        this._growCount = Math.round(this._currentLengthIndex + 1 < HashTable._SIZES.length ? 2 / 3 * this._currentLength : 0);\n        this._elements = [];\n        HashTable._nullOutEntries(this._elements, this._currentLength);\n    }\n    static _nullOutEntries(entries, length) {\n        for (let i = 0; i < length; i++) {\n            entries[i] = null;\n        }\n    }\n    _hash2(n1, n2) {\n        return (((n1 << 5) - n1) + n2) | 0; // n1 * 31 + n2, keep as int32\n    }\n    _hashFunc(tokenTypeIndex, tokenModifierSet, languageId) {\n        return this._hash2(this._hash2(tokenTypeIndex, tokenModifierSet), languageId) % this._currentLength;\n    }\n    get(tokenTypeIndex, tokenModifierSet, languageId) {\n        const hash = this._hashFunc(tokenTypeIndex, tokenModifierSet, languageId);\n        let p = this._elements[hash];\n        while (p) {\n            if (p.tokenTypeIndex === tokenTypeIndex && p.tokenModifierSet === tokenModifierSet && p.languageId === languageId) {\n                return p;\n            }\n            p = p.next;\n        }\n        return null;\n    }\n    add(tokenTypeIndex, tokenModifierSet, languageId, metadata) {\n        this._elementsCount++;\n        if (this._growCount !== 0 && this._elementsCount >= this._growCount) {\n            // expand!\n            const oldElements = this._elements;\n            this._currentLengthIndex++;\n            this._currentLength = HashTable._SIZES[this._currentLengthIndex];\n            this._growCount = Math.round(this._currentLengthIndex + 1 < HashTable._SIZES.length ? 2 / 3 * this._currentLength : 0);\n            this._elements = [];\n            HashTable._nullOutEntries(this._elements, this._currentLength);\n            for (const first of oldElements) {\n                let p = first;\n                while (p) {\n                    const oldNext = p.next;\n                    p.next = null;\n                    this._add(p);\n                    p = oldNext;\n                }\n            }\n        }\n        this._add(new HashTableEntry(tokenTypeIndex, tokenModifierSet, languageId, metadata));\n    }\n    _add(element) {\n        const hash = this._hashFunc(element.tokenTypeIndex, element.tokenModifierSet, element.languageId);\n        element.next = this._elements[hash];\n        this._elements[hash] = element;\n    }\n}\nHashTable._SIZES = [3, 7, 13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521, 131071, 262139, 524287, 1048573, 2097143];\n",
+      "start": 1711096856010,
+      "end": 1711096856113,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856113,
+      "end": 1711096856113,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856114,
+      "end": 1711096856114,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856114,
+      "end": 1711096856115,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856115,
+      "end": 1711096856115,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856115,
+      "end": 1711096856115,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856115,
+      "end": 1711096856115,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856115,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856116,
+      "end": 1711096856116,
+      "order": "normal"
+    }
+  ]
+}

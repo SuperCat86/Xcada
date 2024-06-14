@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport './accessibilityHelp.css';\nimport * as dom from '../../../../base/browser/dom.js';\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { renderFormattedText } from '../../../../base/browser/formattedTextRenderer.js';\nimport { alert } from '../../../../base/browser/ui/aria/aria.js';\nimport { Widget } from '../../../../base/browser/ui/widget.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport * as platform from '../../../../base/common/platform.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ToggleTabFocusModeAction } from '../../../contrib/toggleTabFocusMode/browser/toggleTabFocusMode.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { contrastBorder, editorWidgetBackground, widgetShadow, editorWidgetForeground } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { AccessibilityHelpNLS } from '../../../common/standaloneStrings.js';\nconst CONTEXT_ACCESSIBILITY_WIDGET_VISIBLE = new RawContextKey('accessibilityHelpWidgetVisible', false);\nlet AccessibilityHelpController = class AccessibilityHelpController extends Disposable {\n    constructor(editor, instantiationService) {\n        super();\n        this._editor = editor;\n        this._widget = this._register(instantiationService.createInstance(AccessibilityHelpWidget, this._editor));\n    }\n    static get(editor) {\n        return editor.getContribution(AccessibilityHelpController.ID);\n    }\n    show() {\n        this._widget.show();\n    }\n    hide() {\n        this._widget.hide();\n    }\n};\nAccessibilityHelpController.ID = 'editor.contrib.accessibilityHelpController';\nAccessibilityHelpController = __decorate([\n    __param(1, IInstantiationService)\n], AccessibilityHelpController);\nfunction getSelectionLabel(selections, charactersSelected) {\n    if (!selections || selections.length === 0) {\n        return AccessibilityHelpNLS.noSelection;\n    }\n    if (selections.length === 1) {\n        if (charactersSelected) {\n            return strings.format(AccessibilityHelpNLS.singleSelectionRange, selections[0].positionLineNumber, selections[0].positionColumn, charactersSelected);\n        }\n        return strings.format(AccessibilityHelpNLS.singleSelection, selections[0].positionLineNumber, selections[0].positionColumn);\n    }\n    if (charactersSelected) {\n        return strings.format(AccessibilityHelpNLS.multiSelectionRange, selections.length, charactersSelected);\n    }\n    if (selections.length > 0) {\n        return strings.format(AccessibilityHelpNLS.multiSelection, selections.length);\n    }\n    return '';\n}\nlet AccessibilityHelpWidget = class AccessibilityHelpWidget extends Widget {\n    constructor(editor, _contextKeyService, _keybindingService, _openerService) {\n        super();\n        this._contextKeyService = _contextKeyService;\n        this._keybindingService = _keybindingService;\n        this._openerService = _openerService;\n        this._editor = editor;\n        this._isVisibleKey = CONTEXT_ACCESSIBILITY_WIDGET_VISIBLE.bindTo(this._contextKeyService);\n        this._domNode = createFastDomNode(document.createElement('div'));\n        this._domNode.setClassName('accessibilityHelpWidget');\n        this._domNode.setDisplay('none');\n        this._domNode.setAttribute('role', 'dialog');\n        this._domNode.setAttribute('aria-hidden', 'true');\n        this._contentDomNode = createFastDomNode(document.createElement('div'));\n        this._contentDomNode.setAttribute('role', 'document');\n        this._domNode.appendChild(this._contentDomNode);\n        this._isVisible = false;\n        this._register(this._editor.onDidLayoutChange(() => {\n            if (this._isVisible) {\n                this._layout();\n            }\n        }));\n        // Intentionally not configurable!\n        this._register(dom.addStandardDisposableListener(this._contentDomNode.domNode, 'keydown', (e) => {\n            if (!this._isVisible) {\n                return;\n            }\n            if (e.equals(2048 /* CtrlCmd */ | 35 /* KeyE */)) {\n                alert(AccessibilityHelpNLS.emergencyConfOn);\n                this._editor.updateOptions({\n                    accessibilitySupport: 'on'\n                });\n                dom.clearNode(this._contentDomNode.domNode);\n                this._buildContent();\n                this._contentDomNode.domNode.focus();\n                e.preventDefault();\n                e.stopPropagation();\n            }\n            if (e.equals(2048 /* CtrlCmd */ | 38 /* KeyH */)) {\n                alert(AccessibilityHelpNLS.openingDocs);\n                let url = this._editor.getRawOptions().accessibilityHelpUrl;\n                if (typeof url === 'undefined') {\n                    url = 'https://go.microsoft.com/fwlink/?linkid=852450';\n                }\n                this._openerService.open(URI.parse(url));\n                e.preventDefault();\n                e.stopPropagation();\n            }\n        }));\n        this.onblur(this._contentDomNode.domNode, () => {\n            this.hide();\n        });\n        this._editor.addOverlayWidget(this);\n    }\n    dispose() {\n        this._editor.removeOverlayWidget(this);\n        super.dispose();\n    }\n    getId() {\n        return AccessibilityHelpWidget.ID;\n    }\n    getDomNode() {\n        return this._domNode.domNode;\n    }\n    getPosition() {\n        return {\n            preference: null\n        };\n    }\n    show() {\n        if (this._isVisible) {\n            return;\n        }\n        this._isVisible = true;\n        this._isVisibleKey.set(true);\n        this._layout();\n        this._domNode.setDisplay('block');\n        this._domNode.setAttribute('aria-hidden', 'false');\n        this._contentDomNode.domNode.tabIndex = 0;\n        this._buildContent();\n        this._contentDomNode.domNode.focus();\n    }\n    _descriptionForCommand(commandId, msg, noKbMsg) {\n        const kb = this._keybindingService.lookupKeybinding(commandId);\n        if (kb) {\n            return strings.format(msg, kb.getAriaLabel());\n        }\n        return strings.format(noKbMsg, commandId);\n    }\n    _buildContent() {\n        const options = this._editor.getOptions();\n        const selections = this._editor.getSelections();\n        let charactersSelected = 0;\n        if (selections) {\n            const model = this._editor.getModel();\n            if (model) {\n                selections.forEach((selection) => {\n                    charactersSelected += model.getValueLengthInRange(selection);\n                });\n            }\n        }\n        let text = getSelectionLabel(selections, charactersSelected);\n        if (options.get(54 /* inDiffEditor */)) {\n            if (options.get(81 /* readOnly */)) {\n                text += AccessibilityHelpNLS.readonlyDiffEditor;\n            }\n            else {\n                text += AccessibilityHelpNLS.editableDiffEditor;\n            }\n        }\n        else {\n            if (options.get(81 /* readOnly */)) {\n                text += AccessibilityHelpNLS.readonlyEditor;\n            }\n            else {\n                text += AccessibilityHelpNLS.editableEditor;\n            }\n        }\n        const turnOnMessage = (platform.isMacintosh\n            ? AccessibilityHelpNLS.changeConfigToOnMac\n            : AccessibilityHelpNLS.changeConfigToOnWinLinux);\n        switch (options.get(2 /* accessibilitySupport */)) {\n            case 0 /* Unknown */:\n                text += '\\n\\n - ' + turnOnMessage;\n                break;\n            case 2 /* Enabled */:\n                text += '\\n\\n - ' + AccessibilityHelpNLS.auto_on;\n                break;\n            case 1 /* Disabled */:\n                text += '\\n\\n - ' + AccessibilityHelpNLS.auto_off;\n                text += ' ' + turnOnMessage;\n                break;\n        }\n        if (options.get(130 /* tabFocusMode */)) {\n            text += '\\n\\n - ' + this._descriptionForCommand(ToggleTabFocusModeAction.ID, AccessibilityHelpNLS.tabFocusModeOnMsg, AccessibilityHelpNLS.tabFocusModeOnMsgNoKb);\n        }\n        else {\n            text += '\\n\\n - ' + this._descriptionForCommand(ToggleTabFocusModeAction.ID, AccessibilityHelpNLS.tabFocusModeOffMsg, AccessibilityHelpNLS.tabFocusModeOffMsgNoKb);\n        }\n        const openDocMessage = (platform.isMacintosh\n            ? AccessibilityHelpNLS.openDocMac\n            : AccessibilityHelpNLS.openDocWinLinux);\n        text += '\\n\\n - ' + openDocMessage;\n        text += '\\n\\n' + AccessibilityHelpNLS.outroMsg;\n        this._contentDomNode.domNode.appendChild(renderFormattedText(text));\n        // Per https://www.w3.org/TR/wai-aria/roles#document, Authors SHOULD provide a title or label for documents\n        this._contentDomNode.domNode.setAttribute('aria-label', text);\n    }\n    hide() {\n        if (!this._isVisible) {\n            return;\n        }\n        this._isVisible = false;\n        this._isVisibleKey.reset();\n        this._domNode.setDisplay('none');\n        this._domNode.setAttribute('aria-hidden', 'true');\n        this._contentDomNode.domNode.tabIndex = -1;\n        dom.clearNode(this._contentDomNode.domNode);\n        this._editor.focus();\n    }\n    _layout() {\n        const editorLayout = this._editor.getLayoutInfo();\n        const w = Math.max(5, Math.min(AccessibilityHelpWidget.WIDTH, editorLayout.width - 40));\n        const h = Math.max(5, Math.min(AccessibilityHelpWidget.HEIGHT, editorLayout.height - 40));\n        this._domNode.setWidth(w);\n        this._domNode.setHeight(h);\n        const top = Math.round((editorLayout.height - h) / 2);\n        this._domNode.setTop(top);\n        const left = Math.round((editorLayout.width - w) / 2);\n        this._domNode.setLeft(left);\n    }\n};\nAccessibilityHelpWidget.ID = 'editor.contrib.accessibilityHelpWidget';\nAccessibilityHelpWidget.WIDTH = 500;\nAccessibilityHelpWidget.HEIGHT = 300;\nAccessibilityHelpWidget = __decorate([\n    __param(1, IContextKeyService),\n    __param(2, IKeybindingService),\n    __param(3, IOpenerService)\n], AccessibilityHelpWidget);\nclass ShowAccessibilityHelpAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.showAccessibilityHelp',\n            label: AccessibilityHelpNLS.showAccessibilityHelpAction,\n            alias: 'Show Accessibility Help',\n            precondition: undefined,\n            kbOpts: {\n                primary: 512 /* Alt */ | 59 /* F1 */,\n                weight: 100 /* EditorContrib */,\n                linux: {\n                    primary: 512 /* Alt */ | 1024 /* Shift */ | 59 /* F1 */,\n                    secondary: [512 /* Alt */ | 59 /* F1 */]\n                }\n            }\n        });\n    }\n    run(accessor, editor) {\n        const controller = AccessibilityHelpController.get(editor);\n        if (controller) {\n            controller.show();\n        }\n    }\n}\nregisterEditorContribution(AccessibilityHelpController.ID, AccessibilityHelpController);\nregisterEditorAction(ShowAccessibilityHelpAction);\nconst AccessibilityHelpCommand = EditorCommand.bindToContribution(AccessibilityHelpController.get);\nregisterEditorCommand(new AccessibilityHelpCommand({\n    id: 'closeAccessibilityHelp',\n    precondition: CONTEXT_ACCESSIBILITY_WIDGET_VISIBLE,\n    handler: x => x.hide(),\n    kbOpts: {\n        weight: 100 /* EditorContrib */ + 100,\n        kbExpr: EditorContextKeys.focus,\n        primary: 9 /* Escape */,\n        secondary: [1024 /* Shift */ | 9 /* Escape */]\n    }\n}));\nregisterThemingParticipant((theme, collector) => {\n    const widgetBackground = theme.getColor(editorWidgetBackground);\n    if (widgetBackground) {\n        collector.addRule(`.monaco-editor .accessibilityHelpWidget { background-color: ${widgetBackground}; }`);\n    }\n    const widgetForeground = theme.getColor(editorWidgetForeground);\n    if (widgetForeground) {\n        collector.addRule(`.monaco-editor .accessibilityHelpWidget { color: ${widgetForeground}; }`);\n    }\n    const widgetShadowColor = theme.getColor(widgetShadow);\n    if (widgetShadowColor) {\n        collector.addRule(`.monaco-editor .accessibilityHelpWidget { box-shadow: 0 2px 8px ${widgetShadowColor}; }`);\n    }\n    const hcBorder = theme.getColor(contrastBorder);\n    if (hcBorder) {\n        collector.addRule(`.monaco-editor .accessibilityHelpWidget { border: 2px solid ${hcBorder}; }`);\n    }\n});\n",
+      "start": 1711096853947,
+      "end": 1711096854013,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854013,
+      "end": 1711096854013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854013,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854014,
+      "end": 1711096854014,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854014,
+      "end": 1711096854015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854015,
+      "end": 1711096854015,
+      "order": "normal"
+    }
+  ]
+}

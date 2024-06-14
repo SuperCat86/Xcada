@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/controller/textAreaState.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../base/common/strings.js';\nimport { Position } from '../../common/core/position.js';\nimport { Range } from '../../common/core/range.js';\nexport const _debugComposition = false;\nexport class TextAreaState {\n    constructor(value, selectionStart, selectionEnd, selectionStartPosition, selectionEndPosition) {\n        this.value = value;\n        this.selectionStart = selectionStart;\n        this.selectionEnd = selectionEnd;\n        this.selectionStartPosition = selectionStartPosition;\n        this.selectionEndPosition = selectionEndPosition;\n    }\n    toString() {\n        return `[ <${this.value}>, selectionStart: ${this.selectionStart}, selectionEnd: ${this.selectionEnd}]`;\n    }\n    static readFromTextArea(textArea) {\n        return new TextAreaState(textArea.getValue(), textArea.getSelectionStart(), textArea.getSelectionEnd(), null, null);\n    }\n    collapseSelection() {\n        return new TextAreaState(this.value, this.value.length, this.value.length, null, null);\n    }\n    writeToTextArea(reason, textArea, select) {\n        if (_debugComposition) {\n            console.log(`writeToTextArea ${reason}: ${this.toString()}`);\n        }\n        textArea.setValue(reason, this.value);\n        if (select) {\n            textArea.setSelectionRange(reason, this.selectionStart, this.selectionEnd);\n        }\n    }\n    deduceEditorPosition(offset) {\n        if (offset <= this.selectionStart) {\n            const str = this.value.substring(offset, this.selectionStart);\n            return this._finishDeduceEditorPosition(this.selectionStartPosition, str, -1);\n        }\n        if (offset >= this.selectionEnd) {\n            const str = this.value.substring(this.selectionEnd, offset);\n            return this._finishDeduceEditorPosition(this.selectionEndPosition, str, 1);\n        }\n        const str1 = this.value.substring(this.selectionStart, offset);\n        if (str1.indexOf(String.fromCharCode(8230)) === -1) {\n            return this._finishDeduceEditorPosition(this.selectionStartPosition, str1, 1);\n        }\n        const str2 = this.value.substring(offset, this.selectionEnd);\n        return this._finishDeduceEditorPosition(this.selectionEndPosition, str2, -1);\n    }\n    _finishDeduceEditorPosition(anchor, deltaText, signum) {\n        let lineFeedCnt = 0;\n        let lastLineFeedIndex = -1;\n        while ((lastLineFeedIndex = deltaText.indexOf('\\n', lastLineFeedIndex + 1)) !== -1) {\n            lineFeedCnt++;\n        }\n        return [anchor, signum * deltaText.length, lineFeedCnt];\n    }\n    static deduceInput(previousState, currentState, couldBeEmojiInput) {\n        if (!previousState) {\n            // This is the EMPTY state\n            return {\n                text: '',\n                replacePrevCharCnt: 0,\n                replaceNextCharCnt: 0,\n                positionDelta: 0\n            };\n        }\n        if (_debugComposition) {\n            console.log('------------------------deduceInput');\n            console.log(`PREVIOUS STATE: ${previousState.toString()}`);\n            console.log(`CURRENT STATE: ${currentState.toString()}`);\n        }\n        const prefixLength = Math.min(strings.commonPrefixLength(previousState.value, currentState.value), previousState.selectionStart, currentState.selectionStart);\n        const suffixLength = Math.min(strings.commonSuffixLength(previousState.value, currentState.value), previousState.value.length - previousState.selectionEnd, currentState.value.length - currentState.selectionEnd);\n        const previousValue = previousState.value.substring(prefixLength, previousState.value.length - suffixLength);\n        const currentValue = currentState.value.substring(prefixLength, currentState.value.length - suffixLength);\n        const previousSelectionStart = previousState.selectionStart - prefixLength;\n        const previousSelectionEnd = previousState.selectionEnd - prefixLength;\n        const currentSelectionStart = currentState.selectionStart - prefixLength;\n        const currentSelectionEnd = currentState.selectionEnd - prefixLength;\n        if (_debugComposition) {\n            console.log(`AFTER DIFFING PREVIOUS STATE: <${previousValue}>, selectionStart: ${previousSelectionStart}, selectionEnd: ${previousSelectionEnd}`);\n            console.log(`AFTER DIFFING CURRENT STATE: <${currentValue}>, selectionStart: ${currentSelectionStart}, selectionEnd: ${currentSelectionEnd}`);\n        }\n        if (currentSelectionStart === currentSelectionEnd) {\n            // no current selection\n            const replacePreviousCharacters = (previousState.selectionStart - prefixLength);\n            if (_debugComposition) {\n                console.log(`REMOVE PREVIOUS: ${replacePreviousCharacters} chars`);\n            }\n            return {\n                text: currentValue,\n                replacePrevCharCnt: replacePreviousCharacters,\n                replaceNextCharCnt: 0,\n                positionDelta: 0\n            };\n        }\n        // there is a current selection => composition case\n        const replacePreviousCharacters = previousSelectionEnd - previousSelectionStart;\n        return {\n            text: currentValue,\n            replacePrevCharCnt: replacePreviousCharacters,\n            replaceNextCharCnt: 0,\n            positionDelta: 0\n        };\n    }\n    static deduceAndroidCompositionInput(previousState, currentState) {\n        if (!previousState) {\n            // This is the EMPTY state\n            return {\n                text: '',\n                replacePrevCharCnt: 0,\n                replaceNextCharCnt: 0,\n                positionDelta: 0\n            };\n        }\n        if (_debugComposition) {\n            console.log('------------------------deduceAndroidCompositionInput');\n            console.log(`PREVIOUS STATE: ${previousState.toString()}`);\n            console.log(`CURRENT STATE: ${currentState.toString()}`);\n        }\n        if (previousState.value === currentState.value) {\n            return {\n                text: '',\n                replacePrevCharCnt: 0,\n                replaceNextCharCnt: 0,\n                positionDelta: currentState.selectionEnd - previousState.selectionEnd\n            };\n        }\n        const prefixLength = Math.min(strings.commonPrefixLength(previousState.value, currentState.value), previousState.selectionEnd);\n        const suffixLength = Math.min(strings.commonSuffixLength(previousState.value, currentState.value), previousState.value.length - previousState.selectionEnd);\n        const previousValue = previousState.value.substring(prefixLength, previousState.value.length - suffixLength);\n        const currentValue = currentState.value.substring(prefixLength, currentState.value.length - suffixLength);\n        const previousSelectionStart = previousState.selectionStart - prefixLength;\n        const previousSelectionEnd = previousState.selectionEnd - prefixLength;\n        const currentSelectionStart = currentState.selectionStart - prefixLength;\n        const currentSelectionEnd = currentState.selectionEnd - prefixLength;\n        if (_debugComposition) {\n            console.log(`AFTER DIFFING PREVIOUS STATE: <${previousValue}>, selectionStart: ${previousSelectionStart}, selectionEnd: ${previousSelectionEnd}`);\n            console.log(`AFTER DIFFING CURRENT STATE: <${currentValue}>, selectionStart: ${currentSelectionStart}, selectionEnd: ${currentSelectionEnd}`);\n        }\n        return {\n            text: currentValue,\n            replacePrevCharCnt: previousSelectionEnd,\n            replaceNextCharCnt: previousValue.length - previousSelectionEnd,\n            positionDelta: currentSelectionEnd - currentValue.length\n        };\n    }\n}\nTextAreaState.EMPTY = new TextAreaState('', 0, 0, null, null);\nexport class PagedScreenReaderStrategy {\n    static _getPageOfLine(lineNumber, linesPerPage) {\n        return Math.floor((lineNumber - 1) / linesPerPage);\n    }\n    static _getRangeForPage(page, linesPerPage) {\n        const offset = page * linesPerPage;\n        const startLineNumber = offset + 1;\n        const endLineNumber = offset + linesPerPage;\n        return new Range(startLineNumber, 1, endLineNumber + 1, 1);\n    }\n    static fromEditorSelection(previousState, model, selection, linesPerPage, trimLongText) {\n        const selectionStartPage = PagedScreenReaderStrategy._getPageOfLine(selection.startLineNumber, linesPerPage);\n        const selectionStartPageRange = PagedScreenReaderStrategy._getRangeForPage(selectionStartPage, linesPerPage);\n        const selectionEndPage = PagedScreenReaderStrategy._getPageOfLine(selection.endLineNumber, linesPerPage);\n        const selectionEndPageRange = PagedScreenReaderStrategy._getRangeForPage(selectionEndPage, linesPerPage);\n        const pretextRange = selectionStartPageRange.intersectRanges(new Range(1, 1, selection.startLineNumber, selection.startColumn));\n        let pretext = model.getValueInRange(pretextRange, 1 /* LF */);\n        const lastLine = model.getLineCount();\n        const lastLineMaxColumn = model.getLineMaxColumn(lastLine);\n        const posttextRange = selectionEndPageRange.intersectRanges(new Range(selection.endLineNumber, selection.endColumn, lastLine, lastLineMaxColumn));\n        let posttext = model.getValueInRange(posttextRange, 1 /* LF */);\n        let text;\n        if (selectionStartPage === selectionEndPage || selectionStartPage + 1 === selectionEndPage) {\n            // take full selection\n            text = model.getValueInRange(selection, 1 /* LF */);\n        }\n        else {\n            const selectionRange1 = selectionStartPageRange.intersectRanges(selection);\n            const selectionRange2 = selectionEndPageRange.intersectRanges(selection);\n            text = (model.getValueInRange(selectionRange1, 1 /* LF */)\n                + String.fromCharCode(8230)\n                + model.getValueInRange(selectionRange2, 1 /* LF */));\n        }\n        // Chromium handles very poorly text even of a few thousand chars\n        // Cut text to avoid stalling the entire UI\n        if (trimLongText) {\n            const LIMIT_CHARS = 500;\n            if (pretext.length > LIMIT_CHARS) {\n                pretext = pretext.substring(pretext.length - LIMIT_CHARS, pretext.length);\n            }\n            if (posttext.length > LIMIT_CHARS) {\n                posttext = posttext.substring(0, LIMIT_CHARS);\n            }\n            if (text.length > 2 * LIMIT_CHARS) {\n                text = text.substring(0, LIMIT_CHARS) + String.fromCharCode(8230) + text.substring(text.length - LIMIT_CHARS, text.length);\n            }\n        }\n        return new TextAreaState(pretext + text + posttext, pretext.length, pretext.length + text.length, new Position(selection.startLineNumber, selection.startColumn), new Position(selection.endLineNumber, selection.endColumn));\n    }\n}\n",
+      "start": 1711096856589,
+      "end": 1711096856681,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856681,
+      "end": 1711096856682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856683,
+      "end": 1711096856683,
+      "order": "normal"
+    }
+  ]
+}

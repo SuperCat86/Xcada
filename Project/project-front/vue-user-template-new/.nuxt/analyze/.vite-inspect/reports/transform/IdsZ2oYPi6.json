@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/browser/smartSelect.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as arrays from '../../../../base/common/arrays.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { EditorAction, registerEditorAction, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { BracketSelectionRangeProvider } from './bracketSelections.js';\nimport { WordSelectionRangeProvider } from './wordSelections.js';\nimport * as nls from '../../../../nls.js';\nimport { MenuId } from '../../../../platform/actions/common/actions.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { ITextModelService } from '../../../common/services/resolverService.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nclass SelectionRanges {\n    constructor(index, ranges) {\n        this.index = index;\n        this.ranges = ranges;\n    }\n    mov(fwd) {\n        let index = this.index + (fwd ? 1 : -1);\n        if (index < 0 || index >= this.ranges.length) {\n            return this;\n        }\n        const res = new SelectionRanges(index, this.ranges);\n        if (res.ranges[index].equalsRange(this.ranges[this.index])) {\n            // next range equals this range, retry with next-next\n            return res.mov(fwd);\n        }\n        return res;\n    }\n}\nlet SmartSelectController = class SmartSelectController {\n    constructor(_editor, _languageFeaturesService) {\n        this._editor = _editor;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._ignoreSelection = false;\n    }\n    static get(editor) {\n        return editor.getContribution(SmartSelectController.ID);\n    }\n    dispose() {\n        var _a;\n        (_a = this._selectionListener) === null || _a === void 0 ? void 0 : _a.dispose();\n    }\n    run(forward) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._editor.hasModel()) {\n                return;\n            }\n            const selections = this._editor.getSelections();\n            const model = this._editor.getModel();\n            if (!this._state) {\n                yield provideSelectionRanges(this._languageFeaturesService.selectionRangeProvider, model, selections.map(s => s.getPosition()), this._editor.getOption(102 /* smartSelect */), CancellationToken.None).then(ranges => {\n                    var _a;\n                    if (!arrays.isNonEmptyArray(ranges) || ranges.length !== selections.length) {\n                        // invalid result\n                        return;\n                    }\n                    if (!this._editor.hasModel() || !arrays.equals(this._editor.getSelections(), selections, (a, b) => a.equalsSelection(b))) {\n                        // invalid editor state\n                        return;\n                    }\n                    for (let i = 0; i < ranges.length; i++) {\n                        ranges[i] = ranges[i].filter(range => {\n                            // filter ranges inside the selection\n                            return range.containsPosition(selections[i].getStartPosition()) && range.containsPosition(selections[i].getEndPosition());\n                        });\n                        // prepend current selection\n                        ranges[i].unshift(selections[i]);\n                    }\n                    this._state = ranges.map(ranges => new SelectionRanges(0, ranges));\n                    // listen to caret move and forget about state\n                    (_a = this._selectionListener) === null || _a === void 0 ? void 0 : _a.dispose();\n                    this._selectionListener = this._editor.onDidChangeCursorPosition(() => {\n                        var _a;\n                        if (!this._ignoreSelection) {\n                            (_a = this._selectionListener) === null || _a === void 0 ? void 0 : _a.dispose();\n                            this._state = undefined;\n                        }\n                    });\n                });\n            }\n            if (!this._state) {\n                // no state\n                return;\n            }\n            this._state = this._state.map(state => state.mov(forward));\n            const newSelections = this._state.map(state => Selection.fromPositions(state.ranges[state.index].getStartPosition(), state.ranges[state.index].getEndPosition()));\n            this._ignoreSelection = true;\n            try {\n                this._editor.setSelections(newSelections);\n            }\n            finally {\n                this._ignoreSelection = false;\n            }\n        });\n    }\n};\nSmartSelectController.ID = 'editor.contrib.smartSelectController';\nSmartSelectController = __decorate([\n    __param(1, ILanguageFeaturesService)\n], SmartSelectController);\nclass AbstractSmartSelect extends EditorAction {\n    constructor(forward, opts) {\n        super(opts);\n        this._forward = forward;\n    }\n    run(_accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            let controller = SmartSelectController.get(editor);\n            if (controller) {\n                yield controller.run(this._forward);\n            }\n        });\n    }\n}\nclass GrowSelectionAction extends AbstractSmartSelect {\n    constructor() {\n        super(true, {\n            id: 'editor.action.smartSelect.expand',\n            label: nls.localize('smartSelect.expand', \"Expand Selection\"),\n            alias: 'Expand Selection',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 17 /* RightArrow */,\n                mac: {\n                    primary: 2048 /* CtrlCmd */ | 256 /* WinCtrl */ | 1024 /* Shift */ | 17 /* RightArrow */,\n                    secondary: [256 /* WinCtrl */ | 1024 /* Shift */ | 17 /* RightArrow */],\n                },\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarSelectionMenu,\n                group: '1_basic',\n                title: nls.localize({ key: 'miSmartSelectGrow', comment: ['&& denotes a mnemonic'] }, \"&&Expand Selection\"),\n                order: 2\n            }\n        });\n    }\n}\n// renamed command id\nCommandsRegistry.registerCommandAlias('editor.action.smartSelect.grow', 'editor.action.smartSelect.expand');\nclass ShrinkSelectionAction extends AbstractSmartSelect {\n    constructor() {\n        super(false, {\n            id: 'editor.action.smartSelect.shrink',\n            label: nls.localize('smartSelect.shrink', \"Shrink Selection\"),\n            alias: 'Shrink Selection',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 15 /* LeftArrow */,\n                mac: {\n                    primary: 2048 /* CtrlCmd */ | 256 /* WinCtrl */ | 1024 /* Shift */ | 15 /* LeftArrow */,\n                    secondary: [256 /* WinCtrl */ | 1024 /* Shift */ | 15 /* LeftArrow */],\n                },\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarSelectionMenu,\n                group: '1_basic',\n                title: nls.localize({ key: 'miSmartSelectShrink', comment: ['&& denotes a mnemonic'] }, \"&&Shrink Selection\"),\n                order: 3\n            }\n        });\n    }\n}\nregisterEditorContribution(SmartSelectController.ID, SmartSelectController);\nregisterEditorAction(GrowSelectionAction);\nregisterEditorAction(ShrinkSelectionAction);\nexport function provideSelectionRanges(registry, model, positions, options, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const providers = registry.all(model)\n            .concat(new WordSelectionRangeProvider()); // ALWAYS have word based selection range\n        if (providers.length === 1) {\n            // add word selection and bracket selection when no provider exists\n            providers.unshift(new BracketSelectionRangeProvider());\n        }\n        let work = [];\n        let allRawRanges = [];\n        for (const provider of providers) {\n            work.push(Promise.resolve(provider.provideSelectionRanges(model, positions, token)).then(allProviderRanges => {\n                if (arrays.isNonEmptyArray(allProviderRanges) && allProviderRanges.length === positions.length) {\n                    for (let i = 0; i < positions.length; i++) {\n                        if (!allRawRanges[i]) {\n                            allRawRanges[i] = [];\n                        }\n                        for (const oneProviderRanges of allProviderRanges[i]) {\n                            if (Range.isIRange(oneProviderRanges.range) && Range.containsPosition(oneProviderRanges.range, positions[i])) {\n                                allRawRanges[i].push(Range.lift(oneProviderRanges.range));\n                            }\n                        }\n                    }\n                }\n            }, onUnexpectedExternalError));\n        }\n        yield Promise.all(work);\n        return allRawRanges.map(oneRawRanges => {\n            if (oneRawRanges.length === 0) {\n                return [];\n            }\n            // sort all by start/end position\n            oneRawRanges.sort((a, b) => {\n                if (Position.isBefore(a.getStartPosition(), b.getStartPosition())) {\n                    return 1;\n                }\n                else if (Position.isBefore(b.getStartPosition(), a.getStartPosition())) {\n                    return -1;\n                }\n                else if (Position.isBefore(a.getEndPosition(), b.getEndPosition())) {\n                    return -1;\n                }\n                else if (Position.isBefore(b.getEndPosition(), a.getEndPosition())) {\n                    return 1;\n                }\n                else {\n                    return 0;\n                }\n            });\n            // remove ranges that don't contain the former range or that are equal to the\n            // former range\n            let oneRanges = [];\n            let last;\n            for (const range of oneRawRanges) {\n                if (!last || (Range.containsRange(range, last) && !Range.equalsRange(range, last))) {\n                    oneRanges.push(range);\n                    last = range;\n                }\n            }\n            if (!options.selectLeadingAndTrailingWhitespace) {\n                return oneRanges;\n            }\n            // add ranges that expand trivia at line starts and ends whenever a range\n            // wraps onto the a new line\n            let oneRangesWithTrivia = [oneRanges[0]];\n            for (let i = 1; i < oneRanges.length; i++) {\n                const prev = oneRanges[i - 1];\n                const cur = oneRanges[i];\n                if (cur.startLineNumber !== prev.startLineNumber || cur.endLineNumber !== prev.endLineNumber) {\n                    // add line/block range without leading/failing whitespace\n                    const rangeNoWhitespace = new Range(prev.startLineNumber, model.getLineFirstNonWhitespaceColumn(prev.startLineNumber), prev.endLineNumber, model.getLineLastNonWhitespaceColumn(prev.endLineNumber));\n                    if (rangeNoWhitespace.containsRange(prev) && !rangeNoWhitespace.equalsRange(prev) && cur.containsRange(rangeNoWhitespace) && !cur.equalsRange(rangeNoWhitespace)) {\n                        oneRangesWithTrivia.push(rangeNoWhitespace);\n                    }\n                    // add line/block range\n                    const rangeFull = new Range(prev.startLineNumber, 1, prev.endLineNumber, model.getLineMaxColumn(prev.endLineNumber));\n                    if (rangeFull.containsRange(prev) && !rangeFull.equalsRange(rangeNoWhitespace) && cur.containsRange(rangeFull) && !cur.equalsRange(rangeFull)) {\n                        oneRangesWithTrivia.push(rangeFull);\n                    }\n                }\n                oneRangesWithTrivia.push(cur);\n            }\n            return oneRangesWithTrivia;\n        });\n    });\n}\nCommandsRegistry.registerCommand('_executeSelectionRangeProvider', function (accessor, ...args) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const [resource, positions] = args;\n        assertType(URI.isUri(resource));\n        const registry = accessor.get(ILanguageFeaturesService).selectionRangeProvider;\n        const reference = yield accessor.get(ITextModelService).createModelReference(resource);\n        try {\n            return provideSelectionRanges(registry, reference.object.textEditorModel, positions, { selectLeadingAndTrailingWhitespace: true }, CancellationToken.None);\n        }\n        finally {\n            reference.dispose();\n        }\n    });\n});\n",
+      "start": 1711096854510,
+      "end": 1711096854672,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854672,
+      "end": 1711096854672,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854673,
+      "end": 1711096854673,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854673,
+      "end": 1711096854674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854674,
+      "end": 1711096854674,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854675,
+      "end": 1711096854675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854675,
+      "end": 1711096854675,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854675,
+      "end": 1711096854675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854675,
+      "end": 1711096854675,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/uri.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as paths from './path.js';\nimport { isWindows } from './platform.js';\nconst _schemePattern = /^\\w[\\w\\d+.-]*$/;\nconst _singleSlashStart = /^\\//;\nconst _doubleSlashStart = /^\\/\\//;\nfunction _validateUri(ret, _strict) {\n    // scheme, must be set\n    if (!ret.scheme && _strict) {\n        throw new Error(`[UriError]: Scheme is missing: {scheme: \"\", authority: \"${ret.authority}\", path: \"${ret.path}\", query: \"${ret.query}\", fragment: \"${ret.fragment}\"}`);\n    }\n    // scheme, https://tools.ietf.org/html/rfc3986#section-3.1\n    // ALPHA *( ALPHA / DIGIT / \"+\" / \"-\" / \".\" )\n    if (ret.scheme && !_schemePattern.test(ret.scheme)) {\n        throw new Error('[UriError]: Scheme contains illegal characters.');\n    }\n    // path, http://tools.ietf.org/html/rfc3986#section-3.3\n    // If a URI contains an authority component, then the path component\n    // must either be empty or begin with a slash (\"/\") character.  If a URI\n    // does not contain an authority component, then the path cannot begin\n    // with two slash characters (\"//\").\n    if (ret.path) {\n        if (ret.authority) {\n            if (!_singleSlashStart.test(ret.path)) {\n                throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash (\"/\") character');\n            }\n        }\n        else {\n            if (_doubleSlashStart.test(ret.path)) {\n                throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters (\"//\")');\n            }\n        }\n    }\n}\n// for a while we allowed uris *without* schemes and this is the migration\n// for them, e.g. an uri without scheme and without strict-mode warns and falls\n// back to the file-scheme. that should cause the least carnage and still be a\n// clear warning\nfunction _schemeFix(scheme, _strict) {\n    if (!scheme && !_strict) {\n        return 'file';\n    }\n    return scheme;\n}\n// implements a bit of https://tools.ietf.org/html/rfc3986#section-5\nfunction _referenceResolution(scheme, path) {\n    // the slash-character is our 'default base' as we don't\n    // support constructing URIs relative to other URIs. This\n    // also means that we alter and potentially break paths.\n    // see https://tools.ietf.org/html/rfc3986#section-5.1.4\n    switch (scheme) {\n        case 'https':\n        case 'http':\n        case 'file':\n            if (!path) {\n                path = _slash;\n            }\n            else if (path[0] !== _slash) {\n                path = _slash + path;\n            }\n            break;\n    }\n    return path;\n}\nconst _empty = '';\nconst _slash = '/';\nconst _regexp = /^(([^:/?#]+?):)?(\\/\\/([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?/;\n/**\n * Uniform Resource Identifier (URI) http://tools.ietf.org/html/rfc3986.\n * This class is a simple parser which creates the basic component parts\n * (http://tools.ietf.org/html/rfc3986#section-3) with minimal validation\n * and encoding.\n *\n * ```txt\n *       foo://example.com:8042/over/there?name=ferret#nose\n *       \\_/   \\______________/\\_________/ \\_________/ \\__/\n *        |           |            |            |        |\n *     scheme     authority       path        query   fragment\n *        |   _____________________|__\n *       / \\ /                        \\\n *       urn:example:animal:ferret:nose\n * ```\n */\nexport class URI {\n    /**\n     * @internal\n     */\n    constructor(schemeOrData, authority, path, query, fragment, _strict = false) {\n        if (typeof schemeOrData === 'object') {\n            this.scheme = schemeOrData.scheme || _empty;\n            this.authority = schemeOrData.authority || _empty;\n            this.path = schemeOrData.path || _empty;\n            this.query = schemeOrData.query || _empty;\n            this.fragment = schemeOrData.fragment || _empty;\n            // no validation because it's this URI\n            // that creates uri components.\n            // _validateUri(this);\n        }\n        else {\n            this.scheme = _schemeFix(schemeOrData, _strict);\n            this.authority = authority || _empty;\n            this.path = _referenceResolution(this.scheme, path || _empty);\n            this.query = query || _empty;\n            this.fragment = fragment || _empty;\n            _validateUri(this, _strict);\n        }\n    }\n    static isUri(thing) {\n        if (thing instanceof URI) {\n            return true;\n        }\n        if (!thing) {\n            return false;\n        }\n        return typeof thing.authority === 'string'\n            && typeof thing.fragment === 'string'\n            && typeof thing.path === 'string'\n            && typeof thing.query === 'string'\n            && typeof thing.scheme === 'string'\n            && typeof thing.fsPath === 'string'\n            && typeof thing.with === 'function'\n            && typeof thing.toString === 'function';\n    }\n    // ---- filesystem path -----------------------\n    /**\n     * Returns a string representing the corresponding file system path of this URI.\n     * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the\n     * platform specific path separator.\n     *\n     * * Will *not* validate the path for invalid characters and semantics.\n     * * Will *not* look at the scheme of this URI.\n     * * The result shall *not* be used for display purposes but for accessing a file on disk.\n     *\n     *\n     * The *difference* to `URI#path` is the use of the platform specific separator and the handling\n     * of UNC paths. See the below sample of a file-uri with an authority (UNC path).\n     *\n     * ```ts\n        const u = URI.parse('file://server/c$/folder/file.txt')\n        u.authority === 'server'\n        u.path === '/shares/c$/file.txt'\n        u.fsPath === '\\\\server\\c$\\folder\\file.txt'\n    ```\n     *\n     * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,\n     * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working\n     * with URIs that represent files on disk (`file` scheme).\n     */\n    get fsPath() {\n        // if (this.scheme !== 'file') {\n        // \tconsole.warn(`[UriError] calling fsPath with scheme ${this.scheme}`);\n        // }\n        return uriToFsPath(this, false);\n    }\n    // ---- modify to new -------------------------\n    with(change) {\n        if (!change) {\n            return this;\n        }\n        let { scheme, authority, path, query, fragment } = change;\n        if (scheme === undefined) {\n            scheme = this.scheme;\n        }\n        else if (scheme === null) {\n            scheme = _empty;\n        }\n        if (authority === undefined) {\n            authority = this.authority;\n        }\n        else if (authority === null) {\n            authority = _empty;\n        }\n        if (path === undefined) {\n            path = this.path;\n        }\n        else if (path === null) {\n            path = _empty;\n        }\n        if (query === undefined) {\n            query = this.query;\n        }\n        else if (query === null) {\n            query = _empty;\n        }\n        if (fragment === undefined) {\n            fragment = this.fragment;\n        }\n        else if (fragment === null) {\n            fragment = _empty;\n        }\n        if (scheme === this.scheme\n            && authority === this.authority\n            && path === this.path\n            && query === this.query\n            && fragment === this.fragment) {\n            return this;\n        }\n        return new Uri(scheme, authority, path, query, fragment);\n    }\n    // ---- parse & validate ------------------------\n    /**\n     * Creates a new URI from a string, e.g. `http://www.example.com/some/path`,\n     * `file:///usr/home`, or `scheme:with/path`.\n     *\n     * @param value A string which represents an URI (see `URI#toString`).\n     */\n    static parse(value, _strict = false) {\n        const match = _regexp.exec(value);\n        if (!match) {\n            return new Uri(_empty, _empty, _empty, _empty, _empty);\n        }\n        return new Uri(match[2] || _empty, percentDecode(match[4] || _empty), percentDecode(match[5] || _empty), percentDecode(match[7] || _empty), percentDecode(match[9] || _empty), _strict);\n    }\n    /**\n     * Creates a new URI from a file system path, e.g. `c:\\my\\files`,\n     * `/usr/home`, or `\\\\server\\share\\some\\path`.\n     *\n     * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument\n     * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**\n     * `URI.parse('file://' + path)` because the path might contain characters that are\n     * interpreted (# and ?). See the following sample:\n     * ```ts\n    const good = URI.file('/coding/c#/project1');\n    good.scheme === 'file';\n    good.path === '/coding/c#/project1';\n    good.fragment === '';\n    const bad = URI.parse('file://' + '/coding/c#/project1');\n    bad.scheme === 'file';\n    bad.path === '/coding/c'; // path is now broken\n    bad.fragment === '/project1';\n    ```\n     *\n     * @param path A file system path (see `URI#fsPath`)\n     */\n    static file(path) {\n        let authority = _empty;\n        // normalize to fwd-slashes on windows,\n        // on other systems bwd-slashes are valid\n        // filename character, eg /f\\oo/ba\\r.txt\n        if (isWindows) {\n            path = path.replace(/\\\\/g, _slash);\n        }\n        // check for authority as used in UNC shares\n        // or use the path as given\n        if (path[0] === _slash && path[1] === _slash) {\n            const idx = path.indexOf(_slash, 2);\n            if (idx === -1) {\n                authority = path.substring(2);\n                path = _slash;\n            }\n            else {\n                authority = path.substring(2, idx);\n                path = path.substring(idx) || _slash;\n            }\n        }\n        return new Uri('file', authority, path, _empty, _empty);\n    }\n    static from(components) {\n        const result = new Uri(components.scheme, components.authority, components.path, components.query, components.fragment);\n        _validateUri(result, true);\n        return result;\n    }\n    /**\n     * Join a URI path with path fragments and normalizes the resulting path.\n     *\n     * @param uri The input URI.\n     * @param pathFragment The path fragment to add to the URI path.\n     * @returns The resulting URI.\n     */\n    static joinPath(uri, ...pathFragment) {\n        if (!uri.path) {\n            throw new Error(`[UriError]: cannot call joinPath on URI without path`);\n        }\n        let newPath;\n        if (isWindows && uri.scheme === 'file') {\n            newPath = URI.file(paths.win32.join(uriToFsPath(uri, true), ...pathFragment)).path;\n        }\n        else {\n            newPath = paths.posix.join(uri.path, ...pathFragment);\n        }\n        return uri.with({ path: newPath });\n    }\n    // ---- printing/externalize ---------------------------\n    /**\n     * Creates a string representation for this URI. It's guaranteed that calling\n     * `URI.parse` with the result of this function creates an URI which is equal\n     * to this URI.\n     *\n     * * The result shall *not* be used for display purposes but for externalization or transport.\n     * * The result will be encoded using the percentage encoding and encoding happens mostly\n     * ignore the scheme-specific encoding rules.\n     *\n     * @param skipEncoding Do not encode the result, default is `false`\n     */\n    toString(skipEncoding = false) {\n        return _asFormatted(this, skipEncoding);\n    }\n    toJSON() {\n        return this;\n    }\n    static revive(data) {\n        if (!data) {\n            return data;\n        }\n        else if (data instanceof URI) {\n            return data;\n        }\n        else {\n            const result = new Uri(data);\n            result._formatted = data.external;\n            result._fsPath = data._sep === _pathSepMarker ? data.fsPath : null;\n            return result;\n        }\n    }\n}\nconst _pathSepMarker = isWindows ? 1 : undefined;\n// This class exists so that URI is compatible with vscode.Uri (API).\nclass Uri extends URI {\n    constructor() {\n        super(...arguments);\n        this._formatted = null;\n        this._fsPath = null;\n    }\n    get fsPath() {\n        if (!this._fsPath) {\n            this._fsPath = uriToFsPath(this, false);\n        }\n        return this._fsPath;\n    }\n    toString(skipEncoding = false) {\n        if (!skipEncoding) {\n            if (!this._formatted) {\n                this._formatted = _asFormatted(this, false);\n            }\n            return this._formatted;\n        }\n        else {\n            // we don't cache that\n            return _asFormatted(this, true);\n        }\n    }\n    toJSON() {\n        const res = {\n            $mid: 1 /* Uri */\n        };\n        // cached state\n        if (this._fsPath) {\n            res.fsPath = this._fsPath;\n            res._sep = _pathSepMarker;\n        }\n        if (this._formatted) {\n            res.external = this._formatted;\n        }\n        // uri components\n        if (this.path) {\n            res.path = this.path;\n        }\n        if (this.scheme) {\n            res.scheme = this.scheme;\n        }\n        if (this.authority) {\n            res.authority = this.authority;\n        }\n        if (this.query) {\n            res.query = this.query;\n        }\n        if (this.fragment) {\n            res.fragment = this.fragment;\n        }\n        return res;\n    }\n}\n// reserved characters: https://tools.ietf.org/html/rfc3986#section-2.2\nconst encodeTable = {\n    [58 /* Colon */]: '%3A',\n    [47 /* Slash */]: '%2F',\n    [63 /* QuestionMark */]: '%3F',\n    [35 /* Hash */]: '%23',\n    [91 /* OpenSquareBracket */]: '%5B',\n    [93 /* CloseSquareBracket */]: '%5D',\n    [64 /* AtSign */]: '%40',\n    [33 /* ExclamationMark */]: '%21',\n    [36 /* DollarSign */]: '%24',\n    [38 /* Ampersand */]: '%26',\n    [39 /* SingleQuote */]: '%27',\n    [40 /* OpenParen */]: '%28',\n    [41 /* CloseParen */]: '%29',\n    [42 /* Asterisk */]: '%2A',\n    [43 /* Plus */]: '%2B',\n    [44 /* Comma */]: '%2C',\n    [59 /* Semicolon */]: '%3B',\n    [61 /* Equals */]: '%3D',\n    [32 /* Space */]: '%20',\n};\nfunction encodeURIComponentFast(uriComponent, allowSlash) {\n    let res = undefined;\n    let nativeEncodePos = -1;\n    for (let pos = 0; pos < uriComponent.length; pos++) {\n        const code = uriComponent.charCodeAt(pos);\n        // unreserved characters: https://tools.ietf.org/html/rfc3986#section-2.3\n        if ((code >= 97 /* a */ && code <= 122 /* z */)\n            || (code >= 65 /* A */ && code <= 90 /* Z */)\n            || (code >= 48 /* Digit0 */ && code <= 57 /* Digit9 */)\n            || code === 45 /* Dash */\n            || code === 46 /* Period */\n            || code === 95 /* Underline */\n            || code === 126 /* Tilde */\n            || (allowSlash && code === 47 /* Slash */)) {\n            // check if we are delaying native encode\n            if (nativeEncodePos !== -1) {\n                res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));\n                nativeEncodePos = -1;\n            }\n            // check if we write into a new string (by default we try to return the param)\n            if (res !== undefined) {\n                res += uriComponent.charAt(pos);\n            }\n        }\n        else {\n            // encoding needed, we need to allocate a new string\n            if (res === undefined) {\n                res = uriComponent.substr(0, pos);\n            }\n            // check with default table first\n            const escaped = encodeTable[code];\n            if (escaped !== undefined) {\n                // check if we are delaying native encode\n                if (nativeEncodePos !== -1) {\n                    res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));\n                    nativeEncodePos = -1;\n                }\n                // append escaped variant to result\n                res += escaped;\n            }\n            else if (nativeEncodePos === -1) {\n                // use native encode only when needed\n                nativeEncodePos = pos;\n            }\n        }\n    }\n    if (nativeEncodePos !== -1) {\n        res += encodeURIComponent(uriComponent.substring(nativeEncodePos));\n    }\n    return res !== undefined ? res : uriComponent;\n}\nfunction encodeURIComponentMinimal(path) {\n    let res = undefined;\n    for (let pos = 0; pos < path.length; pos++) {\n        const code = path.charCodeAt(pos);\n        if (code === 35 /* Hash */ || code === 63 /* QuestionMark */) {\n            if (res === undefined) {\n                res = path.substr(0, pos);\n            }\n            res += encodeTable[code];\n        }\n        else {\n            if (res !== undefined) {\n                res += path[pos];\n            }\n        }\n    }\n    return res !== undefined ? res : path;\n}\n/**\n * Compute `fsPath` for the given uri\n */\nexport function uriToFsPath(uri, keepDriveLetterCasing) {\n    let value;\n    if (uri.authority && uri.path.length > 1 && uri.scheme === 'file') {\n        // unc path: file://shares/c$/far/boo\n        value = `//${uri.authority}${uri.path}`;\n    }\n    else if (uri.path.charCodeAt(0) === 47 /* Slash */\n        && (uri.path.charCodeAt(1) >= 65 /* A */ && uri.path.charCodeAt(1) <= 90 /* Z */ || uri.path.charCodeAt(1) >= 97 /* a */ && uri.path.charCodeAt(1) <= 122 /* z */)\n        && uri.path.charCodeAt(2) === 58 /* Colon */) {\n        if (!keepDriveLetterCasing) {\n            // windows drive letter: file:///c:/far/boo\n            value = uri.path[1].toLowerCase() + uri.path.substr(2);\n        }\n        else {\n            value = uri.path.substr(1);\n        }\n    }\n    else {\n        // other path\n        value = uri.path;\n    }\n    if (isWindows) {\n        value = value.replace(/\\//g, '\\\\');\n    }\n    return value;\n}\n/**\n * Create the external version of a uri\n */\nfunction _asFormatted(uri, skipEncoding) {\n    const encoder = !skipEncoding\n        ? encodeURIComponentFast\n        : encodeURIComponentMinimal;\n    let res = '';\n    let { scheme, authority, path, query, fragment } = uri;\n    if (scheme) {\n        res += scheme;\n        res += ':';\n    }\n    if (authority || scheme === 'file') {\n        res += _slash;\n        res += _slash;\n    }\n    if (authority) {\n        let idx = authority.indexOf('@');\n        if (idx !== -1) {\n            // <user>@<auth>\n            const userinfo = authority.substr(0, idx);\n            authority = authority.substr(idx + 1);\n            idx = userinfo.indexOf(':');\n            if (idx === -1) {\n                res += encoder(userinfo, false);\n            }\n            else {\n                // <user>:<pass>@<auth>\n                res += encoder(userinfo.substr(0, idx), false);\n                res += ':';\n                res += encoder(userinfo.substr(idx + 1), false);\n            }\n            res += '@';\n        }\n        authority = authority.toLowerCase();\n        idx = authority.indexOf(':');\n        if (idx === -1) {\n            res += encoder(authority, false);\n        }\n        else {\n            // <auth>:<port>\n            res += encoder(authority.substr(0, idx), false);\n            res += authority.substr(idx);\n        }\n    }\n    if (path) {\n        // lower-case windows drive letters in /C:/fff or C:/fff\n        if (path.length >= 3 && path.charCodeAt(0) === 47 /* Slash */ && path.charCodeAt(2) === 58 /* Colon */) {\n            const code = path.charCodeAt(1);\n            if (code >= 65 /* A */ && code <= 90 /* Z */) {\n                path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`; // \"/c:\".length === 3\n            }\n        }\n        else if (path.length >= 2 && path.charCodeAt(1) === 58 /* Colon */) {\n            const code = path.charCodeAt(0);\n            if (code >= 65 /* A */ && code <= 90 /* Z */) {\n                path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`; // \"/c:\".length === 3\n            }\n        }\n        // encode the rest of the path\n        res += encoder(path, true);\n    }\n    if (query) {\n        res += '?';\n        res += encoder(query, false);\n    }\n    if (fragment) {\n        res += '#';\n        res += !skipEncoding ? encodeURIComponentFast(fragment, false) : fragment;\n    }\n    return res;\n}\n// --- decode\nfunction decodeURIComponentGraceful(str) {\n    try {\n        return decodeURIComponent(str);\n    }\n    catch (_a) {\n        if (str.length > 3) {\n            return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));\n        }\n        else {\n            return str;\n        }\n    }\n}\nconst _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;\nfunction percentDecode(str) {\n    if (!str.match(_rEncodedAsHex)) {\n        return str;\n    }\n    return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));\n}\n",
+      "start": 1711096854672,
+      "end": 1711096854865,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854865,
+      "end": 1711096854865,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854865,
+      "end": 1711096854867,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854867,
+      "end": 1711096854867,
+      "order": "normal"
+    }
+  ]
+}

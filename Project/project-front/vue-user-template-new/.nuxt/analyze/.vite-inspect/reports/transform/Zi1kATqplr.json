@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/comment/browser/comment.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { KeyChord } from '../../../../base/common/keyCodes.js';\nimport { EditorAction, registerEditorAction } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ILanguageConfigurationService } from '../../../common/languages/languageConfigurationRegistry.js';\nimport { BlockCommentCommand } from './blockCommentCommand.js';\nimport { LineCommentCommand } from './lineCommentCommand.js';\nimport * as nls from '../../../../nls.js';\nimport { MenuId } from '../../../../platform/actions/common/actions.js';\nclass CommentLineAction extends EditorAction {\n    constructor(type, opts) {\n        super(opts);\n        this._type = type;\n    }\n    run(accessor, editor) {\n        const languageConfigurationService = accessor.get(ILanguageConfigurationService);\n        if (!editor.hasModel()) {\n            return;\n        }\n        const model = editor.getModel();\n        const commands = [];\n        const modelOptions = model.getOptions();\n        const commentsOptions = editor.getOption(19 /* comments */);\n        const selections = editor.getSelections().map((selection, index) => ({ selection, index, ignoreFirstLine: false }));\n        selections.sort((a, b) => Range.compareRangesUsingStarts(a.selection, b.selection));\n        // Remove selections that would result in copying the same line\n        let prev = selections[0];\n        for (let i = 1; i < selections.length; i++) {\n            const curr = selections[i];\n            if (prev.selection.endLineNumber === curr.selection.startLineNumber) {\n                // these two selections would copy the same line\n                if (prev.index < curr.index) {\n                    // prev wins\n                    curr.ignoreFirstLine = true;\n                }\n                else {\n                    // curr wins\n                    prev.ignoreFirstLine = true;\n                    prev = curr;\n                }\n            }\n        }\n        for (const selection of selections) {\n            commands.push(new LineCommentCommand(languageConfigurationService, selection.selection, modelOptions.tabSize, this._type, commentsOptions.insertSpace, commentsOptions.ignoreEmptyLines, selection.ignoreFirstLine));\n        }\n        editor.pushUndoStop();\n        editor.executeCommands(this.id, commands);\n        editor.pushUndoStop();\n    }\n}\nclass ToggleCommentLineAction extends CommentLineAction {\n    constructor() {\n        super(0 /* Toggle */, {\n            id: 'editor.action.commentLine',\n            label: nls.localize('comment.line', \"Toggle Line Comment\"),\n            alias: 'Toggle Line Comment',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 85 /* Slash */,\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarEditMenu,\n                group: '5_insert',\n                title: nls.localize({ key: 'miToggleLineComment', comment: ['&& denotes a mnemonic'] }, \"&&Toggle Line Comment\"),\n                order: 1\n            }\n        });\n    }\n}\nclass AddLineCommentAction extends CommentLineAction {\n    constructor() {\n        super(1 /* ForceAdd */, {\n            id: 'editor.action.addCommentLine',\n            label: nls.localize('comment.line.add', \"Add Line Comment\"),\n            alias: 'Add Line Comment',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, 2048 /* CtrlCmd */ | 33 /* KeyC */),\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n}\nclass RemoveLineCommentAction extends CommentLineAction {\n    constructor() {\n        super(2 /* ForceRemove */, {\n            id: 'editor.action.removeCommentLine',\n            label: nls.localize('comment.line.remove', \"Remove Line Comment\"),\n            alias: 'Remove Line Comment',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, 2048 /* CtrlCmd */ | 51 /* KeyU */),\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n}\nclass BlockCommentAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.blockComment',\n            label: nls.localize('comment.block', \"Toggle Block Comment\"),\n            alias: 'Toggle Block Comment',\n            precondition: EditorContextKeys.writable,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 31 /* KeyA */,\n                linux: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 31 /* KeyA */ },\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarEditMenu,\n                group: '5_insert',\n                title: nls.localize({ key: 'miToggleBlockComment', comment: ['&& denotes a mnemonic'] }, \"Toggle &&Block Comment\"),\n                order: 2\n            }\n        });\n    }\n    run(accessor, editor) {\n        const languageConfigurationService = accessor.get(ILanguageConfigurationService);\n        if (!editor.hasModel()) {\n            return;\n        }\n        const commentsOptions = editor.getOption(19 /* comments */);\n        const commands = [];\n        const selections = editor.getSelections();\n        for (const selection of selections) {\n            commands.push(new BlockCommentCommand(selection, commentsOptions.insertSpace, languageConfigurationService));\n        }\n        editor.pushUndoStop();\n        editor.executeCommands(this.id, commands);\n        editor.pushUndoStop();\n    }\n}\nregisterEditorAction(ToggleCommentLineAction);\nregisterEditorAction(AddLineCommentAction);\nregisterEditorAction(RemoveLineCommentAction);\nregisterEditorAction(BlockCommentAction);\n",
+      "start": 1711096854400,
+      "end": 1711096854503,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854503,
+      "end": 1711096854503,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854503,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854504,
+      "end": 1711096854504,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/browser/wordSelections.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { isLowerAsciiLetter, isUpperAsciiLetter } from '../../../../base/common/strings.js';\nimport { Range } from '../../../common/core/range.js';\nexport class WordSelectionRangeProvider {\n    provideSelectionRanges(model, positions) {\n        const result = [];\n        for (const position of positions) {\n            const bucket = [];\n            result.push(bucket);\n            this._addInWordRanges(bucket, model, position);\n            this._addWordRanges(bucket, model, position);\n            this._addWhitespaceLine(bucket, model, position);\n            bucket.push({ range: model.getFullModelRange() });\n        }\n        return result;\n    }\n    _addInWordRanges(bucket, model, pos) {\n        const obj = model.getWordAtPosition(pos);\n        if (!obj) {\n            return;\n        }\n        let { word, startColumn } = obj;\n        let offset = pos.column - startColumn;\n        let start = offset;\n        let end = offset;\n        let lastCh = 0;\n        // LEFT anchor (start)\n        for (; start >= 0; start--) {\n            let ch = word.charCodeAt(start);\n            if ((start !== offset) && (ch === 95 /* Underline */ || ch === 45 /* Dash */)) {\n                // foo-bar OR foo_bar\n                break;\n            }\n            else if (isLowerAsciiLetter(ch) && isUpperAsciiLetter(lastCh)) {\n                // fooBar\n                break;\n            }\n            lastCh = ch;\n        }\n        start += 1;\n        // RIGHT anchor (end)\n        for (; end < word.length; end++) {\n            let ch = word.charCodeAt(end);\n            if (isUpperAsciiLetter(ch) && isLowerAsciiLetter(lastCh)) {\n                // fooBar\n                break;\n            }\n            else if (ch === 95 /* Underline */ || ch === 45 /* Dash */) {\n                // foo-bar OR foo_bar\n                break;\n            }\n            lastCh = ch;\n        }\n        if (start < end) {\n            bucket.push({ range: new Range(pos.lineNumber, startColumn + start, pos.lineNumber, startColumn + end) });\n        }\n    }\n    _addWordRanges(bucket, model, pos) {\n        const word = model.getWordAtPosition(pos);\n        if (word) {\n            bucket.push({ range: new Range(pos.lineNumber, word.startColumn, pos.lineNumber, word.endColumn) });\n        }\n    }\n    _addWhitespaceLine(bucket, model, pos) {\n        if (model.getLineLength(pos.lineNumber) > 0\n            && model.getLineFirstNonWhitespaceColumn(pos.lineNumber) === 0\n            && model.getLineLastNonWhitespaceColumn(pos.lineNumber) === 0) {\n            bucket.push({ range: new Range(pos.lineNumber, 1, pos.lineNumber, model.getLineMaxColumn(pos.lineNumber)) });\n        }\n    }\n}\n",
+      "start": 1711096855908,
+      "end": 1711096856010,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    }
+  ]
+}

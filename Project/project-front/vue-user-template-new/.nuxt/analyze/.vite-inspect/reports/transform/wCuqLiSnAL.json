@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationModels.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as arrays from '../../../base/common/arrays.js';\nimport { ResourceMap } from '../../../base/common/map.js';\nimport * as objects from '../../../base/common/objects.js';\nimport * as types from '../../../base/common/types.js';\nimport { URI } from '../../../base/common/uri.js';\nimport { addToValueTree, getConfigurationValue, removeFromValueTree, toValuesTree } from './configuration.js';\nimport { Extensions, overrideIdentifiersFromKey, OVERRIDE_PROPERTY_REGEX } from './configurationRegistry.js';\nimport { Registry } from '../../registry/common/platform.js';\nexport class ConfigurationModel {\n    constructor(_contents = {}, _keys = [], _overrides = []) {\n        this._contents = _contents;\n        this._keys = _keys;\n        this._overrides = _overrides;\n        this.isFrozen = false;\n        this.overrideConfigurations = new Map();\n    }\n    get contents() {\n        return this.checkAndFreeze(this._contents);\n    }\n    get overrides() {\n        return this.checkAndFreeze(this._overrides);\n    }\n    get keys() {\n        return this.checkAndFreeze(this._keys);\n    }\n    isEmpty() {\n        return this._keys.length === 0 && Object.keys(this._contents).length === 0 && this._overrides.length === 0;\n    }\n    getValue(section) {\n        return section ? getConfigurationValue(this.contents, section) : this.contents;\n    }\n    getOverrideValue(section, overrideIdentifier) {\n        const overrideContents = this.getContentsForOverrideIdentifer(overrideIdentifier);\n        return overrideContents\n            ? section ? getConfigurationValue(overrideContents, section) : overrideContents\n            : undefined;\n    }\n    override(identifier) {\n        let overrideConfigurationModel = this.overrideConfigurations.get(identifier);\n        if (!overrideConfigurationModel) {\n            overrideConfigurationModel = this.createOverrideConfigurationModel(identifier);\n            this.overrideConfigurations.set(identifier, overrideConfigurationModel);\n        }\n        return overrideConfigurationModel;\n    }\n    merge(...others) {\n        const contents = objects.deepClone(this.contents);\n        const overrides = objects.deepClone(this.overrides);\n        const keys = [...this.keys];\n        for (const other of others) {\n            this.mergeContents(contents, other.contents);\n            for (const otherOverride of other.overrides) {\n                const [override] = overrides.filter(o => arrays.equals(o.identifiers, otherOverride.identifiers));\n                if (override) {\n                    this.mergeContents(override.contents, otherOverride.contents);\n                    override.keys.push(...otherOverride.keys);\n                    override.keys = arrays.distinct(override.keys);\n                }\n                else {\n                    overrides.push(objects.deepClone(otherOverride));\n                }\n            }\n            for (const key of other.keys) {\n                if (keys.indexOf(key) === -1) {\n                    keys.push(key);\n                }\n            }\n        }\n        return new ConfigurationModel(contents, keys, overrides);\n    }\n    freeze() {\n        this.isFrozen = true;\n        return this;\n    }\n    createOverrideConfigurationModel(identifier) {\n        const overrideContents = this.getContentsForOverrideIdentifer(identifier);\n        if (!overrideContents || typeof overrideContents !== 'object' || !Object.keys(overrideContents).length) {\n            // If there are no valid overrides, return self\n            return this;\n        }\n        let contents = {};\n        for (const key of arrays.distinct([...Object.keys(this.contents), ...Object.keys(overrideContents)])) {\n            let contentsForKey = this.contents[key];\n            let overrideContentsForKey = overrideContents[key];\n            // If there are override contents for the key, clone and merge otherwise use base contents\n            if (overrideContentsForKey) {\n                // Clone and merge only if base contents and override contents are of type object otherwise just override\n                if (typeof contentsForKey === 'object' && typeof overrideContentsForKey === 'object') {\n                    contentsForKey = objects.deepClone(contentsForKey);\n                    this.mergeContents(contentsForKey, overrideContentsForKey);\n                }\n                else {\n                    contentsForKey = overrideContentsForKey;\n                }\n            }\n            contents[key] = contentsForKey;\n        }\n        return new ConfigurationModel(contents, this.keys, this.overrides);\n    }\n    mergeContents(source, target) {\n        for (const key of Object.keys(target)) {\n            if (key in source) {\n                if (types.isObject(source[key]) && types.isObject(target[key])) {\n                    this.mergeContents(source[key], target[key]);\n                    continue;\n                }\n            }\n            source[key] = objects.deepClone(target[key]);\n        }\n    }\n    checkAndFreeze(data) {\n        if (this.isFrozen && !Object.isFrozen(data)) {\n            return objects.deepFreeze(data);\n        }\n        return data;\n    }\n    getContentsForOverrideIdentifer(identifier) {\n        let contentsForIdentifierOnly = null;\n        let contents = null;\n        const mergeContents = (contentsToMerge) => {\n            if (contentsToMerge) {\n                if (contents) {\n                    this.mergeContents(contents, contentsToMerge);\n                }\n                else {\n                    contents = objects.deepClone(contentsToMerge);\n                }\n            }\n        };\n        for (const override of this.overrides) {\n            if (arrays.equals(override.identifiers, [identifier])) {\n                contentsForIdentifierOnly = override.contents;\n            }\n            else if (override.identifiers.includes(identifier)) {\n                mergeContents(override.contents);\n            }\n        }\n        // Merge contents of the identifier only at the end to take precedence.\n        mergeContents(contentsForIdentifierOnly);\n        return contents;\n    }\n    toJSON() {\n        return {\n            contents: this.contents,\n            overrides: this.overrides,\n            keys: this.keys\n        };\n    }\n    // Update methods\n    setValue(key, value) {\n        this.addKey(key);\n        addToValueTree(this.contents, key, value, e => { throw new Error(e); });\n    }\n    removeValue(key) {\n        if (this.removeKey(key)) {\n            removeFromValueTree(this.contents, key);\n        }\n    }\n    addKey(key) {\n        let index = this.keys.length;\n        for (let i = 0; i < index; i++) {\n            if (key.indexOf(this.keys[i]) === 0) {\n                index = i;\n            }\n        }\n        this.keys.splice(index, 1, key);\n    }\n    removeKey(key) {\n        let index = this.keys.indexOf(key);\n        if (index !== -1) {\n            this.keys.splice(index, 1);\n            return true;\n        }\n        return false;\n    }\n}\nexport class DefaultConfigurationModel extends ConfigurationModel {\n    constructor(configurationDefaultsOverrides = {}) {\n        const properties = Registry.as(Extensions.Configuration).getConfigurationProperties();\n        const keys = Object.keys(properties);\n        const contents = Object.create(null);\n        const overrides = [];\n        for (const key in properties) {\n            const defaultOverrideValue = configurationDefaultsOverrides[key];\n            const value = defaultOverrideValue !== undefined ? defaultOverrideValue : properties[key].default;\n            addToValueTree(contents, key, value, message => console.error(`Conflict in default settings: ${message}`));\n        }\n        for (const key of Object.keys(contents)) {\n            if (OVERRIDE_PROPERTY_REGEX.test(key)) {\n                overrides.push({\n                    identifiers: overrideIdentifiersFromKey(key),\n                    keys: Object.keys(contents[key]),\n                    contents: toValuesTree(contents[key], message => console.error(`Conflict in default settings file: ${message}`)),\n                });\n            }\n        }\n        super(contents, keys, overrides);\n    }\n}\nexport class Configuration {\n    constructor(_defaultConfiguration, _localUserConfiguration, _remoteUserConfiguration = new ConfigurationModel(), _workspaceConfiguration = new ConfigurationModel(), _folderConfigurations = new ResourceMap(), _memoryConfiguration = new ConfigurationModel(), _memoryConfigurationByResource = new ResourceMap(), _freeze = true) {\n        this._defaultConfiguration = _defaultConfiguration;\n        this._localUserConfiguration = _localUserConfiguration;\n        this._remoteUserConfiguration = _remoteUserConfiguration;\n        this._workspaceConfiguration = _workspaceConfiguration;\n        this._folderConfigurations = _folderConfigurations;\n        this._memoryConfiguration = _memoryConfiguration;\n        this._memoryConfigurationByResource = _memoryConfigurationByResource;\n        this._freeze = _freeze;\n        this._workspaceConsolidatedConfiguration = null;\n        this._foldersConsolidatedConfigurations = new ResourceMap();\n        this._userConfiguration = null;\n    }\n    getValue(section, overrides, workspace) {\n        const consolidateConfigurationModel = this.getConsolidateConfigurationModel(overrides, workspace);\n        return consolidateConfigurationModel.getValue(section);\n    }\n    updateValue(key, value, overrides = {}) {\n        let memoryConfiguration;\n        if (overrides.resource) {\n            memoryConfiguration = this._memoryConfigurationByResource.get(overrides.resource);\n            if (!memoryConfiguration) {\n                memoryConfiguration = new ConfigurationModel();\n                this._memoryConfigurationByResource.set(overrides.resource, memoryConfiguration);\n            }\n        }\n        else {\n            memoryConfiguration = this._memoryConfiguration;\n        }\n        if (value === undefined) {\n            memoryConfiguration.removeValue(key);\n        }\n        else {\n            memoryConfiguration.setValue(key, value);\n        }\n        if (!overrides.resource) {\n            this._workspaceConsolidatedConfiguration = null;\n        }\n    }\n    inspect(key, overrides, workspace) {\n        const consolidateConfigurationModel = this.getConsolidateConfigurationModel(overrides, workspace);\n        const folderConfigurationModel = this.getFolderConfigurationModelForResource(overrides.resource, workspace);\n        const memoryConfigurationModel = overrides.resource ? this._memoryConfigurationByResource.get(overrides.resource) || this._memoryConfiguration : this._memoryConfiguration;\n        const defaultValue = overrides.overrideIdentifier ? this._defaultConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._defaultConfiguration.freeze().getValue(key);\n        const userValue = overrides.overrideIdentifier ? this.userConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.userConfiguration.freeze().getValue(key);\n        const userLocalValue = overrides.overrideIdentifier ? this.localUserConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.localUserConfiguration.freeze().getValue(key);\n        const userRemoteValue = overrides.overrideIdentifier ? this.remoteUserConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this.remoteUserConfiguration.freeze().getValue(key);\n        const workspaceValue = workspace ? overrides.overrideIdentifier ? this._workspaceConfiguration.freeze().override(overrides.overrideIdentifier).getValue(key) : this._workspaceConfiguration.freeze().getValue(key) : undefined; //Check on workspace exists or not because _workspaceConfiguration is never null\n        const workspaceFolderValue = folderConfigurationModel ? overrides.overrideIdentifier ? folderConfigurationModel.freeze().override(overrides.overrideIdentifier).getValue(key) : folderConfigurationModel.freeze().getValue(key) : undefined;\n        const memoryValue = overrides.overrideIdentifier ? memoryConfigurationModel.override(overrides.overrideIdentifier).getValue(key) : memoryConfigurationModel.getValue(key);\n        const value = consolidateConfigurationModel.getValue(key);\n        const overrideIdentifiers = arrays.distinct(arrays.flatten(consolidateConfigurationModel.overrides.map(override => override.identifiers))).filter(overrideIdentifier => consolidateConfigurationModel.getOverrideValue(key, overrideIdentifier) !== undefined);\n        return {\n            defaultValue: defaultValue,\n            userValue: userValue,\n            userLocalValue: userLocalValue,\n            userRemoteValue: userRemoteValue,\n            workspaceValue: workspaceValue,\n            workspaceFolderValue: workspaceFolderValue,\n            memoryValue: memoryValue,\n            value,\n            default: defaultValue !== undefined ? { value: this._defaultConfiguration.freeze().getValue(key), override: overrides.overrideIdentifier ? this._defaultConfiguration.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            user: userValue !== undefined ? { value: this.userConfiguration.freeze().getValue(key), override: overrides.overrideIdentifier ? this.userConfiguration.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            userLocal: userLocalValue !== undefined ? { value: this.localUserConfiguration.freeze().getValue(key), override: overrides.overrideIdentifier ? this.localUserConfiguration.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            userRemote: userRemoteValue !== undefined ? { value: this.remoteUserConfiguration.freeze().getValue(key), override: overrides.overrideIdentifier ? this.remoteUserConfiguration.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            workspace: workspaceValue !== undefined ? { value: this._workspaceConfiguration.freeze().getValue(key), override: overrides.overrideIdentifier ? this._workspaceConfiguration.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            workspaceFolder: workspaceFolderValue !== undefined ? { value: folderConfigurationModel === null || folderConfigurationModel === void 0 ? void 0 : folderConfigurationModel.freeze().getValue(key), override: overrides.overrideIdentifier ? folderConfigurationModel === null || folderConfigurationModel === void 0 ? void 0 : folderConfigurationModel.freeze().getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            memory: memoryValue !== undefined ? { value: memoryConfigurationModel.getValue(key), override: overrides.overrideIdentifier ? memoryConfigurationModel.getOverrideValue(key, overrides.overrideIdentifier) : undefined } : undefined,\n            overrideIdentifiers: overrideIdentifiers.length ? overrideIdentifiers : undefined\n        };\n    }\n    get userConfiguration() {\n        if (!this._userConfiguration) {\n            this._userConfiguration = this._remoteUserConfiguration.isEmpty() ? this._localUserConfiguration : this._localUserConfiguration.merge(this._remoteUserConfiguration);\n            if (this._freeze) {\n                this._userConfiguration.freeze();\n            }\n        }\n        return this._userConfiguration;\n    }\n    get localUserConfiguration() {\n        return this._localUserConfiguration;\n    }\n    get remoteUserConfiguration() {\n        return this._remoteUserConfiguration;\n    }\n    getConsolidateConfigurationModel(overrides, workspace) {\n        let configurationModel = this.getConsolidatedConfigurationModelForResource(overrides, workspace);\n        return overrides.overrideIdentifier ? configurationModel.override(overrides.overrideIdentifier) : configurationModel;\n    }\n    getConsolidatedConfigurationModelForResource({ resource }, workspace) {\n        let consolidateConfiguration = this.getWorkspaceConsolidatedConfiguration();\n        if (workspace && resource) {\n            const root = workspace.getFolder(resource);\n            if (root) {\n                consolidateConfiguration = this.getFolderConsolidatedConfiguration(root.uri) || consolidateConfiguration;\n            }\n            const memoryConfigurationForResource = this._memoryConfigurationByResource.get(resource);\n            if (memoryConfigurationForResource) {\n                consolidateConfiguration = consolidateConfiguration.merge(memoryConfigurationForResource);\n            }\n        }\n        return consolidateConfiguration;\n    }\n    getWorkspaceConsolidatedConfiguration() {\n        if (!this._workspaceConsolidatedConfiguration) {\n            this._workspaceConsolidatedConfiguration = this._defaultConfiguration.merge(this.userConfiguration, this._workspaceConfiguration, this._memoryConfiguration);\n            if (this._freeze) {\n                this._workspaceConfiguration = this._workspaceConfiguration.freeze();\n            }\n        }\n        return this._workspaceConsolidatedConfiguration;\n    }\n    getFolderConsolidatedConfiguration(folder) {\n        let folderConsolidatedConfiguration = this._foldersConsolidatedConfigurations.get(folder);\n        if (!folderConsolidatedConfiguration) {\n            const workspaceConsolidateConfiguration = this.getWorkspaceConsolidatedConfiguration();\n            const folderConfiguration = this._folderConfigurations.get(folder);\n            if (folderConfiguration) {\n                folderConsolidatedConfiguration = workspaceConsolidateConfiguration.merge(folderConfiguration);\n                if (this._freeze) {\n                    folderConsolidatedConfiguration = folderConsolidatedConfiguration.freeze();\n                }\n                this._foldersConsolidatedConfigurations.set(folder, folderConsolidatedConfiguration);\n            }\n            else {\n                folderConsolidatedConfiguration = workspaceConsolidateConfiguration;\n            }\n        }\n        return folderConsolidatedConfiguration;\n    }\n    getFolderConfigurationModelForResource(resource, workspace) {\n        if (workspace && resource) {\n            const root = workspace.getFolder(resource);\n            if (root) {\n                return this._folderConfigurations.get(root.uri);\n            }\n        }\n        return undefined;\n    }\n    toData() {\n        return {\n            defaults: {\n                contents: this._defaultConfiguration.contents,\n                overrides: this._defaultConfiguration.overrides,\n                keys: this._defaultConfiguration.keys\n            },\n            user: {\n                contents: this.userConfiguration.contents,\n                overrides: this.userConfiguration.overrides,\n                keys: this.userConfiguration.keys\n            },\n            workspace: {\n                contents: this._workspaceConfiguration.contents,\n                overrides: this._workspaceConfiguration.overrides,\n                keys: this._workspaceConfiguration.keys\n            },\n            folders: [...this._folderConfigurations.keys()].reduce((result, folder) => {\n                const { contents, overrides, keys } = this._folderConfigurations.get(folder);\n                result.push([folder, { contents, overrides, keys }]);\n                return result;\n            }, [])\n        };\n    }\n    static parse(data) {\n        const defaultConfiguration = this.parseConfigurationModel(data.defaults);\n        const userConfiguration = this.parseConfigurationModel(data.user);\n        const workspaceConfiguration = this.parseConfigurationModel(data.workspace);\n        const folders = data.folders.reduce((result, value) => {\n            result.set(URI.revive(value[0]), this.parseConfigurationModel(value[1]));\n            return result;\n        }, new ResourceMap());\n        return new Configuration(defaultConfiguration, userConfiguration, new ConfigurationModel(), workspaceConfiguration, folders, new ConfigurationModel(), new ResourceMap(), false);\n    }\n    static parseConfigurationModel(model) {\n        return new ConfigurationModel(model.contents, model.keys, model.overrides).freeze();\n    }\n}\nexport class ConfigurationChangeEvent {\n    constructor(change, previous, currentConfiguraiton, currentWorkspace) {\n        this.change = change;\n        this.previous = previous;\n        this.currentConfiguraiton = currentConfiguraiton;\n        this.currentWorkspace = currentWorkspace;\n        this._previousConfiguration = undefined;\n        const keysSet = new Set();\n        change.keys.forEach(key => keysSet.add(key));\n        change.overrides.forEach(([, keys]) => keys.forEach(key => keysSet.add(key)));\n        this.affectedKeys = [...keysSet.values()];\n        const configurationModel = new ConfigurationModel();\n        this.affectedKeys.forEach(key => configurationModel.setValue(key, {}));\n        this.affectedKeysTree = configurationModel.contents;\n    }\n    get previousConfiguration() {\n        if (!this._previousConfiguration && this.previous) {\n            this._previousConfiguration = Configuration.parse(this.previous.data);\n        }\n        return this._previousConfiguration;\n    }\n    affectsConfiguration(section, overrides) {\n        var _a;\n        if (this.doesAffectedKeysTreeContains(this.affectedKeysTree, section)) {\n            if (overrides) {\n                const value1 = this.previousConfiguration ? this.previousConfiguration.getValue(section, overrides, (_a = this.previous) === null || _a === void 0 ? void 0 : _a.workspace) : undefined;\n                const value2 = this.currentConfiguraiton.getValue(section, overrides, this.currentWorkspace);\n                return !objects.equals(value1, value2);\n            }\n            return true;\n        }\n        return false;\n    }\n    doesAffectedKeysTreeContains(affectedKeysTree, section) {\n        let requestedTree = toValuesTree({ [section]: true }, () => { });\n        let key;\n        while (typeof requestedTree === 'object' && (key = Object.keys(requestedTree)[0])) { // Only one key should present, since we added only one property\n            affectedKeysTree = affectedKeysTree[key];\n            if (!affectedKeysTree) {\n                return false; // Requested tree is not found\n            }\n            requestedTree = requestedTree[key];\n        }\n        return true;\n    }\n}\n",
+      "start": 1711096856199,
+      "end": 1711096856297,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856298,
+      "end": 1711096856298,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856298,
+      "end": 1711096856299,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856299,
+      "end": 1711096856299,
+      "order": "normal"
+    }
+  ]
+}

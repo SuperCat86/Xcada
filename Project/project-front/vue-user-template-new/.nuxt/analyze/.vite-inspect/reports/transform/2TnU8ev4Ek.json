@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestOvertypingCapturer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nexport class OvertypingCapturer {\n    constructor(editor, suggestModel) {\n        this._disposables = new DisposableStore();\n        this._lastOvertyped = [];\n        this._empty = true;\n        this._disposables.add(editor.onWillType(() => {\n            if (!this._empty) {\n                return;\n            }\n            if (!editor.hasModel()) {\n                return;\n            }\n            const selections = editor.getSelections();\n            const selectionsLength = selections.length;\n            // Check if it will overtype any selections\n            let willOvertype = false;\n            for (let i = 0; i < selectionsLength; i++) {\n                if (!selections[i].isEmpty()) {\n                    willOvertype = true;\n                    break;\n                }\n            }\n            if (!willOvertype) {\n                return;\n            }\n            this._lastOvertyped = [];\n            const model = editor.getModel();\n            for (let i = 0; i < selectionsLength; i++) {\n                const selection = selections[i];\n                // Check for overtyping capturer restrictions\n                if (model.getValueLengthInRange(selection) > OvertypingCapturer._maxSelectionLength) {\n                    return;\n                }\n                this._lastOvertyped[i] = { value: model.getValueInRange(selection), multiline: selection.startLineNumber !== selection.endLineNumber };\n            }\n            this._empty = false;\n        }));\n        this._disposables.add(suggestModel.onDidCancel(e => {\n            if (!this._empty && !e.retrigger) {\n                this._empty = true;\n            }\n        }));\n    }\n    getLastOvertypedInfo(idx) {\n        if (!this._empty && idx >= 0 && idx < this._lastOvertyped.length) {\n            return this._lastOvertyped[idx];\n        }\n        return undefined;\n    }\n    dispose() {\n        this._disposables.dispose();\n    }\n}\nOvertypingCapturer._maxSelectionLength = 51200;\n",
+      "start": 1711096855981,
+      "end": 1711096856071,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856071,
+      "end": 1711096856071,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856071,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    }
+  ]
+}

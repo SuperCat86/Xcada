@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/inlineCompletionsModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { createCancelablePromise, RunOnceScheduler } from '../../../../base/common/async.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedError, onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { commonPrefixLength, commonSuffixLength } from '../../../../base/common/strings.js';\nimport { CoreEditingCommands } from '../../../browser/coreCommands.js';\nimport { EditOperation } from '../../../common/core/editOperation.js';\nimport { Range } from '../../../common/core/range.js';\nimport { InlineCompletionTriggerKind } from '../../../common/languages.js';\nimport { BaseGhostTextWidgetModel } from './ghostText.js';\nimport { ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { inlineSuggestCommitId } from './consts.js';\nimport { inlineCompletionToGhostText } from './inlineCompletionToGhostText.js';\nimport { ILanguageConfigurationService } from '../../../common/languages/languageConfigurationRegistry.js';\nimport { fixBracketsInLine } from '../../../common/model/bracketPairsTextModelPart/fixBrackets.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nlet InlineCompletionsModel = class InlineCompletionsModel extends Disposable {\n    constructor(editor, cache, commandService, languageConfigurationService, languageFeaturesService, debounceService) {\n        super();\n        this.editor = editor;\n        this.cache = cache;\n        this.commandService = commandService;\n        this.languageConfigurationService = languageConfigurationService;\n        this.languageFeaturesService = languageFeaturesService;\n        this.debounceService = debounceService;\n        this.onDidChangeEmitter = new Emitter();\n        this.onDidChange = this.onDidChangeEmitter.event;\n        this.completionSession = this._register(new MutableDisposable());\n        this.active = false;\n        this.disposed = false;\n        this.debounceValue = this.debounceService.for(this.languageFeaturesService.inlineCompletionsProvider, 'InlineCompletionsDebounce', { min: 50, max: 200 });\n        this._register(commandService.onDidExecuteCommand((e) => {\n            // These commands don't trigger onDidType.\n            const commands = new Set([\n                CoreEditingCommands.Tab.id,\n                CoreEditingCommands.DeleteLeft.id,\n                CoreEditingCommands.DeleteRight.id,\n                inlineSuggestCommitId,\n                'acceptSelectedSuggestion',\n            ]);\n            if (commands.has(e.commandId) && editor.hasTextFocus()) {\n                this.handleUserInput();\n            }\n        }));\n        this._register(this.editor.onDidType((e) => {\n            this.handleUserInput();\n        }));\n        this._register(this.editor.onDidChangeCursorPosition((e) => {\n            if (this.session && !this.session.isValid) {\n                this.hide();\n            }\n        }));\n        this._register(toDisposable(() => {\n            this.disposed = true;\n        }));\n        this._register(this.editor.onDidBlurEditorWidget(() => {\n            this.hide();\n        }));\n    }\n    handleUserInput() {\n        if (this.session && !this.session.isValid) {\n            this.hide();\n        }\n        setTimeout(() => {\n            if (this.disposed) {\n                return;\n            }\n            // Wait for the cursor update that happens in the same iteration loop iteration\n            this.startSessionIfTriggered();\n        }, 0);\n    }\n    get session() {\n        return this.completionSession.value;\n    }\n    get ghostText() {\n        var _a;\n        return (_a = this.session) === null || _a === void 0 ? void 0 : _a.ghostText;\n    }\n    get minReservedLineCount() {\n        return this.session ? this.session.minReservedLineCount : 0;\n    }\n    setExpanded(expanded) {\n        var _a;\n        (_a = this.session) === null || _a === void 0 ? void 0 : _a.setExpanded(expanded);\n    }\n    setActive(active) {\n        var _a;\n        this.active = active;\n        if (active) {\n            (_a = this.session) === null || _a === void 0 ? void 0 : _a.scheduleAutomaticUpdate();\n        }\n    }\n    startSessionIfTriggered() {\n        const suggestOptions = this.editor.getOption(55 /* inlineSuggest */);\n        if (!suggestOptions.enabled) {\n            return;\n        }\n        if (this.session && this.session.isValid) {\n            return;\n        }\n        this.trigger(InlineCompletionTriggerKind.Automatic);\n    }\n    trigger(triggerKind) {\n        if (this.completionSession.value) {\n            if (triggerKind === InlineCompletionTriggerKind.Explicit) {\n                void this.completionSession.value.ensureUpdateWithExplicitContext();\n            }\n            return;\n        }\n        this.completionSession.value = new InlineCompletionsSession(this.editor, this.editor.getPosition(), () => this.active, this.commandService, this.cache, triggerKind, this.languageConfigurationService, this.languageFeaturesService.inlineCompletionsProvider, this.debounceValue);\n        this.completionSession.value.takeOwnership(this.completionSession.value.onDidChange(() => {\n            this.onDidChangeEmitter.fire();\n        }));\n    }\n    hide() {\n        this.completionSession.clear();\n        this.onDidChangeEmitter.fire();\n    }\n    commitCurrentSuggestion() {\n        var _a;\n        // Don't dispose the session, so that after committing, more suggestions are shown.\n        (_a = this.session) === null || _a === void 0 ? void 0 : _a.commitCurrentCompletion();\n    }\n    showNext() {\n        var _a;\n        (_a = this.session) === null || _a === void 0 ? void 0 : _a.showNextInlineCompletion();\n    }\n    showPrevious() {\n        var _a;\n        (_a = this.session) === null || _a === void 0 ? void 0 : _a.showPreviousInlineCompletion();\n    }\n    hasMultipleInlineCompletions() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            const result = yield ((_a = this.session) === null || _a === void 0 ? void 0 : _a.hasMultipleInlineCompletions());\n            return result !== undefined ? result : false;\n        });\n    }\n};\nInlineCompletionsModel = __decorate([\n    __param(2, ICommandService),\n    __param(3, ILanguageConfigurationService),\n    __param(4, ILanguageFeaturesService),\n    __param(5, ILanguageFeatureDebounceService)\n], InlineCompletionsModel);\nexport { InlineCompletionsModel };\nexport class InlineCompletionsSession extends BaseGhostTextWidgetModel {\n    constructor(editor, triggerPosition, shouldUpdate, commandService, cache, initialTriggerKind, languageConfigurationService, registry, debounce) {\n        super(editor);\n        this.triggerPosition = triggerPosition;\n        this.shouldUpdate = shouldUpdate;\n        this.commandService = commandService;\n        this.cache = cache;\n        this.initialTriggerKind = initialTriggerKind;\n        this.languageConfigurationService = languageConfigurationService;\n        this.registry = registry;\n        this.debounce = debounce;\n        this.minReservedLineCount = 0;\n        this.updateOperation = this._register(new MutableDisposable());\n        this.updateSoon = this._register(new RunOnceScheduler(() => {\n            let triggerKind = this.initialTriggerKind;\n            // All subsequent triggers are automatic.\n            this.initialTriggerKind = InlineCompletionTriggerKind.Automatic;\n            return this.update(triggerKind);\n        }, 50));\n        //#region Selection\n        // We use a semantic id to track the selection even if the cache changes.\n        this.currentlySelectedCompletionId = undefined;\n        let lastCompletionItem = undefined;\n        this._register(this.onDidChange(() => {\n            const currentCompletion = this.currentCompletion;\n            if (currentCompletion && currentCompletion.sourceInlineCompletion !== lastCompletionItem) {\n                lastCompletionItem = currentCompletion.sourceInlineCompletion;\n                const provider = currentCompletion.sourceProvider;\n                if (provider.handleItemDidShow) {\n                    provider.handleItemDidShow(currentCompletion.sourceInlineCompletions, lastCompletionItem);\n                }\n            }\n        }));\n        this._register(toDisposable(() => {\n            this.cache.clear();\n        }));\n        this._register(this.editor.onDidChangeCursorPosition((e) => {\n            if (this.cache.value) {\n                this.onDidChangeEmitter.fire();\n            }\n        }));\n        this._register(this.editor.onDidChangeModelContent((e) => {\n            this.scheduleAutomaticUpdate();\n        }));\n        this._register(this.registry.onDidChange(() => {\n            this.updateSoon.schedule(this.debounce.get(this.editor.getModel()));\n        }));\n        this.scheduleAutomaticUpdate();\n    }\n    fixAndGetIndexOfCurrentSelection() {\n        if (!this.currentlySelectedCompletionId || !this.cache.value) {\n            return 0;\n        }\n        if (this.cache.value.completions.length === 0) {\n            // don't reset the selection in this case\n            return 0;\n        }\n        const idx = this.cache.value.completions.findIndex(v => v.semanticId === this.currentlySelectedCompletionId);\n        if (idx === -1) {\n            // Reset the selection so that the selection does not jump back when it appears again\n            this.currentlySelectedCompletionId = undefined;\n            return 0;\n        }\n        return idx;\n    }\n    get currentCachedCompletion() {\n        if (!this.cache.value) {\n            return undefined;\n        }\n        return this.cache.value.completions[this.fixAndGetIndexOfCurrentSelection()];\n    }\n    showNextInlineCompletion() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            yield this.ensureUpdateWithExplicitContext();\n            const completions = ((_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.completions) || [];\n            if (completions.length > 0) {\n                const newIdx = (this.fixAndGetIndexOfCurrentSelection() + 1) % completions.length;\n                this.currentlySelectedCompletionId = completions[newIdx].semanticId;\n            }\n            else {\n                this.currentlySelectedCompletionId = undefined;\n            }\n            this.onDidChangeEmitter.fire();\n        });\n    }\n    showPreviousInlineCompletion() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            yield this.ensureUpdateWithExplicitContext();\n            const completions = ((_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.completions) || [];\n            if (completions.length > 0) {\n                const newIdx = (this.fixAndGetIndexOfCurrentSelection() + completions.length - 1) % completions.length;\n                this.currentlySelectedCompletionId = completions[newIdx].semanticId;\n            }\n            else {\n                this.currentlySelectedCompletionId = undefined;\n            }\n            this.onDidChangeEmitter.fire();\n        });\n    }\n    ensureUpdateWithExplicitContext() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            if (this.updateOperation.value) {\n                // Restart or wait for current update operation\n                if (this.updateOperation.value.triggerKind === InlineCompletionTriggerKind.Explicit) {\n                    yield this.updateOperation.value.promise;\n                }\n                else {\n                    yield this.update(InlineCompletionTriggerKind.Explicit);\n                }\n            }\n            else if (((_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.triggerKind) !== InlineCompletionTriggerKind.Explicit) {\n                // Refresh cache\n                yield this.update(InlineCompletionTriggerKind.Explicit);\n            }\n        });\n    }\n    hasMultipleInlineCompletions() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            yield this.ensureUpdateWithExplicitContext();\n            return (((_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.completions.length) || 0) > 1;\n        });\n    }\n    //#endregion\n    get ghostText() {\n        const currentCompletion = this.currentCompletion;\n        const mode = this.editor.getOptions().get(55 /* inlineSuggest */).mode;\n        return currentCompletion ? inlineCompletionToGhostText(currentCompletion, this.editor.getModel(), mode, this.editor.getPosition()) : undefined;\n    }\n    get currentCompletion() {\n        const completion = this.currentCachedCompletion;\n        if (!completion) {\n            return undefined;\n        }\n        return completion.toLiveInlineCompletion();\n    }\n    get isValid() {\n        return this.editor.getPosition().lineNumber === this.triggerPosition.lineNumber;\n    }\n    scheduleAutomaticUpdate() {\n        // Since updateSoon debounces, starvation can happen.\n        // To prevent stale cache, we clear the current update operation.\n        this.updateOperation.clear();\n        this.updateSoon.schedule(this.debounce.get(this.editor.getModel()));\n    }\n    update(triggerKind) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this.shouldUpdate()) {\n                return;\n            }\n            const position = this.editor.getPosition();\n            const startTime = new Date();\n            const promise = createCancelablePromise((token) => __awaiter(this, void 0, void 0, function* () {\n                let result;\n                try {\n                    result = yield provideInlineCompletions(this.registry, position, this.editor.getModel(), { triggerKind, selectedSuggestionInfo: undefined }, token, this.languageConfigurationService);\n                    const endTime = new Date();\n                    this.debounce.update(this.editor.getModel(), endTime.getTime() - startTime.getTime());\n                }\n                catch (e) {\n                    onUnexpectedError(e);\n                    return;\n                }\n                if (token.isCancellationRequested) {\n                    return;\n                }\n                this.cache.setValue(this.editor, result, triggerKind);\n                this.onDidChangeEmitter.fire();\n            }));\n            const operation = new UpdateOperation(promise, triggerKind);\n            this.updateOperation.value = operation;\n            yield promise;\n            if (this.updateOperation.value === operation) {\n                this.updateOperation.clear();\n            }\n        });\n    }\n    takeOwnership(disposable) {\n        this._register(disposable);\n    }\n    commitCurrentCompletion() {\n        if (!this.ghostText) {\n            // No ghost text was shown for this completion.\n            // Thus, we don't want to commit anything.\n            return;\n        }\n        const completion = this.currentCompletion;\n        if (completion) {\n            this.commit(completion);\n        }\n    }\n    commit(completion) {\n        // Mark the cache as stale, but don't dispose it yet,\n        // otherwise command args might get disposed.\n        const cache = this.cache.clearAndLeak();\n        this.editor.executeEdits('inlineSuggestion.accept', [\n            EditOperation.replaceMove(completion.range, completion.text)\n        ]);\n        if (completion.command) {\n            this.commandService\n                .executeCommand(completion.command.id, ...(completion.command.arguments || []))\n                .finally(() => {\n                cache === null || cache === void 0 ? void 0 : cache.dispose();\n            })\n                .then(undefined, onUnexpectedExternalError);\n        }\n        else {\n            cache === null || cache === void 0 ? void 0 : cache.dispose();\n        }\n        this.onDidChangeEmitter.fire();\n    }\n}\nexport class UpdateOperation {\n    constructor(promise, triggerKind) {\n        this.promise = promise;\n        this.triggerKind = triggerKind;\n    }\n    dispose() {\n        this.promise.cancel();\n    }\n}\n/**\n * The cache keeps itself in sync with the editor.\n * It also owns the completions result and disposes it when the cache is diposed.\n*/\nexport class SynchronizedInlineCompletionsCache extends Disposable {\n    constructor(editor, completionsSource, onChange, triggerKind) {\n        super();\n        this.triggerKind = triggerKind;\n        const decorationIds = editor.deltaDecorations([], completionsSource.items.map(i => ({\n            range: i.range,\n            options: {\n                description: 'inline-completion-tracking-range'\n            },\n        })));\n        this._register(toDisposable(() => {\n            editor.deltaDecorations(decorationIds, []);\n        }));\n        this.completions = completionsSource.items.map((c, idx) => new CachedInlineCompletion(c, decorationIds[idx]));\n        this._register(editor.onDidChangeModelContent(() => {\n            let hasChanged = false;\n            const model = editor.getModel();\n            for (const c of this.completions) {\n                const newRange = model.getDecorationRange(c.decorationId);\n                if (!newRange) {\n                    onUnexpectedError(new Error('Decoration has no range'));\n                    continue;\n                }\n                if (!c.synchronizedRange.equalsRange(newRange)) {\n                    hasChanged = true;\n                    c.synchronizedRange = newRange;\n                }\n            }\n            if (hasChanged) {\n                onChange();\n            }\n        }));\n        this._register(completionsSource);\n    }\n}\nclass CachedInlineCompletion {\n    constructor(inlineCompletion, decorationId) {\n        this.inlineCompletion = inlineCompletion;\n        this.decorationId = decorationId;\n        this.semanticId = JSON.stringify({\n            text: this.inlineCompletion.text,\n            startLine: this.inlineCompletion.range.startLineNumber,\n            startColumn: this.inlineCompletion.range.startColumn,\n            command: this.inlineCompletion.command\n        });\n        this.synchronizedRange = inlineCompletion.range;\n    }\n    toLiveInlineCompletion() {\n        return {\n            text: this.inlineCompletion.text,\n            range: this.synchronizedRange,\n            command: this.inlineCompletion.command,\n            sourceProvider: this.inlineCompletion.sourceProvider,\n            sourceInlineCompletions: this.inlineCompletion.sourceInlineCompletions,\n            sourceInlineCompletion: this.inlineCompletion.sourceInlineCompletion,\n        };\n    }\n}\nfunction getDefaultRange(position, model) {\n    const word = model.getWordAtPosition(position);\n    const maxColumn = model.getLineMaxColumn(position.lineNumber);\n    // By default, always replace up until the end of the current line.\n    // This default might be subject to change!\n    return word\n        ? new Range(position.lineNumber, word.startColumn, position.lineNumber, maxColumn)\n        : Range.fromPositions(position, position.with(undefined, maxColumn));\n}\nexport function provideInlineCompletions(registry, position, model, context, token = CancellationToken.None, languageConfigurationService) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const defaultReplaceRange = getDefaultRange(position, model);\n        const providers = registry.all(model);\n        const results = yield Promise.all(providers.map((provider) => __awaiter(this, void 0, void 0, function* () {\n            const completions = yield Promise.resolve(provider.provideInlineCompletions(model, position, context, token)).catch(onUnexpectedExternalError);\n            return ({\n                completions,\n                provider,\n                dispose: () => {\n                    if (completions) {\n                        provider.freeInlineCompletions(completions);\n                    }\n                }\n            });\n        })));\n        const itemsByHash = new Map();\n        for (const result of results) {\n            const completions = result.completions;\n            if (completions) {\n                for (const item of completions.items) {\n                    const range = item.range ? Range.lift(item.range) : defaultReplaceRange;\n                    if (range.startLineNumber !== range.endLineNumber) {\n                        // Ignore invalid ranges.\n                        continue;\n                    }\n                    const text = languageConfigurationService && item.completeBracketPairs\n                        ? closeBrackets(item.text, range.getStartPosition(), model, languageConfigurationService)\n                        : item.text;\n                    const trackedItem = ({\n                        text,\n                        range,\n                        command: item.command,\n                        sourceProvider: result.provider,\n                        sourceInlineCompletions: completions,\n                        sourceInlineCompletion: item\n                    });\n                    itemsByHash.set(JSON.stringify({ text, range: item.range }), trackedItem);\n                }\n            }\n        }\n        return {\n            items: [...itemsByHash.values()],\n            dispose: () => {\n                for (const result of results) {\n                    result.dispose();\n                }\n            },\n        };\n    });\n}\nfunction closeBrackets(text, position, model, languageConfigurationService) {\n    const lineStart = model.getLineContent(position.lineNumber).substring(0, position.column - 1);\n    const newLine = lineStart + text;\n    const newTokens = model.tokenizeLineWithEdit(position, newLine.length - (position.column - 1), text);\n    const slicedTokens = newTokens === null || newTokens === void 0 ? void 0 : newTokens.sliceAndInflate(position.column - 1, newLine.length, 0);\n    if (!slicedTokens) {\n        return text;\n    }\n    console.log(slicedTokens);\n    const newText = fixBracketsInLine(slicedTokens, languageConfigurationService);\n    return newText;\n}\nexport function minimizeInlineCompletion(model, inlineCompletion) {\n    if (!inlineCompletion) {\n        return inlineCompletion;\n    }\n    const valueToReplace = model.getValueInRange(inlineCompletion.range);\n    const commonPrefixLen = commonPrefixLength(valueToReplace, inlineCompletion.text);\n    const startOffset = model.getOffsetAt(inlineCompletion.range.getStartPosition()) + commonPrefixLen;\n    const start = model.getPositionAt(startOffset);\n    const remainingValueToReplace = valueToReplace.substr(commonPrefixLen);\n    const commonSuffixLen = commonSuffixLength(remainingValueToReplace, inlineCompletion.text);\n    const end = model.getPositionAt(Math.max(startOffset, model.getOffsetAt(inlineCompletion.range.getEndPosition()) - commonSuffixLen));\n    return {\n        range: Range.fromPositions(start, end),\n        text: inlineCompletion.text.substr(commonPrefixLen, inlineCompletion.text.length - commonPrefixLen - commonSuffixLen),\n    };\n}\n",
+      "start": 1711096857332,
+      "end": 1711096857432,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857432,
+      "end": 1711096857434,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857434,
+      "end": 1711096857434,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857434,
+      "end": 1711096857435,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    }
+  ]
+}

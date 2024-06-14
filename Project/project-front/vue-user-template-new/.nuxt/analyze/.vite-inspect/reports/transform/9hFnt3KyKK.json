@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/editorContextKeys.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as nls from '../../nls.js';\nimport { RawContextKey } from '../../platform/contextkey/common/contextkey.js';\nexport var EditorContextKeys;\n(function (EditorContextKeys) {\n    EditorContextKeys.editorSimpleInput = new RawContextKey('editorSimpleInput', false, true);\n    /**\n     * A context key that is set when the editor's text has focus (cursor is blinking).\n     * Is false when focus is in simple editor widgets (repl input, scm commit input).\n     */\n    EditorContextKeys.editorTextFocus = new RawContextKey('editorTextFocus', false, nls.localize('editorTextFocus', \"Whether the editor text has focus (cursor is blinking)\"));\n    /**\n     * A context key that is set when the editor's text or an editor's widget has focus.\n     */\n    EditorContextKeys.focus = new RawContextKey('editorFocus', false, nls.localize('editorFocus', \"Whether the editor or an editor widget has focus (e.g. focus is in the find widget)\"));\n    /**\n     * A context key that is set when any editor input has focus (regular editor, repl input...).\n     */\n    EditorContextKeys.textInputFocus = new RawContextKey('textInputFocus', false, nls.localize('textInputFocus', \"Whether an editor or a rich text input has focus (cursor is blinking)\"));\n    EditorContextKeys.readOnly = new RawContextKey('editorReadonly', false, nls.localize('editorReadonly', \"Whether the editor is read only\"));\n    EditorContextKeys.inDiffEditor = new RawContextKey('inDiffEditor', false, nls.localize('inDiffEditor', \"Whether the context is a diff editor\"));\n    EditorContextKeys.columnSelection = new RawContextKey('editorColumnSelection', false, nls.localize('editorColumnSelection', \"Whether `editor.columnSelection` is enabled\"));\n    EditorContextKeys.writable = EditorContextKeys.readOnly.toNegated();\n    EditorContextKeys.hasNonEmptySelection = new RawContextKey('editorHasSelection', false, nls.localize('editorHasSelection', \"Whether the editor has text selected\"));\n    EditorContextKeys.hasOnlyEmptySelection = EditorContextKeys.hasNonEmptySelection.toNegated();\n    EditorContextKeys.hasMultipleSelections = new RawContextKey('editorHasMultipleSelections', false, nls.localize('editorHasMultipleSelections', \"Whether the editor has multiple selections\"));\n    EditorContextKeys.hasSingleSelection = EditorContextKeys.hasMultipleSelections.toNegated();\n    EditorContextKeys.tabMovesFocus = new RawContextKey('editorTabMovesFocus', false, nls.localize('editorTabMovesFocus', \"Whether `Tab` will move focus out of the editor\"));\n    EditorContextKeys.tabDoesNotMoveFocus = EditorContextKeys.tabMovesFocus.toNegated();\n    EditorContextKeys.isInWalkThroughSnippet = new RawContextKey('isInEmbeddedEditor', false, true);\n    EditorContextKeys.canUndo = new RawContextKey('canUndo', false, true);\n    EditorContextKeys.canRedo = new RawContextKey('canRedo', false, true);\n    EditorContextKeys.hoverVisible = new RawContextKey('editorHoverVisible', false, nls.localize('editorHoverVisible', \"Whether the editor hover is visible\"));\n    /**\n     * A context key that is set when an editor is part of a larger editor, like notebooks or\n     * (future) a diff editor\n     */\n    EditorContextKeys.inCompositeEditor = new RawContextKey('inCompositeEditor', undefined, nls.localize('inCompositeEditor', \"Whether the editor is part of a larger editor (e.g. notebooks)\"));\n    EditorContextKeys.notInCompositeEditor = EditorContextKeys.inCompositeEditor.toNegated();\n    // -- mode context keys\n    EditorContextKeys.languageId = new RawContextKey('editorLangId', '', nls.localize('editorLangId', \"The language identifier of the editor\"));\n    EditorContextKeys.hasCompletionItemProvider = new RawContextKey('editorHasCompletionItemProvider', false, nls.localize('editorHasCompletionItemProvider', \"Whether the editor has a completion item provider\"));\n    EditorContextKeys.hasCodeActionsProvider = new RawContextKey('editorHasCodeActionsProvider', false, nls.localize('editorHasCodeActionsProvider', \"Whether the editor has a code actions provider\"));\n    EditorContextKeys.hasCodeLensProvider = new RawContextKey('editorHasCodeLensProvider', false, nls.localize('editorHasCodeLensProvider', \"Whether the editor has a code lens provider\"));\n    EditorContextKeys.hasDefinitionProvider = new RawContextKey('editorHasDefinitionProvider', false, nls.localize('editorHasDefinitionProvider', \"Whether the editor has a definition provider\"));\n    EditorContextKeys.hasDeclarationProvider = new RawContextKey('editorHasDeclarationProvider', false, nls.localize('editorHasDeclarationProvider', \"Whether the editor has a declaration provider\"));\n    EditorContextKeys.hasImplementationProvider = new RawContextKey('editorHasImplementationProvider', false, nls.localize('editorHasImplementationProvider', \"Whether the editor has an implementation provider\"));\n    EditorContextKeys.hasTypeDefinitionProvider = new RawContextKey('editorHasTypeDefinitionProvider', false, nls.localize('editorHasTypeDefinitionProvider', \"Whether the editor has a type definition provider\"));\n    EditorContextKeys.hasHoverProvider = new RawContextKey('editorHasHoverProvider', false, nls.localize('editorHasHoverProvider', \"Whether the editor has a hover provider\"));\n    EditorContextKeys.hasDocumentHighlightProvider = new RawContextKey('editorHasDocumentHighlightProvider', false, nls.localize('editorHasDocumentHighlightProvider', \"Whether the editor has a document highlight provider\"));\n    EditorContextKeys.hasDocumentSymbolProvider = new RawContextKey('editorHasDocumentSymbolProvider', false, nls.localize('editorHasDocumentSymbolProvider', \"Whether the editor has a document symbol provider\"));\n    EditorContextKeys.hasReferenceProvider = new RawContextKey('editorHasReferenceProvider', false, nls.localize('editorHasReferenceProvider', \"Whether the editor has a reference provider\"));\n    EditorContextKeys.hasRenameProvider = new RawContextKey('editorHasRenameProvider', false, nls.localize('editorHasRenameProvider', \"Whether the editor has a rename provider\"));\n    EditorContextKeys.hasSignatureHelpProvider = new RawContextKey('editorHasSignatureHelpProvider', false, nls.localize('editorHasSignatureHelpProvider', \"Whether the editor has a signature help provider\"));\n    EditorContextKeys.hasInlayHintsProvider = new RawContextKey('editorHasInlayHintsProvider', false, nls.localize('editorHasInlayHintsProvider', \"Whether the editor has an inline hints provider\"));\n    // -- mode context keys: formatting\n    EditorContextKeys.hasDocumentFormattingProvider = new RawContextKey('editorHasDocumentFormattingProvider', false, nls.localize('editorHasDocumentFormattingProvider', \"Whether the editor has a document formatting provider\"));\n    EditorContextKeys.hasDocumentSelectionFormattingProvider = new RawContextKey('editorHasDocumentSelectionFormattingProvider', false, nls.localize('editorHasDocumentSelectionFormattingProvider', \"Whether the editor has a document selection formatting provider\"));\n    EditorContextKeys.hasMultipleDocumentFormattingProvider = new RawContextKey('editorHasMultipleDocumentFormattingProvider', false, nls.localize('editorHasMultipleDocumentFormattingProvider', \"Whether the editor has multiple document formatting providers\"));\n    EditorContextKeys.hasMultipleDocumentSelectionFormattingProvider = new RawContextKey('editorHasMultipleDocumentSelectionFormattingProvider', false, nls.localize('editorHasMultipleDocumentSelectionFormattingProvider', \"Whether the editor has multiple document selection formatting providers\"));\n})(EditorContextKeys || (EditorContextKeys = {}));\n",
+      "start": 1711096854781,
+      "end": 1711096854915,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854915,
+      "end": 1711096854915,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854915,
+      "end": 1711096854916,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854916,
+      "end": 1711096854916,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854916,
+      "end": 1711096854917,
+      "order": "normal"
+    }
+  ]
+}

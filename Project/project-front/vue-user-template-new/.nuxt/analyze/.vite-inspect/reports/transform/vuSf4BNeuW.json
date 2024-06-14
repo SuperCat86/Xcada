@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/sash/sash.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n:root {\n\t--sash-size: 4px;\n}\n\n.monaco-sash {\n\tposition: absolute;\n\tz-index: 35;\n\ttouch-action: none;\n}\n\n.monaco-sash.disabled {\n\tpointer-events: none;\n}\n\n.monaco-sash.mac.vertical {\n\tcursor: col-resize;\n}\n\n.monaco-sash.vertical.minimum {\n\tcursor: e-resize;\n}\n\n.monaco-sash.vertical.maximum {\n\tcursor: w-resize;\n}\n\n.monaco-sash.mac.horizontal {\n\tcursor: row-resize;\n}\n\n.monaco-sash.horizontal.minimum {\n\tcursor: s-resize;\n}\n\n.monaco-sash.horizontal.maximum {\n\tcursor: n-resize;\n}\n\n.monaco-sash.disabled {\n\tcursor: default !important;\n\tpointer-events: none !important;\n}\n\n.monaco-sash.vertical {\n\tcursor: ew-resize;\n\ttop: 0;\n\twidth: var(--sash-size);\n\theight: 100%;\n}\n\n.monaco-sash.horizontal {\n\tcursor: ns-resize;\n\tleft: 0;\n\twidth: 100%;\n\theight: var(--sash-size);\n}\n\n.monaco-sash:not(.disabled) > .orthogonal-drag-handle {\n\tcontent: \" \";\n\theight: calc(var(--sash-size) * 2);\n\twidth: calc(var(--sash-size) * 2);\n\tz-index: 100;\n\tdisplay: block;\n\tcursor: all-scroll;\n\tposition: absolute;\n}\n\n.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled)\n\t> .orthogonal-drag-handle.start,\n.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled)\n\t> .orthogonal-drag-handle.end {\n\tcursor: nwse-resize;\n}\n\n.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled)\n\t> .orthogonal-drag-handle.end,\n.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled)\n\t> .orthogonal-drag-handle.start {\n\tcursor: nesw-resize;\n}\n\n.monaco-sash.vertical > .orthogonal-drag-handle.start {\n\tleft: calc(var(--sash-size) * -0.5);\n\ttop: calc(var(--sash-size) * -1);\n}\n.monaco-sash.vertical > .orthogonal-drag-handle.end {\n\tleft: calc(var(--sash-size) * -0.5);\n\tbottom: calc(var(--sash-size) * -1);\n}\n.monaco-sash.horizontal > .orthogonal-drag-handle.start {\n\ttop: calc(var(--sash-size) * -0.5);\n\tleft: calc(var(--sash-size) * -1);\n}\n.monaco-sash.horizontal > .orthogonal-drag-handle.end {\n\ttop: calc(var(--sash-size) * -0.5);\n\tright: calc(var(--sash-size) * -1);\n}\n\n.monaco-sash:before {\n\tcontent: '';\n\tpointer-events: none;\n\tposition: absolute;\n\twidth: 100%;\n\theight: 100%;\n\ttransition: background-color 0.1s ease-out;\n\tbackground: transparent;\n}\n\n.monaco-sash.vertical:before {\n\twidth: var(--sash-hover-size);\n\tleft: calc(50% - (var(--sash-hover-size) / 2));\n}\n\n.monaco-sash.horizontal:before {\n\theight: var(--sash-hover-size);\n\ttop: calc(50% - (var(--sash-hover-size) / 2));\n}\n\n.pointer-events-disabled {\n\tpointer-events: none !important;\n}\n\n/** Debug **/\n\n.monaco-sash.debug {\n\tbackground: cyan;\n}\n\n.monaco-sash.debug.disabled {\n\tbackground: rgba(0, 255, 255, 0.2);\n}\n\n.monaco-sash.debug:not(.disabled) > .orthogonal-drag-handle {\n\tbackground: red;\n}\n",
+      "start": 1711096856506,
+      "end": 1711096856570,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856570,
+      "end": 1711096856570,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856570,
+      "end": 1711096856570,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856570,
+      "end": 1711096856570,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ":root{--sash-size:4px}.monaco-sash{position:absolute;touch-action:none;z-index:35}.monaco-sash.disabled{pointer-events:none}.monaco-sash.mac.vertical{cursor:col-resize}.monaco-sash.vertical.minimum{cursor:e-resize}.monaco-sash.vertical.maximum{cursor:w-resize}.monaco-sash.mac.horizontal{cursor:row-resize}.monaco-sash.horizontal.minimum{cursor:s-resize}.monaco-sash.horizontal.maximum{cursor:n-resize}.monaco-sash.disabled{cursor:default!important;pointer-events:none!important}.monaco-sash.vertical{cursor:ew-resize;height:100%;top:0;width:var(--sash-size)}.monaco-sash.horizontal{cursor:ns-resize;height:var(--sash-size);left:0;width:100%}.monaco-sash:not(.disabled)>.orthogonal-drag-handle{content:\" \";cursor:all-scroll;display:block;height:calc(var(--sash-size)*2);position:absolute;width:calc(var(--sash-size)*2);z-index:100}.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled)>.orthogonal-drag-handle.start,.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled)>.orthogonal-drag-handle.end{cursor:nwse-resize}.monaco-sash.horizontal.orthogonal-edge-north:not(.disabled)>.orthogonal-drag-handle.end,.monaco-sash.horizontal.orthogonal-edge-south:not(.disabled)>.orthogonal-drag-handle.start{cursor:nesw-resize}.monaco-sash.vertical>.orthogonal-drag-handle.start{left:calc(var(--sash-size)*-.5);top:calc(var(--sash-size)*-1)}.monaco-sash.vertical>.orthogonal-drag-handle.end{bottom:calc(var(--sash-size)*-1);left:calc(var(--sash-size)*-.5)}.monaco-sash.horizontal>.orthogonal-drag-handle.start{left:calc(var(--sash-size)*-1);top:calc(var(--sash-size)*-.5)}.monaco-sash.horizontal>.orthogonal-drag-handle.end{right:calc(var(--sash-size)*-1);top:calc(var(--sash-size)*-.5)}.monaco-sash:before{background:transparent;content:\"\";height:100%;pointer-events:none;position:absolute;transition:background-color .1s ease-out;width:100%}.monaco-sash.vertical:before{left:calc(50% - var(--sash-hover-size)/2);width:var(--sash-hover-size)}.monaco-sash.horizontal:before{height:var(--sash-hover-size);top:calc(50% - var(--sash-hover-size)/2)}.pointer-events-disabled{pointer-events:none!important}.monaco-sash.debug{background:cyan}.monaco-sash.debug.disabled{background:rgba(0,255,255,.2)}.monaco-sash.debug:not(.disabled)>.orthogonal-drag-handle{background:red}",
+      "start": 1711096856570,
+      "end": 1711096856588,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856588,
+      "end": 1711096856588,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856588,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    }
+  ]
+}

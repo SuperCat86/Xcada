@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/linkComputer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { CharacterClassifier } from '../core/characterClassifier.js';\nexport class Uint8Matrix {\n    constructor(rows, cols, defaultValue) {\n        const data = new Uint8Array(rows * cols);\n        for (let i = 0, len = rows * cols; i < len; i++) {\n            data[i] = defaultValue;\n        }\n        this._data = data;\n        this.rows = rows;\n        this.cols = cols;\n    }\n    get(row, col) {\n        return this._data[row * this.cols + col];\n    }\n    set(row, col, value) {\n        this._data[row * this.cols + col] = value;\n    }\n}\nexport class StateMachine {\n    constructor(edges) {\n        let maxCharCode = 0;\n        let maxState = 0 /* Invalid */;\n        for (let i = 0, len = edges.length; i < len; i++) {\n            const [from, chCode, to] = edges[i];\n            if (chCode > maxCharCode) {\n                maxCharCode = chCode;\n            }\n            if (from > maxState) {\n                maxState = from;\n            }\n            if (to > maxState) {\n                maxState = to;\n            }\n        }\n        maxCharCode++;\n        maxState++;\n        const states = new Uint8Matrix(maxState, maxCharCode, 0 /* Invalid */);\n        for (let i = 0, len = edges.length; i < len; i++) {\n            const [from, chCode, to] = edges[i];\n            states.set(from, chCode, to);\n        }\n        this._states = states;\n        this._maxCharCode = maxCharCode;\n    }\n    nextState(currentState, chCode) {\n        if (chCode < 0 || chCode >= this._maxCharCode) {\n            return 0 /* Invalid */;\n        }\n        return this._states.get(currentState, chCode);\n    }\n}\n// State machine for http:// or https:// or file://\nlet _stateMachine = null;\nfunction getStateMachine() {\n    if (_stateMachine === null) {\n        _stateMachine = new StateMachine([\n            [1 /* Start */, 104 /* h */, 2 /* H */],\n            [1 /* Start */, 72 /* H */, 2 /* H */],\n            [1 /* Start */, 102 /* f */, 6 /* F */],\n            [1 /* Start */, 70 /* F */, 6 /* F */],\n            [2 /* H */, 116 /* t */, 3 /* HT */],\n            [2 /* H */, 84 /* T */, 3 /* HT */],\n            [3 /* HT */, 116 /* t */, 4 /* HTT */],\n            [3 /* HT */, 84 /* T */, 4 /* HTT */],\n            [4 /* HTT */, 112 /* p */, 5 /* HTTP */],\n            [4 /* HTT */, 80 /* P */, 5 /* HTTP */],\n            [5 /* HTTP */, 115 /* s */, 9 /* BeforeColon */],\n            [5 /* HTTP */, 83 /* S */, 9 /* BeforeColon */],\n            [5 /* HTTP */, 58 /* Colon */, 10 /* AfterColon */],\n            [6 /* F */, 105 /* i */, 7 /* FI */],\n            [6 /* F */, 73 /* I */, 7 /* FI */],\n            [7 /* FI */, 108 /* l */, 8 /* FIL */],\n            [7 /* FI */, 76 /* L */, 8 /* FIL */],\n            [8 /* FIL */, 101 /* e */, 9 /* BeforeColon */],\n            [8 /* FIL */, 69 /* E */, 9 /* BeforeColon */],\n            [9 /* BeforeColon */, 58 /* Colon */, 10 /* AfterColon */],\n            [10 /* AfterColon */, 47 /* Slash */, 11 /* AlmostThere */],\n            [11 /* AlmostThere */, 47 /* Slash */, 12 /* End */],\n        ]);\n    }\n    return _stateMachine;\n}\nlet _classifier = null;\nfunction getClassifier() {\n    if (_classifier === null) {\n        _classifier = new CharacterClassifier(0 /* None */);\n        // allow-any-unicode-next-line\n        const FORCE_TERMINATION_CHARACTERS = ' \\t<>\\'\\\"、。｡､，．：；‘〈「『〔（［｛｢｣｝］）〕』」〉’｀～…';\n        for (let i = 0; i < FORCE_TERMINATION_CHARACTERS.length; i++) {\n            _classifier.set(FORCE_TERMINATION_CHARACTERS.charCodeAt(i), 1 /* ForceTermination */);\n        }\n        const CANNOT_END_WITH_CHARACTERS = '.,;';\n        for (let i = 0; i < CANNOT_END_WITH_CHARACTERS.length; i++) {\n            _classifier.set(CANNOT_END_WITH_CHARACTERS.charCodeAt(i), 2 /* CannotEndIn */);\n        }\n    }\n    return _classifier;\n}\nexport class LinkComputer {\n    static _createLink(classifier, line, lineNumber, linkBeginIndex, linkEndIndex) {\n        // Do not allow to end link in certain characters...\n        let lastIncludedCharIndex = linkEndIndex - 1;\n        do {\n            const chCode = line.charCodeAt(lastIncludedCharIndex);\n            const chClass = classifier.get(chCode);\n            if (chClass !== 2 /* CannotEndIn */) {\n                break;\n            }\n            lastIncludedCharIndex--;\n        } while (lastIncludedCharIndex > linkBeginIndex);\n        // Handle links enclosed in parens, square brackets and curlys.\n        if (linkBeginIndex > 0) {\n            const charCodeBeforeLink = line.charCodeAt(linkBeginIndex - 1);\n            const lastCharCodeInLink = line.charCodeAt(lastIncludedCharIndex);\n            if ((charCodeBeforeLink === 40 /* OpenParen */ && lastCharCodeInLink === 41 /* CloseParen */)\n                || (charCodeBeforeLink === 91 /* OpenSquareBracket */ && lastCharCodeInLink === 93 /* CloseSquareBracket */)\n                || (charCodeBeforeLink === 123 /* OpenCurlyBrace */ && lastCharCodeInLink === 125 /* CloseCurlyBrace */)) {\n                // Do not end in ) if ( is before the link start\n                // Do not end in ] if [ is before the link start\n                // Do not end in } if { is before the link start\n                lastIncludedCharIndex--;\n            }\n        }\n        return {\n            range: {\n                startLineNumber: lineNumber,\n                startColumn: linkBeginIndex + 1,\n                endLineNumber: lineNumber,\n                endColumn: lastIncludedCharIndex + 2\n            },\n            url: line.substring(linkBeginIndex, lastIncludedCharIndex + 1)\n        };\n    }\n    static computeLinks(model, stateMachine = getStateMachine()) {\n        const classifier = getClassifier();\n        const result = [];\n        for (let i = 1, lineCount = model.getLineCount(); i <= lineCount; i++) {\n            const line = model.getLineContent(i);\n            const len = line.length;\n            let j = 0;\n            let linkBeginIndex = 0;\n            let linkBeginChCode = 0;\n            let state = 1 /* Start */;\n            let hasOpenParens = false;\n            let hasOpenSquareBracket = false;\n            let inSquareBrackets = false;\n            let hasOpenCurlyBracket = false;\n            while (j < len) {\n                let resetStateMachine = false;\n                const chCode = line.charCodeAt(j);\n                if (state === 13 /* Accept */) {\n                    let chClass;\n                    switch (chCode) {\n                        case 40 /* OpenParen */:\n                            hasOpenParens = true;\n                            chClass = 0 /* None */;\n                            break;\n                        case 41 /* CloseParen */:\n                            chClass = (hasOpenParens ? 0 /* None */ : 1 /* ForceTermination */);\n                            break;\n                        case 91 /* OpenSquareBracket */:\n                            inSquareBrackets = true;\n                            hasOpenSquareBracket = true;\n                            chClass = 0 /* None */;\n                            break;\n                        case 93 /* CloseSquareBracket */:\n                            inSquareBrackets = false;\n                            chClass = (hasOpenSquareBracket ? 0 /* None */ : 1 /* ForceTermination */);\n                            break;\n                        case 123 /* OpenCurlyBrace */:\n                            hasOpenCurlyBracket = true;\n                            chClass = 0 /* None */;\n                            break;\n                        case 125 /* CloseCurlyBrace */:\n                            chClass = (hasOpenCurlyBracket ? 0 /* None */ : 1 /* ForceTermination */);\n                            break;\n                        /* The following three rules make it that ' or \" or ` are allowed inside links if the link began with a different one */\n                        case 39 /* SingleQuote */:\n                            chClass = (linkBeginChCode === 34 /* DoubleQuote */ || linkBeginChCode === 96 /* BackTick */) ? 0 /* None */ : 1 /* ForceTermination */;\n                            break;\n                        case 34 /* DoubleQuote */:\n                            chClass = (linkBeginChCode === 39 /* SingleQuote */ || linkBeginChCode === 96 /* BackTick */) ? 0 /* None */ : 1 /* ForceTermination */;\n                            break;\n                        case 96 /* BackTick */:\n                            chClass = (linkBeginChCode === 39 /* SingleQuote */ || linkBeginChCode === 34 /* DoubleQuote */) ? 0 /* None */ : 1 /* ForceTermination */;\n                            break;\n                        case 42 /* Asterisk */:\n                            // `*` terminates a link if the link began with `*`\n                            chClass = (linkBeginChCode === 42 /* Asterisk */) ? 1 /* ForceTermination */ : 0 /* None */;\n                            break;\n                        case 124 /* Pipe */:\n                            // `|` terminates a link if the link began with `|`\n                            chClass = (linkBeginChCode === 124 /* Pipe */) ? 1 /* ForceTermination */ : 0 /* None */;\n                            break;\n                        case 32 /* Space */:\n                            // ` ` allow space in between [ and ]\n                            chClass = (inSquareBrackets ? 0 /* None */ : 1 /* ForceTermination */);\n                            break;\n                        default:\n                            chClass = classifier.get(chCode);\n                    }\n                    // Check if character terminates link\n                    if (chClass === 1 /* ForceTermination */) {\n                        result.push(LinkComputer._createLink(classifier, line, i, linkBeginIndex, j));\n                        resetStateMachine = true;\n                    }\n                }\n                else if (state === 12 /* End */) {\n                    let chClass;\n                    if (chCode === 91 /* OpenSquareBracket */) {\n                        // Allow for the authority part to contain ipv6 addresses which contain [ and ]\n                        hasOpenSquareBracket = true;\n                        chClass = 0 /* None */;\n                    }\n                    else {\n                        chClass = classifier.get(chCode);\n                    }\n                    // Check if character terminates link\n                    if (chClass === 1 /* ForceTermination */) {\n                        resetStateMachine = true;\n                    }\n                    else {\n                        state = 13 /* Accept */;\n                    }\n                }\n                else {\n                    state = stateMachine.nextState(state, chCode);\n                    if (state === 0 /* Invalid */) {\n                        resetStateMachine = true;\n                    }\n                }\n                if (resetStateMachine) {\n                    state = 1 /* Start */;\n                    hasOpenParens = false;\n                    hasOpenSquareBracket = false;\n                    hasOpenCurlyBracket = false;\n                    // Record where the link started\n                    linkBeginIndex = j + 1;\n                    linkBeginChCode = chCode;\n                }\n                j++;\n            }\n            if (state === 13 /* Accept */) {\n                result.push(LinkComputer._createLink(classifier, line, i, linkBeginIndex, len));\n            }\n        }\n        return result;\n    }\n}\n/**\n * Returns an array of all links contains in the provided\n * document. *Note* that this operation is computational\n * expensive and should not run in the UI thread.\n */\nexport function computeLinks(model) {\n    if (!model || typeof model.getLineCount !== 'function' || typeof model.getLineContent !== 'function') {\n        // Unknown caller!\n        return [];\n    }\n    return LinkComputer.computeLinks(model);\n}\n",
+      "start": 1711096857497,
+      "end": 1711096857592,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857592,
+      "end": 1711096857592,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857592,
+      "end": 1711096857593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857593,
+      "end": 1711096857593,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneEditor.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './standalone-tokens.css';\nimport { splitLines } from '../../../base/common/strings.js';\nimport { FontMeasurements } from '../../browser/config/fontMeasurements.js';\nimport { ICodeEditorService } from '../../browser/services/codeEditorService.js';\nimport { DiffNavigator } from '../../browser/widget/diffNavigator.js';\nimport { ApplyUpdateResult, ConfigurationChangedEvent, EditorOptions } from '../../common/config/editorOptions.js';\nimport { BareFontInfo, FontInfo } from '../../common/config/fontInfo.js';\nimport { EditorType } from '../../common/editorCommon.js';\nimport { FindMatch, TextModelResolvedOptions } from '../../common/model.js';\nimport * as languages from '../../common/languages.js';\nimport { ILanguageConfigurationService } from '../../common/languages/languageConfigurationRegistry.js';\nimport { NullState, nullTokenize } from '../../common/languages/nullTokenize.js';\nimport { ILanguageService } from '../../common/languages/language.js';\nimport { IModelService } from '../../common/services/model.js';\nimport { createWebWorker as actualCreateWebWorker } from '../../browser/services/webWorker.js';\nimport * as standaloneEnums from '../../common/standalone/standaloneEnums.js';\nimport { Colorizer } from './colorizer.js';\nimport { createTextModel, StandaloneDiffEditor, StandaloneEditor } from './standaloneCodeEditor.js';\nimport { StandaloneServices } from './standaloneServices.js';\nimport { IStandaloneThemeService } from '../common/standaloneTheme.js';\nimport { CommandsRegistry } from '../../../platform/commands/common/commands.js';\nimport { IMarkerService } from '../../../platform/markers/common/markers.js';\n/**\n * Create a new editor under `domElement`.\n * `domElement` should be empty (not contain other dom nodes).\n * The editor will read the size of `domElement`.\n */\nexport function create(domElement, options, override) {\n    const instantiationService = StandaloneServices.initialize(override || {});\n    return instantiationService.createInstance(StandaloneEditor, domElement, options);\n}\n/**\n * Emitted when an editor is created.\n * Creating a diff editor might cause this listener to be invoked with the two editors.\n * @event\n */\nexport function onDidCreateEditor(listener) {\n    const codeEditorService = StandaloneServices.get(ICodeEditorService);\n    return codeEditorService.onCodeEditorAdd((editor) => {\n        listener(editor);\n    });\n}\n/**\n * Create a new diff editor under `domElement`.\n * `domElement` should be empty (not contain other dom nodes).\n * The editor will read the size of `domElement`.\n */\nexport function createDiffEditor(domElement, options, override) {\n    const instantiationService = StandaloneServices.initialize(override || {});\n    return instantiationService.createInstance(StandaloneDiffEditor, domElement, options);\n}\nexport function createDiffNavigator(diffEditor, opts) {\n    return new DiffNavigator(diffEditor, opts);\n}\n/**\n * Create a new editor model.\n * You can specify the language that should be set for this model or let the language be inferred from the `uri`.\n */\nexport function createModel(value, language, uri) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    const languageId = languageService.getLanguageIdByMimeType(language) || language;\n    return createTextModel(StandaloneServices.get(IModelService), languageService, value, languageId, uri);\n}\n/**\n * Change the language for a model.\n */\nexport function setModelLanguage(model, languageId) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    const modelService = StandaloneServices.get(IModelService);\n    modelService.setMode(model, languageService.createById(languageId));\n}\n/**\n * Set the markers for a model.\n */\nexport function setModelMarkers(model, owner, markers) {\n    if (model) {\n        const markerService = StandaloneServices.get(IMarkerService);\n        markerService.changeOne(owner, model.uri, markers);\n    }\n}\n/**\n * Get markers for owner and/or resource\n *\n * @returns list of markers\n */\nexport function getModelMarkers(filter) {\n    const markerService = StandaloneServices.get(IMarkerService);\n    return markerService.read(filter);\n}\n/**\n * Emitted when markers change for a model.\n * @event\n */\nexport function onDidChangeMarkers(listener) {\n    const markerService = StandaloneServices.get(IMarkerService);\n    return markerService.onMarkerChanged(listener);\n}\n/**\n * Get the model that has `uri` if it exists.\n */\nexport function getModel(uri) {\n    const modelService = StandaloneServices.get(IModelService);\n    return modelService.getModel(uri);\n}\n/**\n * Get all the created models.\n */\nexport function getModels() {\n    const modelService = StandaloneServices.get(IModelService);\n    return modelService.getModels();\n}\n/**\n * Emitted when a model is created.\n * @event\n */\nexport function onDidCreateModel(listener) {\n    const modelService = StandaloneServices.get(IModelService);\n    return modelService.onModelAdded(listener);\n}\n/**\n * Emitted right before a model is disposed.\n * @event\n */\nexport function onWillDisposeModel(listener) {\n    const modelService = StandaloneServices.get(IModelService);\n    return modelService.onModelRemoved(listener);\n}\n/**\n * Emitted when a different language is set to a model.\n * @event\n */\nexport function onDidChangeModelLanguage(listener) {\n    const modelService = StandaloneServices.get(IModelService);\n    return modelService.onModelLanguageChanged((e) => {\n        listener({\n            model: e.model,\n            oldLanguage: e.oldLanguageId\n        });\n    });\n}\n/**\n * Create a new web worker that has model syncing capabilities built in.\n * Specify an AMD module to load that will `create` an object that will be proxied.\n */\nexport function createWebWorker(opts) {\n    return actualCreateWebWorker(StandaloneServices.get(IModelService), StandaloneServices.get(ILanguageConfigurationService), opts);\n}\n/**\n * Colorize the contents of `domNode` using attribute `data-lang`.\n */\nexport function colorizeElement(domNode, options) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    const themeService = StandaloneServices.get(IStandaloneThemeService);\n    themeService.registerEditorContainer(domNode);\n    return Colorizer.colorizeElement(themeService, languageService, domNode, options);\n}\n/**\n * Colorize `text` using language `languageId`.\n */\nexport function colorize(text, languageId, options) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    const themeService = StandaloneServices.get(IStandaloneThemeService);\n    themeService.registerEditorContainer(document.body);\n    return Colorizer.colorize(languageService, text, languageId, options);\n}\n/**\n * Colorize a line in a model.\n */\nexport function colorizeModelLine(model, lineNumber, tabSize = 4) {\n    const themeService = StandaloneServices.get(IStandaloneThemeService);\n    themeService.registerEditorContainer(document.body);\n    return Colorizer.colorizeModelLine(model, lineNumber, tabSize);\n}\n/**\n * @internal\n */\nfunction getSafeTokenizationSupport(language) {\n    const tokenizationSupport = languages.TokenizationRegistry.get(language);\n    if (tokenizationSupport) {\n        return tokenizationSupport;\n    }\n    return {\n        getInitialState: () => NullState,\n        tokenize: (line, hasEOL, state) => nullTokenize(language, state)\n    };\n}\n/**\n * Tokenize `text` using language `languageId`\n */\nexport function tokenize(text, languageId) {\n    // Needed in order to get the mode registered for subsequent look-ups\n    languages.TokenizationRegistry.getOrCreate(languageId);\n    const tokenizationSupport = getSafeTokenizationSupport(languageId);\n    const lines = splitLines(text);\n    const result = [];\n    let state = tokenizationSupport.getInitialState();\n    for (let i = 0, len = lines.length; i < len; i++) {\n        const line = lines[i];\n        const tokenizationResult = tokenizationSupport.tokenize(line, true, state);\n        result[i] = tokenizationResult.tokens;\n        state = tokenizationResult.endState;\n    }\n    return result;\n}\n/**\n * Define a new theme or update an existing theme.\n */\nexport function defineTheme(themeName, themeData) {\n    const standaloneThemeService = StandaloneServices.get(IStandaloneThemeService);\n    standaloneThemeService.defineTheme(themeName, themeData);\n}\n/**\n * Switches to a theme.\n */\nexport function setTheme(themeName) {\n    const standaloneThemeService = StandaloneServices.get(IStandaloneThemeService);\n    standaloneThemeService.setTheme(themeName);\n}\n/**\n * Clears all cached font measurements and triggers re-measurement.\n */\nexport function remeasureFonts() {\n    FontMeasurements.clearAllFontInfos();\n}\n/**\n * Register a command.\n */\nexport function registerCommand(id, handler) {\n    return CommandsRegistry.registerCommand({ id, handler });\n}\n/**\n * @internal\n */\nexport function createMonacoEditorAPI() {\n    return {\n        // methods\n        create: create,\n        onDidCreateEditor: onDidCreateEditor,\n        createDiffEditor: createDiffEditor,\n        createDiffNavigator: createDiffNavigator,\n        createModel: createModel,\n        setModelLanguage: setModelLanguage,\n        setModelMarkers: setModelMarkers,\n        getModelMarkers: getModelMarkers,\n        onDidChangeMarkers: onDidChangeMarkers,\n        getModels: getModels,\n        getModel: getModel,\n        onDidCreateModel: onDidCreateModel,\n        onWillDisposeModel: onWillDisposeModel,\n        onDidChangeModelLanguage: onDidChangeModelLanguage,\n        createWebWorker: createWebWorker,\n        colorizeElement: colorizeElement,\n        colorize: colorize,\n        colorizeModelLine: colorizeModelLine,\n        tokenize: tokenize,\n        defineTheme: defineTheme,\n        setTheme: setTheme,\n        remeasureFonts: remeasureFonts,\n        registerCommand: registerCommand,\n        // enums\n        AccessibilitySupport: standaloneEnums.AccessibilitySupport,\n        ContentWidgetPositionPreference: standaloneEnums.ContentWidgetPositionPreference,\n        CursorChangeReason: standaloneEnums.CursorChangeReason,\n        DefaultEndOfLine: standaloneEnums.DefaultEndOfLine,\n        EditorAutoIndentStrategy: standaloneEnums.EditorAutoIndentStrategy,\n        EditorOption: standaloneEnums.EditorOption,\n        EndOfLinePreference: standaloneEnums.EndOfLinePreference,\n        EndOfLineSequence: standaloneEnums.EndOfLineSequence,\n        MinimapPosition: standaloneEnums.MinimapPosition,\n        MouseTargetType: standaloneEnums.MouseTargetType,\n        OverlayWidgetPositionPreference: standaloneEnums.OverlayWidgetPositionPreference,\n        OverviewRulerLane: standaloneEnums.OverviewRulerLane,\n        RenderLineNumbersType: standaloneEnums.RenderLineNumbersType,\n        RenderMinimap: standaloneEnums.RenderMinimap,\n        ScrollbarVisibility: standaloneEnums.ScrollbarVisibility,\n        ScrollType: standaloneEnums.ScrollType,\n        TextEditorCursorBlinkingStyle: standaloneEnums.TextEditorCursorBlinkingStyle,\n        TextEditorCursorStyle: standaloneEnums.TextEditorCursorStyle,\n        TrackedRangeStickiness: standaloneEnums.TrackedRangeStickiness,\n        WrappingIndent: standaloneEnums.WrappingIndent,\n        InjectedTextCursorStops: standaloneEnums.InjectedTextCursorStops,\n        PositionAffinity: standaloneEnums.PositionAffinity,\n        // classes\n        ConfigurationChangedEvent: ConfigurationChangedEvent,\n        BareFontInfo: BareFontInfo,\n        FontInfo: FontInfo,\n        TextModelResolvedOptions: TextModelResolvedOptions,\n        FindMatch: FindMatch,\n        ApplyUpdateResult: ApplyUpdateResult,\n        // vars\n        EditorType: EditorType,\n        EditorOptions: EditorOptions\n    };\n}\n",
+      "start": 1711096853976,
+      "end": 1711096854157,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854157,
+      "end": 1711096854157,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854157,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854158,
+      "end": 1711096854158,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854159,
+      "end": 1711096854159,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854159,
+      "end": 1711096854159,
+      "order": "normal"
+    }
+  ]
+}

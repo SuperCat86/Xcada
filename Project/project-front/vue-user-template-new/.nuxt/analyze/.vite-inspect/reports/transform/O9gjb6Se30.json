@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeAction.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { coalesce, equals, flatten, isNonEmptyArray } from '../../../../base/common/arrays.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { illegalArgument, isCancellationError, onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { TextModelCancellationTokenSource } from '../../editorState/browser/editorState.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { IModelService } from '../../../common/services/model.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { Progress } from '../../../../platform/progress/common/progress.js';\nimport { CodeActionKind, filtersAction, mayIncludeActionsOfKind } from './types.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nexport const codeActionCommandId = 'editor.action.codeAction';\nexport const refactorCommandId = 'editor.action.refactor';\nexport const sourceActionCommandId = 'editor.action.sourceAction';\nexport const organizeImportsCommandId = 'editor.action.organizeImports';\nexport const fixAllCommandId = 'editor.action.fixAll';\nexport class CodeActionItem {\n    constructor(action, provider) {\n        this.action = action;\n        this.provider = provider;\n    }\n    resolve(token) {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            if (((_a = this.provider) === null || _a === void 0 ? void 0 : _a.resolveCodeAction) && !this.action.edit) {\n                let action;\n                try {\n                    action = yield this.provider.resolveCodeAction(this.action, token);\n                }\n                catch (err) {\n                    onUnexpectedExternalError(err);\n                }\n                if (action) {\n                    this.action.edit = action.edit;\n                }\n            }\n            return this;\n        });\n    }\n}\nclass ManagedCodeActionSet extends Disposable {\n    constructor(actions, documentation, disposables) {\n        super();\n        this.documentation = documentation;\n        this._register(disposables);\n        this.allActions = [...actions].sort(ManagedCodeActionSet.codeActionsComparator);\n        this.validActions = this.allActions.filter(({ action }) => !action.disabled);\n    }\n    static codeActionsComparator({ action: a }, { action: b }) {\n        if (a.isPreferred && !b.isPreferred) {\n            return -1;\n        }\n        else if (!a.isPreferred && b.isPreferred) {\n            return 1;\n        }\n        if (isNonEmptyArray(a.diagnostics)) {\n            if (isNonEmptyArray(b.diagnostics)) {\n                return a.diagnostics[0].message.localeCompare(b.diagnostics[0].message);\n            }\n            else {\n                return -1;\n            }\n        }\n        else if (isNonEmptyArray(b.diagnostics)) {\n            return 1;\n        }\n        else {\n            return 0; // both have no diagnostics\n        }\n    }\n    get hasAutoFix() {\n        return this.validActions.some(({ action: fix }) => !!fix.kind && CodeActionKind.QuickFix.contains(new CodeActionKind(fix.kind)) && !!fix.isPreferred);\n    }\n}\nconst emptyCodeActionsResponse = { actions: [], documentation: undefined };\nexport function getCodeActions(registry, model, rangeOrSelection, trigger, progress, token) {\n    var _a;\n    const filter = trigger.filter || {};\n    const codeActionContext = {\n        only: (_a = filter.include) === null || _a === void 0 ? void 0 : _a.value,\n        trigger: trigger.type,\n    };\n    const cts = new TextModelCancellationTokenSource(model, token);\n    const providers = getCodeActionProviders(registry, model, filter);\n    const disposables = new DisposableStore();\n    const promises = providers.map((provider) => __awaiter(this, void 0, void 0, function* () {\n        try {\n            progress.report(provider);\n            const providedCodeActions = yield provider.provideCodeActions(model, rangeOrSelection, codeActionContext, cts.token);\n            if (providedCodeActions) {\n                disposables.add(providedCodeActions);\n            }\n            if (cts.token.isCancellationRequested) {\n                return emptyCodeActionsResponse;\n            }\n            const filteredActions = ((providedCodeActions === null || providedCodeActions === void 0 ? void 0 : providedCodeActions.actions) || []).filter(action => action && filtersAction(filter, action));\n            const documentation = getDocumentation(provider, filteredActions, filter.include);\n            return {\n                actions: filteredActions.map(action => new CodeActionItem(action, provider)),\n                documentation\n            };\n        }\n        catch (err) {\n            if (isCancellationError(err)) {\n                throw err;\n            }\n            onUnexpectedExternalError(err);\n            return emptyCodeActionsResponse;\n        }\n    }));\n    const listener = registry.onDidChange(() => {\n        const newProviders = registry.all(model);\n        if (!equals(newProviders, providers)) {\n            cts.cancel();\n        }\n    });\n    return Promise.all(promises).then(actions => {\n        const allActions = flatten(actions.map(x => x.actions));\n        const allDocumentation = coalesce(actions.map(x => x.documentation));\n        return new ManagedCodeActionSet(allActions, allDocumentation, disposables);\n    })\n        .finally(() => {\n        listener.dispose();\n        cts.dispose();\n    });\n}\nfunction getCodeActionProviders(registry, model, filter) {\n    return registry.all(model)\n        // Don't include providers that we know will not return code actions of interest\n        .filter(provider => {\n        if (!provider.providedCodeActionKinds) {\n            // We don't know what type of actions this provider will return.\n            return true;\n        }\n        return provider.providedCodeActionKinds.some(kind => mayIncludeActionsOfKind(filter, new CodeActionKind(kind)));\n    });\n}\nfunction getDocumentation(provider, providedCodeActions, only) {\n    if (!provider.documentation) {\n        return undefined;\n    }\n    const documentation = provider.documentation.map(entry => ({ kind: new CodeActionKind(entry.kind), command: entry.command }));\n    if (only) {\n        let currentBest;\n        for (const entry of documentation) {\n            if (entry.kind.contains(only)) {\n                if (!currentBest) {\n                    currentBest = entry;\n                }\n                else {\n                    // Take best match\n                    if (currentBest.kind.contains(entry.kind)) {\n                        currentBest = entry;\n                    }\n                }\n            }\n        }\n        if (currentBest) {\n            return currentBest === null || currentBest === void 0 ? void 0 : currentBest.command;\n        }\n    }\n    // Otherwise, check to see if any of the provided actions match.\n    for (const action of providedCodeActions) {\n        if (!action.kind) {\n            continue;\n        }\n        for (const entry of documentation) {\n            if (entry.kind.contains(new CodeActionKind(action.kind))) {\n                return entry.command;\n            }\n        }\n    }\n    return undefined;\n}\nCommandsRegistry.registerCommand('_executeCodeActionProvider', function (accessor, resource, rangeOrSelection, kind, itemResolveCount) {\n    return __awaiter(this, void 0, void 0, function* () {\n        if (!(resource instanceof URI)) {\n            throw illegalArgument();\n        }\n        const { codeActionProvider } = accessor.get(ILanguageFeaturesService);\n        const model = accessor.get(IModelService).getModel(resource);\n        if (!model) {\n            throw illegalArgument();\n        }\n        const validatedRangeOrSelection = Selection.isISelection(rangeOrSelection)\n            ? Selection.liftSelection(rangeOrSelection)\n            : Range.isIRange(rangeOrSelection)\n                ? model.validateRange(rangeOrSelection)\n                : undefined;\n        if (!validatedRangeOrSelection) {\n            throw illegalArgument();\n        }\n        const include = typeof kind === 'string' ? new CodeActionKind(kind) : undefined;\n        const codeActionSet = yield getCodeActions(codeActionProvider, model, validatedRangeOrSelection, { type: 1 /* Invoke */, filter: { includeSourceActions: true, include } }, Progress.None, CancellationToken.None);\n        const resolving = [];\n        const resolveCount = Math.min(codeActionSet.validActions.length, typeof itemResolveCount === 'number' ? itemResolveCount : 0);\n        for (let i = 0; i < resolveCount; i++) {\n            resolving.push(codeActionSet.validActions[i].resolve(CancellationToken.None));\n        }\n        try {\n            yield Promise.all(resolving);\n            return codeActionSet.validActions.map(item => item.action);\n        }\n        finally {\n            setTimeout(() => codeActionSet.dispose(), 100);\n        }\n    });\n});\n",
+      "start": 1711096856591,
+      "end": 1711096856678,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856678,
+      "end": 1711096856678,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856678,
+      "end": 1711096856679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856679,
+      "end": 1711096856679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856679,
+      "end": 1711096856679,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856679,
+      "end": 1711096856679,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856679,
+      "end": 1711096856679,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856679,
+      "end": 1711096856679,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    }
+  ]
+}

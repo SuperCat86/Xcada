@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionMenu.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { getDomNodePagePosition } from '../../../../base/browser/dom.js';\nimport { Action, Separator } from '../../../../base/common/actions.js';\nimport { canceled } from '../../../../base/common/errors.js';\nimport { Lazy } from '../../../../base/common/lazy.js';\nimport { Disposable, MutableDisposable } from '../../../../base/common/lifecycle.js';\nimport { Position } from '../../../common/core/position.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { codeActionCommandId, CodeActionItem, fixAllCommandId, organizeImportsCommandId, refactorCommandId, sourceActionCommandId } from './codeAction.js';\nimport { CodeActionCommandArgs, CodeActionKind } from './types.js';\nimport { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nclass CodeActionAction extends Action {\n    constructor(action, callback) {\n        super(action.command ? action.command.id : action.title, stripNewlines(action.title), undefined, !action.disabled, callback);\n        this.action = action;\n    }\n}\nfunction stripNewlines(str) {\n    return str.replace(/\\r\\n|\\r|\\n/g, ' ');\n}\nlet CodeActionMenu = class CodeActionMenu extends Disposable {\n    constructor(_editor, _delegate, _contextMenuService, keybindingService, _languageFeaturesService) {\n        super();\n        this._editor = _editor;\n        this._delegate = _delegate;\n        this._contextMenuService = _contextMenuService;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._visible = false;\n        this._showingActions = this._register(new MutableDisposable());\n        this._keybindingResolver = new CodeActionKeybindingResolver({\n            getKeybindings: () => keybindingService.getKeybindings()\n        });\n    }\n    get isVisible() {\n        return this._visible;\n    }\n    show(trigger, codeActions, at, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const actionsToShow = options.includeDisabledActions ? codeActions.allActions : codeActions.validActions;\n            if (!actionsToShow.length) {\n                this._visible = false;\n                return;\n            }\n            if (!this._editor.getDomNode()) {\n                // cancel when editor went off-dom\n                this._visible = false;\n                throw canceled();\n            }\n            this._visible = true;\n            this._showingActions.value = codeActions;\n            const menuActions = this.getMenuActions(trigger, actionsToShow, codeActions.documentation);\n            const anchor = Position.isIPosition(at) ? this._toCoords(at) : at || { x: 0, y: 0 };\n            const resolver = this._keybindingResolver.getResolver();\n            const useShadowDOM = this._editor.getOption(115 /* useShadowDOM */);\n            this._contextMenuService.showContextMenu({\n                domForShadowRoot: useShadowDOM ? this._editor.getDomNode() : undefined,\n                getAnchor: () => anchor,\n                getActions: () => menuActions,\n                onHide: () => {\n                    this._visible = false;\n                    this._editor.focus();\n                },\n                autoSelectFirstItem: true,\n                getKeyBinding: action => action instanceof CodeActionAction ? resolver(action.action) : undefined,\n            });\n        });\n    }\n    getMenuActions(trigger, actionsToShow, documentation) {\n        var _a, _b;\n        const toCodeActionAction = (item) => new CodeActionAction(item.action, () => this._delegate.onSelectCodeAction(item));\n        const result = actionsToShow\n            .map(toCodeActionAction);\n        const allDocumentation = [...documentation];\n        const model = this._editor.getModel();\n        if (model && result.length) {\n            for (const provider of this._languageFeaturesService.codeActionProvider.all(model)) {\n                if (provider._getAdditionalMenuItems) {\n                    allDocumentation.push(...provider._getAdditionalMenuItems({ trigger: trigger.type, only: (_b = (_a = trigger.filter) === null || _a === void 0 ? void 0 : _a.include) === null || _b === void 0 ? void 0 : _b.value }, actionsToShow.map(item => item.action)));\n                }\n            }\n        }\n        if (allDocumentation.length) {\n            result.push(new Separator(), ...allDocumentation.map(command => toCodeActionAction(new CodeActionItem({\n                title: command.title,\n                command: command,\n            }, undefined))));\n        }\n        return result;\n    }\n    _toCoords(position) {\n        if (!this._editor.hasModel()) {\n            return { x: 0, y: 0 };\n        }\n        this._editor.revealPosition(position, 1 /* Immediate */);\n        this._editor.render();\n        // Translate to absolute editor position\n        const cursorCoords = this._editor.getScrolledVisiblePosition(position);\n        const editorCoords = getDomNodePagePosition(this._editor.getDomNode());\n        const x = editorCoords.left + cursorCoords.left;\n        const y = editorCoords.top + cursorCoords.top + cursorCoords.height;\n        return { x, y };\n    }\n};\nCodeActionMenu = __decorate([\n    __param(2, IContextMenuService),\n    __param(3, IKeybindingService),\n    __param(4, ILanguageFeaturesService)\n], CodeActionMenu);\nexport { CodeActionMenu };\nexport class CodeActionKeybindingResolver {\n    constructor(_keybindingProvider) {\n        this._keybindingProvider = _keybindingProvider;\n    }\n    getResolver() {\n        // Lazy since we may not actually ever read the value\n        const allCodeActionBindings = new Lazy(() => this._keybindingProvider.getKeybindings()\n            .filter(item => CodeActionKeybindingResolver.codeActionCommands.indexOf(item.command) >= 0)\n            .filter(item => item.resolvedKeybinding)\n            .map((item) => {\n            // Special case these commands since they come built-in with VS Code and don't use 'commandArgs'\n            let commandArgs = item.commandArgs;\n            if (item.command === organizeImportsCommandId) {\n                commandArgs = { kind: CodeActionKind.SourceOrganizeImports.value };\n            }\n            else if (item.command === fixAllCommandId) {\n                commandArgs = { kind: CodeActionKind.SourceFixAll.value };\n            }\n            return Object.assign({ resolvedKeybinding: item.resolvedKeybinding }, CodeActionCommandArgs.fromUser(commandArgs, {\n                kind: CodeActionKind.None,\n                apply: \"never\" /* Never */\n            }));\n        }));\n        return (action) => {\n            if (action.kind) {\n                const binding = this.bestKeybindingForCodeAction(action, allCodeActionBindings.getValue());\n                return binding === null || binding === void 0 ? void 0 : binding.resolvedKeybinding;\n            }\n            return undefined;\n        };\n    }\n    bestKeybindingForCodeAction(action, candidates) {\n        if (!action.kind) {\n            return undefined;\n        }\n        const kind = new CodeActionKind(action.kind);\n        return candidates\n            .filter(candidate => candidate.kind.contains(kind))\n            .filter(candidate => {\n            if (candidate.preferred) {\n                // If the candidate keybinding only applies to preferred actions, the this action must also be preferred\n                return action.isPreferred;\n            }\n            return true;\n        })\n            .reduceRight((currentBest, candidate) => {\n            if (!currentBest) {\n                return candidate;\n            }\n            // Select the more specific binding\n            return currentBest.kind.contains(candidate.kind) ? candidate : currentBest;\n        }, undefined);\n    }\n}\nCodeActionKeybindingResolver.codeActionCommands = [\n    refactorCommandId,\n    codeActionCommandId,\n    sourceActionCommandId,\n    organizeImportsCommandId,\n    fixAllCommandId\n];\n",
+      "start": 1711096857299,
+      "end": 1711096857372,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857372,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857373,
+      "end": 1711096857373,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857373,
+      "end": 1711096857374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857374,
+      "end": 1711096857374,
+      "order": "normal"
+    }
+  ]
+}

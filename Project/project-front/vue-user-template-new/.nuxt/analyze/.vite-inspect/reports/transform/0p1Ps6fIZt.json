@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-action-bar {\n\twhite-space: nowrap;\n\theight: 100%;\n}\n\n.monaco-action-bar .actions-container {\n\tdisplay: flex;\n\tmargin: 0 auto;\n\tpadding: 0;\n\theight: 100%;\n\twidth: 100%;\n\talign-items: center;\n}\n\n.monaco-action-bar.vertical .actions-container {\n\tdisplay: inline-block;\n}\n\n.monaco-action-bar .action-item {\n\tdisplay: block;\n\talign-items: center;\n\tjustify-content: center;\n\tcursor: pointer;\n\tposition: relative;  /* DO NOT REMOVE - this is the key to preventing the ghosting icon bug in Chrome 42 */\n}\n\n.monaco-action-bar .action-item.disabled {\n\tcursor: default;\n}\n\n.monaco-action-bar .action-item .icon,\n.monaco-action-bar .action-item .codicon {\n\tdisplay: block;\n}\n\n.monaco-action-bar .action-item .codicon {\n\tdisplay: flex;\n\talign-items: center;\n\twidth: 16px;\n\theight: 16px;\n}\n\n.monaco-action-bar .action-label {\n\tfont-size: 11px;\n\tpadding: 3px;\n\tborder-radius: 5px;\n}\n\n.monaco-action-bar .action-item.disabled .action-label,\n.monaco-action-bar .action-item.disabled .action-label::before,\n.monaco-action-bar .action-item.disabled .action-label:hover {\n\topacity: 0.4;\n}\n\n/* Vertical actions */\n\n.monaco-action-bar.vertical {\n\ttext-align: left;\n}\n\n.monaco-action-bar.vertical .action-item {\n\tdisplay: block;\n}\n\n.monaco-action-bar.vertical .action-label.separator {\n\tdisplay: block;\n\tborder-bottom: 1px solid #bbb;\n\tpadding-top: 1px;\n\tmargin-left: .8em;\n\tmargin-right: .8em;\n}\n\n.monaco-action-bar .action-item .action-label.separator {\n\twidth: 1px;\n\theight: 16px;\n\tmargin: 5px 4px !important;\n\tcursor: default;\n\tmin-width: 1px;\n\tpadding: 0;\n\tbackground-color: #bbb;\n}\n\n.secondary-actions .monaco-action-bar .action-label {\n\tmargin-left: 6px;\n}\n\n/* Action Items */\n.monaco-action-bar .action-item.select-container {\n\toverflow: hidden; /* somehow the dropdown overflows its container, we prevent it here to not push */\n\tflex: 1;\n\tmax-width: 170px;\n\tmin-width: 60px;\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n\tmargin-right: 10px;\n}\n\n.monaco-action-bar .action-item.action-dropdown-item {\n\tdisplay: flex;\n}\n\n.monaco-action-bar .action-item.action-dropdown-item > .action-label {\n\tmargin-right: 1px;\n}\n",
+      "start": 1711096856630,
+      "end": 1711096856720,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856720,
+      "end": 1711096856720,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856720,
+      "end": 1711096856720,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856720,
+      "end": 1711096856720,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-action-bar{height:100%;white-space:nowrap}.monaco-action-bar .actions-container{align-items:center;display:flex;height:100%;margin:0 auto;padding:0;width:100%}.monaco-action-bar.vertical .actions-container{display:inline-block}.monaco-action-bar .action-item{align-items:center;cursor:pointer;display:block;justify-content:center;position:relative}.monaco-action-bar .action-item.disabled{cursor:default}.monaco-action-bar .action-item .codicon,.monaco-action-bar .action-item .icon{display:block}.monaco-action-bar .action-item .codicon{align-items:center;display:flex;height:16px;width:16px}.monaco-action-bar .action-label{border-radius:5px;font-size:11px;padding:3px}.monaco-action-bar .action-item.disabled .action-label,.monaco-action-bar .action-item.disabled .action-label:before,.monaco-action-bar .action-item.disabled .action-label:hover{opacity:.4}.monaco-action-bar.vertical{text-align:left}.monaco-action-bar.vertical .action-item{display:block}.monaco-action-bar.vertical .action-label.separator{border-bottom:1px solid #bbb;display:block;margin-left:.8em;margin-right:.8em;padding-top:1px}.monaco-action-bar .action-item .action-label.separator{background-color:#bbb;cursor:default;height:16px;margin:5px 4px!important;min-width:1px;padding:0;width:1px}.secondary-actions .monaco-action-bar .action-label{margin-left:6px}.monaco-action-bar .action-item.select-container{align-items:center;display:flex;flex:1;justify-content:center;margin-right:10px;max-width:170px;min-width:60px;overflow:hidden}.monaco-action-bar .action-item.action-dropdown-item{display:flex}.monaco-action-bar .action-item.action-dropdown-item>.action-label{margin-right:1px}",
+      "start": 1711096856720,
+      "end": 1711096856735,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856735,
+      "end": 1711096856735,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856735,
+      "end": 1711096856735,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856736,
+      "end": 1711096856736,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856736,
+      "end": 1711096856737,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856737,
+      "end": 1711096856737,
+      "order": "normal"
+    }
+  ]
+}

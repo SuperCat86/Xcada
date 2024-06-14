@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/rename/browser/renameInputField.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport './renameInputField.css';\nimport { Position } from '../../../common/core/position.js';\nimport { localize } from '../../../../nls.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { editorWidgetBackground, inputBackground, inputBorder, inputForeground, widgetShadow } from '../../../../platform/theme/common/colorRegistry.js';\nimport { IThemeService } from '../../../../platform/theme/common/themeService.js';\nexport const CONTEXT_RENAME_INPUT_VISIBLE = new RawContextKey('renameInputVisible', false, localize('renameInputVisible', \"Whether the rename input widget is visible\"));\nlet RenameInputField = class RenameInputField {\n    constructor(_editor, _acceptKeybindings, _themeService, _keybindingService, contextKeyService) {\n        this._editor = _editor;\n        this._acceptKeybindings = _acceptKeybindings;\n        this._themeService = _themeService;\n        this._keybindingService = _keybindingService;\n        this._disposables = new DisposableStore();\n        this.allowEditorOverflow = true;\n        this._visibleContextKey = CONTEXT_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);\n        this._editor.addContentWidget(this);\n        this._disposables.add(this._editor.onDidChangeConfiguration(e => {\n            if (e.hasChanged(44 /* fontInfo */)) {\n                this._updateFont();\n            }\n        }));\n        this._disposables.add(_themeService.onDidColorThemeChange(this._updateStyles, this));\n    }\n    dispose() {\n        this._disposables.dispose();\n        this._editor.removeContentWidget(this);\n    }\n    getId() {\n        return '__renameInputWidget';\n    }\n    getDomNode() {\n        if (!this._domNode) {\n            this._domNode = document.createElement('div');\n            this._domNode.className = 'monaco-editor rename-box';\n            this._input = document.createElement('input');\n            this._input.className = 'rename-input';\n            this._input.type = 'text';\n            this._input.setAttribute('aria-label', localize('renameAriaLabel', \"Rename input. Type new name and press Enter to commit.\"));\n            this._domNode.appendChild(this._input);\n            this._label = document.createElement('div');\n            this._label.className = 'rename-label';\n            this._domNode.appendChild(this._label);\n            const updateLabel = () => {\n                var _a, _b;\n                const [accept, preview] = this._acceptKeybindings;\n                this._keybindingService.lookupKeybinding(accept);\n                this._label.innerText = localize({ key: 'label', comment: ['placeholders are keybindings, e.g \"F2 to Rename, Shift+F2 to Preview\"'] }, \"{0} to Rename, {1} to Preview\", (_a = this._keybindingService.lookupKeybinding(accept)) === null || _a === void 0 ? void 0 : _a.getLabel(), (_b = this._keybindingService.lookupKeybinding(preview)) === null || _b === void 0 ? void 0 : _b.getLabel());\n            };\n            updateLabel();\n            this._disposables.add(this._keybindingService.onDidUpdateKeybindings(updateLabel));\n            this._updateFont();\n            this._updateStyles(this._themeService.getColorTheme());\n        }\n        return this._domNode;\n    }\n    _updateStyles(theme) {\n        var _a, _b, _c, _d;\n        if (!this._input || !this._domNode) {\n            return;\n        }\n        const widgetShadowColor = theme.getColor(widgetShadow);\n        this._domNode.style.backgroundColor = String((_a = theme.getColor(editorWidgetBackground)) !== null && _a !== void 0 ? _a : '');\n        this._domNode.style.boxShadow = widgetShadowColor ? ` 0 0 8px 2px ${widgetShadowColor}` : '';\n        this._domNode.style.color = String((_b = theme.getColor(inputForeground)) !== null && _b !== void 0 ? _b : '');\n        this._input.style.backgroundColor = String((_c = theme.getColor(inputBackground)) !== null && _c !== void 0 ? _c : '');\n        // this._input.style.color = String(theme.getColor(inputForeground) ?? '');\n        const border = theme.getColor(inputBorder);\n        this._input.style.borderWidth = border ? '1px' : '0px';\n        this._input.style.borderStyle = border ? 'solid' : 'none';\n        this._input.style.borderColor = (_d = border === null || border === void 0 ? void 0 : border.toString()) !== null && _d !== void 0 ? _d : 'none';\n    }\n    _updateFont() {\n        if (!this._input || !this._label) {\n            return;\n        }\n        const fontInfo = this._editor.getOption(44 /* fontInfo */);\n        this._input.style.fontFamily = fontInfo.fontFamily;\n        this._input.style.fontWeight = fontInfo.fontWeight;\n        this._input.style.fontSize = `${fontInfo.fontSize}px`;\n        this._label.style.fontSize = `${fontInfo.fontSize * 0.8}px`;\n    }\n    getPosition() {\n        if (!this._visible) {\n            return null;\n        }\n        return {\n            position: this._position,\n            preference: [2 /* BELOW */, 1 /* ABOVE */]\n        };\n    }\n    afterRender(position) {\n        if (!position) {\n            // cancel rename when input widget isn't rendered anymore\n            this.cancelInput(true);\n        }\n    }\n    acceptInput(wantsPreview) {\n        if (this._currentAcceptInput) {\n            this._currentAcceptInput(wantsPreview);\n        }\n    }\n    cancelInput(focusEditor) {\n        if (this._currentCancelInput) {\n            this._currentCancelInput(focusEditor);\n        }\n    }\n    getInput(where, value, selectionStart, selectionEnd, supportPreview, token) {\n        this._domNode.classList.toggle('preview', supportPreview);\n        this._position = new Position(where.startLineNumber, where.startColumn);\n        this._input.value = value;\n        this._input.setAttribute('selectionStart', selectionStart.toString());\n        this._input.setAttribute('selectionEnd', selectionEnd.toString());\n        this._input.size = Math.max((where.endColumn - where.startColumn) * 1.1, 20);\n        const disposeOnDone = new DisposableStore();\n        return new Promise(resolve => {\n            this._currentCancelInput = (focusEditor) => {\n                this._currentAcceptInput = undefined;\n                this._currentCancelInput = undefined;\n                resolve(focusEditor);\n                return true;\n            };\n            this._currentAcceptInput = (wantsPreview) => {\n                if (this._input.value.trim().length === 0 || this._input.value === value) {\n                    // empty or whitespace only or not changed\n                    this.cancelInput(true);\n                    return;\n                }\n                this._currentAcceptInput = undefined;\n                this._currentCancelInput = undefined;\n                resolve({\n                    newName: this._input.value,\n                    wantsPreview: supportPreview && wantsPreview\n                });\n            };\n            disposeOnDone.add(token.onCancellationRequested(() => this.cancelInput(true)));\n            disposeOnDone.add(this._editor.onDidBlurEditorWidget(() => this.cancelInput(false)));\n            this._show();\n        }).finally(() => {\n            disposeOnDone.dispose();\n            this._hide();\n        });\n    }\n    _show() {\n        this._editor.revealLineInCenterIfOutsideViewport(this._position.lineNumber, 0 /* Smooth */);\n        this._visible = true;\n        this._visibleContextKey.set(true);\n        this._editor.layoutContentWidget(this);\n        setTimeout(() => {\n            this._input.focus();\n            this._input.setSelectionRange(parseInt(this._input.getAttribute('selectionStart')), parseInt(this._input.getAttribute('selectionEnd')));\n        }, 100);\n    }\n    _hide() {\n        this._visible = false;\n        this._visibleContextKey.reset();\n        this._editor.layoutContentWidget(this);\n    }\n};\nRenameInputField = __decorate([\n    __param(2, IThemeService),\n    __param(3, IKeybindingService),\n    __param(4, IContextKeyService)\n], RenameInputField);\nexport { RenameInputField };\n",
+      "start": 1711096855903,
+      "end": 1711096856003,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856004,
+      "end": 1711096856004,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856004,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    }
+  ]
+}

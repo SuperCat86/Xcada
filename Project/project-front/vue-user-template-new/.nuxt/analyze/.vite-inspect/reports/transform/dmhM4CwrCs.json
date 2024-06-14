@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/configuration/common/configurationRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { distinct } from '../../../base/common/arrays.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport * as types from '../../../base/common/types.js';\nimport * as nls from '../../../nls.js';\nimport { Extensions as JSONExtensions } from '../../jsonschemas/common/jsonContributionRegistry.js';\nimport { Registry } from '../../registry/common/platform.js';\nexport const Extensions = {\n    Configuration: 'base.contributions.configuration'\n};\nexport const allSettings = { properties: {}, patternProperties: {} };\nexport const applicationSettings = { properties: {}, patternProperties: {} };\nexport const machineSettings = { properties: {}, patternProperties: {} };\nexport const machineOverridableSettings = { properties: {}, patternProperties: {} };\nexport const windowSettings = { properties: {}, patternProperties: {} };\nexport const resourceSettings = { properties: {}, patternProperties: {} };\nexport const resourceLanguageSettingsSchemaId = 'vscode://schemas/settings/resourceLanguage';\nconst contributionRegistry = Registry.as(JSONExtensions.JSONContribution);\nclass ConfigurationRegistry {\n    constructor() {\n        this.overrideIdentifiers = new Set();\n        this._onDidSchemaChange = new Emitter();\n        this._onDidUpdateConfiguration = new Emitter();\n        this.configurationDefaultsOverrides = new Map();\n        this.defaultLanguageConfigurationOverridesNode = {\n            id: 'defaultOverrides',\n            title: nls.localize('defaultLanguageConfigurationOverrides.title', \"Default Language Configuration Overrides\"),\n            properties: {}\n        };\n        this.configurationContributors = [this.defaultLanguageConfigurationOverridesNode];\n        this.resourceLanguageSettingsSchema = { properties: {}, patternProperties: {}, additionalProperties: false, errorMessage: 'Unknown editor configuration setting', allowTrailingCommas: true, allowComments: true };\n        this.configurationProperties = {};\n        this.excludedConfigurationProperties = {};\n        contributionRegistry.registerSchema(resourceLanguageSettingsSchemaId, this.resourceLanguageSettingsSchema);\n        this.registerOverridePropertyPatternKey();\n    }\n    registerConfiguration(configuration, validate = true) {\n        this.registerConfigurations([configuration], validate);\n    }\n    registerConfigurations(configurations, validate = true) {\n        const properties = this.doRegisterConfigurations(configurations, validate);\n        contributionRegistry.registerSchema(resourceLanguageSettingsSchemaId, this.resourceLanguageSettingsSchema);\n        this._onDidSchemaChange.fire();\n        this._onDidUpdateConfiguration.fire({ properties });\n    }\n    registerDefaultConfigurations(configurationDefaults) {\n        var _a;\n        const properties = [];\n        const overrideIdentifiers = [];\n        for (const { overrides, source } of configurationDefaults) {\n            for (const key in overrides) {\n                properties.push(key);\n                if (OVERRIDE_PROPERTY_REGEX.test(key)) {\n                    const defaultValue = Object.assign(Object.assign({}, (((_a = this.configurationDefaultsOverrides.get(key)) === null || _a === void 0 ? void 0 : _a.value) || {})), overrides[key]);\n                    this.configurationDefaultsOverrides.set(key, { source, value: defaultValue });\n                    const property = {\n                        type: 'object',\n                        default: defaultValue,\n                        description: nls.localize('defaultLanguageConfiguration.description', \"Configure settings to be overridden for {0} language.\", key),\n                        $ref: resourceLanguageSettingsSchemaId,\n                        defaultDefaultValue: defaultValue,\n                        source: types.isString(source) ? undefined : source,\n                    };\n                    overrideIdentifiers.push(...overrideIdentifiersFromKey(key));\n                    this.configurationProperties[key] = property;\n                    this.defaultLanguageConfigurationOverridesNode.properties[key] = property;\n                }\n                else {\n                    this.configurationDefaultsOverrides.set(key, { value: overrides[key], source });\n                    const property = this.configurationProperties[key];\n                    if (property) {\n                        this.updatePropertyDefaultValue(key, property);\n                        this.updateSchema(key, property);\n                    }\n                }\n            }\n        }\n        this.registerOverrideIdentifiers(overrideIdentifiers);\n        this._onDidSchemaChange.fire();\n        this._onDidUpdateConfiguration.fire({ properties, defaultsOverrides: true });\n    }\n    registerOverrideIdentifiers(overrideIdentifiers) {\n        for (const overrideIdentifier of overrideIdentifiers) {\n            this.overrideIdentifiers.add(overrideIdentifier);\n        }\n        this.updateOverridePropertyPatternKey();\n    }\n    doRegisterConfigurations(configurations, validate) {\n        const properties = [];\n        configurations.forEach(configuration => {\n            properties.push(...this.validateAndRegisterProperties(configuration, validate, configuration.extensionInfo, configuration.restrictedProperties)); // fills in defaults\n            this.configurationContributors.push(configuration);\n            this.registerJSONConfiguration(configuration);\n        });\n        return properties;\n    }\n    validateAndRegisterProperties(configuration, validate = true, extensionInfo, restrictedProperties, scope = 3 /* WINDOW */) {\n        scope = types.isUndefinedOrNull(configuration.scope) ? scope : configuration.scope;\n        let propertyKeys = [];\n        let properties = configuration.properties;\n        if (properties) {\n            for (let key in properties) {\n                if (validate && validateProperty(key)) {\n                    delete properties[key];\n                    continue;\n                }\n                const property = properties[key];\n                property.source = extensionInfo;\n                // update default value\n                property.defaultDefaultValue = properties[key].default;\n                this.updatePropertyDefaultValue(key, property);\n                // update scope\n                if (OVERRIDE_PROPERTY_REGEX.test(key)) {\n                    property.scope = undefined; // No scope for overridable properties `[${identifier}]`\n                }\n                else {\n                    property.scope = types.isUndefinedOrNull(property.scope) ? scope : property.scope;\n                    property.restricted = types.isUndefinedOrNull(property.restricted) ? !!(restrictedProperties === null || restrictedProperties === void 0 ? void 0 : restrictedProperties.includes(key)) : property.restricted;\n                }\n                // Add to properties maps\n                // Property is included by default if 'included' is unspecified\n                if (properties[key].hasOwnProperty('included') && !properties[key].included) {\n                    this.excludedConfigurationProperties[key] = properties[key];\n                    delete properties[key];\n                    continue;\n                }\n                else {\n                    this.configurationProperties[key] = properties[key];\n                }\n                if (!properties[key].deprecationMessage && properties[key].markdownDeprecationMessage) {\n                    // If not set, default deprecationMessage to the markdown source\n                    properties[key].deprecationMessage = properties[key].markdownDeprecationMessage;\n                }\n                propertyKeys.push(key);\n            }\n        }\n        let subNodes = configuration.allOf;\n        if (subNodes) {\n            for (let node of subNodes) {\n                propertyKeys.push(...this.validateAndRegisterProperties(node, validate, extensionInfo, restrictedProperties, scope));\n            }\n        }\n        return propertyKeys;\n    }\n    getConfigurationProperties() {\n        return this.configurationProperties;\n    }\n    registerJSONConfiguration(configuration) {\n        const register = (configuration) => {\n            let properties = configuration.properties;\n            if (properties) {\n                for (const key in properties) {\n                    this.updateSchema(key, properties[key]);\n                }\n            }\n            let subNodes = configuration.allOf;\n            if (subNodes) {\n                subNodes.forEach(register);\n            }\n        };\n        register(configuration);\n    }\n    updateSchema(key, property) {\n        allSettings.properties[key] = property;\n        switch (property.scope) {\n            case 1 /* APPLICATION */:\n                applicationSettings.properties[key] = property;\n                break;\n            case 2 /* MACHINE */:\n                machineSettings.properties[key] = property;\n                break;\n            case 6 /* MACHINE_OVERRIDABLE */:\n                machineOverridableSettings.properties[key] = property;\n                break;\n            case 3 /* WINDOW */:\n                windowSettings.properties[key] = property;\n                break;\n            case 4 /* RESOURCE */:\n                resourceSettings.properties[key] = property;\n                break;\n            case 5 /* LANGUAGE_OVERRIDABLE */:\n                resourceSettings.properties[key] = property;\n                this.resourceLanguageSettingsSchema.properties[key] = property;\n                break;\n        }\n    }\n    updateOverridePropertyPatternKey() {\n        for (const overrideIdentifier of this.overrideIdentifiers.values()) {\n            const overrideIdentifierProperty = `[${overrideIdentifier}]`;\n            const resourceLanguagePropertiesSchema = {\n                type: 'object',\n                description: nls.localize('overrideSettings.defaultDescription', \"Configure editor settings to be overridden for a language.\"),\n                errorMessage: nls.localize('overrideSettings.errorMessage', \"This setting does not support per-language configuration.\"),\n                $ref: resourceLanguageSettingsSchemaId,\n            };\n            this.updatePropertyDefaultValue(overrideIdentifierProperty, resourceLanguagePropertiesSchema);\n            allSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n            applicationSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n            machineSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n            machineOverridableSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n            windowSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n            resourceSettings.properties[overrideIdentifierProperty] = resourceLanguagePropertiesSchema;\n        }\n        this._onDidSchemaChange.fire();\n    }\n    registerOverridePropertyPatternKey() {\n        const resourceLanguagePropertiesSchema = {\n            type: 'object',\n            description: nls.localize('overrideSettings.defaultDescription', \"Configure editor settings to be overridden for a language.\"),\n            errorMessage: nls.localize('overrideSettings.errorMessage', \"This setting does not support per-language configuration.\"),\n            $ref: resourceLanguageSettingsSchemaId,\n        };\n        allSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        applicationSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        machineSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        machineOverridableSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        windowSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        resourceSettings.patternProperties[OVERRIDE_PROPERTY_PATTERN] = resourceLanguagePropertiesSchema;\n        this._onDidSchemaChange.fire();\n    }\n    updatePropertyDefaultValue(key, property) {\n        const configurationdefaultOverride = this.configurationDefaultsOverrides.get(key);\n        let defaultValue = configurationdefaultOverride === null || configurationdefaultOverride === void 0 ? void 0 : configurationdefaultOverride.value;\n        let defaultSource = configurationdefaultOverride === null || configurationdefaultOverride === void 0 ? void 0 : configurationdefaultOverride.source;\n        if (types.isUndefined(defaultValue)) {\n            defaultValue = property.defaultDefaultValue;\n            defaultSource = undefined;\n        }\n        if (types.isUndefined(defaultValue)) {\n            defaultValue = getDefaultValue(property.type);\n        }\n        property.default = defaultValue;\n        property.defaultValueSource = defaultSource;\n    }\n}\nconst OVERRIDE_IDENTIFIER_PATTERN = `\\\\[([^\\\\]]+)\\\\]`;\nconst OVERRIDE_IDENTIFIER_REGEX = new RegExp(OVERRIDE_IDENTIFIER_PATTERN, 'g');\nexport const OVERRIDE_PROPERTY_PATTERN = `^(${OVERRIDE_IDENTIFIER_PATTERN})+$`;\nexport const OVERRIDE_PROPERTY_REGEX = new RegExp(OVERRIDE_PROPERTY_PATTERN);\nexport function overrideIdentifiersFromKey(key) {\n    const identifiers = [];\n    if (OVERRIDE_PROPERTY_REGEX.test(key)) {\n        let matches = OVERRIDE_IDENTIFIER_REGEX.exec(key);\n        while (matches === null || matches === void 0 ? void 0 : matches.length) {\n            const identifier = matches[1].trim();\n            if (identifier) {\n                identifiers.push(identifier);\n            }\n            matches = OVERRIDE_IDENTIFIER_REGEX.exec(key);\n        }\n    }\n    return distinct(identifiers);\n}\nexport function getDefaultValue(type) {\n    const t = Array.isArray(type) ? type[0] : type;\n    switch (t) {\n        case 'boolean':\n            return false;\n        case 'integer':\n        case 'number':\n            return 0;\n        case 'string':\n            return '';\n        case 'array':\n            return [];\n        case 'object':\n            return {};\n        default:\n            return null;\n    }\n}\nconst configurationRegistry = new ConfigurationRegistry();\nRegistry.add(Extensions.Configuration, configurationRegistry);\nexport function validateProperty(property) {\n    if (!property.trim()) {\n        return nls.localize('config.property.empty', \"Cannot register an empty property\");\n    }\n    if (OVERRIDE_PROPERTY_REGEX.test(property)) {\n        return nls.localize('config.property.languageDefault', \"Cannot register '{0}'. This matches property pattern '\\\\\\\\[.*\\\\\\\\]$' for describing language specific editor settings. Use 'configurationDefaults' contribution.\", property);\n    }\n    if (configurationRegistry.getConfigurationProperties()[property] !== undefined) {\n        return nls.localize('config.property.duplicate', \"Cannot register '{0}'. This property is already registered.\", property);\n    }\n    return null;\n}\n",
+      "start": 1711096855900,
+      "end": 1711096856006,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856007,
+      "end": 1711096856007,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856007,
+      "end": 1711096856008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856008,
+      "end": 1711096856008,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856008,
+      "end": 1711096856008,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856008,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    }
+  ]
+}

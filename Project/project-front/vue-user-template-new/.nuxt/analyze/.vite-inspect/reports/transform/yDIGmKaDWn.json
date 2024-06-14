@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/core/stringBuilder.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../base/common/strings.js';\nimport * as platform from '../../../base/common/platform.js';\nimport * as buffer from '../../../base/common/buffer.js';\nlet _utf16LE_TextDecoder;\nfunction getUTF16LE_TextDecoder() {\n    if (!_utf16LE_TextDecoder) {\n        _utf16LE_TextDecoder = new TextDecoder('UTF-16LE');\n    }\n    return _utf16LE_TextDecoder;\n}\nlet _utf16BE_TextDecoder;\nfunction getUTF16BE_TextDecoder() {\n    if (!_utf16BE_TextDecoder) {\n        _utf16BE_TextDecoder = new TextDecoder('UTF-16BE');\n    }\n    return _utf16BE_TextDecoder;\n}\nlet _platformTextDecoder;\nexport function getPlatformTextDecoder() {\n    if (!_platformTextDecoder) {\n        _platformTextDecoder = platform.isLittleEndian() ? getUTF16LE_TextDecoder() : getUTF16BE_TextDecoder();\n    }\n    return _platformTextDecoder;\n}\nexport const hasTextDecoder = (typeof TextDecoder !== 'undefined');\nexport let createStringBuilder;\nexport let decodeUTF16LE;\nif (hasTextDecoder) {\n    createStringBuilder = (capacity) => new StringBuilder(capacity);\n    decodeUTF16LE = standardDecodeUTF16LE;\n}\nelse {\n    createStringBuilder = (capacity) => new CompatStringBuilder();\n    decodeUTF16LE = compatDecodeUTF16LE;\n}\nfunction standardDecodeUTF16LE(source, offset, len) {\n    const view = new Uint16Array(source.buffer, offset, len);\n    if (len > 0 && (view[0] === 0xFEFF || view[0] === 0xFFFE)) {\n        // UTF16 sometimes starts with a BOM https://de.wikipedia.org/wiki/Byte_Order_Mark\n        // It looks like TextDecoder.decode will eat up a leading BOM (0xFEFF or 0xFFFE)\n        // We don't want that behavior because we know the string is UTF16LE and the BOM should be maintained\n        // So we use the manual decoder\n        return compatDecodeUTF16LE(source, offset, len);\n    }\n    return getUTF16LE_TextDecoder().decode(view);\n}\nfunction compatDecodeUTF16LE(source, offset, len) {\n    const result = [];\n    let resultLen = 0;\n    for (let i = 0; i < len; i++) {\n        const charCode = buffer.readUInt16LE(source, offset);\n        offset += 2;\n        result[resultLen++] = String.fromCharCode(charCode);\n    }\n    return result.join('');\n}\nclass StringBuilder {\n    constructor(capacity) {\n        this._capacity = capacity | 0;\n        this._buffer = new Uint16Array(this._capacity);\n        this._completedStrings = null;\n        this._bufferLength = 0;\n    }\n    reset() {\n        this._completedStrings = null;\n        this._bufferLength = 0;\n    }\n    build() {\n        if (this._completedStrings !== null) {\n            this._flushBuffer();\n            return this._completedStrings.join('');\n        }\n        return this._buildBuffer();\n    }\n    _buildBuffer() {\n        if (this._bufferLength === 0) {\n            return '';\n        }\n        const view = new Uint16Array(this._buffer.buffer, 0, this._bufferLength);\n        return getPlatformTextDecoder().decode(view);\n    }\n    _flushBuffer() {\n        const bufferString = this._buildBuffer();\n        this._bufferLength = 0;\n        if (this._completedStrings === null) {\n            this._completedStrings = [bufferString];\n        }\n        else {\n            this._completedStrings[this._completedStrings.length] = bufferString;\n        }\n    }\n    write1(charCode) {\n        const remainingSpace = this._capacity - this._bufferLength;\n        if (remainingSpace <= 1) {\n            if (remainingSpace === 0 || strings.isHighSurrogate(charCode)) {\n                this._flushBuffer();\n            }\n        }\n        this._buffer[this._bufferLength++] = charCode;\n    }\n    appendASCII(charCode) {\n        if (this._bufferLength === this._capacity) {\n            // buffer is full\n            this._flushBuffer();\n        }\n        this._buffer[this._bufferLength++] = charCode;\n    }\n    appendASCIIString(str) {\n        const strLen = str.length;\n        if (this._bufferLength + strLen >= this._capacity) {\n            // This string does not fit in the remaining buffer space\n            this._flushBuffer();\n            this._completedStrings[this._completedStrings.length] = str;\n            return;\n        }\n        for (let i = 0; i < strLen; i++) {\n            this._buffer[this._bufferLength++] = str.charCodeAt(i);\n        }\n    }\n}\nclass CompatStringBuilder {\n    constructor() {\n        this._pieces = [];\n        this._piecesLen = 0;\n    }\n    reset() {\n        this._pieces = [];\n        this._piecesLen = 0;\n    }\n    build() {\n        return this._pieces.join('');\n    }\n    write1(charCode) {\n        this._pieces[this._piecesLen++] = String.fromCharCode(charCode);\n    }\n    appendASCII(charCode) {\n        this._pieces[this._piecesLen++] = String.fromCharCode(charCode);\n    }\n    appendASCIIString(str) {\n        this._pieces[this._piecesLen++] = str;\n    }\n}\n",
+      "start": 1711096855361,
+      "end": 1711096855507,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855507,
+      "end": 1711096855507,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855507,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855508,
+      "end": 1711096855508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855509,
+      "end": 1711096855509,
+      "order": "normal"
+    }
+  ]
+}

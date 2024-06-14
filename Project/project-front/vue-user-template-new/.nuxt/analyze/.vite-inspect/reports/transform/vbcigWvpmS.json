@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/keybindings.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { illegalArgument } from './errors.js';\nexport function createKeybinding(keybinding, OS) {\n    if (keybinding === 0) {\n        return null;\n    }\n    const firstPart = (keybinding & 0x0000FFFF) >>> 0;\n    const chordPart = (keybinding & 0xFFFF0000) >>> 16;\n    if (chordPart !== 0) {\n        return new ChordKeybinding([\n            createSimpleKeybinding(firstPart, OS),\n            createSimpleKeybinding(chordPart, OS)\n        ]);\n    }\n    return new ChordKeybinding([createSimpleKeybinding(firstPart, OS)]);\n}\nexport function createSimpleKeybinding(keybinding, OS) {\n    const ctrlCmd = (keybinding & 2048 /* CtrlCmd */ ? true : false);\n    const winCtrl = (keybinding & 256 /* WinCtrl */ ? true : false);\n    const ctrlKey = (OS === 2 /* Macintosh */ ? winCtrl : ctrlCmd);\n    const shiftKey = (keybinding & 1024 /* Shift */ ? true : false);\n    const altKey = (keybinding & 512 /* Alt */ ? true : false);\n    const metaKey = (OS === 2 /* Macintosh */ ? ctrlCmd : winCtrl);\n    const keyCode = (keybinding & 255 /* KeyCode */);\n    return new SimpleKeybinding(ctrlKey, shiftKey, altKey, metaKey, keyCode);\n}\nexport class SimpleKeybinding {\n    constructor(ctrlKey, shiftKey, altKey, metaKey, keyCode) {\n        this.ctrlKey = ctrlKey;\n        this.shiftKey = shiftKey;\n        this.altKey = altKey;\n        this.metaKey = metaKey;\n        this.keyCode = keyCode;\n    }\n    equals(other) {\n        return (this.ctrlKey === other.ctrlKey\n            && this.shiftKey === other.shiftKey\n            && this.altKey === other.altKey\n            && this.metaKey === other.metaKey\n            && this.keyCode === other.keyCode);\n    }\n    isModifierKey() {\n        return (this.keyCode === 0 /* Unknown */\n            || this.keyCode === 5 /* Ctrl */\n            || this.keyCode === 57 /* Meta */\n            || this.keyCode === 6 /* Alt */\n            || this.keyCode === 4 /* Shift */);\n    }\n    toChord() {\n        return new ChordKeybinding([this]);\n    }\n    /**\n     * Does this keybinding refer to the key code of a modifier and it also has the modifier flag?\n     */\n    isDuplicateModifierCase() {\n        return ((this.ctrlKey && this.keyCode === 5 /* Ctrl */)\n            || (this.shiftKey && this.keyCode === 4 /* Shift */)\n            || (this.altKey && this.keyCode === 6 /* Alt */)\n            || (this.metaKey && this.keyCode === 57 /* Meta */));\n    }\n}\nexport class ChordKeybinding {\n    constructor(parts) {\n        if (parts.length === 0) {\n            throw illegalArgument(`parts`);\n        }\n        this.parts = parts;\n    }\n}\nexport class ScanCodeBinding {\n    constructor(ctrlKey, shiftKey, altKey, metaKey, scanCode) {\n        this.ctrlKey = ctrlKey;\n        this.shiftKey = shiftKey;\n        this.altKey = altKey;\n        this.metaKey = metaKey;\n        this.scanCode = scanCode;\n    }\n    /**\n     * Does this keybinding refer to the key code of a modifier and it also has the modifier flag?\n     */\n    isDuplicateModifierCase() {\n        return ((this.ctrlKey && (this.scanCode === 157 /* ControlLeft */ || this.scanCode === 161 /* ControlRight */))\n            || (this.shiftKey && (this.scanCode === 158 /* ShiftLeft */ || this.scanCode === 162 /* ShiftRight */))\n            || (this.altKey && (this.scanCode === 159 /* AltLeft */ || this.scanCode === 163 /* AltRight */))\n            || (this.metaKey && (this.scanCode === 160 /* MetaLeft */ || this.scanCode === 164 /* MetaRight */)));\n    }\n}\nexport class ResolvedKeybindingPart {\n    constructor(ctrlKey, shiftKey, altKey, metaKey, kbLabel, kbAriaLabel) {\n        this.ctrlKey = ctrlKey;\n        this.shiftKey = shiftKey;\n        this.altKey = altKey;\n        this.metaKey = metaKey;\n        this.keyLabel = kbLabel;\n        this.keyAriaLabel = kbAriaLabel;\n    }\n}\n/**\n * A resolved keybinding. Can be a simple keybinding or a chord keybinding.\n */\nexport class ResolvedKeybinding {\n}\n",
+      "start": 1711096855913,
+      "end": 1711096856016,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856016,
+      "end": 1711096856016,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856016,
+      "end": 1711096856017,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856017,
+      "end": 1711096856017,
+      "order": "normal"
+    }
+  ]
+}

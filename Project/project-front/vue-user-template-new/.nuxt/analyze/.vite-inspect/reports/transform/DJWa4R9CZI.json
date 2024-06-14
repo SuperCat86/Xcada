@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/keybinding/common/keybindingsRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { createKeybinding } from '../../../base/common/keybindings.js';\nimport { OS } from '../../../base/common/platform.js';\nimport { CommandsRegistry } from '../../commands/common/commands.js';\nimport { Registry } from '../../registry/common/platform.js';\nclass KeybindingsRegistryImpl {\n    constructor() {\n        this._coreKeybindings = [];\n        this._extensionKeybindings = [];\n        this._cachedMergedKeybindings = null;\n    }\n    /**\n     * Take current platform into account and reduce to primary & secondary.\n     */\n    static bindToCurrentPlatform(kb) {\n        if (OS === 1 /* Windows */) {\n            if (kb && kb.win) {\n                return kb.win;\n            }\n        }\n        else if (OS === 2 /* Macintosh */) {\n            if (kb && kb.mac) {\n                return kb.mac;\n            }\n        }\n        else {\n            if (kb && kb.linux) {\n                return kb.linux;\n            }\n        }\n        return kb;\n    }\n    registerKeybindingRule(rule) {\n        const actualKb = KeybindingsRegistryImpl.bindToCurrentPlatform(rule);\n        if (actualKb && actualKb.primary) {\n            const kk = createKeybinding(actualKb.primary, OS);\n            if (kk) {\n                this._registerDefaultKeybinding(kk, rule.id, rule.args, rule.weight, 0, rule.when);\n            }\n        }\n        if (actualKb && Array.isArray(actualKb.secondary)) {\n            for (let i = 0, len = actualKb.secondary.length; i < len; i++) {\n                const k = actualKb.secondary[i];\n                const kk = createKeybinding(k, OS);\n                if (kk) {\n                    this._registerDefaultKeybinding(kk, rule.id, rule.args, rule.weight, -i - 1, rule.when);\n                }\n            }\n        }\n    }\n    registerCommandAndKeybindingRule(desc) {\n        this.registerKeybindingRule(desc);\n        CommandsRegistry.registerCommand(desc);\n    }\n    static _mightProduceChar(keyCode) {\n        if (keyCode >= 21 /* Digit0 */ && keyCode <= 30 /* Digit9 */) {\n            return true;\n        }\n        if (keyCode >= 31 /* KeyA */ && keyCode <= 56 /* KeyZ */) {\n            return true;\n        }\n        return (keyCode === 80 /* Semicolon */\n            || keyCode === 81 /* Equal */\n            || keyCode === 82 /* Comma */\n            || keyCode === 83 /* Minus */\n            || keyCode === 84 /* Period */\n            || keyCode === 85 /* Slash */\n            || keyCode === 86 /* Backquote */\n            || keyCode === 110 /* ABNT_C1 */\n            || keyCode === 111 /* ABNT_C2 */\n            || keyCode === 87 /* BracketLeft */\n            || keyCode === 88 /* Backslash */\n            || keyCode === 89 /* BracketRight */\n            || keyCode === 90 /* Quote */\n            || keyCode === 91 /* OEM_8 */\n            || keyCode === 92 /* IntlBackslash */);\n    }\n    _assertNoCtrlAlt(keybinding, commandId) {\n        if (keybinding.ctrlKey && keybinding.altKey && !keybinding.metaKey) {\n            if (KeybindingsRegistryImpl._mightProduceChar(keybinding.keyCode)) {\n                console.warn('Ctrl+Alt+ keybindings should not be used by default under Windows. Offender: ', keybinding, ' for ', commandId);\n            }\n        }\n    }\n    _registerDefaultKeybinding(keybinding, commandId, commandArgs, weight1, weight2, when) {\n        if (OS === 1 /* Windows */) {\n            this._assertNoCtrlAlt(keybinding.parts[0], commandId);\n        }\n        this._coreKeybindings.push({\n            keybinding: keybinding.parts,\n            command: commandId,\n            commandArgs: commandArgs,\n            when: when,\n            weight1: weight1,\n            weight2: weight2,\n            extensionId: null,\n            isBuiltinExtension: false\n        });\n        this._cachedMergedKeybindings = null;\n    }\n    getDefaultKeybindings() {\n        if (!this._cachedMergedKeybindings) {\n            this._cachedMergedKeybindings = [].concat(this._coreKeybindings).concat(this._extensionKeybindings);\n            this._cachedMergedKeybindings.sort(sorter);\n        }\n        return this._cachedMergedKeybindings.slice(0);\n    }\n}\nexport const KeybindingsRegistry = new KeybindingsRegistryImpl();\n// Define extension point ids\nexport const Extensions = {\n    EditorModes: 'platform.keybindingsRegistry'\n};\nRegistry.add(Extensions.EditorModes, KeybindingsRegistry);\nfunction sorter(a, b) {\n    if (a.weight1 !== b.weight1) {\n        return a.weight1 - b.weight1;\n    }\n    if (a.command < b.command) {\n        return -1;\n    }\n    if (a.command > b.command) {\n        return 1;\n    }\n    return a.weight2 - b.weight2;\n}\n",
+      "start": 1711096855238,
+      "end": 1711096855322,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855322,
+      "end": 1711096855322,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855323,
+      "end": 1711096855323,
+      "order": "normal"
+    }
+  ]
+}

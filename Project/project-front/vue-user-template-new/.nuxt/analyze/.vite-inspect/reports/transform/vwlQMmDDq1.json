@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/iframe.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nlet hasDifferentOriginAncestorFlag = false;\nlet sameOriginWindowChainCache = null;\nfunction getParentWindowIfSameOrigin(w) {\n    if (!w.parent || w.parent === w) {\n        return null;\n    }\n    // Cannot really tell if we have access to the parent window unless we try to access something in it\n    try {\n        let location = w.location;\n        let parentLocation = w.parent.location;\n        if (location.origin !== 'null' && parentLocation.origin !== 'null' && location.origin !== parentLocation.origin) {\n            hasDifferentOriginAncestorFlag = true;\n            return null;\n        }\n    }\n    catch (e) {\n        hasDifferentOriginAncestorFlag = true;\n        return null;\n    }\n    return w.parent;\n}\nexport class IframeUtils {\n    /**\n     * Returns a chain of embedded windows with the same origin (which can be accessed programmatically).\n     * Having a chain of length 1 might mean that the current execution environment is running outside of an iframe or inside an iframe embedded in a window with a different origin.\n     * To distinguish if at one point the current execution environment is running inside a window with a different origin, see hasDifferentOriginAncestor()\n     */\n    static getSameOriginWindowChain() {\n        if (!sameOriginWindowChainCache) {\n            sameOriginWindowChainCache = [];\n            let w = window;\n            let parent;\n            do {\n                parent = getParentWindowIfSameOrigin(w);\n                if (parent) {\n                    sameOriginWindowChainCache.push({\n                        window: w,\n                        iframeElement: w.frameElement || null\n                    });\n                }\n                else {\n                    sameOriginWindowChainCache.push({\n                        window: w,\n                        iframeElement: null\n                    });\n                }\n                w = parent;\n            } while (w);\n        }\n        return sameOriginWindowChainCache.slice(0);\n    }\n    /**\n     * Returns true if the current execution environment is chained in a list of iframes which at one point ends in a window with a different origin.\n     * Returns false if the current execution environment is not running inside an iframe or if the entire chain of iframes have the same origin.\n     */\n    static hasDifferentOriginAncestor() {\n        if (!sameOriginWindowChainCache) {\n            this.getSameOriginWindowChain();\n        }\n        return hasDifferentOriginAncestorFlag;\n    }\n    /**\n     * Returns the position of `childWindow` relative to `ancestorWindow`\n     */\n    static getPositionOfChildWindowRelativeToAncestorWindow(childWindow, ancestorWindow) {\n        if (!ancestorWindow || childWindow === ancestorWindow) {\n            return {\n                top: 0,\n                left: 0\n            };\n        }\n        let top = 0, left = 0;\n        let windowChain = this.getSameOriginWindowChain();\n        for (const windowChainEl of windowChain) {\n            top += windowChainEl.window.scrollY;\n            left += windowChainEl.window.scrollX;\n            if (windowChainEl.window === ancestorWindow) {\n                break;\n            }\n            if (!windowChainEl.iframeElement) {\n                break;\n            }\n            let boundingRect = windowChainEl.iframeElement.getBoundingClientRect();\n            top += boundingRect.top;\n            left += boundingRect.left;\n        }\n        return {\n            top: top,\n            left: left\n        };\n    }\n}\n",
+      "start": 1711096856898,
+      "end": 1711096857069,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857069,
+      "end": 1711096857069,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857069,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857070,
+      "end": 1711096857070,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/types.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nexport class CodeActionKind {\n    constructor(value) {\n        this.value = value;\n    }\n    equals(other) {\n        return this.value === other.value;\n    }\n    contains(other) {\n        return this.equals(other) || this.value === '' || other.value.startsWith(this.value + CodeActionKind.sep);\n    }\n    intersects(other) {\n        return this.contains(other) || other.contains(this);\n    }\n    append(part) {\n        return new CodeActionKind(this.value + CodeActionKind.sep + part);\n    }\n}\nCodeActionKind.sep = '.';\nCodeActionKind.None = new CodeActionKind('@@none@@'); // Special code action that contains nothing\nCodeActionKind.Empty = new CodeActionKind('');\nCodeActionKind.QuickFix = new CodeActionKind('quickfix');\nCodeActionKind.Refactor = new CodeActionKind('refactor');\nCodeActionKind.Source = new CodeActionKind('source');\nCodeActionKind.SourceOrganizeImports = CodeActionKind.Source.append('organizeImports');\nCodeActionKind.SourceFixAll = CodeActionKind.Source.append('fixAll');\nexport function mayIncludeActionsOfKind(filter, providedKind) {\n    // A provided kind may be a subset or superset of our filtered kind.\n    if (filter.include && !filter.include.intersects(providedKind)) {\n        return false;\n    }\n    if (filter.excludes) {\n        if (filter.excludes.some(exclude => excludesAction(providedKind, exclude, filter.include))) {\n            return false;\n        }\n    }\n    // Don't return source actions unless they are explicitly requested\n    if (!filter.includeSourceActions && CodeActionKind.Source.contains(providedKind)) {\n        return false;\n    }\n    return true;\n}\nexport function filtersAction(filter, action) {\n    const actionKind = action.kind ? new CodeActionKind(action.kind) : undefined;\n    // Filter out actions by kind\n    if (filter.include) {\n        if (!actionKind || !filter.include.contains(actionKind)) {\n            return false;\n        }\n    }\n    if (filter.excludes) {\n        if (actionKind && filter.excludes.some(exclude => excludesAction(actionKind, exclude, filter.include))) {\n            return false;\n        }\n    }\n    // Don't return source actions unless they are explicitly requested\n    if (!filter.includeSourceActions) {\n        if (actionKind && CodeActionKind.Source.contains(actionKind)) {\n            return false;\n        }\n    }\n    if (filter.onlyIncludePreferredActions) {\n        if (!action.isPreferred) {\n            return false;\n        }\n    }\n    return true;\n}\nfunction excludesAction(providedKind, exclude, include) {\n    if (!exclude.contains(providedKind)) {\n        return false;\n    }\n    if (include && exclude.contains(include)) {\n        // The include is more specific, don't filter out\n        return false;\n    }\n    return true;\n}\nexport class CodeActionCommandArgs {\n    constructor(kind, apply, preferred) {\n        this.kind = kind;\n        this.apply = apply;\n        this.preferred = preferred;\n    }\n    static fromUser(arg, defaults) {\n        if (!arg || typeof arg !== 'object') {\n            return new CodeActionCommandArgs(defaults.kind, defaults.apply, false);\n        }\n        return new CodeActionCommandArgs(CodeActionCommandArgs.getKindFromUser(arg, defaults.kind), CodeActionCommandArgs.getApplyFromUser(arg, defaults.apply), CodeActionCommandArgs.getPreferredUser(arg));\n    }\n    static getApplyFromUser(arg, defaultAutoApply) {\n        switch (typeof arg.apply === 'string' ? arg.apply.toLowerCase() : '') {\n            case 'first': return \"first\" /* First */;\n            case 'never': return \"never\" /* Never */;\n            case 'ifsingle': return \"ifSingle\" /* IfSingle */;\n            default: return defaultAutoApply;\n        }\n    }\n    static getKindFromUser(arg, defaultKind) {\n        return typeof arg.kind === 'string'\n            ? new CodeActionKind(arg.kind)\n            : defaultKind;\n    }\n    static getPreferredUser(arg) {\n        return typeof arg.preferred === 'boolean'\n            ? arg.preferred\n            : false;\n    }\n}\n",
+      "start": 1711096856615,
+      "end": 1711096856698,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856698,
+      "end": 1711096856698,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856699,
+      "end": 1711096856699,
+      "order": "normal"
+    }
+  ]
+}

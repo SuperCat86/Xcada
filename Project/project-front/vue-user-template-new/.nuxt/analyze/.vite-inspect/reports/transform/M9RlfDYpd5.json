@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/browser/peekView.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { ActionBar } from '../../../../base/browser/ui/actionbar/actionbar.js';\nimport { Action } from '../../../../base/common/actions.js';\nimport { Codicon } from '../../../../base/common/codicons.js';\nimport { Color } from '../../../../base/common/color.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport * as objects from '../../../../base/common/objects.js';\nimport './media/peekViewWidget.css';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { EmbeddedCodeEditorWidget } from '../../../browser/widget/embeddedCodeEditorWidget.js';\nimport { ZoneWidget } from '../../zoneWidget/browser/zoneWidget.js';\nimport * as nls from '../../../../nls.js';\nimport { createActionViewItem } from '../../../../platform/actions/browser/menuEntryActionViewItem.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator, IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { activeContrastBorder, contrastBorder, editorInfoForeground, registerColor, transparent } from '../../../../platform/theme/common/colorRegistry.js';\nexport const IPeekViewService = createDecorator('IPeekViewService');\nregisterSingleton(IPeekViewService, class {\n    constructor() {\n        this._widgets = new Map();\n    }\n    addExclusiveWidget(editor, widget) {\n        const existing = this._widgets.get(editor);\n        if (existing) {\n            existing.listener.dispose();\n            existing.widget.dispose();\n        }\n        const remove = () => {\n            const data = this._widgets.get(editor);\n            if (data && data.widget === widget) {\n                data.listener.dispose();\n                this._widgets.delete(editor);\n            }\n        };\n        this._widgets.set(editor, { widget, listener: widget.onDidClose(remove) });\n    }\n});\nexport var PeekContext;\n(function (PeekContext) {\n    PeekContext.inPeekEditor = new RawContextKey('inReferenceSearchEditor', true, nls.localize('inReferenceSearchEditor', \"Whether the current code editor is embedded inside peek\"));\n    PeekContext.notInPeekEditor = PeekContext.inPeekEditor.toNegated();\n})(PeekContext || (PeekContext = {}));\nlet PeekContextController = class PeekContextController {\n    constructor(editor, contextKeyService) {\n        if (editor instanceof EmbeddedCodeEditorWidget) {\n            PeekContext.inPeekEditor.bindTo(contextKeyService);\n        }\n    }\n    dispose() { }\n};\nPeekContextController.ID = 'editor.contrib.referenceController';\nPeekContextController = __decorate([\n    __param(1, IContextKeyService)\n], PeekContextController);\nregisterEditorContribution(PeekContextController.ID, PeekContextController);\nexport function getOuterEditor(accessor) {\n    let editor = accessor.get(ICodeEditorService).getFocusedCodeEditor();\n    if (editor instanceof EmbeddedCodeEditorWidget) {\n        return editor.getParentEditor();\n    }\n    return editor;\n}\nconst defaultOptions = {\n    headerBackgroundColor: Color.white,\n    primaryHeadingColor: Color.fromHex('#333333'),\n    secondaryHeadingColor: Color.fromHex('#6c6c6cb3')\n};\nlet PeekViewWidget = class PeekViewWidget extends ZoneWidget {\n    constructor(editor, options, instantiationService) {\n        super(editor, options);\n        this.instantiationService = instantiationService;\n        this._onDidClose = new Emitter();\n        this.onDidClose = this._onDidClose.event;\n        objects.mixin(this.options, defaultOptions, false);\n    }\n    dispose() {\n        if (!this.disposed) {\n            this.disposed = true; // prevent consumers who dispose on onDidClose from looping\n            super.dispose();\n            this._onDidClose.fire(this);\n        }\n    }\n    style(styles) {\n        let options = this.options;\n        if (styles.headerBackgroundColor) {\n            options.headerBackgroundColor = styles.headerBackgroundColor;\n        }\n        if (styles.primaryHeadingColor) {\n            options.primaryHeadingColor = styles.primaryHeadingColor;\n        }\n        if (styles.secondaryHeadingColor) {\n            options.secondaryHeadingColor = styles.secondaryHeadingColor;\n        }\n        super.style(styles);\n    }\n    _applyStyles() {\n        super._applyStyles();\n        let options = this.options;\n        if (this._headElement && options.headerBackgroundColor) {\n            this._headElement.style.backgroundColor = options.headerBackgroundColor.toString();\n        }\n        if (this._primaryHeading && options.primaryHeadingColor) {\n            this._primaryHeading.style.color = options.primaryHeadingColor.toString();\n        }\n        if (this._secondaryHeading && options.secondaryHeadingColor) {\n            this._secondaryHeading.style.color = options.secondaryHeadingColor.toString();\n        }\n        if (this._bodyElement && options.frameColor) {\n            this._bodyElement.style.borderColor = options.frameColor.toString();\n        }\n    }\n    _fillContainer(container) {\n        this.setCssClass('peekview-widget');\n        this._headElement = dom.$('.head');\n        this._bodyElement = dom.$('.body');\n        this._fillHead(this._headElement);\n        this._fillBody(this._bodyElement);\n        container.appendChild(this._headElement);\n        container.appendChild(this._bodyElement);\n    }\n    _fillHead(container, noCloseAction) {\n        const titleElement = dom.$('.peekview-title');\n        if (this.options.supportOnTitleClick) {\n            titleElement.classList.add('clickable');\n            dom.addStandardDisposableListener(titleElement, 'click', event => this._onTitleClick(event));\n        }\n        dom.append(this._headElement, titleElement);\n        this._fillTitleIcon(titleElement);\n        this._primaryHeading = dom.$('span.filename');\n        this._secondaryHeading = dom.$('span.dirname');\n        this._metaHeading = dom.$('span.meta');\n        dom.append(titleElement, this._primaryHeading, this._secondaryHeading, this._metaHeading);\n        const actionsContainer = dom.$('.peekview-actions');\n        dom.append(this._headElement, actionsContainer);\n        const actionBarOptions = this._getActionBarOptions();\n        this._actionbarWidget = new ActionBar(actionsContainer, actionBarOptions);\n        this._disposables.add(this._actionbarWidget);\n        if (!noCloseAction) {\n            this._actionbarWidget.push(new Action('peekview.close', nls.localize('label.close', \"Close\"), Codicon.close.classNames, true, () => {\n                this.dispose();\n                return Promise.resolve();\n            }), { label: false, icon: true });\n        }\n    }\n    _fillTitleIcon(container) {\n    }\n    _getActionBarOptions() {\n        return {\n            actionViewItemProvider: createActionViewItem.bind(undefined, this.instantiationService),\n            orientation: 0 /* HORIZONTAL */\n        };\n    }\n    _onTitleClick(event) {\n        // implement me if supportOnTitleClick option is set\n    }\n    setTitle(primaryHeading, secondaryHeading) {\n        if (this._primaryHeading && this._secondaryHeading) {\n            this._primaryHeading.innerText = primaryHeading;\n            this._primaryHeading.setAttribute('title', primaryHeading);\n            if (secondaryHeading) {\n                this._secondaryHeading.innerText = secondaryHeading;\n            }\n            else {\n                dom.clearNode(this._secondaryHeading);\n            }\n        }\n    }\n    setMetaTitle(value) {\n        if (this._metaHeading) {\n            if (value) {\n                this._metaHeading.innerText = value;\n                dom.show(this._metaHeading);\n            }\n            else {\n                dom.hide(this._metaHeading);\n            }\n        }\n    }\n    _doLayout(heightInPixel, widthInPixel) {\n        if (!this._isShowing && heightInPixel < 0) {\n            // Looks like the view zone got folded away!\n            this.dispose();\n            return;\n        }\n        const headHeight = Math.ceil(this.editor.getOption(59 /* lineHeight */) * 1.2);\n        const bodyHeight = Math.round(heightInPixel - (headHeight + 2 /* the border-top/bottom width*/));\n        this._doLayoutHead(headHeight, widthInPixel);\n        this._doLayoutBody(bodyHeight, widthInPixel);\n    }\n    _doLayoutHead(heightInPixel, widthInPixel) {\n        if (this._headElement) {\n            this._headElement.style.height = `${heightInPixel}px`;\n            this._headElement.style.lineHeight = this._headElement.style.height;\n        }\n    }\n    _doLayoutBody(heightInPixel, widthInPixel) {\n        if (this._bodyElement) {\n            this._bodyElement.style.height = `${heightInPixel}px`;\n        }\n    }\n};\nPeekViewWidget = __decorate([\n    __param(2, IInstantiationService)\n], PeekViewWidget);\nexport { PeekViewWidget };\nexport const peekViewTitleBackground = registerColor('peekViewTitle.background', { dark: transparent(editorInfoForeground, .1), light: transparent(editorInfoForeground, .1), hc: null }, nls.localize('peekViewTitleBackground', 'Background color of the peek view title area.'));\nexport const peekViewTitleForeground = registerColor('peekViewTitleLabel.foreground', { dark: Color.white, light: Color.black, hc: Color.white }, nls.localize('peekViewTitleForeground', 'Color of the peek view title.'));\nexport const peekViewTitleInfoForeground = registerColor('peekViewTitleDescription.foreground', { dark: '#ccccccb3', light: '#616161', hc: '#FFFFFF99' }, nls.localize('peekViewTitleInfoForeground', 'Color of the peek view title info.'));\nexport const peekViewBorder = registerColor('peekView.border', { dark: editorInfoForeground, light: editorInfoForeground, hc: contrastBorder }, nls.localize('peekViewBorder', 'Color of the peek view borders and arrow.'));\nexport const peekViewResultsBackground = registerColor('peekViewResult.background', { dark: '#252526', light: '#F3F3F3', hc: Color.black }, nls.localize('peekViewResultsBackground', 'Background color of the peek view result list.'));\nexport const peekViewResultsMatchForeground = registerColor('peekViewResult.lineForeground', { dark: '#bbbbbb', light: '#646465', hc: Color.white }, nls.localize('peekViewResultsMatchForeground', 'Foreground color for line nodes in the peek view result list.'));\nexport const peekViewResultsFileForeground = registerColor('peekViewResult.fileForeground', { dark: Color.white, light: '#1E1E1E', hc: Color.white }, nls.localize('peekViewResultsFileForeground', 'Foreground color for file nodes in the peek view result list.'));\nexport const peekViewResultsSelectionBackground = registerColor('peekViewResult.selectionBackground', { dark: '#3399ff33', light: '#3399ff33', hc: null }, nls.localize('peekViewResultsSelectionBackground', 'Background color of the selected entry in the peek view result list.'));\nexport const peekViewResultsSelectionForeground = registerColor('peekViewResult.selectionForeground', { dark: Color.white, light: '#6C6C6C', hc: Color.white }, nls.localize('peekViewResultsSelectionForeground', 'Foreground color of the selected entry in the peek view result list.'));\nexport const peekViewEditorBackground = registerColor('peekViewEditor.background', { dark: '#001F33', light: '#F2F8FC', hc: Color.black }, nls.localize('peekViewEditorBackground', 'Background color of the peek view editor.'));\nexport const peekViewEditorGutterBackground = registerColor('peekViewEditorGutter.background', { dark: peekViewEditorBackground, light: peekViewEditorBackground, hc: peekViewEditorBackground }, nls.localize('peekViewEditorGutterBackground', 'Background color of the gutter in the peek view editor.'));\nexport const peekViewResultsMatchHighlight = registerColor('peekViewResult.matchHighlightBackground', { dark: '#ea5c004d', light: '#ea5c004d', hc: null }, nls.localize('peekViewResultsMatchHighlight', 'Match highlight color in the peek view result list.'));\nexport const peekViewEditorMatchHighlight = registerColor('peekViewEditor.matchHighlightBackground', { dark: '#ff8f0099', light: '#f5d802de', hc: null }, nls.localize('peekViewEditorMatchHighlight', 'Match highlight color in the peek view editor.'));\nexport const peekViewEditorMatchHighlightBorder = registerColor('peekViewEditor.matchHighlightBorder', { dark: null, light: null, hc: activeContrastBorder }, nls.localize('peekViewEditorMatchHighlightBorder', 'Match highlight border in the peek view editor.'));\n",
+      "start": 1711096855737,
+      "end": 1711096855840,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855840,
+      "end": 1711096855840,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855840,
+      "end": 1711096855841,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855841,
+      "end": 1711096855841,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855841,
+      "end": 1711096855841,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855841,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855842,
+      "end": 1711096855842,
+      "order": "normal"
+    }
+  ]
+}

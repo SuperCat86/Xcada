@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/symbolNavigation.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { Emitter } from '../../../../base/common/event.js';\nimport { combinedDisposable, DisposableStore, dispose } from '../../../../base/common/lifecycle.js';\nimport { isEqual } from '../../../../base/common/resources.js';\nimport { EditorCommand, registerEditorCommand } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { Range } from '../../../common/core/range.js';\nimport { localize } from '../../../../nls.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { KeybindingsRegistry } from '../../../../platform/keybinding/common/keybindingsRegistry.js';\nimport { INotificationService } from '../../../../platform/notification/common/notification.js';\nexport const ctxHasSymbols = new RawContextKey('hasSymbols', false, localize('hasSymbols', \"Whether there are symbol locations that can be navigated via keyboard-only.\"));\nexport const ISymbolNavigationService = createDecorator('ISymbolNavigationService');\nlet SymbolNavigationService = class SymbolNavigationService {\n    constructor(contextKeyService, _editorService, _notificationService, _keybindingService) {\n        this._editorService = _editorService;\n        this._notificationService = _notificationService;\n        this._keybindingService = _keybindingService;\n        this._currentModel = undefined;\n        this._currentIdx = -1;\n        this._ignoreEditorChange = false;\n        this._ctxHasSymbols = ctxHasSymbols.bindTo(contextKeyService);\n    }\n    reset() {\n        var _a, _b;\n        this._ctxHasSymbols.reset();\n        (_a = this._currentState) === null || _a === void 0 ? void 0 : _a.dispose();\n        (_b = this._currentMessage) === null || _b === void 0 ? void 0 : _b.dispose();\n        this._currentModel = undefined;\n        this._currentIdx = -1;\n    }\n    put(anchor) {\n        const refModel = anchor.parent.parent;\n        if (refModel.references.length <= 1) {\n            this.reset();\n            return;\n        }\n        this._currentModel = refModel;\n        this._currentIdx = refModel.references.indexOf(anchor);\n        this._ctxHasSymbols.set(true);\n        this._showMessage();\n        const editorState = new EditorState(this._editorService);\n        const listener = editorState.onDidChange(_ => {\n            if (this._ignoreEditorChange) {\n                return;\n            }\n            const editor = this._editorService.getActiveCodeEditor();\n            if (!editor) {\n                return;\n            }\n            const model = editor.getModel();\n            const position = editor.getPosition();\n            if (!model || !position) {\n                return;\n            }\n            let seenUri = false;\n            let seenPosition = false;\n            for (const reference of refModel.references) {\n                if (isEqual(reference.uri, model.uri)) {\n                    seenUri = true;\n                    seenPosition = seenPosition || Range.containsPosition(reference.range, position);\n                }\n                else if (seenUri) {\n                    break;\n                }\n            }\n            if (!seenUri || !seenPosition) {\n                this.reset();\n            }\n        });\n        this._currentState = combinedDisposable(editorState, listener);\n    }\n    revealNext(source) {\n        if (!this._currentModel) {\n            return Promise.resolve();\n        }\n        // get next result and advance\n        this._currentIdx += 1;\n        this._currentIdx %= this._currentModel.references.length;\n        const reference = this._currentModel.references[this._currentIdx];\n        // status\n        this._showMessage();\n        // open editor, ignore events while that happens\n        this._ignoreEditorChange = true;\n        return this._editorService.openCodeEditor({\n            resource: reference.uri,\n            options: {\n                selection: Range.collapseToStart(reference.range),\n                selectionRevealType: 3 /* NearTopIfOutsideViewport */\n            }\n        }, source).finally(() => {\n            this._ignoreEditorChange = false;\n        });\n    }\n    _showMessage() {\n        var _a;\n        (_a = this._currentMessage) === null || _a === void 0 ? void 0 : _a.dispose();\n        const kb = this._keybindingService.lookupKeybinding('editor.gotoNextSymbolFromResult');\n        const message = kb\n            ? localize('location.kb', \"Symbol {0} of {1}, {2} for next\", this._currentIdx + 1, this._currentModel.references.length, kb.getLabel())\n            : localize('location', \"Symbol {0} of {1}\", this._currentIdx + 1, this._currentModel.references.length);\n        this._currentMessage = this._notificationService.status(message);\n    }\n};\nSymbolNavigationService = __decorate([\n    __param(0, IContextKeyService),\n    __param(1, ICodeEditorService),\n    __param(2, INotificationService),\n    __param(3, IKeybindingService)\n], SymbolNavigationService);\nregisterSingleton(ISymbolNavigationService, SymbolNavigationService, true);\nregisterEditorCommand(new class extends EditorCommand {\n    constructor() {\n        super({\n            id: 'editor.gotoNextSymbolFromResult',\n            precondition: ctxHasSymbols,\n            kbOpts: {\n                weight: 100 /* EditorContrib */,\n                primary: 70 /* F12 */\n            }\n        });\n    }\n    runEditorCommand(accessor, editor) {\n        return accessor.get(ISymbolNavigationService).revealNext(editor);\n    }\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'editor.gotoNextSymbolFromResult.cancel',\n    weight: 100 /* EditorContrib */,\n    when: ctxHasSymbols,\n    primary: 9 /* Escape */,\n    handler(accessor) {\n        accessor.get(ISymbolNavigationService).reset();\n    }\n});\n//\nlet EditorState = class EditorState {\n    constructor(editorService) {\n        this._listener = new Map();\n        this._disposables = new DisposableStore();\n        this._onDidChange = new Emitter();\n        this.onDidChange = this._onDidChange.event;\n        this._disposables.add(editorService.onCodeEditorRemove(this._onDidRemoveEditor, this));\n        this._disposables.add(editorService.onCodeEditorAdd(this._onDidAddEditor, this));\n        editorService.listCodeEditors().forEach(this._onDidAddEditor, this);\n    }\n    dispose() {\n        this._disposables.dispose();\n        this._onDidChange.dispose();\n        dispose(this._listener.values());\n    }\n    _onDidAddEditor(editor) {\n        this._listener.set(editor, combinedDisposable(editor.onDidChangeCursorPosition(_ => this._onDidChange.fire({ editor })), editor.onDidChangeModelContent(_ => this._onDidChange.fire({ editor }))));\n    }\n    _onDidRemoveEditor(editor) {\n        var _a;\n        (_a = this._listener.get(editor)) === null || _a === void 0 ? void 0 : _a.dispose();\n        this._listener.delete(editor);\n    }\n};\nEditorState = __decorate([\n    __param(0, ICodeEditorService)\n], EditorState);\n",
+      "start": 1711096855686,
+      "end": 1711096855799,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855799,
+      "end": 1711096855800,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855800,
+      "end": 1711096855800,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855800,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855801,
+      "end": 1711096855801,
+      "order": "normal"
+    }
+  ]
+}

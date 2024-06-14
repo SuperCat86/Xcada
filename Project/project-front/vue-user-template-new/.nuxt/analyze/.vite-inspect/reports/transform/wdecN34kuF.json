@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/widget/media/diffEditor.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n/* ---------- DiffEditor ---------- */\n\n.monaco-diff-editor .diffOverview {\n\tz-index: 9;\n}\n\n.monaco-diff-editor .diffOverview .diffViewport {\n\tz-index: 10;\n}\n\n/* colors not externalized: using transparancy on background */\n.monaco-diff-editor.vs\t\t\t.diffOverview { background: rgba(0, 0, 0, 0.03); }\n.monaco-diff-editor.vs-dark\t\t.diffOverview { background: rgba(255, 255, 255, 0.01); }\n\n.monaco-scrollable-element.modified-in-monaco-diff-editor.vs\t\t.scrollbar { background: rgba(0,0,0,0); }\n.monaco-scrollable-element.modified-in-monaco-diff-editor.vs-dark\t.scrollbar { background: rgba(0,0,0,0); }\n.monaco-scrollable-element.modified-in-monaco-diff-editor.hc-black\t.scrollbar { background: none; }\n\n.monaco-scrollable-element.modified-in-monaco-diff-editor .slider {\n\tz-index: 10;\n}\n.modified-in-monaco-diff-editor\t\t\t\t.slider.active { background: rgba(171, 171, 171, .4); }\n.modified-in-monaco-diff-editor.hc-black\t.slider.active { background: none; }\n\n/* ---------- Diff ---------- */\n\n.monaco-editor .insert-sign,\n.monaco-diff-editor .insert-sign,\n.monaco-editor .delete-sign,\n.monaco-diff-editor .delete-sign {\n\tfont-size: 11px !important;\n\topacity: 0.7 !important;\n\tdisplay: flex !important;\n\talign-items: center;\n}\n.monaco-editor.hc-black .insert-sign,\n.monaco-diff-editor.hc-black .insert-sign,\n.monaco-editor.hc-black .delete-sign,\n.monaco-diff-editor.hc-black .delete-sign {\n\topacity: 1;\n}\n\n.monaco-editor .inline-deleted-margin-view-zone {\n\ttext-align: right;\n}\n.monaco-editor .inline-added-margin-view-zone {\n\ttext-align: right;\n}\n\n/* ---------- Inline Diff ---------- */\n\n.monaco-editor .view-zones .view-lines .view-line span {\n\tdisplay: inline-block;\n}\n\n.monaco-editor .margin-view-zones .lightbulb-glyph:hover {\n\tcursor: pointer;\n}\n",
+      "start": 1711096855417,
+      "end": 1711096855566,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855566,
+      "end": 1711096855566,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855566,
+      "end": 1711096855566,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855566,
+      "end": 1711096855566,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-diff-editor .diffOverview{z-index:9}.monaco-diff-editor .diffOverview .diffViewport{z-index:10}.monaco-diff-editor.vs\t\t\t.diffOverview{background:rgba(0,0,0,.03)}.monaco-diff-editor.vs-dark\t\t.diffOverview{background:hsla(0,0%,100%,.01)}.monaco-scrollable-element.modified-in-monaco-diff-editor.vs\t\t.scrollbar,.monaco-scrollable-element.modified-in-monaco-diff-editor.vs-dark\t.scrollbar{background:transparent}.monaco-scrollable-element.modified-in-monaco-diff-editor.hc-black\t.scrollbar{background:none}.monaco-scrollable-element.modified-in-monaco-diff-editor .slider{z-index:10}.modified-in-monaco-diff-editor\t\t\t\t.slider.active{background:hsla(0,0%,67%,.4)}.modified-in-monaco-diff-editor.hc-black\t.slider.active{background:none}.monaco-diff-editor .delete-sign,.monaco-diff-editor .insert-sign,.monaco-editor .delete-sign,.monaco-editor .insert-sign{align-items:center;display:flex!important;font-size:11px!important;opacity:.7!important}.monaco-diff-editor.hc-black .delete-sign,.monaco-diff-editor.hc-black .insert-sign,.monaco-editor.hc-black .delete-sign,.monaco-editor.hc-black .insert-sign{opacity:1}.monaco-editor .inline-added-margin-view-zone,.monaco-editor .inline-deleted-margin-view-zone{text-align:right}.monaco-editor .view-zones .view-lines .view-line span{display:inline-block}.monaco-editor .margin-view-zones .lightbulb-glyph:hover{cursor:pointer}",
+      "start": 1711096855566,
+      "end": 1711096855574,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855574,
+      "end": 1711096855574,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855574,
+      "end": 1711096855574,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855574,
+      "end": 1711096855574,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855574,
+      "end": 1711096855574,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855574,
+      "end": 1711096855574,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855574,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    }
+  ]
+}

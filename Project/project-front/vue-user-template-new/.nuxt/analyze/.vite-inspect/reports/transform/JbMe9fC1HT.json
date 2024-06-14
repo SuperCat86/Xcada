@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/markers/common/markers.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport Severity from '../../../base/common/severity.js';\nimport { localize } from '../../../nls.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nexport var MarkerSeverity;\n(function (MarkerSeverity) {\n    MarkerSeverity[MarkerSeverity[\"Hint\"] = 1] = \"Hint\";\n    MarkerSeverity[MarkerSeverity[\"Info\"] = 2] = \"Info\";\n    MarkerSeverity[MarkerSeverity[\"Warning\"] = 4] = \"Warning\";\n    MarkerSeverity[MarkerSeverity[\"Error\"] = 8] = \"Error\";\n})(MarkerSeverity || (MarkerSeverity = {}));\n(function (MarkerSeverity) {\n    function compare(a, b) {\n        return b - a;\n    }\n    MarkerSeverity.compare = compare;\n    const _displayStrings = Object.create(null);\n    _displayStrings[MarkerSeverity.Error] = localize('sev.error', \"Error\");\n    _displayStrings[MarkerSeverity.Warning] = localize('sev.warning', \"Warning\");\n    _displayStrings[MarkerSeverity.Info] = localize('sev.info', \"Info\");\n    function toString(a) {\n        return _displayStrings[a] || '';\n    }\n    MarkerSeverity.toString = toString;\n    function fromSeverity(severity) {\n        switch (severity) {\n            case Severity.Error: return MarkerSeverity.Error;\n            case Severity.Warning: return MarkerSeverity.Warning;\n            case Severity.Info: return MarkerSeverity.Info;\n            case Severity.Ignore: return MarkerSeverity.Hint;\n        }\n    }\n    MarkerSeverity.fromSeverity = fromSeverity;\n    function toSeverity(severity) {\n        switch (severity) {\n            case MarkerSeverity.Error: return Severity.Error;\n            case MarkerSeverity.Warning: return Severity.Warning;\n            case MarkerSeverity.Info: return Severity.Info;\n            case MarkerSeverity.Hint: return Severity.Ignore;\n        }\n    }\n    MarkerSeverity.toSeverity = toSeverity;\n})(MarkerSeverity || (MarkerSeverity = {}));\nexport var IMarkerData;\n(function (IMarkerData) {\n    const emptyString = '';\n    function makeKey(markerData) {\n        return makeKeyOptionalMessage(markerData, true);\n    }\n    IMarkerData.makeKey = makeKey;\n    function makeKeyOptionalMessage(markerData, useMessage) {\n        let result = [emptyString];\n        if (markerData.source) {\n            result.push(markerData.source.replace('¦', '\\\\¦'));\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.code) {\n            if (typeof markerData.code === 'string') {\n                result.push(markerData.code.replace('¦', '\\\\¦'));\n            }\n            else {\n                result.push(markerData.code.value.replace('¦', '\\\\¦'));\n            }\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.severity !== undefined && markerData.severity !== null) {\n            result.push(MarkerSeverity.toString(markerData.severity));\n        }\n        else {\n            result.push(emptyString);\n        }\n        // Modifed to not include the message as part of the marker key to work around\n        // https://github.com/microsoft/vscode/issues/77475\n        if (markerData.message && useMessage) {\n            result.push(markerData.message.replace('¦', '\\\\¦'));\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.startLineNumber !== undefined && markerData.startLineNumber !== null) {\n            result.push(markerData.startLineNumber.toString());\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.startColumn !== undefined && markerData.startColumn !== null) {\n            result.push(markerData.startColumn.toString());\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.endLineNumber !== undefined && markerData.endLineNumber !== null) {\n            result.push(markerData.endLineNumber.toString());\n        }\n        else {\n            result.push(emptyString);\n        }\n        if (markerData.endColumn !== undefined && markerData.endColumn !== null) {\n            result.push(markerData.endColumn.toString());\n        }\n        else {\n            result.push(emptyString);\n        }\n        result.push(emptyString);\n        return result.join('¦');\n    }\n    IMarkerData.makeKeyOptionalMessage = makeKeyOptionalMessage;\n})(IMarkerData || (IMarkerData = {}));\nexport const IMarkerService = createDecorator('markerService');\n",
+      "start": 1711096855083,
+      "end": 1711096855175,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855176,
+      "end": 1711096855176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855176,
+      "end": 1711096855177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "normal"
+    }
+  ]
+}

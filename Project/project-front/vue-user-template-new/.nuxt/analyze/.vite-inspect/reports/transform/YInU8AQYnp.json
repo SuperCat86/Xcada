@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/colorizedBracketPairsDecorationProvider.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { Range } from '../../core/range.js';\nimport { editorBracketHighlightingForeground1, editorBracketHighlightingForeground2, editorBracketHighlightingForeground3, editorBracketHighlightingForeground4, editorBracketHighlightingForeground5, editorBracketHighlightingForeground6, editorBracketHighlightingUnexpectedBracketForeground } from '../../core/editorColorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nexport class ColorizedBracketPairsDecorationProvider extends Disposable {\n    constructor(textModel) {\n        super();\n        this.textModel = textModel;\n        this.colorProvider = new ColorProvider();\n        this.onDidChangeEmitter = new Emitter();\n        this.onDidChange = this.onDidChangeEmitter.event;\n        this.colorizationOptions = textModel.getOptions().bracketPairColorizationOptions;\n        this._register(textModel.bracketPairs.onDidChange(e => {\n            this.onDidChangeEmitter.fire();\n        }));\n    }\n    //#region TextModel events\n    handleDidChangeOptions(e) {\n        this.colorizationOptions = this.textModel.getOptions().bracketPairColorizationOptions;\n    }\n    //#endregion\n    getDecorationsInRange(range, ownerId, filterOutValidation) {\n        if (ownerId === undefined) {\n            return [];\n        }\n        if (!this.colorizationOptions.enabled) {\n            return [];\n        }\n        const result = new Array();\n        const bracketsInRange = this.textModel.bracketPairs.getBracketsInRange(range);\n        for (const bracket of bracketsInRange) {\n            result.push({\n                id: `bracket${bracket.range.toString()}-${bracket.nestingLevel}`,\n                options: { description: 'BracketPairColorization', inlineClassName: this.colorProvider.getInlineClassName(bracket) },\n                ownerId: 0,\n                range: bracket.range\n            });\n        }\n        return result;\n    }\n    getAllDecorations(ownerId, filterOutValidation) {\n        if (ownerId === undefined) {\n            return [];\n        }\n        if (!this.colorizationOptions.enabled) {\n            return [];\n        }\n        return this.getDecorationsInRange(new Range(1, 1, this.textModel.getLineCount(), 1), ownerId, filterOutValidation);\n    }\n}\nclass ColorProvider {\n    constructor() {\n        this.unexpectedClosingBracketClassName = 'unexpected-closing-bracket';\n    }\n    getInlineClassName(bracket) {\n        if (bracket.isInvalid) {\n            return this.unexpectedClosingBracketClassName;\n        }\n        return this.getInlineClassNameOfLevel(bracket.nestingLevel);\n    }\n    getInlineClassNameOfLevel(level) {\n        // To support a dynamic amount of colors up to 6 colors,\n        // we use a number that is a lcm of all numbers from 1 to 6.\n        return `bracket-highlighting-${level % 30}`;\n    }\n}\nregisterThemingParticipant((theme, collector) => {\n    const colors = [\n        editorBracketHighlightingForeground1,\n        editorBracketHighlightingForeground2,\n        editorBracketHighlightingForeground3,\n        editorBracketHighlightingForeground4,\n        editorBracketHighlightingForeground5,\n        editorBracketHighlightingForeground6\n    ];\n    const colorProvider = new ColorProvider();\n    collector.addRule(`.monaco-editor .${colorProvider.unexpectedClosingBracketClassName} { color: ${theme.getColor(editorBracketHighlightingUnexpectedBracketForeground)}; }`);\n    const colorValues = colors\n        .map(c => theme.getColor(c))\n        .filter((c) => !!c)\n        .filter(c => !c.isTransparent());\n    for (let level = 0; level < 30; level++) {\n        const color = colorValues[level % colorValues.length];\n        collector.addRule(`.monaco-editor .${colorProvider.getInlineClassNameOfLevel(level)} { color: ${color}; }`);\n    }\n});\n",
+      "start": 1711096856524,
+      "end": 1711096856615,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856615,
+      "end": 1711096856615,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856616,
+      "end": 1711096856616,
+      "order": "normal"
+    }
+  ]
+}

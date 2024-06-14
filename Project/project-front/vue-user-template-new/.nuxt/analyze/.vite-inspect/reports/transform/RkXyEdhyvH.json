@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/folding/browser/intializingRangeProvider.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { sanitizeRanges } from './syntaxRangeProvider.js';\nexport const ID_INIT_PROVIDER = 'init';\nexport class InitializingRangeProvider {\n    constructor(editorModel, initialRanges, onTimeout, timeoutTime) {\n        this.editorModel = editorModel;\n        this.id = ID_INIT_PROVIDER;\n        if (initialRanges.length) {\n            let toDecorationRange = (range) => {\n                return {\n                    range: {\n                        startLineNumber: range.startLineNumber,\n                        startColumn: 0,\n                        endLineNumber: range.endLineNumber,\n                        endColumn: editorModel.getLineLength(range.endLineNumber)\n                    },\n                    options: {\n                        description: 'folding-initializing-range-provider',\n                        stickiness: 1 /* NeverGrowsWhenTypingAtEdges */\n                    }\n                };\n            };\n            this.decorationIds = editorModel.deltaDecorations([], initialRanges.map(toDecorationRange));\n            this.timeout = setTimeout(onTimeout, timeoutTime);\n        }\n    }\n    dispose() {\n        if (this.decorationIds) {\n            this.editorModel.deltaDecorations(this.decorationIds, []);\n            this.decorationIds = undefined;\n        }\n        if (typeof this.timeout === 'number') {\n            clearTimeout(this.timeout);\n            this.timeout = undefined;\n        }\n    }\n    compute(cancelationToken) {\n        let foldingRangeData = [];\n        if (this.decorationIds) {\n            for (let id of this.decorationIds) {\n                let range = this.editorModel.getDecorationRange(id);\n                if (range) {\n                    foldingRangeData.push({ start: range.startLineNumber, end: range.endLineNumber, rank: 1 });\n                }\n            }\n        }\n        return Promise.resolve(sanitizeRanges(foldingRangeData, Number.MAX_VALUE));\n    }\n}\n",
+      "start": 1711096855661,
+      "end": 1711096855770,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855770,
+      "end": 1711096855770,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855770,
+      "end": 1711096855771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855771,
+      "end": 1711096855771,
+      "order": "normal"
+    }
+  ]
+}

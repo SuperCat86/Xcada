@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneGotoSymbolQuickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport '../../../../base/browser/ui/codicons/codiconStyles.js'; // The codicon symbol styles are defined here and must be loaded\nimport '../../../contrib/symbolIcons/browser/symbolIcons.js'; // The codicon symbol colors are defined here and must be loaded to get colors\nimport { AbstractGotoSymbolQuickAccessProvider } from '../../../contrib/quickAccess/browser/gotoSymbolQuickAccess.js';\nimport { Registry } from '../../../../platform/registry/common/platform.js';\nimport { Extensions } from '../../../../platform/quickinput/common/quickAccess.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { withNullAsUndefined } from '../../../../base/common/types.js';\nimport { QuickOutlineNLS } from '../../../common/standaloneStrings.js';\nimport { Event } from '../../../../base/common/event.js';\nimport { EditorAction, registerEditorAction } from '../../../browser/editorExtensions.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';\nimport { IOutlineModelService } from '../../../contrib/documentSymbols/browser/outlineModel.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nlet StandaloneGotoSymbolQuickAccessProvider = class StandaloneGotoSymbolQuickAccessProvider extends AbstractGotoSymbolQuickAccessProvider {\n    constructor(editorService, languageFeaturesService, outlineModelService) {\n        super(languageFeaturesService, outlineModelService);\n        this.editorService = editorService;\n        this.onDidActiveTextEditorControlChange = Event.None;\n    }\n    get activeTextEditorControl() {\n        return withNullAsUndefined(this.editorService.getFocusedCodeEditor());\n    }\n};\nStandaloneGotoSymbolQuickAccessProvider = __decorate([\n    __param(0, ICodeEditorService),\n    __param(1, ILanguageFeaturesService),\n    __param(2, IOutlineModelService)\n], StandaloneGotoSymbolQuickAccessProvider);\nexport { StandaloneGotoSymbolQuickAccessProvider };\nRegistry.as(Extensions.Quickaccess).registerQuickAccessProvider({\n    ctor: StandaloneGotoSymbolQuickAccessProvider,\n    prefix: AbstractGotoSymbolQuickAccessProvider.PREFIX,\n    helpEntries: [\n        { description: QuickOutlineNLS.quickOutlineActionLabel, prefix: AbstractGotoSymbolQuickAccessProvider.PREFIX, needsEditor: true },\n        { description: QuickOutlineNLS.quickOutlineByCategoryActionLabel, prefix: AbstractGotoSymbolQuickAccessProvider.PREFIX_BY_CATEGORY, needsEditor: true }\n    ]\n});\nexport class GotoLineAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.quickOutline',\n            label: QuickOutlineNLS.quickOutlineActionLabel,\n            alias: 'Go to Symbol...',\n            precondition: EditorContextKeys.hasDocumentSymbolProvider,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 45 /* KeyO */,\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                group: 'navigation',\n                order: 3\n            }\n        });\n    }\n    run(accessor) {\n        accessor.get(IQuickInputService).quickAccess.show(AbstractGotoSymbolQuickAccessProvider.PREFIX);\n    }\n}\nregisterEditorAction(GotoLineAction);\n",
+      "start": 1711096853952,
+      "end": 1711096854037,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854037,
+      "end": 1711096854037,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854038,
+      "end": 1711096854038,
+      "order": "normal"
+    }
+  ]
+}

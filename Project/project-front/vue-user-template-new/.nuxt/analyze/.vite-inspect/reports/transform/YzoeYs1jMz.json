@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/button/button.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-text-button {\n\tbox-sizing: border-box;\n\tdisplay: flex;\n\twidth: 100%;\n\tpadding: 4px;\n\ttext-align: center;\n\tcursor: pointer;\n\tjustify-content: center;\n\talign-items: center;\n}\n\n.monaco-text-button:focus {\n\toutline-offset: 2px !important;\n}\n\n.monaco-text-button:hover {\n\ttext-decoration: none !important;\n}\n\n.monaco-button.disabled:focus,\n.monaco-button.disabled {\n\topacity: 0.4 !important;\n\tcursor: default;\n}\n\n.monaco-text-button > .codicon {\n\tmargin: 0 0.2em;\n\tcolor: inherit !important;\n}\n\n.monaco-button-dropdown {\n\tdisplay: flex;\n\tcursor: pointer;\n}\n\n.monaco-button-dropdown > .monaco-dropdown-button {\n\tmargin-left: 1px;\n}\n\n.monaco-description-button {\n\tflex-direction: column;\n}\n\n.monaco-description-button .monaco-button-label {\n\tfont-weight: 500;\n}\n\n.monaco-description-button .monaco-button-description {\n\tfont-style: italic;\n}\n\n.monaco-description-button .monaco-button-label,\n.monaco-description-button .monaco-button-description\n{\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: center;\n}\n\n.monaco-description-button .monaco-button-label > .codicon,\n.monaco-description-button .monaco-button-description > .codicon\n{\n\tmargin: 0 0.2em;\n\tcolor: inherit !important;\n}\n",
+      "start": 1711096857832,
+      "end": 1711096857895,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857895,
+      "end": 1711096857895,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857895,
+      "end": 1711096857895,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857895,
+      "end": 1711096857895,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-text-button{align-items:center;box-sizing:border-box;cursor:pointer;display:flex;justify-content:center;padding:4px;text-align:center;width:100%}.monaco-text-button:focus{outline-offset:2px!important}.monaco-text-button:hover{text-decoration:none!important}.monaco-button.disabled,.monaco-button.disabled:focus{cursor:default;opacity:.4!important}.monaco-text-button>.codicon{color:inherit!important;margin:0 .2em}.monaco-button-dropdown{cursor:pointer;display:flex}.monaco-button-dropdown>.monaco-dropdown-button{margin-left:1px}.monaco-description-button{flex-direction:column}.monaco-description-button .monaco-button-label{font-weight:500}.monaco-description-button .monaco-button-description{font-style:italic}.monaco-description-button .monaco-button-description,.monaco-description-button .monaco-button-label{align-items:center;display:flex;justify-content:center}.monaco-description-button .monaco-button-description>.codicon,.monaco-description-button .monaco-button-label>.codicon{color:inherit!important;margin:0 .2em}",
+      "start": 1711096857895,
+      "end": 1711096857901,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857901,
+      "end": 1711096857901,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857901,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "normal"
+    }
+  ]
+}

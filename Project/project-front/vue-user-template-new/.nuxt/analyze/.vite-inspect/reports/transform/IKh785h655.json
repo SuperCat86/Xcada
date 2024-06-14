@@ -1,0 +1,212 @@
+{
+  "resolvedId": "virtual:nuxt:D:/Project/Project/project-front/vue-user-template-new/.nuxt/routes.mjs",
+  "transforms": [
+    {
+      "name": "virtual",
+      "result": "import { default as indexw0wFEdZAAjMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/about/index.vue?macro=true\";\nimport { default as indexixtqNoPFG5Meta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/course/index.vue?macro=true\";\nimport { default as indexKikvxRfDwcMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/discuss/index.vue?macro=true\";\nimport { default as indexDYjL14bhHrMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/index/index.vue?macro=true\";\nimport { default as indexUzsTXdj43SMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/index.vue?macro=true\";\nimport { default as indexm401Ao46doMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/question/index.vue?macro=true\";\nexport default [\n  {\n    name: indexw0wFEdZAAjMeta?.name ?? \"about\",\n    path: indexw0wFEdZAAjMeta?.path ?? \"/about\",\n    meta: indexw0wFEdZAAjMeta || {},\n    alias: indexw0wFEdZAAjMeta?.alias || [],\n    redirect: indexw0wFEdZAAjMeta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/about/index.vue\").then(m => m.default || m)\n  },\n  {\n    name: indexixtqNoPFG5Meta?.name ?? \"course\",\n    path: indexixtqNoPFG5Meta?.path ?? \"/course\",\n    meta: indexixtqNoPFG5Meta || {},\n    alias: indexixtqNoPFG5Meta?.alias || [],\n    redirect: indexixtqNoPFG5Meta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/course/index.vue\").then(m => m.default || m)\n  },\n  {\n    name: indexKikvxRfDwcMeta?.name ?? \"discuss\",\n    path: indexKikvxRfDwcMeta?.path ?? \"/discuss\",\n    meta: indexKikvxRfDwcMeta || {},\n    alias: indexKikvxRfDwcMeta?.alias || [],\n    redirect: indexKikvxRfDwcMeta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/discuss/index.vue\").then(m => m.default || m)\n  },\n  {\n    name: indexUzsTXdj43SMeta?.name ?? undefined,\n    path: indexUzsTXdj43SMeta?.path ?? \"/\",\n    meta: indexUzsTXdj43SMeta || {},\n    alias: indexUzsTXdj43SMeta?.alias || [],\n    redirect: indexUzsTXdj43SMeta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/index.vue\").then(m => m.default || m),\n    children: [\n  {\n    name: indexDYjL14bhHrMeta?.name ?? \"index\",\n    path: indexDYjL14bhHrMeta?.path ?? \"\",\n    meta: indexDYjL14bhHrMeta || {},\n    alias: indexDYjL14bhHrMeta?.alias || [],\n    redirect: indexDYjL14bhHrMeta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/index/index.vue\").then(m => m.default || m)\n  }\n]\n  },\n  {\n    name: indexm401Ao46doMeta?.name ?? \"question\",\n    path: indexm401Ao46doMeta?.path ?? \"/question\",\n    meta: indexm401Ao46doMeta || {},\n    alias: indexm401Ao46doMeta?.alias || [],\n    redirect: indexm401Ao46doMeta?.redirect,\n    component: () => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/question/index.vue\").then(m => m.default || m)\n  }\n]",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096852934,
+      "end": 1711096852934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096852935,
+      "end": 1711096852935,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096852936,
+      "end": 1711096852936,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096852936,
+      "end": 1711096852936,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096852936,
+      "end": 1711096852937,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096852937,
+      "end": 1711096852937,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096852937,
+      "end": 1711096852937,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096852937,
+      "end": 1711096852942,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096852942,
+      "end": 1711096852942,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096852942,
+      "end": 1711096852942,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096852942,
+      "end": 1711096852942,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096852942,
+      "end": 1711096852942,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096852943,
+      "end": 1711096852943,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096852943,
+      "end": 1711096852943,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";import { default as indexw0wFEdZAAjMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/about/index.vue?macro=true\";\nimport { default as indexixtqNoPFG5Meta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/course/index.vue?macro=true\";\nimport { default as indexKikvxRfDwcMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/discuss/index.vue?macro=true\";\nimport { default as indexDYjL14bhHrMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/index/index.vue?macro=true\";\nimport { default as indexUzsTXdj43SMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/index.vue?macro=true\";\nimport { default as indexm401Ao46doMeta } from \"D:/Project/Project/project-front/vue-user-template-new/pages/question/index.vue?macro=true\";\nexport default [\n  {\n    name: indexw0wFEdZAAjMeta?.name ?? \"about\",\n    path: indexw0wFEdZAAjMeta?.path ?? \"/about\",\n    meta: indexw0wFEdZAAjMeta || {},\n    alias: indexw0wFEdZAAjMeta?.alias || [],\n    redirect: indexw0wFEdZAAjMeta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/about/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m)\n  },\n  {\n    name: indexixtqNoPFG5Meta?.name ?? \"course\",\n    path: indexixtqNoPFG5Meta?.path ?? \"/course\",\n    meta: indexixtqNoPFG5Meta || {},\n    alias: indexixtqNoPFG5Meta?.alias || [],\n    redirect: indexixtqNoPFG5Meta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/course/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m)\n  },\n  {\n    name: indexKikvxRfDwcMeta?.name ?? \"discuss\",\n    path: indexKikvxRfDwcMeta?.path ?? \"/discuss\",\n    meta: indexKikvxRfDwcMeta || {},\n    alias: indexKikvxRfDwcMeta?.alias || [],\n    redirect: indexKikvxRfDwcMeta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/discuss/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m)\n  },\n  {\n    name: indexUzsTXdj43SMeta?.name ?? undefined,\n    path: indexUzsTXdj43SMeta?.path ?? \"/\",\n    meta: indexUzsTXdj43SMeta || {},\n    alias: indexUzsTXdj43SMeta?.alias || [],\n    redirect: indexUzsTXdj43SMeta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m),\n    children: [\n  {\n    name: indexDYjL14bhHrMeta?.name ?? \"index\",\n    path: indexDYjL14bhHrMeta?.path ?? \"\",\n    meta: indexDYjL14bhHrMeta || {},\n    alias: indexDYjL14bhHrMeta?.alias || [],\n    redirect: indexDYjL14bhHrMeta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/index/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m)\n  }\n]\n  },\n  {\n    name: indexm401Ao46doMeta?.name ?? \"question\",\n    path: indexm401Ao46doMeta?.path ?? \"/question\",\n    meta: indexm401Ao46doMeta || {},\n    alias: indexm401Ao46doMeta?.alias || [],\n    redirect: indexm401Ao46doMeta?.redirect,\n    component: () => __vitePreload(() => import(\"D:/Project/Project/project-front/vue-user-template-new/pages/question/index.vue\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then(m => m.default || m)\n  }\n]",
+      "start": 1711096852943,
+      "end": 1711096852943,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096852943,
+      "end": 1711096852943,
+      "order": "normal"
+    }
+  ]
+}

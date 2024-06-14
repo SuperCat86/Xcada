@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/inplaceReplaceSupport.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nexport class BasicInplaceReplace {\n    constructor() {\n        this._defaultValueSet = [\n            ['true', 'false'],\n            ['True', 'False'],\n            ['Private', 'Public', 'Friend', 'ReadOnly', 'Partial', 'Protected', 'WriteOnly'],\n            ['public', 'protected', 'private'],\n        ];\n    }\n    navigateValueSet(range1, text1, range2, text2, up) {\n        if (range1 && text1) {\n            const result = this.doNavigateValueSet(text1, up);\n            if (result) {\n                return {\n                    range: range1,\n                    value: result\n                };\n            }\n        }\n        if (range2 && text2) {\n            const result = this.doNavigateValueSet(text2, up);\n            if (result) {\n                return {\n                    range: range2,\n                    value: result\n                };\n            }\n        }\n        return null;\n    }\n    doNavigateValueSet(text, up) {\n        const numberResult = this.numberReplace(text, up);\n        if (numberResult !== null) {\n            return numberResult;\n        }\n        return this.textReplace(text, up);\n    }\n    numberReplace(value, up) {\n        const precision = Math.pow(10, value.length - (value.lastIndexOf('.') + 1));\n        let n1 = Number(value);\n        let n2 = parseFloat(value);\n        if (!isNaN(n1) && !isNaN(n2) && n1 === n2) {\n            if (n1 === 0 && !up) {\n                return null; // don't do negative\n                //\t\t\t} else if(n1 === 9 && up) {\n                //\t\t\t\treturn null; // don't insert 10 into a number\n            }\n            else {\n                n1 = Math.floor(n1 * precision);\n                n1 += up ? precision : -precision;\n                return String(n1 / precision);\n            }\n        }\n        return null;\n    }\n    textReplace(value, up) {\n        return this.valueSetsReplace(this._defaultValueSet, value, up);\n    }\n    valueSetsReplace(valueSets, value, up) {\n        let result = null;\n        for (let i = 0, len = valueSets.length; result === null && i < len; i++) {\n            result = this.valueSetReplace(valueSets[i], value, up);\n        }\n        return result;\n    }\n    valueSetReplace(valueSet, value, up) {\n        let idx = valueSet.indexOf(value);\n        if (idx >= 0) {\n            idx += up ? +1 : -1;\n            if (idx < 0) {\n                idx = valueSet.length - 1;\n            }\n            else {\n                idx %= valueSet.length;\n            }\n            return valueSet[idx];\n        }\n        return null;\n    }\n}\nBasicInplaceReplace.INSTANCE = new BasicInplaceReplace();\n",
+      "start": 1711096857498,
+      "end": 1711096857604,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857604,
+      "end": 1711096857604,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857604,
+      "end": 1711096857605,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857605,
+      "end": 1711096857605,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857605,
+      "end": 1711096857605,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857605,
+      "end": 1711096857605,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857605,
+      "end": 1711096857605,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857605,
+      "end": 1711096857605,
+      "order": "normal"
+    }
+  ]
+}

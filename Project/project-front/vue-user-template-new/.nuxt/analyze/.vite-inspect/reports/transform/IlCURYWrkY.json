@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/browser/sortLinesCommand.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { EditOperation } from '../../../common/core/editOperation.js';\nimport { Range } from '../../../common/core/range.js';\nexport class SortLinesCommand {\n    constructor(selection, descending) {\n        this.selection = selection;\n        this.descending = descending;\n        this.selectionId = null;\n    }\n    static getCollator() {\n        if (!SortLinesCommand._COLLATOR) {\n            SortLinesCommand._COLLATOR = new Intl.Collator();\n        }\n        return SortLinesCommand._COLLATOR;\n    }\n    getEditOperations(model, builder) {\n        let op = sortLines(model, this.selection, this.descending);\n        if (op) {\n            builder.addEditOperation(op.range, op.text);\n        }\n        this.selectionId = builder.trackSelection(this.selection);\n    }\n    computeCursorState(model, helper) {\n        return helper.getTrackedSelection(this.selectionId);\n    }\n    static canRun(model, selection, descending) {\n        if (model === null) {\n            return false;\n        }\n        let data = getSortData(model, selection, descending);\n        if (!data) {\n            return false;\n        }\n        for (let i = 0, len = data.before.length; i < len; i++) {\n            if (data.before[i] !== data.after[i]) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\nSortLinesCommand._COLLATOR = null;\nfunction getSortData(model, selection, descending) {\n    let startLineNumber = selection.startLineNumber;\n    let endLineNumber = selection.endLineNumber;\n    if (selection.endColumn === 1) {\n        endLineNumber--;\n    }\n    // Nothing to sort if user didn't select anything.\n    if (startLineNumber >= endLineNumber) {\n        return null;\n    }\n    let linesToSort = [];\n    // Get the contents of the selection to be sorted.\n    for (let lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++) {\n        linesToSort.push(model.getLineContent(lineNumber));\n    }\n    let sorted = linesToSort.slice(0);\n    sorted.sort(SortLinesCommand.getCollator().compare);\n    // If descending, reverse the order.\n    if (descending === true) {\n        sorted = sorted.reverse();\n    }\n    return {\n        startLineNumber: startLineNumber,\n        endLineNumber: endLineNumber,\n        before: linesToSort,\n        after: sorted\n    };\n}\n/**\n * Generate commands for sorting lines on a model.\n */\nfunction sortLines(model, selection, descending) {\n    let data = getSortData(model, selection, descending);\n    if (!data) {\n        return null;\n    }\n    return EditOperation.replace(new Range(data.startLineNumber, 1, data.endLineNumber, model.getLineMaxColumn(data.endLineNumber)), data.after.join('\\n'));\n}\n",
+      "start": 1711096855840,
+      "end": 1711096855972,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855972,
+      "end": 1711096855972,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855973,
+      "end": 1711096855973,
+      "order": "normal"
+    }
+  ]
+}

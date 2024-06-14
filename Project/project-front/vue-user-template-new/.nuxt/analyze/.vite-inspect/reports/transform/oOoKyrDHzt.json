@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/viewModel/monospaceLineBreaksComputer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../base/common/strings.js';\nimport { CharacterClassifier } from '../core/characterClassifier.js';\nimport { LineInjectedText } from '../textModelEvents.js';\nimport { ModelLineProjectionData } from '../modelLineProjectionData.js';\nexport class MonospaceLineBreaksComputerFactory {\n    constructor(breakBeforeChars, breakAfterChars) {\n        this.classifier = new WrappingCharacterClassifier(breakBeforeChars, breakAfterChars);\n    }\n    static create(options) {\n        return new MonospaceLineBreaksComputerFactory(options.get(120 /* wordWrapBreakBeforeCharacters */), options.get(119 /* wordWrapBreakAfterCharacters */));\n    }\n    createLineBreaksComputer(fontInfo, tabSize, wrappingColumn, wrappingIndent) {\n        const requests = [];\n        const injectedTexts = [];\n        const previousBreakingData = [];\n        return {\n            addRequest: (lineText, injectedText, previousLineBreakData) => {\n                requests.push(lineText);\n                injectedTexts.push(injectedText);\n                previousBreakingData.push(previousLineBreakData);\n            },\n            finalize: () => {\n                const columnsForFullWidthChar = fontInfo.typicalFullwidthCharacterWidth / fontInfo.typicalHalfwidthCharacterWidth;\n                const result = [];\n                for (let i = 0, len = requests.length; i < len; i++) {\n                    const injectedText = injectedTexts[i];\n                    const previousLineBreakData = previousBreakingData[i];\n                    if (previousLineBreakData && !previousLineBreakData.injectionOptions && !injectedText) {\n                        result[i] = createLineBreaksFromPreviousLineBreaks(this.classifier, previousLineBreakData, requests[i], tabSize, wrappingColumn, columnsForFullWidthChar, wrappingIndent);\n                    }\n                    else {\n                        result[i] = createLineBreaks(this.classifier, requests[i], injectedText, tabSize, wrappingColumn, columnsForFullWidthChar, wrappingIndent);\n                    }\n                }\n                arrPool1.length = 0;\n                arrPool2.length = 0;\n                return result;\n            }\n        };\n    }\n}\nclass WrappingCharacterClassifier extends CharacterClassifier {\n    constructor(BREAK_BEFORE, BREAK_AFTER) {\n        super(0 /* NONE */);\n        for (let i = 0; i < BREAK_BEFORE.length; i++) {\n            this.set(BREAK_BEFORE.charCodeAt(i), 1 /* BREAK_BEFORE */);\n        }\n        for (let i = 0; i < BREAK_AFTER.length; i++) {\n            this.set(BREAK_AFTER.charCodeAt(i), 2 /* BREAK_AFTER */);\n        }\n    }\n    get(charCode) {\n        if (charCode >= 0 && charCode < 256) {\n            return this._asciiMap[charCode];\n        }\n        else {\n            // Initialize CharacterClass.BREAK_IDEOGRAPHIC for these Unicode ranges:\n            // 1. CJK Unified Ideographs (0x4E00 -- 0x9FFF)\n            // 2. CJK Unified Ideographs Extension A (0x3400 -- 0x4DBF)\n            // 3. Hiragana and Katakana (0x3040 -- 0x30FF)\n            if ((charCode >= 0x3040 && charCode <= 0x30FF)\n                || (charCode >= 0x3400 && charCode <= 0x4DBF)\n                || (charCode >= 0x4E00 && charCode <= 0x9FFF)) {\n                return 3 /* BREAK_IDEOGRAPHIC */;\n            }\n            return (this._map.get(charCode) || this._defaultValue);\n        }\n    }\n}\nlet arrPool1 = [];\nlet arrPool2 = [];\nfunction createLineBreaksFromPreviousLineBreaks(classifier, previousBreakingData, lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent) {\n    if (firstLineBreakColumn === -1) {\n        return null;\n    }\n    const len = lineText.length;\n    if (len <= 1) {\n        return null;\n    }\n    const prevBreakingOffsets = previousBreakingData.breakOffsets;\n    const prevBreakingOffsetsVisibleColumn = previousBreakingData.breakOffsetsVisibleColumn;\n    const wrappedTextIndentLength = computeWrappedTextIndentLength(lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent);\n    const wrappedLineBreakColumn = firstLineBreakColumn - wrappedTextIndentLength;\n    const breakingOffsets = arrPool1;\n    const breakingOffsetsVisibleColumn = arrPool2;\n    let breakingOffsetsCount = 0;\n    let lastBreakingOffset = 0;\n    let lastBreakingOffsetVisibleColumn = 0;\n    let breakingColumn = firstLineBreakColumn;\n    const prevLen = prevBreakingOffsets.length;\n    let prevIndex = 0;\n    if (prevIndex >= 0) {\n        let bestDistance = Math.abs(prevBreakingOffsetsVisibleColumn[prevIndex] - breakingColumn);\n        while (prevIndex + 1 < prevLen) {\n            const distance = Math.abs(prevBreakingOffsetsVisibleColumn[prevIndex + 1] - breakingColumn);\n            if (distance >= bestDistance) {\n                break;\n            }\n            bestDistance = distance;\n            prevIndex++;\n        }\n    }\n    while (prevIndex < prevLen) {\n        // Allow for prevIndex to be -1 (for the case where we hit a tab when walking backwards from the first break)\n        let prevBreakOffset = prevIndex < 0 ? 0 : prevBreakingOffsets[prevIndex];\n        let prevBreakOffsetVisibleColumn = prevIndex < 0 ? 0 : prevBreakingOffsetsVisibleColumn[prevIndex];\n        if (lastBreakingOffset > prevBreakOffset) {\n            prevBreakOffset = lastBreakingOffset;\n            prevBreakOffsetVisibleColumn = lastBreakingOffsetVisibleColumn;\n        }\n        let breakOffset = 0;\n        let breakOffsetVisibleColumn = 0;\n        let forcedBreakOffset = 0;\n        let forcedBreakOffsetVisibleColumn = 0;\n        // initially, we search as much as possible to the right (if it fits)\n        if (prevBreakOffsetVisibleColumn <= breakingColumn) {\n            let visibleColumn = prevBreakOffsetVisibleColumn;\n            let prevCharCode = prevBreakOffset === 0 ? 0 /* Null */ : lineText.charCodeAt(prevBreakOffset - 1);\n            let prevCharCodeClass = prevBreakOffset === 0 ? 0 /* NONE */ : classifier.get(prevCharCode);\n            let entireLineFits = true;\n            for (let i = prevBreakOffset; i < len; i++) {\n                const charStartOffset = i;\n                const charCode = lineText.charCodeAt(i);\n                let charCodeClass;\n                let charWidth;\n                if (strings.isHighSurrogate(charCode)) {\n                    // A surrogate pair must always be considered as a single unit, so it is never to be broken\n                    i++;\n                    charCodeClass = 0 /* NONE */;\n                    charWidth = 2;\n                }\n                else {\n                    charCodeClass = classifier.get(charCode);\n                    charWidth = computeCharWidth(charCode, visibleColumn, tabSize, columnsForFullWidthChar);\n                }\n                if (charStartOffset > lastBreakingOffset && canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass)) {\n                    breakOffset = charStartOffset;\n                    breakOffsetVisibleColumn = visibleColumn;\n                }\n                visibleColumn += charWidth;\n                // check if adding character at `i` will go over the breaking column\n                if (visibleColumn > breakingColumn) {\n                    // We need to break at least before character at `i`:\n                    if (charStartOffset > lastBreakingOffset) {\n                        forcedBreakOffset = charStartOffset;\n                        forcedBreakOffsetVisibleColumn = visibleColumn - charWidth;\n                    }\n                    else {\n                        // we need to advance at least by one character\n                        forcedBreakOffset = i + 1;\n                        forcedBreakOffsetVisibleColumn = visibleColumn;\n                    }\n                    if (visibleColumn - breakOffsetVisibleColumn > wrappedLineBreakColumn) {\n                        // Cannot break at `breakOffset` => reset it if it was set\n                        breakOffset = 0;\n                    }\n                    entireLineFits = false;\n                    break;\n                }\n                prevCharCode = charCode;\n                prevCharCodeClass = charCodeClass;\n            }\n            if (entireLineFits) {\n                // there is no more need to break => stop the outer loop!\n                if (breakingOffsetsCount > 0) {\n                    // Add last segment, no need to assign to `lastBreakingOffset` and `lastBreakingOffsetVisibleColumn`\n                    breakingOffsets[breakingOffsetsCount] = prevBreakingOffsets[prevBreakingOffsets.length - 1];\n                    breakingOffsetsVisibleColumn[breakingOffsetsCount] = prevBreakingOffsetsVisibleColumn[prevBreakingOffsets.length - 1];\n                    breakingOffsetsCount++;\n                }\n                break;\n            }\n        }\n        if (breakOffset === 0) {\n            // must search left\n            let visibleColumn = prevBreakOffsetVisibleColumn;\n            let charCode = lineText.charCodeAt(prevBreakOffset);\n            let charCodeClass = classifier.get(charCode);\n            let hitATabCharacter = false;\n            for (let i = prevBreakOffset - 1; i >= lastBreakingOffset; i--) {\n                const charStartOffset = i + 1;\n                const prevCharCode = lineText.charCodeAt(i);\n                if (prevCharCode === 9 /* Tab */) {\n                    // cannot determine the width of a tab when going backwards, so we must go forwards\n                    hitATabCharacter = true;\n                    break;\n                }\n                let prevCharCodeClass;\n                let prevCharWidth;\n                if (strings.isLowSurrogate(prevCharCode)) {\n                    // A surrogate pair must always be considered as a single unit, so it is never to be broken\n                    i--;\n                    prevCharCodeClass = 0 /* NONE */;\n                    prevCharWidth = 2;\n                }\n                else {\n                    prevCharCodeClass = classifier.get(prevCharCode);\n                    prevCharWidth = (strings.isFullWidthCharacter(prevCharCode) ? columnsForFullWidthChar : 1);\n                }\n                if (visibleColumn <= breakingColumn) {\n                    if (forcedBreakOffset === 0) {\n                        forcedBreakOffset = charStartOffset;\n                        forcedBreakOffsetVisibleColumn = visibleColumn;\n                    }\n                    if (visibleColumn <= breakingColumn - wrappedLineBreakColumn) {\n                        // went too far!\n                        break;\n                    }\n                    if (canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass)) {\n                        breakOffset = charStartOffset;\n                        breakOffsetVisibleColumn = visibleColumn;\n                        break;\n                    }\n                }\n                visibleColumn -= prevCharWidth;\n                charCode = prevCharCode;\n                charCodeClass = prevCharCodeClass;\n            }\n            if (breakOffset !== 0) {\n                const remainingWidthOfNextLine = wrappedLineBreakColumn - (forcedBreakOffsetVisibleColumn - breakOffsetVisibleColumn);\n                if (remainingWidthOfNextLine <= tabSize) {\n                    const charCodeAtForcedBreakOffset = lineText.charCodeAt(forcedBreakOffset);\n                    let charWidth;\n                    if (strings.isHighSurrogate(charCodeAtForcedBreakOffset)) {\n                        // A surrogate pair must always be considered as a single unit, so it is never to be broken\n                        charWidth = 2;\n                    }\n                    else {\n                        charWidth = computeCharWidth(charCodeAtForcedBreakOffset, forcedBreakOffsetVisibleColumn, tabSize, columnsForFullWidthChar);\n                    }\n                    if (remainingWidthOfNextLine - charWidth < 0) {\n                        // it is not worth it to break at breakOffset, it just introduces an extra needless line!\n                        breakOffset = 0;\n                    }\n                }\n            }\n            if (hitATabCharacter) {\n                // cannot determine the width of a tab when going backwards, so we must go forwards from the previous break\n                prevIndex--;\n                continue;\n            }\n        }\n        if (breakOffset === 0) {\n            // Could not find a good breaking point\n            breakOffset = forcedBreakOffset;\n            breakOffsetVisibleColumn = forcedBreakOffsetVisibleColumn;\n        }\n        if (breakOffset <= lastBreakingOffset) {\n            // Make sure that we are advancing (at least one character)\n            const charCode = lineText.charCodeAt(lastBreakingOffset);\n            if (strings.isHighSurrogate(charCode)) {\n                // A surrogate pair must always be considered as a single unit, so it is never to be broken\n                breakOffset = lastBreakingOffset + 2;\n                breakOffsetVisibleColumn = lastBreakingOffsetVisibleColumn + 2;\n            }\n            else {\n                breakOffset = lastBreakingOffset + 1;\n                breakOffsetVisibleColumn = lastBreakingOffsetVisibleColumn + computeCharWidth(charCode, lastBreakingOffsetVisibleColumn, tabSize, columnsForFullWidthChar);\n            }\n        }\n        lastBreakingOffset = breakOffset;\n        breakingOffsets[breakingOffsetsCount] = breakOffset;\n        lastBreakingOffsetVisibleColumn = breakOffsetVisibleColumn;\n        breakingOffsetsVisibleColumn[breakingOffsetsCount] = breakOffsetVisibleColumn;\n        breakingOffsetsCount++;\n        breakingColumn = breakOffsetVisibleColumn + wrappedLineBreakColumn;\n        while (prevIndex < 0 || (prevIndex < prevLen && prevBreakingOffsetsVisibleColumn[prevIndex] < breakOffsetVisibleColumn)) {\n            prevIndex++;\n        }\n        let bestDistance = Math.abs(prevBreakingOffsetsVisibleColumn[prevIndex] - breakingColumn);\n        while (prevIndex + 1 < prevLen) {\n            const distance = Math.abs(prevBreakingOffsetsVisibleColumn[prevIndex + 1] - breakingColumn);\n            if (distance >= bestDistance) {\n                break;\n            }\n            bestDistance = distance;\n            prevIndex++;\n        }\n    }\n    if (breakingOffsetsCount === 0) {\n        return null;\n    }\n    // Doing here some object reuse which ends up helping a huge deal with GC pauses!\n    breakingOffsets.length = breakingOffsetsCount;\n    breakingOffsetsVisibleColumn.length = breakingOffsetsCount;\n    arrPool1 = previousBreakingData.breakOffsets;\n    arrPool2 = previousBreakingData.breakOffsetsVisibleColumn;\n    previousBreakingData.breakOffsets = breakingOffsets;\n    previousBreakingData.breakOffsetsVisibleColumn = breakingOffsetsVisibleColumn;\n    previousBreakingData.wrappedTextIndentLength = wrappedTextIndentLength;\n    return previousBreakingData;\n}\nfunction createLineBreaks(classifier, _lineText, injectedTexts, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent) {\n    const lineText = LineInjectedText.applyInjectedText(_lineText, injectedTexts);\n    let injectionOptions;\n    let injectionOffsets;\n    if (injectedTexts && injectedTexts.length > 0) {\n        injectionOptions = injectedTexts.map(t => t.options);\n        injectionOffsets = injectedTexts.map(text => text.column - 1);\n    }\n    else {\n        injectionOptions = null;\n        injectionOffsets = null;\n    }\n    if (firstLineBreakColumn === -1) {\n        if (!injectionOptions) {\n            return null;\n        }\n        // creating a `LineBreakData` with an invalid `breakOffsetsVisibleColumn` is OK\n        // because `breakOffsetsVisibleColumn` will never be used because it contains injected text\n        return new ModelLineProjectionData(injectionOffsets, injectionOptions, [lineText.length], [], 0);\n    }\n    const len = lineText.length;\n    if (len <= 1) {\n        if (!injectionOptions) {\n            return null;\n        }\n        // creating a `LineBreakData` with an invalid `breakOffsetsVisibleColumn` is OK\n        // because `breakOffsetsVisibleColumn` will never be used because it contains injected text\n        return new ModelLineProjectionData(injectionOffsets, injectionOptions, [lineText.length], [], 0);\n    }\n    const wrappedTextIndentLength = computeWrappedTextIndentLength(lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent);\n    const wrappedLineBreakColumn = firstLineBreakColumn - wrappedTextIndentLength;\n    const breakingOffsets = [];\n    const breakingOffsetsVisibleColumn = [];\n    let breakingOffsetsCount = 0;\n    let breakOffset = 0;\n    let breakOffsetVisibleColumn = 0;\n    let breakingColumn = firstLineBreakColumn;\n    let prevCharCode = lineText.charCodeAt(0);\n    let prevCharCodeClass = classifier.get(prevCharCode);\n    let visibleColumn = computeCharWidth(prevCharCode, 0, tabSize, columnsForFullWidthChar);\n    let startOffset = 1;\n    if (strings.isHighSurrogate(prevCharCode)) {\n        // A surrogate pair must always be considered as a single unit, so it is never to be broken\n        visibleColumn += 1;\n        prevCharCode = lineText.charCodeAt(1);\n        prevCharCodeClass = classifier.get(prevCharCode);\n        startOffset++;\n    }\n    for (let i = startOffset; i < len; i++) {\n        const charStartOffset = i;\n        const charCode = lineText.charCodeAt(i);\n        let charCodeClass;\n        let charWidth;\n        if (strings.isHighSurrogate(charCode)) {\n            // A surrogate pair must always be considered as a single unit, so it is never to be broken\n            i++;\n            charCodeClass = 0 /* NONE */;\n            charWidth = 2;\n        }\n        else {\n            charCodeClass = classifier.get(charCode);\n            charWidth = computeCharWidth(charCode, visibleColumn, tabSize, columnsForFullWidthChar);\n        }\n        if (canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass)) {\n            breakOffset = charStartOffset;\n            breakOffsetVisibleColumn = visibleColumn;\n        }\n        visibleColumn += charWidth;\n        // check if adding character at `i` will go over the breaking column\n        if (visibleColumn > breakingColumn) {\n            // We need to break at least before character at `i`:\n            if (breakOffset === 0 || visibleColumn - breakOffsetVisibleColumn > wrappedLineBreakColumn) {\n                // Cannot break at `breakOffset`, must break at `i`\n                breakOffset = charStartOffset;\n                breakOffsetVisibleColumn = visibleColumn - charWidth;\n            }\n            breakingOffsets[breakingOffsetsCount] = breakOffset;\n            breakingOffsetsVisibleColumn[breakingOffsetsCount] = breakOffsetVisibleColumn;\n            breakingOffsetsCount++;\n            breakingColumn = breakOffsetVisibleColumn + wrappedLineBreakColumn;\n            breakOffset = 0;\n        }\n        prevCharCode = charCode;\n        prevCharCodeClass = charCodeClass;\n    }\n    if (breakingOffsetsCount === 0 && (!injectedTexts || injectedTexts.length === 0)) {\n        return null;\n    }\n    // Add last segment\n    breakingOffsets[breakingOffsetsCount] = len;\n    breakingOffsetsVisibleColumn[breakingOffsetsCount] = visibleColumn;\n    return new ModelLineProjectionData(injectionOffsets, injectionOptions, breakingOffsets, breakingOffsetsVisibleColumn, wrappedTextIndentLength);\n}\nfunction computeCharWidth(charCode, visibleColumn, tabSize, columnsForFullWidthChar) {\n    if (charCode === 9 /* Tab */) {\n        return (tabSize - (visibleColumn % tabSize));\n    }\n    if (strings.isFullWidthCharacter(charCode)) {\n        return columnsForFullWidthChar;\n    }\n    if (charCode < 32) {\n        // when using `editor.renderControlCharacters`, the substitutions are often wide\n        return columnsForFullWidthChar;\n    }\n    return 1;\n}\nfunction tabCharacterWidth(visibleColumn, tabSize) {\n    return (tabSize - (visibleColumn % tabSize));\n}\n/**\n * Kinsoku Shori : Don't break after a leading character, like an open bracket\n * Kinsoku Shori : Don't break before a trailing character, like a period\n */\nfunction canBreak(prevCharCode, prevCharCodeClass, charCode, charCodeClass) {\n    return (charCode !== 32 /* Space */\n        && ((prevCharCodeClass === 2 /* BREAK_AFTER */)\n            || (prevCharCodeClass === 3 /* BREAK_IDEOGRAPHIC */ && charCodeClass !== 2 /* BREAK_AFTER */)\n            || (charCodeClass === 1 /* BREAK_BEFORE */)\n            || (charCodeClass === 3 /* BREAK_IDEOGRAPHIC */ && prevCharCodeClass !== 1 /* BREAK_BEFORE */)));\n}\nfunction computeWrappedTextIndentLength(lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent) {\n    let wrappedTextIndentLength = 0;\n    if (wrappingIndent !== 0 /* None */) {\n        const firstNonWhitespaceIndex = strings.firstNonWhitespaceIndex(lineText);\n        if (firstNonWhitespaceIndex !== -1) {\n            // Track existing indent\n            for (let i = 0; i < firstNonWhitespaceIndex; i++) {\n                const charWidth = (lineText.charCodeAt(i) === 9 /* Tab */ ? tabCharacterWidth(wrappedTextIndentLength, tabSize) : 1);\n                wrappedTextIndentLength += charWidth;\n            }\n            // Increase indent of continuation lines, if desired\n            const numberOfAdditionalTabs = (wrappingIndent === 3 /* DeepIndent */ ? 2 : wrappingIndent === 2 /* Indent */ ? 1 : 0);\n            for (let i = 0; i < numberOfAdditionalTabs; i++) {\n                const charWidth = tabCharacterWidth(wrappedTextIndentLength, tabSize);\n                wrappedTextIndentLength += charWidth;\n            }\n            // Force sticking to beginning of line if no character would fit except for the indentation\n            if (wrappedTextIndentLength + columnsForFullWidthChar > firstLineBreakColumn) {\n                wrappedTextIndentLength = 0;\n            }\n        }\n    }\n    return wrappedTextIndentLength;\n}\n",
+      "start": 1711096855300,
+      "end": 1711096855401,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855401,
+      "end": 1711096855401,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855401,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855402,
+      "end": 1711096855402,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855402,
+      "end": 1711096855403,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855403,
+      "end": 1711096855403,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855403,
+      "end": 1711096855404,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855404,
+      "end": 1711096855404,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855404,
+      "end": 1711096855404,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855404,
+      "end": 1711096855404,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/richEditBrackets.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../../base/common/strings.js';\nimport * as stringBuilder from '../../core/stringBuilder.js';\nimport { Range } from '../../core/range.js';\n/**\n * Represents a grouping of colliding bracket pairs.\n *\n * Most of the times this contains a single bracket pair,\n * but sometimes this contains multiple bracket pairs in cases\n * where the same string appears as a closing bracket for multiple\n * bracket pairs, or the same string appears an opening bracket for\n * multiple bracket pairs.\n *\n * e.g. of a group containing a single pair:\n *   open: ['{'], close: ['}']\n *\n * e.g. of a group containing multiple pairs:\n *   open: ['if', 'for'], close: ['end', 'end']\n */\nexport class RichEditBracket {\n    constructor(languageId, index, open, close, forwardRegex, reversedRegex) {\n        this._richEditBracketBrand = undefined;\n        this.languageId = languageId;\n        this.index = index;\n        this.open = open;\n        this.close = close;\n        this.forwardRegex = forwardRegex;\n        this.reversedRegex = reversedRegex;\n        this._openSet = RichEditBracket._toSet(this.open);\n        this._closeSet = RichEditBracket._toSet(this.close);\n    }\n    /**\n     * Check if the provided `text` is an open bracket in this group.\n     */\n    isOpen(text) {\n        return this._openSet.has(text);\n    }\n    /**\n     * Check if the provided `text` is a close bracket in this group.\n     */\n    isClose(text) {\n        return this._closeSet.has(text);\n    }\n    static _toSet(arr) {\n        const result = new Set();\n        for (const element of arr) {\n            result.add(element);\n        }\n        return result;\n    }\n}\n/**\n * Groups together brackets that have equal open or close sequences.\n *\n * For example, if the following brackets are defined:\n *   ['IF','END']\n *   ['for','end']\n *   ['{','}']\n *\n * Then the grouped brackets would be:\n *   { open: ['if', 'for'], close: ['end', 'end'] }\n *   { open: ['{'], close: ['}'] }\n *\n */\nfunction groupFuzzyBrackets(brackets) {\n    const N = brackets.length;\n    brackets = brackets.map(b => [b[0].toLowerCase(), b[1].toLowerCase()]);\n    const group = [];\n    for (let i = 0; i < N; i++) {\n        group[i] = i;\n    }\n    const areOverlapping = (a, b) => {\n        const [aOpen, aClose] = a;\n        const [bOpen, bClose] = b;\n        return (aOpen === bOpen || aOpen === bClose || aClose === bOpen || aClose === bClose);\n    };\n    const mergeGroups = (g1, g2) => {\n        const newG = Math.min(g1, g2);\n        const oldG = Math.max(g1, g2);\n        for (let i = 0; i < N; i++) {\n            if (group[i] === oldG) {\n                group[i] = newG;\n            }\n        }\n    };\n    // group together brackets that have the same open or the same close sequence\n    for (let i = 0; i < N; i++) {\n        const a = brackets[i];\n        for (let j = i + 1; j < N; j++) {\n            const b = brackets[j];\n            if (areOverlapping(a, b)) {\n                mergeGroups(group[i], group[j]);\n            }\n        }\n    }\n    const result = [];\n    for (let g = 0; g < N; g++) {\n        const currentOpen = [];\n        const currentClose = [];\n        for (let i = 0; i < N; i++) {\n            if (group[i] === g) {\n                const [open, close] = brackets[i];\n                currentOpen.push(open);\n                currentClose.push(close);\n            }\n        }\n        if (currentOpen.length > 0) {\n            result.push({\n                open: currentOpen,\n                close: currentClose\n            });\n        }\n    }\n    return result;\n}\nexport class RichEditBrackets {\n    constructor(languageId, _brackets) {\n        this._richEditBracketsBrand = undefined;\n        const brackets = groupFuzzyBrackets(_brackets);\n        this.brackets = brackets.map((b, index) => {\n            return new RichEditBracket(languageId, index, b.open, b.close, getRegexForBracketPair(b.open, b.close, brackets, index), getReversedRegexForBracketPair(b.open, b.close, brackets, index));\n        });\n        this.forwardRegex = getRegexForBrackets(this.brackets);\n        this.reversedRegex = getReversedRegexForBrackets(this.brackets);\n        this.textIsBracket = {};\n        this.textIsOpenBracket = {};\n        this.maxBracketLength = 0;\n        for (const bracket of this.brackets) {\n            for (const open of bracket.open) {\n                this.textIsBracket[open] = bracket;\n                this.textIsOpenBracket[open] = true;\n                this.maxBracketLength = Math.max(this.maxBracketLength, open.length);\n            }\n            for (const close of bracket.close) {\n                this.textIsBracket[close] = bracket;\n                this.textIsOpenBracket[close] = false;\n                this.maxBracketLength = Math.max(this.maxBracketLength, close.length);\n            }\n        }\n    }\n}\nfunction collectSuperstrings(str, brackets, currentIndex, dest) {\n    for (let i = 0, len = brackets.length; i < len; i++) {\n        if (i === currentIndex) {\n            continue;\n        }\n        const bracket = brackets[i];\n        for (const open of bracket.open) {\n            if (open.indexOf(str) >= 0) {\n                dest.push(open);\n            }\n        }\n        for (const close of bracket.close) {\n            if (close.indexOf(str) >= 0) {\n                dest.push(close);\n            }\n        }\n    }\n}\nfunction lengthcmp(a, b) {\n    return a.length - b.length;\n}\nfunction unique(arr) {\n    if (arr.length <= 1) {\n        return arr;\n    }\n    const result = [];\n    const seen = new Set();\n    for (const element of arr) {\n        if (seen.has(element)) {\n            continue;\n        }\n        result.push(element);\n        seen.add(element);\n    }\n    return result;\n}\n/**\n * Create a regular expression that can be used to search forward in a piece of text\n * for a group of bracket pairs. But this regex must be built in a way in which\n * it is aware of the other bracket pairs defined for the language.\n *\n * For example, if a language contains the following bracket pairs:\n *   ['begin', 'end']\n *   ['if', 'end if']\n * The two bracket pairs do not collide because no open or close brackets are equal.\n * So the function getRegexForBracketPair is called twice, once with\n * the ['begin'], ['end'] group consisting of one bracket pair, and once with\n * the ['if'], ['end if'] group consiting of the other bracket pair.\n *\n * But there could be a situation where an occurrence of 'end if' is mistaken\n * for an occurrence of 'end'.\n *\n * Therefore, for the bracket pair ['begin', 'end'], the regex will also\n * target 'end if'. The regex will be something like:\n *   /(\\bend if\\b)|(\\bend\\b)|(\\bif\\b)/\n *\n * The regex also searches for \"superstrings\" (other brackets that might be mistaken with the current bracket).\n *\n */\nfunction getRegexForBracketPair(open, close, brackets, currentIndex) {\n    // search in all brackets for other brackets that are a superstring of these brackets\n    let pieces = [];\n    pieces = pieces.concat(open);\n    pieces = pieces.concat(close);\n    for (let i = 0, len = pieces.length; i < len; i++) {\n        collectSuperstrings(pieces[i], brackets, currentIndex, pieces);\n    }\n    pieces = unique(pieces);\n    pieces.sort(lengthcmp);\n    pieces.reverse();\n    return createBracketOrRegExp(pieces);\n}\n/**\n * Matching a regular expression in JS can only be done \"forwards\". So JS offers natively only\n * methods to find the first match of a regex in a string. But sometimes, it is useful to\n * find the last match of a regex in a string. For such a situation, a nice solution is to\n * simply reverse the string and then search for a reversed regex.\n *\n * This function also has the fine details of `getRegexForBracketPair`. For the same example\n * given above, the regex produced here would look like:\n *   /(\\bfi dne\\b)|(\\bdne\\b)|(\\bfi\\b)/\n */\nfunction getReversedRegexForBracketPair(open, close, brackets, currentIndex) {\n    // search in all brackets for other brackets that are a superstring of these brackets\n    let pieces = [];\n    pieces = pieces.concat(open);\n    pieces = pieces.concat(close);\n    for (let i = 0, len = pieces.length; i < len; i++) {\n        collectSuperstrings(pieces[i], brackets, currentIndex, pieces);\n    }\n    pieces = unique(pieces);\n    pieces.sort(lengthcmp);\n    pieces.reverse();\n    return createBracketOrRegExp(pieces.map(toReversedString));\n}\n/**\n * Creates a regular expression that targets all bracket pairs.\n *\n * e.g. for the bracket pairs:\n *  ['{','}']\n *  ['begin,'end']\n *  ['for','end']\n * the regex would look like:\n *  /(\\{)|(\\})|(\\bbegin\\b)|(\\bend\\b)|(\\bfor\\b)/\n */\nfunction getRegexForBrackets(brackets) {\n    let pieces = [];\n    for (const bracket of brackets) {\n        for (const open of bracket.open) {\n            pieces.push(open);\n        }\n        for (const close of bracket.close) {\n            pieces.push(close);\n        }\n    }\n    pieces = unique(pieces);\n    return createBracketOrRegExp(pieces);\n}\n/**\n * Matching a regular expression in JS can only be done \"forwards\". So JS offers natively only\n * methods to find the first match of a regex in a string. But sometimes, it is useful to\n * find the last match of a regex in a string. For such a situation, a nice solution is to\n * simply reverse the string and then search for a reversed regex.\n *\n * e.g. for the bracket pairs:\n *  ['{','}']\n *  ['begin,'end']\n *  ['for','end']\n * the regex would look like:\n *  /(\\{)|(\\})|(\\bnigeb\\b)|(\\bdne\\b)|(\\brof\\b)/\n */\nfunction getReversedRegexForBrackets(brackets) {\n    let pieces = [];\n    for (const bracket of brackets) {\n        for (const open of bracket.open) {\n            pieces.push(open);\n        }\n        for (const close of bracket.close) {\n            pieces.push(close);\n        }\n    }\n    pieces = unique(pieces);\n    return createBracketOrRegExp(pieces.map(toReversedString));\n}\nfunction prepareBracketForRegExp(str) {\n    // This bracket pair uses letters like e.g. \"begin\" - \"end\"\n    const insertWordBoundaries = (/^[\\w ]+$/.test(str));\n    str = strings.escapeRegExpCharacters(str);\n    return (insertWordBoundaries ? `\\\\b${str}\\\\b` : str);\n}\nfunction createBracketOrRegExp(pieces) {\n    const regexStr = `(${pieces.map(prepareBracketForRegExp).join(')|(')})`;\n    return strings.createRegExp(regexStr, true);\n}\nconst toReversedString = (function () {\n    function reverse(str) {\n        if (stringBuilder.hasTextDecoder) {\n            // create a Uint16Array and then use a TextDecoder to create a string\n            const arr = new Uint16Array(str.length);\n            let offset = 0;\n            for (let i = str.length - 1; i >= 0; i--) {\n                arr[offset++] = str.charCodeAt(i);\n            }\n            return stringBuilder.getPlatformTextDecoder().decode(arr);\n        }\n        else {\n            const result = [];\n            let resultLen = 0;\n            for (let i = str.length - 1; i >= 0; i--) {\n                result[resultLen++] = str.charAt(i);\n            }\n            return result.join('');\n        }\n    }\n    let lastInput = null;\n    let lastOutput = null;\n    return function toReversedString(str) {\n        if (lastInput !== str) {\n            lastInput = str;\n            lastOutput = reverse(lastInput);\n        }\n        return lastOutput;\n    };\n})();\nexport class BracketsUtils {\n    static _findPrevBracketInText(reversedBracketRegex, lineNumber, reversedText, offset) {\n        const m = reversedText.match(reversedBracketRegex);\n        if (!m) {\n            return null;\n        }\n        const matchOffset = reversedText.length - (m.index || 0);\n        const matchLength = m[0].length;\n        const absoluteMatchOffset = offset + matchOffset;\n        return new Range(lineNumber, absoluteMatchOffset - matchLength + 1, lineNumber, absoluteMatchOffset + 1);\n    }\n    static findPrevBracketInRange(reversedBracketRegex, lineNumber, lineText, startOffset, endOffset) {\n        // Because JS does not support backwards regex search, we search forwards in a reversed string with a reversed regex ;)\n        const reversedLineText = toReversedString(lineText);\n        const reversedSubstr = reversedLineText.substring(lineText.length - endOffset, lineText.length - startOffset);\n        return this._findPrevBracketInText(reversedBracketRegex, lineNumber, reversedSubstr, startOffset);\n    }\n    static findNextBracketInText(bracketRegex, lineNumber, text, offset) {\n        const m = text.match(bracketRegex);\n        if (!m) {\n            return null;\n        }\n        const matchOffset = m.index || 0;\n        const matchLength = m[0].length;\n        if (matchLength === 0) {\n            return null;\n        }\n        const absoluteMatchOffset = offset + matchOffset;\n        return new Range(lineNumber, absoluteMatchOffset + 1, lineNumber, absoluteMatchOffset + 1 + matchLength);\n    }\n    static findNextBracketInRange(bracketRegex, lineNumber, lineText, startOffset, endOffset) {\n        const substr = lineText.substring(startOffset, endOffset);\n        return this.findNextBracketInText(bracketRegex, lineNumber, substr, startOffset);\n    }\n}\n",
+      "start": 1711096856186,
+      "end": 1711096856273,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856273,
+      "end": 1711096856273,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856273,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    }
+  ]
+}

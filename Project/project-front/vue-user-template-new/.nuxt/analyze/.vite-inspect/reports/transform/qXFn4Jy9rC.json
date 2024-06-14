@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/editorExtensions.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as nls from '../../nls.js';\nimport { URI } from '../../base/common/uri.js';\nimport { ICodeEditorService } from './services/codeEditorService.js';\nimport { Position } from '../common/core/position.js';\nimport { IModelService } from '../common/services/model.js';\nimport { ITextModelService } from '../common/services/resolverService.js';\nimport { MenuId, MenuRegistry } from '../../platform/actions/common/actions.js';\nimport { CommandsRegistry } from '../../platform/commands/common/commands.js';\nimport { ContextKeyExpr, IContextKeyService } from '../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../platform/instantiation/common/instantiation.js';\nimport { KeybindingsRegistry } from '../../platform/keybinding/common/keybindingsRegistry.js';\nimport { Registry } from '../../platform/registry/common/platform.js';\nimport { ITelemetryService } from '../../platform/telemetry/common/telemetry.js';\nimport { withNullAsUndefined, assertType } from '../../base/common/types.js';\nimport { ILogService } from '../../platform/log/common/log.js';\nexport class Command {\n    constructor(opts) {\n        this.id = opts.id;\n        this.precondition = opts.precondition;\n        this._kbOpts = opts.kbOpts;\n        this._menuOpts = opts.menuOpts;\n        this._description = opts.description;\n    }\n    register() {\n        if (Array.isArray(this._menuOpts)) {\n            this._menuOpts.forEach(this._registerMenuItem, this);\n        }\n        else if (this._menuOpts) {\n            this._registerMenuItem(this._menuOpts);\n        }\n        if (this._kbOpts) {\n            const kbOptsArr = Array.isArray(this._kbOpts) ? this._kbOpts : [this._kbOpts];\n            for (const kbOpts of kbOptsArr) {\n                let kbWhen = kbOpts.kbExpr;\n                if (this.precondition) {\n                    if (kbWhen) {\n                        kbWhen = ContextKeyExpr.and(kbWhen, this.precondition);\n                    }\n                    else {\n                        kbWhen = this.precondition;\n                    }\n                }\n                const desc = {\n                    id: this.id,\n                    weight: kbOpts.weight,\n                    args: kbOpts.args,\n                    when: kbWhen,\n                    primary: kbOpts.primary,\n                    secondary: kbOpts.secondary,\n                    win: kbOpts.win,\n                    linux: kbOpts.linux,\n                    mac: kbOpts.mac,\n                };\n                KeybindingsRegistry.registerKeybindingRule(desc);\n            }\n        }\n        CommandsRegistry.registerCommand({\n            id: this.id,\n            handler: (accessor, args) => this.runCommand(accessor, args),\n            description: this._description\n        });\n    }\n    _registerMenuItem(item) {\n        MenuRegistry.appendMenuItem(item.menuId, {\n            group: item.group,\n            command: {\n                id: this.id,\n                title: item.title,\n                icon: item.icon,\n                precondition: this.precondition\n            },\n            when: item.when,\n            order: item.order\n        });\n    }\n}\nexport class MultiCommand extends Command {\n    constructor() {\n        super(...arguments);\n        this._implementations = [];\n    }\n    /**\n     * A higher priority gets to be looked at first\n     */\n    addImplementation(priority, name, implementation) {\n        this._implementations.push({ priority, name, implementation });\n        this._implementations.sort((a, b) => b.priority - a.priority);\n        return {\n            dispose: () => {\n                for (let i = 0; i < this._implementations.length; i++) {\n                    if (this._implementations[i].implementation === implementation) {\n                        this._implementations.splice(i, 1);\n                        return;\n                    }\n                }\n            }\n        };\n    }\n    runCommand(accessor, args) {\n        const logService = accessor.get(ILogService);\n        logService.trace(`Executing Command '${this.id}' which has ${this._implementations.length} bound.`);\n        for (const impl of this._implementations) {\n            const result = impl.implementation(accessor, args);\n            if (result) {\n                logService.trace(`Command '${this.id}' was handled by '${impl.name}'.`);\n                if (typeof result === 'boolean') {\n                    return;\n                }\n                return result;\n            }\n        }\n        logService.trace(`The Command '${this.id}' was not handled by any implementation.`);\n    }\n}\n//#endregion\n/**\n * A command that delegates to another command's implementation.\n *\n * This lets different commands be registered but share the same implementation\n */\nexport class ProxyCommand extends Command {\n    constructor(command, opts) {\n        super(opts);\n        this.command = command;\n    }\n    runCommand(accessor, args) {\n        return this.command.runCommand(accessor, args);\n    }\n}\nexport class EditorCommand extends Command {\n    /**\n     * Create a command class that is bound to a certain editor contribution.\n     */\n    static bindToContribution(controllerGetter) {\n        return class EditorControllerCommandImpl extends EditorCommand {\n            constructor(opts) {\n                super(opts);\n                this._callback = opts.handler;\n            }\n            runEditorCommand(accessor, editor, args) {\n                const controller = controllerGetter(editor);\n                if (controller) {\n                    this._callback(controller, args);\n                }\n            }\n        };\n    }\n    runCommand(accessor, args) {\n        const codeEditorService = accessor.get(ICodeEditorService);\n        // Find the editor with text focus or active\n        const editor = codeEditorService.getFocusedCodeEditor() || codeEditorService.getActiveCodeEditor();\n        if (!editor) {\n            // well, at least we tried...\n            return;\n        }\n        return editor.invokeWithinContext((editorAccessor) => {\n            const kbService = editorAccessor.get(IContextKeyService);\n            if (!kbService.contextMatchesRules(withNullAsUndefined(this.precondition))) {\n                // precondition does not hold\n                return;\n            }\n            return this.runEditorCommand(editorAccessor, editor, args);\n        });\n    }\n}\nexport class EditorAction extends EditorCommand {\n    constructor(opts) {\n        super(EditorAction.convertOptions(opts));\n        this.label = opts.label;\n        this.alias = opts.alias;\n    }\n    static convertOptions(opts) {\n        let menuOpts;\n        if (Array.isArray(opts.menuOpts)) {\n            menuOpts = opts.menuOpts;\n        }\n        else if (opts.menuOpts) {\n            menuOpts = [opts.menuOpts];\n        }\n        else {\n            menuOpts = [];\n        }\n        function withDefaults(item) {\n            if (!item.menuId) {\n                item.menuId = MenuId.EditorContext;\n            }\n            if (!item.title) {\n                item.title = opts.label;\n            }\n            item.when = ContextKeyExpr.and(opts.precondition, item.when);\n            return item;\n        }\n        if (Array.isArray(opts.contextMenuOpts)) {\n            menuOpts.push(...opts.contextMenuOpts.map(withDefaults));\n        }\n        else if (opts.contextMenuOpts) {\n            menuOpts.push(withDefaults(opts.contextMenuOpts));\n        }\n        opts.menuOpts = menuOpts;\n        return opts;\n    }\n    runEditorCommand(accessor, editor, args) {\n        this.reportTelemetry(accessor, editor);\n        return this.run(accessor, editor, args || {});\n    }\n    reportTelemetry(accessor, editor) {\n        accessor.get(ITelemetryService).publicLog2('editorActionInvoked', { name: this.label, id: this.id });\n    }\n}\nexport class MultiEditorAction extends EditorAction {\n    constructor() {\n        super(...arguments);\n        this._implementations = [];\n    }\n    /**\n     * A higher priority gets to be looked at first\n     */\n    addImplementation(priority, implementation) {\n        this._implementations.push([priority, implementation]);\n        this._implementations.sort((a, b) => b[0] - a[0]);\n        return {\n            dispose: () => {\n                for (let i = 0; i < this._implementations.length; i++) {\n                    if (this._implementations[i][1] === implementation) {\n                        this._implementations.splice(i, 1);\n                        return;\n                    }\n                }\n            }\n        };\n    }\n    run(accessor, editor, args) {\n        for (const impl of this._implementations) {\n            const result = impl[1](accessor, editor, args);\n            if (result) {\n                if (typeof result === 'boolean') {\n                    return;\n                }\n                return result;\n            }\n        }\n    }\n}\n//#endregion\n// --- Registration of commands and actions\nexport function registerModelAndPositionCommand(id, handler) {\n    CommandsRegistry.registerCommand(id, function (accessor, ...args) {\n        const instaService = accessor.get(IInstantiationService);\n        const [resource, position] = args;\n        assertType(URI.isUri(resource));\n        assertType(Position.isIPosition(position));\n        const model = accessor.get(IModelService).getModel(resource);\n        if (model) {\n            const editorPosition = Position.lift(position);\n            return instaService.invokeFunction(handler, model, editorPosition, ...args.slice(2));\n        }\n        return accessor.get(ITextModelService).createModelReference(resource).then(reference => {\n            return new Promise((resolve, reject) => {\n                try {\n                    const result = instaService.invokeFunction(handler, reference.object.textEditorModel, Position.lift(position), args.slice(2));\n                    resolve(result);\n                }\n                catch (err) {\n                    reject(err);\n                }\n            }).finally(() => {\n                reference.dispose();\n            });\n        });\n    });\n}\nexport function registerEditorCommand(editorCommand) {\n    EditorContributionRegistry.INSTANCE.registerEditorCommand(editorCommand);\n    return editorCommand;\n}\nexport function registerEditorAction(ctor) {\n    const action = new ctor();\n    EditorContributionRegistry.INSTANCE.registerEditorAction(action);\n    return action;\n}\nexport function registerMultiEditorAction(action) {\n    EditorContributionRegistry.INSTANCE.registerEditorAction(action);\n    return action;\n}\nexport function registerInstantiatedEditorAction(editorAction) {\n    EditorContributionRegistry.INSTANCE.registerEditorAction(editorAction);\n}\nexport function registerEditorContribution(id, ctor) {\n    EditorContributionRegistry.INSTANCE.registerEditorContribution(id, ctor);\n}\nexport var EditorExtensionsRegistry;\n(function (EditorExtensionsRegistry) {\n    function getEditorCommand(commandId) {\n        return EditorContributionRegistry.INSTANCE.getEditorCommand(commandId);\n    }\n    EditorExtensionsRegistry.getEditorCommand = getEditorCommand;\n    function getEditorActions() {\n        return EditorContributionRegistry.INSTANCE.getEditorActions();\n    }\n    EditorExtensionsRegistry.getEditorActions = getEditorActions;\n    function getEditorContributions() {\n        return EditorContributionRegistry.INSTANCE.getEditorContributions();\n    }\n    EditorExtensionsRegistry.getEditorContributions = getEditorContributions;\n    function getSomeEditorContributions(ids) {\n        return EditorContributionRegistry.INSTANCE.getEditorContributions().filter(c => ids.indexOf(c.id) >= 0);\n    }\n    EditorExtensionsRegistry.getSomeEditorContributions = getSomeEditorContributions;\n    function getDiffEditorContributions() {\n        return EditorContributionRegistry.INSTANCE.getDiffEditorContributions();\n    }\n    EditorExtensionsRegistry.getDiffEditorContributions = getDiffEditorContributions;\n})(EditorExtensionsRegistry || (EditorExtensionsRegistry = {}));\n// Editor extension points\nconst Extensions = {\n    EditorCommonContributions: 'editor.contributions'\n};\nclass EditorContributionRegistry {\n    constructor() {\n        this.editorContributions = [];\n        this.diffEditorContributions = [];\n        this.editorActions = [];\n        this.editorCommands = Object.create(null);\n    }\n    registerEditorContribution(id, ctor) {\n        this.editorContributions.push({ id, ctor: ctor });\n    }\n    getEditorContributions() {\n        return this.editorContributions.slice(0);\n    }\n    getDiffEditorContributions() {\n        return this.diffEditorContributions.slice(0);\n    }\n    registerEditorAction(action) {\n        action.register();\n        this.editorActions.push(action);\n    }\n    getEditorActions() {\n        return this.editorActions.slice(0);\n    }\n    registerEditorCommand(editorCommand) {\n        editorCommand.register();\n        this.editorCommands[editorCommand.id] = editorCommand;\n    }\n    getEditorCommand(commandId) {\n        return (this.editorCommands[commandId] || null);\n    }\n}\nEditorContributionRegistry.INSTANCE = new EditorContributionRegistry();\nRegistry.add(Extensions.EditorCommonContributions, EditorContributionRegistry.INSTANCE);\nfunction registerCommand(command) {\n    command.register();\n    return command;\n}\nexport const UndoCommand = registerCommand(new MultiCommand({\n    id: 'undo',\n    precondition: undefined,\n    kbOpts: {\n        weight: 0 /* EditorCore */,\n        primary: 2048 /* CtrlCmd */ | 56 /* KeyZ */\n    },\n    menuOpts: [{\n            menuId: MenuId.MenubarEditMenu,\n            group: '1_do',\n            title: nls.localize({ key: 'miUndo', comment: ['&& denotes a mnemonic'] }, \"&&Undo\"),\n            order: 1\n        }, {\n            menuId: MenuId.CommandPalette,\n            group: '',\n            title: nls.localize('undo', \"Undo\"),\n            order: 1\n        }]\n}));\nregisterCommand(new ProxyCommand(UndoCommand, { id: 'default:undo', precondition: undefined }));\nexport const RedoCommand = registerCommand(new MultiCommand({\n    id: 'redo',\n    precondition: undefined,\n    kbOpts: {\n        weight: 0 /* EditorCore */,\n        primary: 2048 /* CtrlCmd */ | 55 /* KeyY */,\n        secondary: [2048 /* CtrlCmd */ | 1024 /* Shift */ | 56 /* KeyZ */],\n        mac: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 56 /* KeyZ */ }\n    },\n    menuOpts: [{\n            menuId: MenuId.MenubarEditMenu,\n            group: '1_do',\n            title: nls.localize({ key: 'miRedo', comment: ['&& denotes a mnemonic'] }, \"&&Redo\"),\n            order: 2\n        }, {\n            menuId: MenuId.CommandPalette,\n            group: '',\n            title: nls.localize('redo', \"Redo\"),\n            order: 1\n        }]\n}));\nregisterCommand(new ProxyCommand(RedoCommand, { id: 'default:redo', precondition: undefined }));\nexport const SelectAllCommand = registerCommand(new MultiCommand({\n    id: 'editor.action.selectAll',\n    precondition: undefined,\n    kbOpts: {\n        weight: 0 /* EditorCore */,\n        kbExpr: null,\n        primary: 2048 /* CtrlCmd */ | 31 /* KeyA */\n    },\n    menuOpts: [{\n            menuId: MenuId.MenubarSelectionMenu,\n            group: '1_basic',\n            title: nls.localize({ key: 'miSelectAll', comment: ['&& denotes a mnemonic'] }, \"&&Select All\"),\n            order: 1\n        }, {\n            menuId: MenuId.CommandPalette,\n            group: '',\n            title: nls.localize('selectAll', \"Select All\"),\n            order: 1\n        }]\n}));\n",
+      "start": 1711096854778,
+      "end": 1711096854917,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854917,
+      "end": 1711096854917,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854917,
+      "end": 1711096854919,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854919,
+      "end": 1711096854919,
+      "order": "normal"
+    }
+  ]
+}

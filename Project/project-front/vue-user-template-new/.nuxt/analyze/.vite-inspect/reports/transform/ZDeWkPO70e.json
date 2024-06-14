@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/quickinput/browser/commandsQuickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { toErrorMessage } from '../../../base/common/errorMessage.js';\nimport { isCancellationError } from '../../../base/common/errors.js';\nimport { matchesContiguousSubString, matchesPrefix, matchesWords, or } from '../../../base/common/filters.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { LRUCache } from '../../../base/common/map.js';\nimport Severity from '../../../base/common/severity.js';\nimport { withNullAsUndefined } from '../../../base/common/types.js';\nimport { localize } from '../../../nls.js';\nimport { ICommandService } from '../../commands/common/commands.js';\nimport { IConfigurationService } from '../../configuration/common/configuration.js';\nimport { IDialogService } from '../../dialogs/common/dialogs.js';\nimport { IInstantiationService } from '../../instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../keybinding/common/keybinding.js';\nimport { PickerQuickAccessProvider } from './pickerQuickAccess.js';\nimport { IStorageService } from '../../storage/common/storage.js';\nimport { ITelemetryService } from '../../telemetry/common/telemetry.js';\nlet AbstractCommandsQuickAccessProvider = class AbstractCommandsQuickAccessProvider extends PickerQuickAccessProvider {\n    constructor(options, instantiationService, keybindingService, commandService, telemetryService, dialogService) {\n        super(AbstractCommandsQuickAccessProvider.PREFIX, options);\n        this.instantiationService = instantiationService;\n        this.keybindingService = keybindingService;\n        this.commandService = commandService;\n        this.telemetryService = telemetryService;\n        this.dialogService = dialogService;\n        this.commandsHistory = this._register(this.instantiationService.createInstance(CommandsHistory));\n        this.options = options;\n    }\n    _getPicks(filter, disposables, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            // Ask subclass for all command picks\n            const allCommandPicks = yield this.getCommandPicks(disposables, token);\n            if (token.isCancellationRequested) {\n                return [];\n            }\n            // Filter\n            const filteredCommandPicks = [];\n            for (const commandPick of allCommandPicks) {\n                const labelHighlights = withNullAsUndefined(AbstractCommandsQuickAccessProvider.WORD_FILTER(filter, commandPick.label));\n                const aliasHighlights = commandPick.commandAlias ? withNullAsUndefined(AbstractCommandsQuickAccessProvider.WORD_FILTER(filter, commandPick.commandAlias)) : undefined;\n                // Add if matching in label or alias\n                if (labelHighlights || aliasHighlights) {\n                    commandPick.highlights = {\n                        label: labelHighlights,\n                        detail: this.options.showAlias ? aliasHighlights : undefined\n                    };\n                    filteredCommandPicks.push(commandPick);\n                }\n                // Also add if we have a 100% command ID match\n                else if (filter === commandPick.commandId) {\n                    filteredCommandPicks.push(commandPick);\n                }\n            }\n            // Add description to commands that have duplicate labels\n            const mapLabelToCommand = new Map();\n            for (const commandPick of filteredCommandPicks) {\n                const existingCommandForLabel = mapLabelToCommand.get(commandPick.label);\n                if (existingCommandForLabel) {\n                    commandPick.description = commandPick.commandId;\n                    existingCommandForLabel.description = existingCommandForLabel.commandId;\n                }\n                else {\n                    mapLabelToCommand.set(commandPick.label, commandPick);\n                }\n            }\n            // Sort by MRU order and fallback to name otherwise\n            filteredCommandPicks.sort((commandPickA, commandPickB) => {\n                const commandACounter = this.commandsHistory.peek(commandPickA.commandId);\n                const commandBCounter = this.commandsHistory.peek(commandPickB.commandId);\n                if (commandACounter && commandBCounter) {\n                    return commandACounter > commandBCounter ? -1 : 1; // use more recently used command before older\n                }\n                if (commandACounter) {\n                    return -1; // first command was used, so it wins over the non used one\n                }\n                if (commandBCounter) {\n                    return 1; // other command was used so it wins over the command\n                }\n                // both commands were never used, so we sort by name\n                return commandPickA.label.localeCompare(commandPickB.label);\n            });\n            const commandPicks = [];\n            let addSeparator = false;\n            for (let i = 0; i < filteredCommandPicks.length; i++) {\n                const commandPick = filteredCommandPicks[i];\n                const keybinding = this.keybindingService.lookupKeybinding(commandPick.commandId);\n                const ariaLabel = keybinding ?\n                    localize('commandPickAriaLabelWithKeybinding', \"{0}, {1}\", commandPick.label, keybinding.getAriaLabel()) :\n                    commandPick.label;\n                // Separator: recently used\n                if (i === 0 && this.commandsHistory.peek(commandPick.commandId)) {\n                    commandPicks.push({ type: 'separator', label: localize('recentlyUsed', \"recently used\") });\n                    addSeparator = true;\n                }\n                // Separator: other commands\n                if (i !== 0 && addSeparator && !this.commandsHistory.peek(commandPick.commandId)) {\n                    commandPicks.push({ type: 'separator', label: localize('morecCommands', \"other commands\") });\n                    addSeparator = false; // only once\n                }\n                // Command\n                commandPicks.push(Object.assign(Object.assign({}, commandPick), { ariaLabel, detail: this.options.showAlias && commandPick.commandAlias !== commandPick.label ? commandPick.commandAlias : undefined, keybinding, accept: () => __awaiter(this, void 0, void 0, function* () {\n                        // Add to history\n                        this.commandsHistory.push(commandPick.commandId);\n                        // Telementry\n                        this.telemetryService.publicLog2('workbenchActionExecuted', {\n                            id: commandPick.commandId,\n                            from: 'quick open'\n                        });\n                        // Run\n                        try {\n                            yield this.commandService.executeCommand(commandPick.commandId);\n                        }\n                        catch (error) {\n                            if (!isCancellationError(error)) {\n                                this.dialogService.show(Severity.Error, localize('canNotRun', \"Command '{0}' resulted in an error ({1})\", commandPick.label, toErrorMessage(error)));\n                            }\n                        }\n                    }) }));\n            }\n            return commandPicks;\n        });\n    }\n};\nAbstractCommandsQuickAccessProvider.PREFIX = '>';\nAbstractCommandsQuickAccessProvider.WORD_FILTER = or(matchesPrefix, matchesWords, matchesContiguousSubString);\nAbstractCommandsQuickAccessProvider = __decorate([\n    __param(1, IInstantiationService),\n    __param(2, IKeybindingService),\n    __param(3, ICommandService),\n    __param(4, ITelemetryService),\n    __param(5, IDialogService)\n], AbstractCommandsQuickAccessProvider);\nexport { AbstractCommandsQuickAccessProvider };\nlet CommandsHistory = class CommandsHistory extends Disposable {\n    constructor(storageService, configurationService) {\n        super();\n        this.storageService = storageService;\n        this.configurationService = configurationService;\n        this.configuredCommandsHistoryLength = 0;\n        this.updateConfiguration();\n        this.load();\n        this.registerListeners();\n    }\n    registerListeners() {\n        this._register(this.configurationService.onDidChangeConfiguration(() => this.updateConfiguration()));\n    }\n    updateConfiguration() {\n        this.configuredCommandsHistoryLength = CommandsHistory.getConfiguredCommandHistoryLength(this.configurationService);\n        if (CommandsHistory.cache && CommandsHistory.cache.limit !== this.configuredCommandsHistoryLength) {\n            CommandsHistory.cache.limit = this.configuredCommandsHistoryLength;\n            CommandsHistory.saveState(this.storageService);\n        }\n    }\n    load() {\n        const raw = this.storageService.get(CommandsHistory.PREF_KEY_CACHE, 0 /* GLOBAL */);\n        let serializedCache;\n        if (raw) {\n            try {\n                serializedCache = JSON.parse(raw);\n            }\n            catch (error) {\n                // invalid data\n            }\n        }\n        const cache = CommandsHistory.cache = new LRUCache(this.configuredCommandsHistoryLength, 1);\n        if (serializedCache) {\n            let entries;\n            if (serializedCache.usesLRU) {\n                entries = serializedCache.entries;\n            }\n            else {\n                entries = serializedCache.entries.sort((a, b) => a.value - b.value);\n            }\n            entries.forEach(entry => cache.set(entry.key, entry.value));\n        }\n        CommandsHistory.counter = this.storageService.getNumber(CommandsHistory.PREF_KEY_COUNTER, 0 /* GLOBAL */, CommandsHistory.counter);\n    }\n    push(commandId) {\n        if (!CommandsHistory.cache) {\n            return;\n        }\n        CommandsHistory.cache.set(commandId, CommandsHistory.counter++); // set counter to command\n        CommandsHistory.saveState(this.storageService);\n    }\n    peek(commandId) {\n        var _a;\n        return (_a = CommandsHistory.cache) === null || _a === void 0 ? void 0 : _a.peek(commandId);\n    }\n    static saveState(storageService) {\n        if (!CommandsHistory.cache) {\n            return;\n        }\n        const serializedCache = { usesLRU: true, entries: [] };\n        CommandsHistory.cache.forEach((value, key) => serializedCache.entries.push({ key, value }));\n        storageService.store(CommandsHistory.PREF_KEY_CACHE, JSON.stringify(serializedCache), 0 /* GLOBAL */, 0 /* USER */);\n        storageService.store(CommandsHistory.PREF_KEY_COUNTER, CommandsHistory.counter, 0 /* GLOBAL */, 0 /* USER */);\n    }\n    static getConfiguredCommandHistoryLength(configurationService) {\n        var _a, _b;\n        const config = configurationService.getValue();\n        const configuredCommandHistoryLength = (_b = (_a = config.workbench) === null || _a === void 0 ? void 0 : _a.commandPalette) === null || _b === void 0 ? void 0 : _b.history;\n        if (typeof configuredCommandHistoryLength === 'number') {\n            return configuredCommandHistoryLength;\n        }\n        return CommandsHistory.DEFAULT_COMMANDS_HISTORY_LENGTH;\n    }\n};\nCommandsHistory.DEFAULT_COMMANDS_HISTORY_LENGTH = 50;\nCommandsHistory.PREF_KEY_CACHE = 'commandPalette.mru.cache';\nCommandsHistory.PREF_KEY_COUNTER = 'commandPalette.mru.counter';\nCommandsHistory.counter = 1;\nCommandsHistory = __decorate([\n    __param(0, IStorageService),\n    __param(1, IConfigurationService)\n], CommandsHistory);\nexport { CommandsHistory };\n",
+      "start": 1711096856132,
+      "end": 1711096856209,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856209,
+      "end": 1711096856209,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856210,
+      "end": 1711096856210,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856210,
+      "end": 1711096856211,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856211,
+      "end": 1711096856211,
+      "order": "normal"
+    }
+  ]
+}

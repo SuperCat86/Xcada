@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/log/common/log.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "import { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nexport const ILogService = createDecorator('logService');\nexport var LogLevel;\n(function (LogLevel) {\n    LogLevel[LogLevel[\"Trace\"] = 0] = \"Trace\";\n    LogLevel[LogLevel[\"Debug\"] = 1] = \"Debug\";\n    LogLevel[LogLevel[\"Info\"] = 2] = \"Info\";\n    LogLevel[LogLevel[\"Warning\"] = 3] = \"Warning\";\n    LogLevel[LogLevel[\"Error\"] = 4] = \"Error\";\n    LogLevel[LogLevel[\"Critical\"] = 5] = \"Critical\";\n    LogLevel[LogLevel[\"Off\"] = 6] = \"Off\";\n})(LogLevel || (LogLevel = {}));\nexport const DEFAULT_LOG_LEVEL = LogLevel.Info;\nexport class AbstractLogger extends Disposable {\n    constructor() {\n        super(...arguments);\n        this.level = DEFAULT_LOG_LEVEL;\n        this._onDidChangeLogLevel = this._register(new Emitter());\n    }\n    setLevel(level) {\n        if (this.level !== level) {\n            this.level = level;\n            this._onDidChangeLogLevel.fire(this.level);\n        }\n    }\n    getLevel() {\n        return this.level;\n    }\n}\nexport class ConsoleLogger extends AbstractLogger {\n    constructor(logLevel = DEFAULT_LOG_LEVEL) {\n        super();\n        this.setLevel(logLevel);\n    }\n    trace(message, ...args) {\n        if (this.getLevel() <= LogLevel.Trace) {\n            console.log('%cTRACE', 'color: #888', message, ...args);\n        }\n    }\n    debug(message, ...args) {\n        if (this.getLevel() <= LogLevel.Debug) {\n            console.log('%cDEBUG', 'background: #eee; color: #888', message, ...args);\n        }\n    }\n    info(message, ...args) {\n        if (this.getLevel() <= LogLevel.Info) {\n            console.log('%c INFO', 'color: #33f', message, ...args);\n        }\n    }\n    error(message, ...args) {\n        if (this.getLevel() <= LogLevel.Error) {\n            console.log('%c  ERR', 'color: #f33', message, ...args);\n        }\n    }\n    dispose() {\n        // noop\n    }\n}\nexport class LogService extends Disposable {\n    constructor(logger) {\n        super();\n        this.logger = logger;\n        this._register(logger);\n    }\n    getLevel() {\n        return this.logger.getLevel();\n    }\n    trace(message, ...args) {\n        this.logger.trace(message, ...args);\n    }\n    debug(message, ...args) {\n        this.logger.debug(message, ...args);\n    }\n    info(message, ...args) {\n        this.logger.info(message, ...args);\n    }\n    error(message, ...args) {\n        this.logger.error(message, ...args);\n    }\n}\n",
+      "start": 1711096855901,
+      "end": 1711096856005,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856005,
+      "end": 1711096856005,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856006,
+      "end": 1711096856006,
+      "order": "normal"
+    }
+  ]
+}

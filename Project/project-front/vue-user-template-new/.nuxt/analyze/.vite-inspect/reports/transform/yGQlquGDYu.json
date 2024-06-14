@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/ghostTextController.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { firstNonWhitespaceIndex } from '../../../../base/common/strings.js';\nimport { EditorAction, EditorCommand, registerEditorCommand } from '../../../browser/editorExtensions.js';\nimport { CursorColumns } from '../../../common/core/cursorColumns.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { inlineSuggestCommitId } from './consts.js';\nimport { GhostTextModel } from './ghostTextModel.js';\nimport { GhostTextWidget } from './ghostTextWidget.js';\nimport * as nls from '../../../../nls.js';\nimport { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { KeybindingsRegistry } from '../../../../platform/keybinding/common/keybindingsRegistry.js';\nlet GhostTextController = class GhostTextController extends Disposable {\n    constructor(editor, instantiationService) {\n        super();\n        this.editor = editor;\n        this.instantiationService = instantiationService;\n        this.triggeredExplicitly = false;\n        this.activeController = this._register(new MutableDisposable());\n        this.activeModelDidChangeEmitter = this._register(new Emitter());\n        this._register(this.editor.onDidChangeModel(() => {\n            this.updateModelController();\n        }));\n        this._register(this.editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(106 /* suggest */)) {\n                this.updateModelController();\n            }\n            if (e.hasChanged(55 /* inlineSuggest */)) {\n                this.updateModelController();\n            }\n        }));\n        this.updateModelController();\n    }\n    static get(editor) {\n        return editor.getContribution(GhostTextController.ID);\n    }\n    get activeModel() {\n        var _a;\n        return (_a = this.activeController.value) === null || _a === void 0 ? void 0 : _a.model;\n    }\n    // Don't call this method when not necessary. It will recreate the activeController.\n    updateModelController() {\n        const suggestOptions = this.editor.getOption(106 /* suggest */);\n        const inlineSuggestOptions = this.editor.getOption(55 /* inlineSuggest */);\n        this.activeController.value = undefined;\n        // ActiveGhostTextController is only created if one of those settings is set or if the inline completions are triggered explicitly.\n        this.activeController.value =\n            this.editor.hasModel() && (suggestOptions.preview || inlineSuggestOptions.enabled || this.triggeredExplicitly)\n                ? this.instantiationService.createInstance(ActiveGhostTextController, this.editor)\n                : undefined;\n        this.activeModelDidChangeEmitter.fire();\n    }\n    shouldShowHoverAt(hoverRange) {\n        var _a;\n        return ((_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.shouldShowHoverAt(hoverRange)) || false;\n    }\n    shouldShowHoverAtViewZone(viewZoneId) {\n        var _a, _b;\n        return ((_b = (_a = this.activeController.value) === null || _a === void 0 ? void 0 : _a.widget) === null || _b === void 0 ? void 0 : _b.shouldShowHoverAtViewZone(viewZoneId)) || false;\n    }\n    trigger() {\n        var _a;\n        this.triggeredExplicitly = true;\n        if (!this.activeController.value) {\n            this.updateModelController();\n        }\n        (_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.triggerInlineCompletion();\n    }\n    commit() {\n        var _a;\n        (_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.commitInlineCompletion();\n    }\n    hide() {\n        var _a;\n        (_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.hideInlineCompletion();\n    }\n    showNextInlineCompletion() {\n        var _a;\n        (_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.showNextInlineCompletion();\n    }\n    showPreviousInlineCompletion() {\n        var _a;\n        (_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.showPreviousInlineCompletion();\n    }\n    hasMultipleInlineCompletions() {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            const result = yield ((_a = this.activeModel) === null || _a === void 0 ? void 0 : _a.hasMultipleInlineCompletions());\n            return result !== undefined ? result : false;\n        });\n    }\n};\nGhostTextController.inlineSuggestionVisible = new RawContextKey('inlineSuggestionVisible', false, nls.localize('inlineSuggestionVisible', \"Whether an inline suggestion is visible\"));\nGhostTextController.inlineSuggestionHasIndentation = new RawContextKey('inlineSuggestionHasIndentation', false, nls.localize('inlineSuggestionHasIndentation', \"Whether the inline suggestion starts with whitespace\"));\nGhostTextController.inlineSuggestionHasIndentationLessThanTabSize = new RawContextKey('inlineSuggestionHasIndentationLessThanTabSize', true, nls.localize('inlineSuggestionHasIndentationLessThanTabSize', \"Whether the inline suggestion starts with whitespace that is less than what would be inserted by tab\"));\nGhostTextController.ID = 'editor.contrib.ghostTextController';\nGhostTextController = __decorate([\n    __param(1, IInstantiationService)\n], GhostTextController);\nexport { GhostTextController };\nclass GhostTextContextKeys {\n    constructor(contextKeyService) {\n        this.contextKeyService = contextKeyService;\n        this.inlineCompletionVisible = GhostTextController.inlineSuggestionVisible.bindTo(this.contextKeyService);\n        this.inlineCompletionSuggestsIndentation = GhostTextController.inlineSuggestionHasIndentation.bindTo(this.contextKeyService);\n        this.inlineCompletionSuggestsIndentationLessThanTabSize = GhostTextController.inlineSuggestionHasIndentationLessThanTabSize.bindTo(this.contextKeyService);\n    }\n}\n/**\n * The controller for a text editor with an initialized text model.\n * Must be disposed as soon as the model detaches from the editor.\n*/\nlet ActiveGhostTextController = class ActiveGhostTextController extends Disposable {\n    constructor(editor, instantiationService, contextKeyService) {\n        super();\n        this.editor = editor;\n        this.instantiationService = instantiationService;\n        this.contextKeyService = contextKeyService;\n        this.contextKeys = new GhostTextContextKeys(this.contextKeyService);\n        this.model = this._register(this.instantiationService.createInstance(GhostTextModel, this.editor));\n        this.widget = this._register(this.instantiationService.createInstance(GhostTextWidget, this.editor, this.model));\n        this._register(toDisposable(() => {\n            this.contextKeys.inlineCompletionVisible.set(false);\n            this.contextKeys.inlineCompletionSuggestsIndentation.set(false);\n            this.contextKeys.inlineCompletionSuggestsIndentationLessThanTabSize.set(true);\n        }));\n        this._register(this.model.onDidChange(() => {\n            this.updateContextKeys();\n        }));\n        this.updateContextKeys();\n    }\n    updateContextKeys() {\n        var _a;\n        this.contextKeys.inlineCompletionVisible.set(((_a = this.model.activeInlineCompletionsModel) === null || _a === void 0 ? void 0 : _a.ghostText) !== undefined);\n        let startsWithIndentation = false;\n        let startsWithIndentationLessThanTabSize = true;\n        const ghostText = this.model.inlineCompletionsModel.ghostText;\n        if (!!this.model.activeInlineCompletionsModel && ghostText && ghostText.parts.length > 0) {\n            const { column, lines } = ghostText.parts[0];\n            const firstLine = lines[0];\n            const indentationEndColumn = this.editor.getModel().getLineIndentColumn(ghostText.lineNumber);\n            const inIndentation = column <= indentationEndColumn;\n            if (inIndentation) {\n                let firstNonWsIdx = firstNonWhitespaceIndex(firstLine);\n                if (firstNonWsIdx === -1) {\n                    firstNonWsIdx = firstLine.length - 1;\n                }\n                startsWithIndentation = firstNonWsIdx > 0;\n                const tabSize = this.editor.getModel().getOptions().tabSize;\n                const visibleColumnIndentation = CursorColumns.visibleColumnFromColumn(firstLine, firstNonWsIdx + 1, tabSize);\n                startsWithIndentationLessThanTabSize = visibleColumnIndentation < tabSize;\n            }\n        }\n        this.contextKeys.inlineCompletionSuggestsIndentation.set(startsWithIndentation);\n        this.contextKeys.inlineCompletionSuggestsIndentationLessThanTabSize.set(startsWithIndentationLessThanTabSize);\n    }\n};\nActiveGhostTextController = __decorate([\n    __param(1, IInstantiationService),\n    __param(2, IContextKeyService)\n], ActiveGhostTextController);\nexport { ActiveGhostTextController };\nconst GhostTextCommand = EditorCommand.bindToContribution(GhostTextController.get);\nexport const commitInlineSuggestionAction = new GhostTextCommand({\n    id: inlineSuggestCommitId,\n    precondition: GhostTextController.inlineSuggestionVisible,\n    handler(x) {\n        x.commit();\n        x.editor.focus();\n    }\n});\nregisterEditorCommand(commitInlineSuggestionAction);\nKeybindingsRegistry.registerKeybindingRule({\n    primary: 2 /* Tab */,\n    weight: 200,\n    id: commitInlineSuggestionAction.id,\n    when: ContextKeyExpr.and(commitInlineSuggestionAction.precondition, EditorContextKeys.tabMovesFocus.toNegated(), GhostTextController.inlineSuggestionHasIndentationLessThanTabSize),\n});\nregisterEditorCommand(new GhostTextCommand({\n    id: 'editor.action.inlineSuggest.hide',\n    precondition: GhostTextController.inlineSuggestionVisible,\n    kbOpts: {\n        weight: 100,\n        primary: 9 /* Escape */,\n    },\n    handler(x) {\n        x.hide();\n    }\n}));\nexport class ShowNextInlineSuggestionAction extends EditorAction {\n    constructor() {\n        super({\n            id: ShowNextInlineSuggestionAction.ID,\n            label: nls.localize('action.inlineSuggest.showNext', \"Show Next Inline Suggestion\"),\n            alias: 'Show Next Inline Suggestion',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, GhostTextController.inlineSuggestionVisible),\n            kbOpts: {\n                weight: 100,\n                primary: 512 /* Alt */ | 89 /* BracketRight */,\n            },\n        });\n    }\n    run(accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const controller = GhostTextController.get(editor);\n            if (controller) {\n                controller.showNextInlineCompletion();\n                editor.focus();\n            }\n        });\n    }\n}\nShowNextInlineSuggestionAction.ID = 'editor.action.inlineSuggest.showNext';\nexport class ShowPreviousInlineSuggestionAction extends EditorAction {\n    constructor() {\n        super({\n            id: ShowPreviousInlineSuggestionAction.ID,\n            label: nls.localize('action.inlineSuggest.showPrevious', \"Show Previous Inline Suggestion\"),\n            alias: 'Show Previous Inline Suggestion',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, GhostTextController.inlineSuggestionVisible),\n            kbOpts: {\n                weight: 100,\n                primary: 512 /* Alt */ | 87 /* BracketLeft */,\n            },\n        });\n    }\n    run(accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const controller = GhostTextController.get(editor);\n            if (controller) {\n                controller.showPreviousInlineCompletion();\n                editor.focus();\n            }\n        });\n    }\n}\nShowPreviousInlineSuggestionAction.ID = 'editor.action.inlineSuggest.showPrevious';\nexport class TriggerInlineSuggestionAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.inlineSuggest.trigger',\n            label: nls.localize('action.inlineSuggest.trigger', \"Trigger Inline Suggestion\"),\n            alias: 'Trigger Inline Suggestion',\n            precondition: EditorContextKeys.writable\n        });\n    }\n    run(accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const controller = GhostTextController.get(editor);\n            if (controller) {\n                controller.trigger();\n            }\n        });\n    }\n}\n",
+      "start": 1711096855672,
+      "end": 1711096855787,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855788,
+      "end": 1711096855788,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855788,
+      "end": 1711096855790,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855790,
+      "end": 1711096855790,
+      "order": "normal"
+    }
+  ]
+}

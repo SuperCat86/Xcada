@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/services/unicodeTextModelHighlighter.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Range } from '../core/range.js';\nimport { Searcher } from '../model/textModelSearch.js';\nimport * as strings from '../../../base/common/strings.js';\nimport { assertNever } from '../../../base/common/types.js';\nimport { DEFAULT_WORD_REGEXP, getWordAtText } from '../core/wordHelper.js';\nexport class UnicodeTextModelHighlighter {\n    static computeUnicodeHighlights(model, options, range) {\n        const startLine = range ? range.startLineNumber : 1;\n        const endLine = range ? range.endLineNumber : model.getLineCount();\n        const codePointHighlighter = new CodePointHighlighter(options);\n        const candidates = codePointHighlighter.getCandidateCodePoints();\n        let regex;\n        if (candidates === 'allNonBasicAscii') {\n            regex = new RegExp('[^\\\\t\\\\n\\\\r\\\\x20-\\\\x7E]', 'g');\n        }\n        else {\n            regex = new RegExp(`${buildRegExpCharClassExpr(Array.from(candidates))}`, 'g');\n        }\n        const searcher = new Searcher(null, regex);\n        const ranges = [];\n        let hasMore = false;\n        let m;\n        let ambiguousCharacterCount = 0;\n        let invisibleCharacterCount = 0;\n        let nonBasicAsciiCharacterCount = 0;\n        forLoop: for (let lineNumber = startLine, lineCount = endLine; lineNumber <= lineCount; lineNumber++) {\n            const lineContent = model.getLineContent(lineNumber);\n            const lineLength = lineContent.length;\n            // Reset regex to search from the beginning\n            searcher.reset(0);\n            do {\n                m = searcher.next(lineContent);\n                if (m) {\n                    let startIndex = m.index;\n                    let endIndex = m.index + m[0].length;\n                    // Extend range to entire code point\n                    if (startIndex > 0) {\n                        const charCodeBefore = lineContent.charCodeAt(startIndex - 1);\n                        if (strings.isHighSurrogate(charCodeBefore)) {\n                            startIndex--;\n                        }\n                    }\n                    if (endIndex + 1 < lineLength) {\n                        const charCodeBefore = lineContent.charCodeAt(endIndex - 1);\n                        if (strings.isHighSurrogate(charCodeBefore)) {\n                            endIndex++;\n                        }\n                    }\n                    const str = lineContent.substring(startIndex, endIndex);\n                    const word = getWordAtText(startIndex + 1, DEFAULT_WORD_REGEXP, lineContent, 0);\n                    const highlightReason = codePointHighlighter.shouldHighlightNonBasicASCII(str, word ? word.word : null);\n                    if (highlightReason !== 0 /* None */) {\n                        if (highlightReason === 3 /* Ambiguous */) {\n                            ambiguousCharacterCount++;\n                        }\n                        else if (highlightReason === 2 /* Invisible */) {\n                            invisibleCharacterCount++;\n                        }\n                        else if (highlightReason === 1 /* NonBasicASCII */) {\n                            nonBasicAsciiCharacterCount++;\n                        }\n                        else {\n                            assertNever(highlightReason);\n                        }\n                        const MAX_RESULT_LENGTH = 1000;\n                        if (ranges.length >= MAX_RESULT_LENGTH) {\n                            hasMore = true;\n                            break forLoop;\n                        }\n                        ranges.push(new Range(lineNumber, startIndex + 1, lineNumber, endIndex + 1));\n                    }\n                }\n            } while (m);\n        }\n        return {\n            ranges,\n            hasMore,\n            ambiguousCharacterCount,\n            invisibleCharacterCount,\n            nonBasicAsciiCharacterCount\n        };\n    }\n    static computeUnicodeHighlightReason(char, options) {\n        const codePointHighlighter = new CodePointHighlighter(options);\n        const reason = codePointHighlighter.shouldHighlightNonBasicASCII(char, null);\n        switch (reason) {\n            case 0 /* None */:\n                return null;\n            case 2 /* Invisible */:\n                return { kind: 1 /* Invisible */ };\n            case 3 /* Ambiguous */: {\n                const codePoint = char.codePointAt(0);\n                const primaryConfusable = codePointHighlighter.ambiguousCharacters.getPrimaryConfusable(codePoint);\n                const notAmbiguousInLocales = strings.AmbiguousCharacters.getLocales().filter((l) => !strings.AmbiguousCharacters.getInstance(new Set([...options.allowedLocales, l])).isAmbiguous(codePoint));\n                return { kind: 0 /* Ambiguous */, confusableWith: String.fromCodePoint(primaryConfusable), notAmbiguousInLocales };\n            }\n            case 1 /* NonBasicASCII */:\n                return { kind: 2 /* NonBasicAscii */ };\n        }\n    }\n}\nfunction buildRegExpCharClassExpr(codePoints, flags) {\n    const src = `[${strings.escapeRegExpCharacters(codePoints.map((i) => String.fromCodePoint(i)).join(''))}]`;\n    return src;\n}\nclass CodePointHighlighter {\n    constructor(options) {\n        this.options = options;\n        this.allowedCodePoints = new Set(options.allowedCodePoints);\n        this.ambiguousCharacters = strings.AmbiguousCharacters.getInstance(new Set(options.allowedLocales));\n    }\n    getCandidateCodePoints() {\n        if (this.options.nonBasicASCII) {\n            return 'allNonBasicAscii';\n        }\n        const set = new Set();\n        if (this.options.invisibleCharacters) {\n            for (const cp of strings.InvisibleCharacters.codePoints) {\n                if (!isAllowedInvisibleCharacter(String.fromCodePoint(cp))) {\n                    set.add(cp);\n                }\n            }\n        }\n        if (this.options.ambiguousCharacters) {\n            for (const cp of this.ambiguousCharacters.getConfusableCodePoints()) {\n                set.add(cp);\n            }\n        }\n        for (const cp of this.allowedCodePoints) {\n            set.delete(cp);\n        }\n        return set;\n    }\n    shouldHighlightNonBasicASCII(character, wordContext) {\n        const codePoint = character.codePointAt(0);\n        if (this.allowedCodePoints.has(codePoint)) {\n            return 0 /* None */;\n        }\n        if (this.options.nonBasicASCII) {\n            return 1 /* NonBasicASCII */;\n        }\n        let hasBasicASCIICharacters = false;\n        let hasNonConfusableNonBasicAsciiCharacter = false;\n        if (wordContext) {\n            for (let char of wordContext) {\n                const codePoint = char.codePointAt(0);\n                const isBasicASCII = strings.isBasicASCII(char);\n                hasBasicASCIICharacters = hasBasicASCIICharacters || isBasicASCII;\n                if (!isBasicASCII &&\n                    !this.ambiguousCharacters.isAmbiguous(codePoint) &&\n                    !strings.InvisibleCharacters.isInvisibleCharacter(codePoint)) {\n                    hasNonConfusableNonBasicAsciiCharacter = true;\n                }\n            }\n        }\n        if (\n        /* Don't allow mixing weird looking characters with ASCII */ !hasBasicASCIICharacters &&\n            /* Is there an obviously weird looking character? */ hasNonConfusableNonBasicAsciiCharacter) {\n            return 0 /* None */;\n        }\n        if (this.options.invisibleCharacters) {\n            // TODO check for emojis\n            if (!isAllowedInvisibleCharacter(character) && strings.InvisibleCharacters.isInvisibleCharacter(codePoint)) {\n                return 2 /* Invisible */;\n            }\n        }\n        if (this.options.ambiguousCharacters) {\n            if (this.ambiguousCharacters.isAmbiguous(codePoint)) {\n                return 3 /* Ambiguous */;\n            }\n        }\n        return 0 /* None */;\n    }\n}\nfunction isAllowedInvisibleCharacter(character) {\n    return character === ' ' || character === '\\n' || character === '\\t';\n}\n",
+      "start": 1711096855987,
+      "end": 1711096856072,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856072,
+      "end": 1711096856072,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856072,
+      "end": 1711096856073,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856073,
+      "end": 1711096856073,
+      "order": "normal"
+    }
+  ]
+}

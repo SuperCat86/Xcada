@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/snippet/browser/snippetVariables.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { normalizeDriveLetter } from '../../../../base/common/labels.js';\nimport * as path from '../../../../base/common/path.js';\nimport { dirname } from '../../../../base/common/resources.js';\nimport { commonPrefixLength, getLeadingWhitespace, isFalsyOrWhitespace, splitLines } from '../../../../base/common/strings.js';\nimport { generateUuid } from '../../../../base/common/uuid.js';\nimport { LanguageConfigurationRegistry } from '../../../common/languages/languageConfigurationRegistry.js';\nimport { Text } from './snippetParser.js';\nimport * as nls from '../../../../nls.js';\nimport { WORKSPACE_EXTENSION, isSingleFolderWorkspaceIdentifier, toWorkspaceIdentifier } from '../../../../platform/workspace/common/workspace.js';\nexport const KnownSnippetVariableNames = Object.freeze({\n    'CURRENT_YEAR': true,\n    'CURRENT_YEAR_SHORT': true,\n    'CURRENT_MONTH': true,\n    'CURRENT_DATE': true,\n    'CURRENT_HOUR': true,\n    'CURRENT_MINUTE': true,\n    'CURRENT_SECOND': true,\n    'CURRENT_DAY_NAME': true,\n    'CURRENT_DAY_NAME_SHORT': true,\n    'CURRENT_MONTH_NAME': true,\n    'CURRENT_MONTH_NAME_SHORT': true,\n    'CURRENT_SECONDS_UNIX': true,\n    'SELECTION': true,\n    'CLIPBOARD': true,\n    'TM_SELECTED_TEXT': true,\n    'TM_CURRENT_LINE': true,\n    'TM_CURRENT_WORD': true,\n    'TM_LINE_INDEX': true,\n    'TM_LINE_NUMBER': true,\n    'TM_FILENAME': true,\n    'TM_FILENAME_BASE': true,\n    'TM_DIRECTORY': true,\n    'TM_FILEPATH': true,\n    'RELATIVE_FILEPATH': true,\n    'BLOCK_COMMENT_START': true,\n    'BLOCK_COMMENT_END': true,\n    'LINE_COMMENT': true,\n    'WORKSPACE_NAME': true,\n    'WORKSPACE_FOLDER': true,\n    'RANDOM': true,\n    'RANDOM_HEX': true,\n    'UUID': true\n});\nexport class CompositeSnippetVariableResolver {\n    constructor(_delegates) {\n        this._delegates = _delegates;\n        //\n    }\n    resolve(variable) {\n        for (const delegate of this._delegates) {\n            let value = delegate.resolve(variable);\n            if (value !== undefined) {\n                return value;\n            }\n        }\n        return undefined;\n    }\n}\nexport class SelectionBasedVariableResolver {\n    constructor(_model, _selection, _selectionIdx, _overtypingCapturer) {\n        this._model = _model;\n        this._selection = _selection;\n        this._selectionIdx = _selectionIdx;\n        this._overtypingCapturer = _overtypingCapturer;\n        //\n    }\n    resolve(variable) {\n        const { name } = variable;\n        if (name === 'SELECTION' || name === 'TM_SELECTED_TEXT') {\n            let value = this._model.getValueInRange(this._selection) || undefined;\n            let isMultiline = this._selection.startLineNumber !== this._selection.endLineNumber;\n            // If there was no selected text, try to get last overtyped text\n            if (!value && this._overtypingCapturer) {\n                const info = this._overtypingCapturer.getLastOvertypedInfo(this._selectionIdx);\n                if (info) {\n                    value = info.value;\n                    isMultiline = info.multiline;\n                }\n            }\n            if (value && isMultiline && variable.snippet) {\n                // Selection is a multiline string which we indentation we now\n                // need to adjust. We compare the indentation of this variable\n                // with the indentation at the editor position and add potential\n                // extra indentation to the value\n                const line = this._model.getLineContent(this._selection.startLineNumber);\n                const lineLeadingWhitespace = getLeadingWhitespace(line, 0, this._selection.startColumn - 1);\n                let varLeadingWhitespace = lineLeadingWhitespace;\n                variable.snippet.walk(marker => {\n                    if (marker === variable) {\n                        return false;\n                    }\n                    if (marker instanceof Text) {\n                        varLeadingWhitespace = getLeadingWhitespace(splitLines(marker.value).pop());\n                    }\n                    return true;\n                });\n                const whitespaceCommonLength = commonPrefixLength(varLeadingWhitespace, lineLeadingWhitespace);\n                value = value.replace(/(\\r\\n|\\r|\\n)(.*)/g, (m, newline, rest) => `${newline}${varLeadingWhitespace.substr(whitespaceCommonLength)}${rest}`);\n            }\n            return value;\n        }\n        else if (name === 'TM_CURRENT_LINE') {\n            return this._model.getLineContent(this._selection.positionLineNumber);\n        }\n        else if (name === 'TM_CURRENT_WORD') {\n            const info = this._model.getWordAtPosition({\n                lineNumber: this._selection.positionLineNumber,\n                column: this._selection.positionColumn\n            });\n            return info && info.word || undefined;\n        }\n        else if (name === 'TM_LINE_INDEX') {\n            return String(this._selection.positionLineNumber - 1);\n        }\n        else if (name === 'TM_LINE_NUMBER') {\n            return String(this._selection.positionLineNumber);\n        }\n        return undefined;\n    }\n}\nexport class ModelBasedVariableResolver {\n    constructor(_labelService, _model) {\n        this._labelService = _labelService;\n        this._model = _model;\n        //\n    }\n    resolve(variable) {\n        const { name } = variable;\n        if (name === 'TM_FILENAME') {\n            return path.basename(this._model.uri.fsPath);\n        }\n        else if (name === 'TM_FILENAME_BASE') {\n            const name = path.basename(this._model.uri.fsPath);\n            const idx = name.lastIndexOf('.');\n            if (idx <= 0) {\n                return name;\n            }\n            else {\n                return name.slice(0, idx);\n            }\n        }\n        else if (name === 'TM_DIRECTORY') {\n            if (path.dirname(this._model.uri.fsPath) === '.') {\n                return '';\n            }\n            return this._labelService.getUriLabel(dirname(this._model.uri));\n        }\n        else if (name === 'TM_FILEPATH') {\n            return this._labelService.getUriLabel(this._model.uri);\n        }\n        else if (name === 'RELATIVE_FILEPATH') {\n            return this._labelService.getUriLabel(this._model.uri, { relative: true, noPrefix: true });\n        }\n        return undefined;\n    }\n}\nexport class ClipboardBasedVariableResolver {\n    constructor(_readClipboardText, _selectionIdx, _selectionCount, _spread) {\n        this._readClipboardText = _readClipboardText;\n        this._selectionIdx = _selectionIdx;\n        this._selectionCount = _selectionCount;\n        this._spread = _spread;\n        //\n    }\n    resolve(variable) {\n        if (variable.name !== 'CLIPBOARD') {\n            return undefined;\n        }\n        const clipboardText = this._readClipboardText();\n        if (!clipboardText) {\n            return undefined;\n        }\n        // `spread` is assigning each cursor a line of the clipboard\n        // text whenever there the line count equals the cursor count\n        // and when enabled\n        if (this._spread) {\n            const lines = clipboardText.split(/\\r\\n|\\n|\\r/).filter(s => !isFalsyOrWhitespace(s));\n            if (lines.length === this._selectionCount) {\n                return lines[this._selectionIdx];\n            }\n        }\n        return clipboardText;\n    }\n}\nexport class CommentBasedVariableResolver {\n    constructor(_model, _selection) {\n        this._model = _model;\n        this._selection = _selection;\n        //\n    }\n    resolve(variable) {\n        const { name } = variable;\n        const langId = this._model.getLanguageIdAtPosition(this._selection.selectionStartLineNumber, this._selection.selectionStartColumn);\n        const config = LanguageConfigurationRegistry.getComments(langId);\n        if (!config) {\n            return undefined;\n        }\n        if (name === 'LINE_COMMENT') {\n            return config.lineCommentToken || undefined;\n        }\n        else if (name === 'BLOCK_COMMENT_START') {\n            return config.blockCommentStartToken || undefined;\n        }\n        else if (name === 'BLOCK_COMMENT_END') {\n            return config.blockCommentEndToken || undefined;\n        }\n        return undefined;\n    }\n}\nexport class TimeBasedVariableResolver {\n    constructor() {\n        this._date = new Date();\n    }\n    resolve(variable) {\n        const { name } = variable;\n        if (name === 'CURRENT_YEAR') {\n            return String(this._date.getFullYear());\n        }\n        else if (name === 'CURRENT_YEAR_SHORT') {\n            return String(this._date.getFullYear()).slice(-2);\n        }\n        else if (name === 'CURRENT_MONTH') {\n            return String(this._date.getMonth().valueOf() + 1).padStart(2, '0');\n        }\n        else if (name === 'CURRENT_DATE') {\n            return String(this._date.getDate().valueOf()).padStart(2, '0');\n        }\n        else if (name === 'CURRENT_HOUR') {\n            return String(this._date.getHours().valueOf()).padStart(2, '0');\n        }\n        else if (name === 'CURRENT_MINUTE') {\n            return String(this._date.getMinutes().valueOf()).padStart(2, '0');\n        }\n        else if (name === 'CURRENT_SECOND') {\n            return String(this._date.getSeconds().valueOf()).padStart(2, '0');\n        }\n        else if (name === 'CURRENT_DAY_NAME') {\n            return TimeBasedVariableResolver.dayNames[this._date.getDay()];\n        }\n        else if (name === 'CURRENT_DAY_NAME_SHORT') {\n            return TimeBasedVariableResolver.dayNamesShort[this._date.getDay()];\n        }\n        else if (name === 'CURRENT_MONTH_NAME') {\n            return TimeBasedVariableResolver.monthNames[this._date.getMonth()];\n        }\n        else if (name === 'CURRENT_MONTH_NAME_SHORT') {\n            return TimeBasedVariableResolver.monthNamesShort[this._date.getMonth()];\n        }\n        else if (name === 'CURRENT_SECONDS_UNIX') {\n            return String(Math.floor(this._date.getTime() / 1000));\n        }\n        return undefined;\n    }\n}\nTimeBasedVariableResolver.dayNames = [nls.localize('Sunday', \"Sunday\"), nls.localize('Monday', \"Monday\"), nls.localize('Tuesday', \"Tuesday\"), nls.localize('Wednesday', \"Wednesday\"), nls.localize('Thursday', \"Thursday\"), nls.localize('Friday', \"Friday\"), nls.localize('Saturday', \"Saturday\")];\nTimeBasedVariableResolver.dayNamesShort = [nls.localize('SundayShort', \"Sun\"), nls.localize('MondayShort', \"Mon\"), nls.localize('TuesdayShort', \"Tue\"), nls.localize('WednesdayShort', \"Wed\"), nls.localize('ThursdayShort', \"Thu\"), nls.localize('FridayShort', \"Fri\"), nls.localize('SaturdayShort', \"Sat\")];\nTimeBasedVariableResolver.monthNames = [nls.localize('January', \"January\"), nls.localize('February', \"February\"), nls.localize('March', \"March\"), nls.localize('April', \"April\"), nls.localize('May', \"May\"), nls.localize('June', \"June\"), nls.localize('July', \"July\"), nls.localize('August', \"August\"), nls.localize('September', \"September\"), nls.localize('October', \"October\"), nls.localize('November', \"November\"), nls.localize('December', \"December\")];\nTimeBasedVariableResolver.monthNamesShort = [nls.localize('JanuaryShort', \"Jan\"), nls.localize('FebruaryShort', \"Feb\"), nls.localize('MarchShort', \"Mar\"), nls.localize('AprilShort', \"Apr\"), nls.localize('MayShort', \"May\"), nls.localize('JuneShort', \"Jun\"), nls.localize('JulyShort', \"Jul\"), nls.localize('AugustShort', \"Aug\"), nls.localize('SeptemberShort', \"Sep\"), nls.localize('OctoberShort', \"Oct\"), nls.localize('NovemberShort', \"Nov\"), nls.localize('DecemberShort', \"Dec\")];\nexport class WorkspaceBasedVariableResolver {\n    constructor(_workspaceService) {\n        this._workspaceService = _workspaceService;\n        //\n    }\n    resolve(variable) {\n        if (!this._workspaceService) {\n            return undefined;\n        }\n        const workspaceIdentifier = toWorkspaceIdentifier(this._workspaceService.getWorkspace());\n        if (!workspaceIdentifier) {\n            return undefined;\n        }\n        if (variable.name === 'WORKSPACE_NAME') {\n            return this._resolveWorkspaceName(workspaceIdentifier);\n        }\n        else if (variable.name === 'WORKSPACE_FOLDER') {\n            return this._resoveWorkspacePath(workspaceIdentifier);\n        }\n        return undefined;\n    }\n    _resolveWorkspaceName(workspaceIdentifier) {\n        if (isSingleFolderWorkspaceIdentifier(workspaceIdentifier)) {\n            return path.basename(workspaceIdentifier.uri.path);\n        }\n        let filename = path.basename(workspaceIdentifier.configPath.path);\n        if (filename.endsWith(WORKSPACE_EXTENSION)) {\n            filename = filename.substr(0, filename.length - WORKSPACE_EXTENSION.length - 1);\n        }\n        return filename;\n    }\n    _resoveWorkspacePath(workspaceIdentifier) {\n        if (isSingleFolderWorkspaceIdentifier(workspaceIdentifier)) {\n            return normalizeDriveLetter(workspaceIdentifier.uri.fsPath);\n        }\n        let filename = path.basename(workspaceIdentifier.configPath.path);\n        let folderpath = workspaceIdentifier.configPath.fsPath;\n        if (folderpath.endsWith(filename)) {\n            folderpath = folderpath.substr(0, folderpath.length - filename.length - 1);\n        }\n        return (folderpath ? normalizeDriveLetter(folderpath) : '/');\n    }\n}\nexport class RandomBasedVariableResolver {\n    resolve(variable) {\n        const { name } = variable;\n        if (name === 'RANDOM') {\n            return Math.random().toString().slice(-6);\n        }\n        else if (name === 'RANDOM_HEX') {\n            return Math.random().toString(16).slice(-6);\n        }\n        else if (name === 'UUID') {\n            return generateUuid();\n        }\n        return undefined;\n    }\n}\n",
+      "start": 1711096856812,
+      "end": 1711096856934,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856934,
+      "end": 1711096856934,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856934,
+      "end": 1711096856936,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856936,
+      "end": 1711096856936,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856936,
+      "end": 1711096856936,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856936,
+      "end": 1711096856936,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856936,
+      "end": 1711096856936,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856936,
+      "end": 1711096856936,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856936,
+      "end": 1711096856937,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856937,
+      "end": 1711096856937,
+      "order": "normal"
+    }
+  ]
+}

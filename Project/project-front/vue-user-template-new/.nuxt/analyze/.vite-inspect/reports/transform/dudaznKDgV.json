@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/onEnter.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { IndentAction } from '../languageConfiguration.js';\nexport class OnEnterSupport {\n    constructor(opts) {\n        opts = opts || {};\n        opts.brackets = opts.brackets || [\n            ['(', ')'],\n            ['{', '}'],\n            ['[', ']']\n        ];\n        this._brackets = [];\n        opts.brackets.forEach((bracket) => {\n            const openRegExp = OnEnterSupport._createOpenBracketRegExp(bracket[0]);\n            const closeRegExp = OnEnterSupport._createCloseBracketRegExp(bracket[1]);\n            if (openRegExp && closeRegExp) {\n                this._brackets.push({\n                    open: bracket[0],\n                    openRegExp: openRegExp,\n                    close: bracket[1],\n                    closeRegExp: closeRegExp,\n                });\n            }\n        });\n        this._regExpRules = opts.onEnterRules || [];\n    }\n    onEnter(autoIndent, previousLineText, beforeEnterText, afterEnterText) {\n        // (1): `regExpRules`\n        if (autoIndent >= 3 /* Advanced */) {\n            for (let i = 0, len = this._regExpRules.length; i < len; i++) {\n                const rule = this._regExpRules[i];\n                const regResult = [{\n                        reg: rule.beforeText,\n                        text: beforeEnterText\n                    }, {\n                        reg: rule.afterText,\n                        text: afterEnterText\n                    }, {\n                        reg: rule.previousLineText,\n                        text: previousLineText\n                    }].every((obj) => {\n                    if (!obj.reg) {\n                        return true;\n                    }\n                    obj.reg.lastIndex = 0; // To disable the effect of the \"g\" flag.\n                    return obj.reg.test(obj.text);\n                });\n                if (regResult) {\n                    return rule.action;\n                }\n            }\n        }\n        // (2): Special indent-outdent\n        if (autoIndent >= 2 /* Brackets */) {\n            if (beforeEnterText.length > 0 && afterEnterText.length > 0) {\n                for (let i = 0, len = this._brackets.length; i < len; i++) {\n                    const bracket = this._brackets[i];\n                    if (bracket.openRegExp.test(beforeEnterText) && bracket.closeRegExp.test(afterEnterText)) {\n                        return { indentAction: IndentAction.IndentOutdent };\n                    }\n                }\n            }\n        }\n        // (4): Open bracket based logic\n        if (autoIndent >= 2 /* Brackets */) {\n            if (beforeEnterText.length > 0) {\n                for (let i = 0, len = this._brackets.length; i < len; i++) {\n                    const bracket = this._brackets[i];\n                    if (bracket.openRegExp.test(beforeEnterText)) {\n                        return { indentAction: IndentAction.Indent };\n                    }\n                }\n            }\n        }\n        return null;\n    }\n    static _createOpenBracketRegExp(bracket) {\n        let str = strings.escapeRegExpCharacters(bracket);\n        if (!/\\B/.test(str.charAt(0))) {\n            str = '\\\\b' + str;\n        }\n        str += '\\\\s*$';\n        return OnEnterSupport._safeRegExp(str);\n    }\n    static _createCloseBracketRegExp(bracket) {\n        let str = strings.escapeRegExpCharacters(bracket);\n        if (!/\\B/.test(str.charAt(str.length - 1))) {\n            str = str + '\\\\b';\n        }\n        str = '^\\\\s*' + str;\n        return OnEnterSupport._safeRegExp(str);\n    }\n    static _safeRegExp(def) {\n        try {\n            return new RegExp(def);\n        }\n        catch (err) {\n            onUnexpectedError(err);\n            return null;\n        }\n    }\n}\n",
+      "start": 1711096856184,
+      "end": 1711096856274,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856274,
+      "end": 1711096856274,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856274,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856275,
+      "end": 1711096856275,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/viewCursors/viewCursor.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../../base/browser/dom.js';\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { applyFontInfo } from '../../config/domFontInfo.js';\nimport { TextEditorCursorStyle } from '../../../common/config/editorOptions.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from '../../../../base/browser/ui/mouseCursor/mouseCursor.js';\nclass ViewCursorRenderData {\n    constructor(top, left, width, height, textContent, textContentClassName) {\n        this.top = top;\n        this.left = left;\n        this.width = width;\n        this.height = height;\n        this.textContent = textContent;\n        this.textContentClassName = textContentClassName;\n    }\n}\nexport class ViewCursor {\n    constructor(context) {\n        this._context = context;\n        const options = this._context.configuration.options;\n        const fontInfo = options.get(44 /* fontInfo */);\n        this._cursorStyle = options.get(24 /* cursorStyle */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._typicalHalfwidthCharacterWidth = fontInfo.typicalHalfwidthCharacterWidth;\n        this._lineCursorWidth = Math.min(options.get(27 /* cursorWidth */), this._typicalHalfwidthCharacterWidth);\n        this._isVisible = true;\n        // Create the dom node\n        this._domNode = createFastDomNode(document.createElement('div'));\n        this._domNode.setClassName(`cursor ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);\n        this._domNode.setHeight(this._lineHeight);\n        this._domNode.setTop(0);\n        this._domNode.setLeft(0);\n        applyFontInfo(this._domNode, fontInfo);\n        this._domNode.setDisplay('none');\n        this._position = new Position(1, 1);\n        this._lastRenderedContent = '';\n        this._renderData = null;\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    getPosition() {\n        return this._position;\n    }\n    show() {\n        if (!this._isVisible) {\n            this._domNode.setVisibility('inherit');\n            this._isVisible = true;\n        }\n    }\n    hide() {\n        if (this._isVisible) {\n            this._domNode.setVisibility('hidden');\n            this._isVisible = false;\n        }\n    }\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const fontInfo = options.get(44 /* fontInfo */);\n        this._cursorStyle = options.get(24 /* cursorStyle */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._typicalHalfwidthCharacterWidth = fontInfo.typicalHalfwidthCharacterWidth;\n        this._lineCursorWidth = Math.min(options.get(27 /* cursorWidth */), this._typicalHalfwidthCharacterWidth);\n        applyFontInfo(this._domNode, fontInfo);\n        return true;\n    }\n    onCursorPositionChanged(position) {\n        this._position = position;\n        return true;\n    }\n    /**\n     * If `this._position` is inside a grapheme, returns the position where the grapheme starts.\n     * Also returns the next grapheme.\n     */\n    _getGraphemeAwarePosition() {\n        const { lineNumber, column } = this._position;\n        const lineContent = this._context.viewModel.getLineContent(lineNumber);\n        const [startOffset, endOffset] = strings.getCharContainingOffset(lineContent, column - 1);\n        return [new Position(lineNumber, startOffset + 1), lineContent.substring(startOffset, endOffset)];\n    }\n    _prepareRender(ctx) {\n        let textContent = '';\n        const [position, nextGrapheme] = this._getGraphemeAwarePosition();\n        if (this._cursorStyle === TextEditorCursorStyle.Line || this._cursorStyle === TextEditorCursorStyle.LineThin) {\n            const visibleRange = ctx.visibleRangeForPosition(position);\n            if (!visibleRange || visibleRange.outsideRenderedLine) {\n                // Outside viewport\n                return null;\n            }\n            let width;\n            if (this._cursorStyle === TextEditorCursorStyle.Line) {\n                width = dom.computeScreenAwareSize(this._lineCursorWidth > 0 ? this._lineCursorWidth : 2);\n                if (width > 2) {\n                    textContent = nextGrapheme;\n                }\n            }\n            else {\n                width = dom.computeScreenAwareSize(1);\n            }\n            let left = visibleRange.left;\n            if (width >= 2 && left >= 1) {\n                // try to center cursor\n                left -= 1;\n            }\n            const top = ctx.getVerticalOffsetForLineNumber(position.lineNumber) - ctx.bigNumbersDelta;\n            return new ViewCursorRenderData(top, left, width, this._lineHeight, textContent, '');\n        }\n        const visibleRangeForCharacter = ctx.linesVisibleRangesForRange(new Range(position.lineNumber, position.column, position.lineNumber, position.column + nextGrapheme.length), false);\n        if (!visibleRangeForCharacter || visibleRangeForCharacter.length === 0) {\n            // Outside viewport\n            return null;\n        }\n        const firstVisibleRangeForCharacter = visibleRangeForCharacter[0];\n        if (firstVisibleRangeForCharacter.outsideRenderedLine || firstVisibleRangeForCharacter.ranges.length === 0) {\n            // Outside viewport\n            return null;\n        }\n        const range = firstVisibleRangeForCharacter.ranges[0];\n        const width = range.width < 1 ? this._typicalHalfwidthCharacterWidth : range.width;\n        let textContentClassName = '';\n        if (this._cursorStyle === TextEditorCursorStyle.Block) {\n            const lineData = this._context.viewModel.getViewLineData(position.lineNumber);\n            textContent = nextGrapheme;\n            const tokenIndex = lineData.tokens.findTokenIndexAtOffset(position.column - 1);\n            textContentClassName = lineData.tokens.getClassName(tokenIndex);\n        }\n        let top = ctx.getVerticalOffsetForLineNumber(position.lineNumber) - ctx.bigNumbersDelta;\n        let height = this._lineHeight;\n        // Underline might interfere with clicking\n        if (this._cursorStyle === TextEditorCursorStyle.Underline || this._cursorStyle === TextEditorCursorStyle.UnderlineThin) {\n            top += this._lineHeight - 2;\n            height = 2;\n        }\n        return new ViewCursorRenderData(top, range.left, width, height, textContent, textContentClassName);\n    }\n    prepareRender(ctx) {\n        this._renderData = this._prepareRender(ctx);\n    }\n    render(ctx) {\n        if (!this._renderData) {\n            this._domNode.setDisplay('none');\n            return null;\n        }\n        if (this._lastRenderedContent !== this._renderData.textContent) {\n            this._lastRenderedContent = this._renderData.textContent;\n            this._domNode.domNode.textContent = this._lastRenderedContent;\n        }\n        this._domNode.setClassName(`cursor ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME} ${this._renderData.textContentClassName}`);\n        this._domNode.setDisplay('block');\n        this._domNode.setTop(this._renderData.top);\n        this._domNode.setLeft(this._renderData.left);\n        this._domNode.setWidth(this._renderData.width);\n        this._domNode.setLineHeight(this._renderData.height);\n        this._domNode.setHeight(this._renderData.height);\n        return {\n            domNode: this._domNode.domNode,\n            position: this._position,\n            contentLeft: this._renderData.left,\n            height: this._renderData.height,\n            width: 2\n        };\n    }\n}\n",
+      "start": 1711096857206,
+      "end": 1711096857311,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857311,
+      "end": 1711096857311,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857311,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857312,
+      "end": 1711096857312,
+      "order": "normal"
+    }
+  ]
+}

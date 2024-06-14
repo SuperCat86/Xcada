@@ -1,0 +1,212 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/process.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { globals, isMacintosh, isWindows } from './platform.js';\nlet safeProcess;\n// Native sandbox environment\nif (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== 'undefined') {\n    const sandboxProcess = globals.vscode.process;\n    safeProcess = {\n        get platform() { return sandboxProcess.platform; },\n        get arch() { return sandboxProcess.arch; },\n        get env() { return sandboxProcess.env; },\n        cwd() { return sandboxProcess.cwd(); }\n    };\n}\n// Native node.js environment\nelse if (typeof process !== 'undefined') {\n    safeProcess = {\n        get platform() { return process.platform; },\n        get arch() { return process.arch; },\n        get env() { return process.env; },\n        cwd() { return process.env['VSCODE_CWD'] || process.cwd(); }\n    };\n}\n// Web environment\nelse {\n    safeProcess = {\n        // Supported\n        get platform() { return isWindows ? 'win32' : isMacintosh ? 'darwin' : 'linux'; },\n        get arch() { return undefined; /* arch is undefined in web */ },\n        // Unsupported\n        get env() { return {}; },\n        cwd() { return '/'; }\n    };\n}\n/**\n * Provides safe access to the `cwd` property in node.js, sandboxed or web\n * environments.\n *\n * Note: in web, this property is hardcoded to be `/`.\n */\nexport const cwd = safeProcess.cwd;\n/**\n * Provides safe access to the `env` property in node.js, sandboxed or web\n * environments.\n *\n * Note: in web, this property is hardcoded to be `{}`.\n */\nexport const env = safeProcess.env;\n/**\n * Provides safe access to the `platform` property in node.js, sandboxed or web\n * environments.\n */\nexport const platform = safeProcess.platform;\n",
+      "start": 1711096856950,
+      "end": 1711096857101,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857101,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857102,
+      "end": 1711096857102,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "result": "var define_process_env_default = {};\nimport { globals, isMacintosh, isWindows } from \"./platform.js\";\nlet safeProcess;\nif (typeof globals.vscode !== \"undefined\" && typeof globals.vscode.process !== \"undefined\") {\n  const sandboxProcess = globals.vscode.process;\n  safeProcess = {\n    get platform() {\n      return sandboxProcess.platform;\n    },\n    get arch() {\n      return sandboxProcess.arch;\n    },\n    get env() {\n      return sandboxProcess.env;\n    },\n    cwd() {\n      return sandboxProcess.cwd();\n    }\n  };\n} else if (typeof process !== \"undefined\") {\n  safeProcess = {\n    get platform() {\n      return process.platform;\n    },\n    get arch() {\n      return process.arch;\n    },\n    get env() {\n      return define_process_env_default;\n    },\n    cwd() {\n      return define_process_env_default[\"VSCODE_CWD\"] || process.cwd();\n    }\n  };\n} else {\n  safeProcess = {\n    // Supported\n    get platform() {\n      return isWindows ? \"win32\" : isMacintosh ? \"darwin\" : \"linux\";\n    },\n    get arch() {\n      return void 0;\n    },\n    // Unsupported\n    get env() {\n      return {};\n    },\n    cwd() {\n      return \"/\";\n    }\n  };\n}\nexport const cwd = safeProcess.cwd;\nexport const env = safeProcess.env;\nexport const platform = safeProcess.platform;\n",
+      "start": 1711096857102,
+      "end": 1711096857143,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857143,
+      "end": 1711096857143,
+      "order": "normal"
+    }
+  ]
+}

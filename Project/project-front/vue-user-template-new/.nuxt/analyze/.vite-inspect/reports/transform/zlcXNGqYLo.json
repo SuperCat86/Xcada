@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/findinput/findInputCheckboxes.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Checkbox } from '../checkbox/checkbox.js';\nimport { Codicon } from '../../../common/codicons.js';\nimport * as nls from '../../../../nls.js';\nconst NLS_CASE_SENSITIVE_CHECKBOX_LABEL = nls.localize('caseDescription', \"Match Case\");\nconst NLS_WHOLE_WORD_CHECKBOX_LABEL = nls.localize('wordsDescription', \"Match Whole Word\");\nconst NLS_REGEX_CHECKBOX_LABEL = nls.localize('regexDescription', \"Use Regular Expression\");\nexport class CaseSensitiveCheckbox extends Checkbox {\n    constructor(opts) {\n        super({\n            icon: Codicon.caseSensitive,\n            title: NLS_CASE_SENSITIVE_CHECKBOX_LABEL + opts.appendTitle,\n            isChecked: opts.isChecked,\n            inputActiveOptionBorder: opts.inputActiveOptionBorder,\n            inputActiveOptionForeground: opts.inputActiveOptionForeground,\n            inputActiveOptionBackground: opts.inputActiveOptionBackground\n        });\n    }\n}\nexport class WholeWordsCheckbox extends Checkbox {\n    constructor(opts) {\n        super({\n            icon: Codicon.wholeWord,\n            title: NLS_WHOLE_WORD_CHECKBOX_LABEL + opts.appendTitle,\n            isChecked: opts.isChecked,\n            inputActiveOptionBorder: opts.inputActiveOptionBorder,\n            inputActiveOptionForeground: opts.inputActiveOptionForeground,\n            inputActiveOptionBackground: opts.inputActiveOptionBackground\n        });\n    }\n}\nexport class RegexCheckbox extends Checkbox {\n    constructor(opts) {\n        super({\n            icon: Codicon.regex,\n            title: NLS_REGEX_CHECKBOX_LABEL + opts.appendTitle,\n            isChecked: opts.isChecked,\n            inputActiveOptionBorder: opts.inputActiveOptionBorder,\n            inputActiveOptionForeground: opts.inputActiveOptionForeground,\n            inputActiveOptionBackground: opts.inputActiveOptionBackground\n        });\n    }\n}\n",
+      "start": 1711096856672,
+      "end": 1711096856771,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856771,
+      "end": 1711096856772,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856772,
+      "end": 1711096856772,
+      "order": "normal"
+    }
+  ]
+}

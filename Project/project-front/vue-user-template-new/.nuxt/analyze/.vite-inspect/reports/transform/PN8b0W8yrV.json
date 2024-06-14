@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/progressbar/progressbar.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-progress-container {\n\twidth: 100%;\n\theight: 5px;\n\toverflow: hidden; /* keep progress bit in bounds */\n}\n\n.monaco-progress-container .progress-bit {\n\twidth: 2%;\n\theight: 5px;\n\tposition: absolute;\n\tleft: 0;\n\tdisplay: none;\n}\n\n.monaco-progress-container.active .progress-bit {\n\tdisplay: inherit;\n}\n\n.monaco-progress-container.discrete .progress-bit {\n\tleft: 0;\n\ttransition: width 100ms linear;\n}\n\n.monaco-progress-container.discrete.done .progress-bit {\n\twidth: 100%;\n}\n\n.monaco-progress-container.infinite .progress-bit {\n\tanimation-name: progress;\n\tanimation-duration: 4s;\n\tanimation-iteration-count: infinite;\n\ttransform: translate3d(0px, 0px, 0px);\n\tanimation-timing-function: linear;\n}\n\n.monaco-progress-container.infinite.infinite-long-running .progress-bit {\n\t/*\n\t\tThe more smooth `linear` timing function can cause\n\t\thigher GPU consumption as indicated in\n\t\thttps://github.com/microsoft/vscode/issues/97900 &\n\t\thttps://github.com/microsoft/vscode/issues/138396\n\t*/\n\tanimation-timing-function: steps(100);\n}\n\n/**\n * The progress bit has a width: 2% (1/50) of the parent container. The animation moves it from 0% to 100% of\n * that container. Since translateX is relative to the progress bit size, we have to multiple it with\n * its relative size to the parent container:\n * parent width: 5000%\n *    bit width: 100%\n * translateX should be as follow:\n *  50%: 5000% * 50% - 50% (set to center) = 2450%\n * 100%: 5000% * 100% - 100% (do not overflow) = 4900%\n */\n@keyframes progress { from { transform: translateX(0%) scaleX(1) } 50% { transform: translateX(2500%) scaleX(3) } to { transform: translateX(4900%) scaleX(1) } }\n",
+      "start": 1711096857834,
+      "end": 1711096857902,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857902,
+      "end": 1711096857902,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-progress-container{height:5px;overflow:hidden;width:100%}.monaco-progress-container .progress-bit{display:none;height:5px;left:0;position:absolute;width:2%}.monaco-progress-container.active .progress-bit{display:inherit}.monaco-progress-container.discrete .progress-bit{left:0;transition:width .1s linear}.monaco-progress-container.discrete.done .progress-bit{width:100%}.monaco-progress-container.infinite .progress-bit{animation-duration:4s;animation-iteration-count:infinite;animation-name:progress;animation-timing-function:linear;transform:translateZ(0)}.monaco-progress-container.infinite.infinite-long-running .progress-bit{animation-timing-function:steps(100)}@keyframes progress{0%{transform:translateX(0) scaleX(1)}50%{transform:translateX(2500%) scaleX(3)}to{transform:translateX(4900%) scaleX(1)}}",
+      "start": 1711096857902,
+      "end": 1711096857908,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857908,
+      "end": 1711096857908,
+      "order": "normal"
+    }
+  ]
+}

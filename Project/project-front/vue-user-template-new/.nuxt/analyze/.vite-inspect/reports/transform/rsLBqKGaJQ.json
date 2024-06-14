@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/indentGuides/indentGuides.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './indentGuides.css';\nimport { DynamicViewOverlay } from '../../view/dynamicViewOverlay.js';\nimport { editorActiveIndentGuides, editorBracketHighlightingForeground1, editorBracketHighlightingForeground2, editorBracketHighlightingForeground3, editorBracketHighlightingForeground4, editorBracketHighlightingForeground5, editorBracketHighlightingForeground6, editorBracketPairGuideActiveBackground1, editorBracketPairGuideActiveBackground2, editorBracketPairGuideActiveBackground3, editorBracketPairGuideActiveBackground4, editorBracketPairGuideActiveBackground5, editorBracketPairGuideActiveBackground6, editorBracketPairGuideBackground1, editorBracketPairGuideBackground2, editorBracketPairGuideBackground3, editorBracketPairGuideBackground4, editorBracketPairGuideBackground5, editorBracketPairGuideBackground6, editorIndentGuides } from '../../../common/core/editorColorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { Position } from '../../../common/core/position.js';\nimport { ArrayQueue } from '../../../../base/common/arrays.js';\nimport { isDefined } from '../../../../base/common/types.js';\nimport { BracketPairGuidesClassNames } from '../../../common/model/guidesTextModelPart.js';\nimport { IndentGuide, HorizontalGuidesState } from '../../../common/textModelGuides.js';\nexport class IndentGuidesOverlay extends DynamicViewOverlay {\n    constructor(context) {\n        super();\n        this._context = context;\n        this._primaryPosition = null;\n        const options = this._context.configuration.options;\n        const wrappingInfo = options.get(132 /* wrappingInfo */);\n        const fontInfo = options.get(44 /* fontInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._spaceWidth = fontInfo.spaceWidth;\n        this._maxIndentLeft = wrappingInfo.wrappingColumn === -1 ? -1 : (wrappingInfo.wrappingColumn * fontInfo.typicalHalfwidthCharacterWidth);\n        this._bracketPairGuideOptions = options.get(13 /* guides */);\n        this._renderResult = null;\n        this._context.addEventHandler(this);\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        this._renderResult = null;\n        super.dispose();\n    }\n    // --- begin event handlers\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const wrappingInfo = options.get(132 /* wrappingInfo */);\n        const fontInfo = options.get(44 /* fontInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._spaceWidth = fontInfo.spaceWidth;\n        this._maxIndentLeft = wrappingInfo.wrappingColumn === -1 ? -1 : (wrappingInfo.wrappingColumn * fontInfo.typicalHalfwidthCharacterWidth);\n        this._bracketPairGuideOptions = options.get(13 /* guides */);\n        return true;\n    }\n    onCursorStateChanged(e) {\n        var _a;\n        const selection = e.selections[0];\n        const newPosition = selection.getPosition();\n        if (!((_a = this._primaryPosition) === null || _a === void 0 ? void 0 : _a.equals(newPosition))) {\n            this._primaryPosition = newPosition;\n            return true;\n        }\n        return false;\n    }\n    onDecorationsChanged(e) {\n        // true for inline decorations\n        return true;\n    }\n    onFlushed(e) {\n        return true;\n    }\n    onLinesChanged(e) {\n        return true;\n    }\n    onLinesDeleted(e) {\n        return true;\n    }\n    onLinesInserted(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollTopChanged; // || e.scrollWidthChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    onLanguageConfigurationChanged(e) {\n        return true;\n    }\n    // --- end event handlers\n    prepareRender(ctx) {\n        var _a, _b, _c, _d;\n        if (!this._bracketPairGuideOptions.indentation && this._bracketPairGuideOptions.bracketPairs === false) {\n            this._renderResult = null;\n            return;\n        }\n        const visibleStartLineNumber = ctx.visibleRange.startLineNumber;\n        const visibleEndLineNumber = ctx.visibleRange.endLineNumber;\n        const scrollWidth = ctx.scrollWidth;\n        const lineHeight = this._lineHeight;\n        const activeCursorPosition = this._primaryPosition;\n        const indents = this.getGuidesByLine(visibleStartLineNumber, visibleEndLineNumber, activeCursorPosition);\n        const output = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - visibleStartLineNumber;\n            const indent = indents[lineIndex];\n            let result = '';\n            const leftOffset = (_b = (_a = ctx.visibleRangeForPosition(new Position(lineNumber, 1))) === null || _a === void 0 ? void 0 : _a.left) !== null && _b !== void 0 ? _b : 0;\n            for (const guide of indent) {\n                const left = leftOffset + (guide.visibleColumn - 1) * this._spaceWidth;\n                if (left > scrollWidth || (this._maxIndentLeft > 0 && left > this._maxIndentLeft)) {\n                    break;\n                }\n                const className = guide.horizontalLine ? (guide.horizontalLine.top ? 'horizontal-top' : 'horizontal-bottom') : 'vertical';\n                const width = guide.horizontalLine\n                    ? ((_d = (_c = ctx.visibleRangeForPosition(new Position(lineNumber, guide.horizontalLine.endColumn))) === null || _c === void 0 ? void 0 : _c.left) !== null && _d !== void 0 ? _d : (left + this._spaceWidth)) - left\n                    : this._spaceWidth;\n                result += `<div class=\"core-guide ${guide.className} ${className}\" style=\"left:${left}px;height:${lineHeight}px;width:${width}px\"></div>`;\n            }\n            output[lineIndex] = result;\n        }\n        this._renderResult = output;\n    }\n    getGuidesByLine(visibleStartLineNumber, visibleEndLineNumber, activeCursorPosition) {\n        const bracketGuides = this._bracketPairGuideOptions.bracketPairs !== false\n            ? this._context.viewModel.getBracketGuidesInRangeByLine(visibleStartLineNumber, visibleEndLineNumber, activeCursorPosition, {\n                highlightActive: this._bracketPairGuideOptions.highlightActiveBracketPair,\n                horizontalGuides: this._bracketPairGuideOptions.bracketPairsHorizontal === true\n                    ? HorizontalGuidesState.Enabled\n                    : this._bracketPairGuideOptions.bracketPairsHorizontal === 'active'\n                        ? HorizontalGuidesState.EnabledForActive\n                        : HorizontalGuidesState.Disabled,\n                includeInactive: this._bracketPairGuideOptions.bracketPairs === true,\n            })\n            : null;\n        const indentGuides = this._bracketPairGuideOptions.indentation\n            ? this._context.viewModel.getLinesIndentGuides(visibleStartLineNumber, visibleEndLineNumber)\n            : null;\n        let activeIndentStartLineNumber = 0;\n        let activeIndentEndLineNumber = 0;\n        let activeIndentLevel = 0;\n        if (this._bracketPairGuideOptions.highlightActiveIndentation && activeCursorPosition) {\n            const activeIndentInfo = this._context.viewModel.getActiveIndentGuide(activeCursorPosition.lineNumber, visibleStartLineNumber, visibleEndLineNumber);\n            activeIndentStartLineNumber = activeIndentInfo.startLineNumber;\n            activeIndentEndLineNumber = activeIndentInfo.endLineNumber;\n            activeIndentLevel = activeIndentInfo.indent;\n        }\n        const { indentSize } = this._context.viewModel.model.getOptions();\n        const result = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineGuides = new Array();\n            result.push(lineGuides);\n            const bracketGuidesInLine = bracketGuides ? bracketGuides[lineNumber - visibleStartLineNumber] : [];\n            const bracketGuidesInLineQueue = new ArrayQueue(bracketGuidesInLine);\n            const indentGuidesInLine = indentGuides ? indentGuides[lineNumber - visibleStartLineNumber] : [];\n            for (let indentLvl = 1; indentLvl <= indentGuidesInLine; indentLvl++) {\n                const indentGuide = (indentLvl - 1) * indentSize + 1;\n                const isActive = \n                // Disable active indent guide if there are bracket guides.\n                bracketGuidesInLine.length === 0 &&\n                    activeIndentStartLineNumber <= lineNumber &&\n                    lineNumber <= activeIndentEndLineNumber &&\n                    indentLvl === activeIndentLevel;\n                lineGuides.push(...bracketGuidesInLineQueue.takeWhile(g => g.visibleColumn < indentGuide) || []);\n                const peeked = bracketGuidesInLineQueue.peek();\n                if (!peeked || peeked.visibleColumn !== indentGuide || peeked.horizontalLine) {\n                    lineGuides.push(new IndentGuide(indentGuide, isActive ? 'core-guide-indent-active' : 'core-guide-indent', null));\n                }\n            }\n            lineGuides.push(...bracketGuidesInLineQueue.takeWhile(g => true) || []);\n        }\n        return result;\n    }\n    render(startLineNumber, lineNumber) {\n        if (!this._renderResult) {\n            return '';\n        }\n        const lineIndex = lineNumber - startLineNumber;\n        if (lineIndex < 0 || lineIndex >= this._renderResult.length) {\n            return '';\n        }\n        return this._renderResult[lineIndex];\n    }\n}\nfunction transparentToUndefined(color) {\n    if (color && color.isTransparent()) {\n        return undefined;\n    }\n    return color;\n}\nregisterThemingParticipant((theme, collector) => {\n    const editorIndentGuidesColor = theme.getColor(editorIndentGuides);\n    if (editorIndentGuidesColor) {\n        collector.addRule(`.monaco-editor .lines-content .core-guide-indent { box-shadow: 1px 0 0 0 ${editorIndentGuidesColor} inset; }`);\n    }\n    const editorActiveIndentGuidesColor = theme.getColor(editorActiveIndentGuides) || editorIndentGuidesColor;\n    if (editorActiveIndentGuidesColor) {\n        collector.addRule(`.monaco-editor .lines-content .core-guide-indent-active { box-shadow: 1px 0 0 0 ${editorActiveIndentGuidesColor} inset; }`);\n    }\n    const colors = [\n        { bracketColor: editorBracketHighlightingForeground1, guideColor: editorBracketPairGuideBackground1, guideColorActive: editorBracketPairGuideActiveBackground1 },\n        { bracketColor: editorBracketHighlightingForeground2, guideColor: editorBracketPairGuideBackground2, guideColorActive: editorBracketPairGuideActiveBackground2 },\n        { bracketColor: editorBracketHighlightingForeground3, guideColor: editorBracketPairGuideBackground3, guideColorActive: editorBracketPairGuideActiveBackground3 },\n        { bracketColor: editorBracketHighlightingForeground4, guideColor: editorBracketPairGuideBackground4, guideColorActive: editorBracketPairGuideActiveBackground4 },\n        { bracketColor: editorBracketHighlightingForeground5, guideColor: editorBracketPairGuideBackground5, guideColorActive: editorBracketPairGuideActiveBackground5 },\n        { bracketColor: editorBracketHighlightingForeground6, guideColor: editorBracketPairGuideBackground6, guideColorActive: editorBracketPairGuideActiveBackground6 }\n    ];\n    const colorProvider = new BracketPairGuidesClassNames();\n    const colorValues = colors\n        .map(c => {\n        var _a, _b;\n        const bracketColor = theme.getColor(c.bracketColor);\n        const guideColor = theme.getColor(c.guideColor);\n        const guideColorActive = theme.getColor(c.guideColorActive);\n        const effectiveGuideColor = transparentToUndefined((_a = transparentToUndefined(guideColor)) !== null && _a !== void 0 ? _a : bracketColor === null || bracketColor === void 0 ? void 0 : bracketColor.transparent(0.3));\n        const effectiveGuideColorActive = transparentToUndefined((_b = transparentToUndefined(guideColorActive)) !== null && _b !== void 0 ? _b : bracketColor);\n        if (!effectiveGuideColor || !effectiveGuideColorActive) {\n            return undefined;\n        }\n        return {\n            guideColor: effectiveGuideColor,\n            guideColorActive: effectiveGuideColorActive,\n        };\n    })\n        .filter(isDefined);\n    if (colorValues.length > 0) {\n        for (let level = 0; level < 30; level++) {\n            const colors = colorValues[level % colorValues.length];\n            collector.addRule(`.monaco-editor .${colorProvider.getInlineClassNameOfLevel(level).replace(/ /g, '.')} { --guide-color: ${colors.guideColor}; --guide-color-active: ${colors.guideColorActive}; }`);\n        }\n        collector.addRule(`.monaco-editor .vertical { box-shadow: 1px 0 0 0 var(--guide-color) inset; }`);\n        collector.addRule(`.monaco-editor .horizontal-top { border-top: 1px solid var(--guide-color); }`);\n        collector.addRule(`.monaco-editor .horizontal-bottom { border-bottom: 1px solid var(--guide-color); }`);\n        collector.addRule(`.monaco-editor .vertical.${colorProvider.activeClassName} { box-shadow: 1px 0 0 0 var(--guide-color-active) inset; }`);\n        collector.addRule(`.monaco-editor .horizontal-top.${colorProvider.activeClassName} { border-top: 1px solid var(--guide-color-active); }`);\n        collector.addRule(`.monaco-editor .horizontal-bottom.${colorProvider.activeClassName} { border-bottom: 1px solid var(--guide-color-active); }`);\n    }\n});\n",
+      "start": 1711096856371,
+      "end": 1711096856445,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856445,
+      "end": 1711096856445,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856446,
+      "end": 1711096856446,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856446,
+      "end": 1711096856446,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856446,
+      "end": 1711096856446,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856446,
+      "end": 1711096856446,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856446,
+      "end": 1711096856446,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856446,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856447,
+      "end": 1711096856447,
+      "order": "normal"
+    }
+  ]
+}

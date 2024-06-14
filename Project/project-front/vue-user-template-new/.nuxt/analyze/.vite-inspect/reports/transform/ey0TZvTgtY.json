@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/message/browser/messageController.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { alert } from '../../../../base/browser/ui/aria/aria.js';\nimport { TimeoutTimer } from '../../../../base/common/async.js';\nimport { DisposableStore, MutableDisposable } from '../../../../base/common/lifecycle.js';\nimport './messageController.css';\nimport { EditorCommand, registerEditorCommand, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport * as nls from '../../../../nls.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nlet MessageController = class MessageController {\n    constructor(editor, contextKeyService) {\n        this._messageWidget = new MutableDisposable();\n        this._messageListeners = new DisposableStore();\n        this._editor = editor;\n        this._visible = MessageController.MESSAGE_VISIBLE.bindTo(contextKeyService);\n        this._editorListener = this._editor.onDidAttemptReadOnlyEdit(() => this._onDidAttemptReadOnlyEdit());\n    }\n    static get(editor) {\n        return editor.getContribution(MessageController.ID);\n    }\n    dispose() {\n        this._editorListener.dispose();\n        this._messageListeners.dispose();\n        this._messageWidget.dispose();\n        this._visible.reset();\n    }\n    showMessage(message, position) {\n        alert(message);\n        this._visible.set(true);\n        this._messageWidget.clear();\n        this._messageListeners.clear();\n        this._messageWidget.value = new MessageWidget(this._editor, position, message);\n        // close on blur, cursor, model change, dispose\n        this._messageListeners.add(this._editor.onDidBlurEditorText(() => this.closeMessage()));\n        this._messageListeners.add(this._editor.onDidChangeCursorPosition(() => this.closeMessage()));\n        this._messageListeners.add(this._editor.onDidDispose(() => this.closeMessage()));\n        this._messageListeners.add(this._editor.onDidChangeModel(() => this.closeMessage()));\n        // 3sec\n        this._messageListeners.add(new TimeoutTimer(() => this.closeMessage(), 3000));\n        // close on mouse move\n        let bounds;\n        this._messageListeners.add(this._editor.onMouseMove(e => {\n            // outside the text area\n            if (!e.target.position) {\n                return;\n            }\n            if (!bounds) {\n                // define bounding box around position and first mouse occurance\n                bounds = new Range(position.lineNumber - 3, 1, e.target.position.lineNumber + 3, 1);\n            }\n            else if (!bounds.containsPosition(e.target.position)) {\n                // check if position is still in bounds\n                this.closeMessage();\n            }\n        }));\n    }\n    closeMessage() {\n        this._visible.reset();\n        this._messageListeners.clear();\n        if (this._messageWidget.value) {\n            this._messageListeners.add(MessageWidget.fadeOut(this._messageWidget.value));\n        }\n    }\n    _onDidAttemptReadOnlyEdit() {\n        if (this._editor.hasModel()) {\n            this.showMessage(nls.localize('editor.readonly', \"Cannot edit in read-only editor\"), this._editor.getPosition());\n        }\n    }\n};\nMessageController.ID = 'editor.contrib.messageController';\nMessageController.MESSAGE_VISIBLE = new RawContextKey('messageVisible', false, nls.localize('messageVisible', 'Whether the editor is currently showing an inline message'));\nMessageController = __decorate([\n    __param(1, IContextKeyService)\n], MessageController);\nexport { MessageController };\nconst MessageCommand = EditorCommand.bindToContribution(MessageController.get);\nregisterEditorCommand(new MessageCommand({\n    id: 'leaveEditorMessage',\n    precondition: MessageController.MESSAGE_VISIBLE,\n    handler: c => c.closeMessage(),\n    kbOpts: {\n        weight: 100 /* EditorContrib */ + 30,\n        primary: 9 /* Escape */\n    }\n}));\nclass MessageWidget {\n    constructor(editor, { lineNumber, column }, text) {\n        // Editor.IContentWidget.allowEditorOverflow\n        this.allowEditorOverflow = true;\n        this.suppressMouseDown = false;\n        this._editor = editor;\n        this._editor.revealLinesInCenterIfOutsideViewport(lineNumber, lineNumber, 0 /* Smooth */);\n        this._position = { lineNumber, column: column - 1 };\n        this._domNode = document.createElement('div');\n        this._domNode.classList.add('monaco-editor-overlaymessage');\n        const anchorTop = document.createElement('div');\n        anchorTop.classList.add('anchor', 'top');\n        this._domNode.appendChild(anchorTop);\n        const message = document.createElement('div');\n        message.classList.add('message');\n        message.textContent = text;\n        this._domNode.appendChild(message);\n        const anchorBottom = document.createElement('div');\n        anchorBottom.classList.add('anchor', 'below');\n        this._domNode.appendChild(anchorBottom);\n        this._editor.addContentWidget(this);\n        this._domNode.classList.add('fadeIn');\n    }\n    static fadeOut(messageWidget) {\n        let handle;\n        const dispose = () => {\n            messageWidget.dispose();\n            clearTimeout(handle);\n            messageWidget.getDomNode().removeEventListener('animationend', dispose);\n        };\n        handle = setTimeout(dispose, 110);\n        messageWidget.getDomNode().addEventListener('animationend', dispose);\n        messageWidget.getDomNode().classList.add('fadeOut');\n        return { dispose };\n    }\n    dispose() {\n        this._editor.removeContentWidget(this);\n    }\n    getId() {\n        return 'messageoverlay';\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    getPosition() {\n        return { position: this._position, preference: [1 /* ABOVE */, 2 /* BELOW */] };\n    }\n    afterRender(position) {\n        this._domNode.classList.toggle('below', position === 2 /* BELOW */);\n    }\n}\nregisterEditorContribution(MessageController.ID, MessageController);\n",
+      "start": 1711096855697,
+      "end": 1711096855803,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855803,
+      "end": 1711096855803,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855803,
+      "end": 1711096855804,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855804,
+      "end": 1711096855804,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855804,
+      "end": 1711096855805,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855805,
+      "end": 1711096855805,
+      "order": "normal"
+    }
+  ]
+}

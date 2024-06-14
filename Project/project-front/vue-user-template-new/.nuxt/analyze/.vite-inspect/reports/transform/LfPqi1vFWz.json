@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/quickAccess/browser/gotoLineQuickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Disposable, DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { getCodeEditor } from '../../../browser/editorBrowser.js';\nimport { AbstractEditorNavigationQuickAccessProvider } from './editorNavigationQuickAccess.js';\nimport { localize } from '../../../../nls.js';\nexport class AbstractGotoLineQuickAccessProvider extends AbstractEditorNavigationQuickAccessProvider {\n    constructor() {\n        super({ canAcceptInBackground: true });\n    }\n    provideWithoutTextEditor(picker) {\n        const label = localize('cannotRunGotoLine', \"Open a text editor first to go to a line.\");\n        picker.items = [{ label }];\n        picker.ariaLabel = label;\n        return Disposable.None;\n    }\n    provideWithTextEditor(context, picker, token) {\n        const editor = context.editor;\n        const disposables = new DisposableStore();\n        // Goto line once picked\n        disposables.add(picker.onDidAccept(event => {\n            const [item] = picker.selectedItems;\n            if (item) {\n                if (!this.isValidLineNumber(editor, item.lineNumber)) {\n                    return;\n                }\n                this.gotoLocation(context, { range: this.toRange(item.lineNumber, item.column), keyMods: picker.keyMods, preserveFocus: event.inBackground });\n                if (!event.inBackground) {\n                    picker.hide();\n                }\n            }\n        }));\n        // React to picker changes\n        const updatePickerAndEditor = () => {\n            const position = this.parsePosition(editor, picker.value.trim().substr(AbstractGotoLineQuickAccessProvider.PREFIX.length));\n            const label = this.getPickLabel(editor, position.lineNumber, position.column);\n            // Picker\n            picker.items = [{\n                    lineNumber: position.lineNumber,\n                    column: position.column,\n                    label\n                }];\n            // ARIA Label\n            picker.ariaLabel = label;\n            // Clear decorations for invalid range\n            if (!this.isValidLineNumber(editor, position.lineNumber)) {\n                this.clearDecorations(editor);\n                return;\n            }\n            // Reveal\n            const range = this.toRange(position.lineNumber, position.column);\n            editor.revealRangeInCenter(range, 0 /* Smooth */);\n            // Decorate\n            this.addDecorations(editor, range);\n        };\n        updatePickerAndEditor();\n        disposables.add(picker.onDidChangeValue(() => updatePickerAndEditor()));\n        // Adjust line number visibility as needed\n        const codeEditor = getCodeEditor(editor);\n        if (codeEditor) {\n            const options = codeEditor.getOptions();\n            const lineNumbers = options.get(60 /* lineNumbers */);\n            if (lineNumbers.renderType === 2 /* Relative */) {\n                codeEditor.updateOptions({ lineNumbers: 'on' });\n                disposables.add(toDisposable(() => codeEditor.updateOptions({ lineNumbers: 'relative' })));\n            }\n        }\n        return disposables;\n    }\n    toRange(lineNumber = 1, column = 1) {\n        return {\n            startLineNumber: lineNumber,\n            startColumn: column,\n            endLineNumber: lineNumber,\n            endColumn: column\n        };\n    }\n    parsePosition(editor, value) {\n        // Support line-col formats of `line,col`, `line:col`, `line#col`\n        const numbers = value.split(/,|:|#/).map(part => parseInt(part, 10)).filter(part => !isNaN(part));\n        const endLine = this.lineCount(editor) + 1;\n        return {\n            lineNumber: numbers[0] > 0 ? numbers[0] : endLine + numbers[0],\n            column: numbers[1]\n        };\n    }\n    getPickLabel(editor, lineNumber, column) {\n        // Location valid: indicate this as picker label\n        if (this.isValidLineNumber(editor, lineNumber)) {\n            if (this.isValidColumn(editor, lineNumber, column)) {\n                return localize('gotoLineColumnLabel', \"Go to line {0} and character {1}.\", lineNumber, column);\n            }\n            return localize('gotoLineLabel', \"Go to line {0}.\", lineNumber);\n        }\n        // Location invalid: show generic label\n        const position = editor.getPosition() || { lineNumber: 1, column: 1 };\n        const lineCount = this.lineCount(editor);\n        if (lineCount > 1) {\n            return localize('gotoLineLabelEmptyWithLimit', \"Current Line: {0}, Character: {1}. Type a line number between 1 and {2} to navigate to.\", position.lineNumber, position.column, lineCount);\n        }\n        return localize('gotoLineLabelEmpty', \"Current Line: {0}, Character: {1}. Type a line number to navigate to.\", position.lineNumber, position.column);\n    }\n    isValidLineNumber(editor, lineNumber) {\n        if (!lineNumber || typeof lineNumber !== 'number') {\n            return false;\n        }\n        return lineNumber > 0 && lineNumber <= this.lineCount(editor);\n    }\n    isValidColumn(editor, lineNumber, column) {\n        if (!column || typeof column !== 'number') {\n            return false;\n        }\n        const model = this.getModel(editor);\n        if (!model) {\n            return false;\n        }\n        const positionCandidate = { lineNumber, column };\n        return model.validatePosition(positionCandidate).equals(positionCandidate);\n    }\n    lineCount(editor) {\n        var _a, _b;\n        return (_b = (_a = this.getModel(editor)) === null || _a === void 0 ? void 0 : _a.getLineCount()) !== null && _b !== void 0 ? _b : 0;\n    }\n}\nAbstractGotoLineQuickAccessProvider.PREFIX = ':';\n",
+      "start": 1711096854915,
+      "end": 1711096855062,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855062,
+      "end": 1711096855062,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855063,
+      "end": 1711096855063,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    }
+  ]
+}

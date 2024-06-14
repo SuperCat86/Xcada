@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languageFeatureRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../base/common/event.js';\nimport { toDisposable } from '../../base/common/lifecycle.js';\nimport { shouldSynchronizeModel } from './model.js';\nimport { score } from './languageSelector.js';\nfunction isExclusive(selector) {\n    if (typeof selector === 'string') {\n        return false;\n    }\n    else if (Array.isArray(selector)) {\n        return selector.every(isExclusive);\n    }\n    else {\n        return !!selector.exclusive; // TODO: microsoft/TypeScript#42768\n    }\n}\nexport class LanguageFeatureRegistry {\n    constructor(_notebookTypeResolver) {\n        this._notebookTypeResolver = _notebookTypeResolver;\n        this._clock = 0;\n        this._entries = [];\n        this._onDidChange = new Emitter();\n        this.onDidChange = this._onDidChange.event;\n    }\n    register(selector, provider) {\n        let entry = {\n            selector,\n            provider,\n            _score: -1,\n            _time: this._clock++\n        };\n        this._entries.push(entry);\n        this._lastCandidate = undefined;\n        this._onDidChange.fire(this._entries.length);\n        return toDisposable(() => {\n            if (entry) {\n                const idx = this._entries.indexOf(entry);\n                if (idx >= 0) {\n                    this._entries.splice(idx, 1);\n                    this._lastCandidate = undefined;\n                    this._onDidChange.fire(this._entries.length);\n                    entry = undefined;\n                }\n            }\n        });\n    }\n    has(model) {\n        return this.all(model).length > 0;\n    }\n    all(model) {\n        if (!model) {\n            return [];\n        }\n        this._updateScores(model);\n        const result = [];\n        // from registry\n        for (let entry of this._entries) {\n            if (entry._score > 0) {\n                result.push(entry.provider);\n            }\n        }\n        return result;\n    }\n    ordered(model) {\n        const result = [];\n        this._orderedForEach(model, entry => result.push(entry.provider));\n        return result;\n    }\n    orderedGroups(model) {\n        const result = [];\n        let lastBucket;\n        let lastBucketScore;\n        this._orderedForEach(model, entry => {\n            if (lastBucket && lastBucketScore === entry._score) {\n                lastBucket.push(entry.provider);\n            }\n            else {\n                lastBucketScore = entry._score;\n                lastBucket = [entry.provider];\n                result.push(lastBucket);\n            }\n        });\n        return result;\n    }\n    _orderedForEach(model, callback) {\n        if (!model) {\n            return;\n        }\n        this._updateScores(model);\n        for (const entry of this._entries) {\n            if (entry._score > 0) {\n                callback(entry);\n            }\n        }\n    }\n    _updateScores(model) {\n        var _a;\n        const notebookType = (_a = this._notebookTypeResolver) === null || _a === void 0 ? void 0 : _a.call(this, model.uri);\n        const candidate = {\n            uri: model.uri.toString(),\n            language: model.getLanguageId(),\n            notebookType\n        };\n        if (this._lastCandidate\n            && this._lastCandidate.language === candidate.language\n            && this._lastCandidate.uri === candidate.uri\n            && this._lastCandidate.notebookType === candidate.notebookType) {\n            // nothing has changed\n            return;\n        }\n        this._lastCandidate = candidate;\n        for (let entry of this._entries) {\n            entry._score = score(entry.selector, model.uri, model.getLanguageId(), shouldSynchronizeModel(model), notebookType);\n            if (isExclusive(entry.selector) && entry._score > 0) {\n                // support for one exclusive selector that overwrites\n                // any other selector\n                for (let entry of this._entries) {\n                    entry._score = 0;\n                }\n                entry._score = 1000;\n                break;\n            }\n        }\n        // needs sorting\n        this._entries.sort(LanguageFeatureRegistry._compareByScoreAndTime);\n    }\n    static _compareByScoreAndTime(a, b) {\n        if (a._score < b._score) {\n            return 1;\n        }\n        else if (a._score > b._score) {\n            return -1;\n        }\n        else if (a._time < b._time) {\n            return 1;\n        }\n        else if (a._time > b._time) {\n            return -1;\n        }\n        else {\n            return 0;\n        }\n    }\n}\n",
+      "start": 1711096857098,
+      "end": 1711096857180,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857180,
+      "end": 1711096857180,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857180,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857181,
+      "end": 1711096857181,
+      "order": "normal"
+    }
+  ]
+}

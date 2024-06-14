@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/overviewRuler/overviewRuler.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { OverviewZoneManager } from '../../../common/viewModel/overviewZoneManager.js';\nimport { ViewEventHandler } from '../../../common/viewEventHandler.js';\nexport class OverviewRuler extends ViewEventHandler {\n    constructor(context, cssClassName) {\n        super();\n        this._context = context;\n        const options = this._context.configuration.options;\n        this._domNode = createFastDomNode(document.createElement('canvas'));\n        this._domNode.setClassName(cssClassName);\n        this._domNode.setPosition('absolute');\n        this._domNode.setLayerHinting(true);\n        this._domNode.setContain('strict');\n        this._zoneManager = new OverviewZoneManager((lineNumber) => this._context.viewLayout.getVerticalOffsetForLineNumber(lineNumber));\n        this._zoneManager.setDOMWidth(0);\n        this._zoneManager.setDOMHeight(0);\n        this._zoneManager.setOuterHeight(this._context.viewLayout.getScrollHeight());\n        this._zoneManager.setLineHeight(options.get(59 /* lineHeight */));\n        this._zoneManager.setPixelRatio(options.get(129 /* pixelRatio */));\n        this._context.addEventHandler(this);\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        super.dispose();\n    }\n    // ---- begin view event handlers\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        if (e.hasChanged(59 /* lineHeight */)) {\n            this._zoneManager.setLineHeight(options.get(59 /* lineHeight */));\n            this._render();\n        }\n        if (e.hasChanged(129 /* pixelRatio */)) {\n            this._zoneManager.setPixelRatio(options.get(129 /* pixelRatio */));\n            this._domNode.setWidth(this._zoneManager.getDOMWidth());\n            this._domNode.setHeight(this._zoneManager.getDOMHeight());\n            this._domNode.domNode.width = this._zoneManager.getCanvasWidth();\n            this._domNode.domNode.height = this._zoneManager.getCanvasHeight();\n            this._render();\n        }\n        return true;\n    }\n    onFlushed(e) {\n        this._render();\n        return true;\n    }\n    onScrollChanged(e) {\n        if (e.scrollHeightChanged) {\n            this._zoneManager.setOuterHeight(e.scrollHeight);\n            this._render();\n        }\n        return true;\n    }\n    onZonesChanged(e) {\n        this._render();\n        return true;\n    }\n    // ---- end view event handlers\n    getDomNode() {\n        return this._domNode.domNode;\n    }\n    setLayout(position) {\n        this._domNode.setTop(position.top);\n        this._domNode.setRight(position.right);\n        let hasChanged = false;\n        hasChanged = this._zoneManager.setDOMWidth(position.width) || hasChanged;\n        hasChanged = this._zoneManager.setDOMHeight(position.height) || hasChanged;\n        if (hasChanged) {\n            this._domNode.setWidth(this._zoneManager.getDOMWidth());\n            this._domNode.setHeight(this._zoneManager.getDOMHeight());\n            this._domNode.domNode.width = this._zoneManager.getCanvasWidth();\n            this._domNode.domNode.height = this._zoneManager.getCanvasHeight();\n            this._render();\n        }\n    }\n    setZones(zones) {\n        this._zoneManager.setZones(zones);\n        this._render();\n    }\n    _render() {\n        if (this._zoneManager.getOuterHeight() === 0) {\n            return false;\n        }\n        const width = this._zoneManager.getCanvasWidth();\n        const height = this._zoneManager.getCanvasHeight();\n        const colorZones = this._zoneManager.resolveColorZones();\n        const id2Color = this._zoneManager.getId2Color();\n        const ctx = this._domNode.domNode.getContext('2d');\n        ctx.clearRect(0, 0, width, height);\n        if (colorZones.length > 0) {\n            this._renderOneLane(ctx, colorZones, id2Color, width);\n        }\n        return true;\n    }\n    _renderOneLane(ctx, colorZones, id2Color, width) {\n        let currentColorId = 0;\n        let currentFrom = 0;\n        let currentTo = 0;\n        for (const zone of colorZones) {\n            const zoneColorId = zone.colorId;\n            const zoneFrom = zone.from;\n            const zoneTo = zone.to;\n            if (zoneColorId !== currentColorId) {\n                ctx.fillRect(0, currentFrom, width, currentTo - currentFrom);\n                currentColorId = zoneColorId;\n                ctx.fillStyle = id2Color[currentColorId];\n                currentFrom = zoneFrom;\n                currentTo = zoneTo;\n            }\n            else {\n                if (currentTo >= zoneFrom) {\n                    currentTo = Math.max(currentTo, zoneTo);\n                }\n                else {\n                    ctx.fillRect(0, currentFrom, width, currentTo - currentFrom);\n                    currentFrom = zoneFrom;\n                    currentTo = zoneTo;\n                }\n            }\n        }\n        ctx.fillRect(0, currentFrom, width, currentTo - currentFrom);\n    }\n}\n",
+      "start": 1711096856414,
+      "end": 1711096856503,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856503,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856504,
+      "end": 1711096856504,
+      "order": "normal"
+    }
+  ]
+}

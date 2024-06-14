@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/suggest.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { canceled, isCancellationError, onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { FuzzyScore } from '../../../../base/common/filters.js';\nimport { DisposableStore, isDisposable } from '../../../../base/common/lifecycle.js';\nimport { StopWatch } from '../../../../base/common/stopwatch.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ITextModelService } from '../../../common/services/resolverService.js';\nimport { SnippetParser } from '../../snippet/browser/snippetParser.js';\nimport { localize } from '../../../../nls.js';\nimport { MenuId } from '../../../../platform/actions/common/actions.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { historyNavigationVisible } from '../../../../platform/history/browser/contextScopedHistoryWidget.js';\nexport const Context = {\n    Visible: historyNavigationVisible,\n    DetailsVisible: new RawContextKey('suggestWidgetDetailsVisible', false, localize('suggestWidgetDetailsVisible', \"Whether suggestion details are visible\")),\n    MultipleSuggestions: new RawContextKey('suggestWidgetMultipleSuggestions', false, localize('suggestWidgetMultipleSuggestions', \"Whether there are multiple suggestions to pick from\")),\n    MakesTextEdit: new RawContextKey('suggestionMakesTextEdit', true, localize('suggestionMakesTextEdit', \"Whether inserting the current suggestion yields in a change or has everything already been typed\")),\n    AcceptSuggestionsOnEnter: new RawContextKey('acceptSuggestionOnEnter', true, localize('acceptSuggestionOnEnter', \"Whether suggestions are inserted when pressing Enter\")),\n    HasInsertAndReplaceRange: new RawContextKey('suggestionHasInsertAndReplaceRange', false, localize('suggestionHasInsertAndReplaceRange', \"Whether the current suggestion has insert and replace behaviour\")),\n    InsertMode: new RawContextKey('suggestionInsertMode', undefined, { type: 'string', description: localize('suggestionInsertMode', \"Whether the default behaviour is to insert or replace\") }),\n    CanResolve: new RawContextKey('suggestionCanResolve', false, localize('suggestionCanResolve', \"Whether the current suggestion supports to resolve further details\")),\n};\nexport const suggestWidgetStatusbarMenu = new MenuId('suggestWidgetStatusBar');\nexport class CompletionItem {\n    constructor(position, completion, container, provider) {\n        this.position = position;\n        this.completion = completion;\n        this.container = container;\n        this.provider = provider;\n        // validation\n        this.isInvalid = false;\n        // sorting, filtering\n        this.score = FuzzyScore.Default;\n        this.distance = 0;\n        this.textLabel = typeof completion.label === 'string'\n            ? completion.label\n            : completion.label.label;\n        // ensure lower-variants (perf)\n        this.labelLow = this.textLabel.toLowerCase();\n        // validate label\n        this.isInvalid = !this.textLabel;\n        this.sortTextLow = completion.sortText && completion.sortText.toLowerCase();\n        this.filterTextLow = completion.filterText && completion.filterText.toLowerCase();\n        // normalize ranges\n        if (Range.isIRange(completion.range)) {\n            this.editStart = new Position(completion.range.startLineNumber, completion.range.startColumn);\n            this.editInsertEnd = new Position(completion.range.endLineNumber, completion.range.endColumn);\n            this.editReplaceEnd = new Position(completion.range.endLineNumber, completion.range.endColumn);\n            // validate range\n            this.isInvalid = this.isInvalid\n                || Range.spansMultipleLines(completion.range) || completion.range.startLineNumber !== position.lineNumber;\n        }\n        else {\n            this.editStart = new Position(completion.range.insert.startLineNumber, completion.range.insert.startColumn);\n            this.editInsertEnd = new Position(completion.range.insert.endLineNumber, completion.range.insert.endColumn);\n            this.editReplaceEnd = new Position(completion.range.replace.endLineNumber, completion.range.replace.endColumn);\n            // validate ranges\n            this.isInvalid = this.isInvalid\n                || Range.spansMultipleLines(completion.range.insert) || Range.spansMultipleLines(completion.range.replace)\n                || completion.range.insert.startLineNumber !== position.lineNumber || completion.range.replace.startLineNumber !== position.lineNumber\n                || completion.range.insert.startColumn !== completion.range.replace.startColumn;\n        }\n        // create the suggestion resolver\n        if (typeof provider.resolveCompletionItem !== 'function') {\n            this._resolveCache = Promise.resolve();\n            this._isResolved = true;\n        }\n    }\n    // ---- resolving\n    get isResolved() {\n        return !!this._isResolved;\n    }\n    resolve(token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._resolveCache) {\n                const sub = token.onCancellationRequested(() => {\n                    this._resolveCache = undefined;\n                    this._isResolved = false;\n                });\n                this._resolveCache = Promise.resolve(this.provider.resolveCompletionItem(this.completion, token)).then(value => {\n                    Object.assign(this.completion, value);\n                    this._isResolved = true;\n                    sub.dispose();\n                }, err => {\n                    if (isCancellationError(err)) {\n                        // the IPC queue will reject the request with the\n                        // cancellation error -> reset cached\n                        this._resolveCache = undefined;\n                        this._isResolved = false;\n                    }\n                });\n            }\n            return this._resolveCache;\n        });\n    }\n}\nexport class CompletionOptions {\n    constructor(snippetSortOrder = 2 /* Bottom */, kindFilter = new Set(), providerFilter = new Set(), showDeprecated = true) {\n        this.snippetSortOrder = snippetSortOrder;\n        this.kindFilter = kindFilter;\n        this.providerFilter = providerFilter;\n        this.showDeprecated = showDeprecated;\n    }\n}\nCompletionOptions.default = new CompletionOptions();\nlet _snippetSuggestSupport;\nexport function getSnippetSuggestSupport() {\n    return _snippetSuggestSupport;\n}\nexport class CompletionItemModel {\n    constructor(items, needsClipboard, durations, disposable) {\n        this.items = items;\n        this.needsClipboard = needsClipboard;\n        this.durations = durations;\n        this.disposable = disposable;\n    }\n}\nexport function provideSuggestionItems(registry, model, position, options = CompletionOptions.default, context = { triggerKind: 0 /* Invoke */ }, token = CancellationToken.None) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const sw = new StopWatch(true);\n        position = position.clone();\n        const word = model.getWordAtPosition(position);\n        const defaultReplaceRange = word ? new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn) : Range.fromPositions(position);\n        const defaultRange = { replace: defaultReplaceRange, insert: defaultReplaceRange.setEndPosition(position.lineNumber, position.column) };\n        const result = [];\n        const disposables = new DisposableStore();\n        const durations = [];\n        let needsClipboard = false;\n        const onCompletionList = (provider, container, sw) => {\n            var _a, _b, _c;\n            let didAddResult = false;\n            if (!container) {\n                return didAddResult;\n            }\n            for (let suggestion of container.suggestions) {\n                if (!options.kindFilter.has(suggestion.kind)) {\n                    // skip if not showing deprecated suggestions\n                    if (!options.showDeprecated && ((_a = suggestion === null || suggestion === void 0 ? void 0 : suggestion.tags) === null || _a === void 0 ? void 0 : _a.includes(1 /* Deprecated */))) {\n                        continue;\n                    }\n                    // fill in default range when missing\n                    if (!suggestion.range) {\n                        suggestion.range = defaultRange;\n                    }\n                    // fill in default sortText when missing\n                    if (!suggestion.sortText) {\n                        suggestion.sortText = typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.label;\n                    }\n                    if (!needsClipboard && suggestion.insertTextRules && suggestion.insertTextRules & 4 /* InsertAsSnippet */) {\n                        needsClipboard = SnippetParser.guessNeedsClipboard(suggestion.insertText);\n                    }\n                    result.push(new CompletionItem(position, suggestion, container, provider));\n                    didAddResult = true;\n                }\n            }\n            if (isDisposable(container)) {\n                disposables.add(container);\n            }\n            durations.push({\n                providerName: (_b = provider._debugDisplayName) !== null && _b !== void 0 ? _b : 'unknown_provider', elapsedProvider: (_c = container.duration) !== null && _c !== void 0 ? _c : -1, elapsedOverall: sw.elapsed()\n            });\n            return didAddResult;\n        };\n        // ask for snippets in parallel to asking \"real\" providers. Only do something if configured to\n        // do so - no snippet filter, no special-providers-only request\n        const snippetCompletions = (() => __awaiter(this, void 0, void 0, function* () {\n            if (!_snippetSuggestSupport || options.kindFilter.has(27 /* Snippet */)) {\n                return;\n            }\n            if (options.providerFilter.size > 0 && !options.providerFilter.has(_snippetSuggestSupport)) {\n                return;\n            }\n            const sw = new StopWatch(true);\n            const list = yield _snippetSuggestSupport.provideCompletionItems(model, position, context, token);\n            onCompletionList(_snippetSuggestSupport, list, sw);\n        }))();\n        // add suggestions from contributed providers - providers are ordered in groups of\n        // equal score and once a group produces a result the process stops\n        // get provider groups, always add snippet suggestion provider\n        for (let providerGroup of registry.orderedGroups(model)) {\n            // for each support in the group ask for suggestions\n            let didAddResult = false;\n            yield Promise.all(providerGroup.map((provider) => __awaiter(this, void 0, void 0, function* () {\n                if (options.providerFilter.size > 0 && !options.providerFilter.has(provider)) {\n                    return;\n                }\n                try {\n                    const sw = new StopWatch(true);\n                    const list = yield provider.provideCompletionItems(model, position, context, token);\n                    didAddResult = onCompletionList(provider, list, sw) || didAddResult;\n                }\n                catch (err) {\n                    onUnexpectedExternalError(err);\n                }\n            })));\n            if (didAddResult || token.isCancellationRequested) {\n                break;\n            }\n        }\n        yield snippetCompletions;\n        if (token.isCancellationRequested) {\n            disposables.dispose();\n            return Promise.reject(canceled());\n        }\n        return new CompletionItemModel(result.sort(getSuggestionComparator(options.snippetSortOrder)), needsClipboard, { entries: durations, elapsed: sw.elapsed() }, disposables);\n    });\n}\nfunction defaultComparator(a, b) {\n    // check with 'sortText'\n    if (a.sortTextLow && b.sortTextLow) {\n        if (a.sortTextLow < b.sortTextLow) {\n            return -1;\n        }\n        else if (a.sortTextLow > b.sortTextLow) {\n            return 1;\n        }\n    }\n    // check with 'label'\n    if (a.completion.label < b.completion.label) {\n        return -1;\n    }\n    else if (a.completion.label > b.completion.label) {\n        return 1;\n    }\n    // check with 'type'\n    return a.completion.kind - b.completion.kind;\n}\nfunction snippetUpComparator(a, b) {\n    if (a.completion.kind !== b.completion.kind) {\n        if (a.completion.kind === 27 /* Snippet */) {\n            return -1;\n        }\n        else if (b.completion.kind === 27 /* Snippet */) {\n            return 1;\n        }\n    }\n    return defaultComparator(a, b);\n}\nfunction snippetDownComparator(a, b) {\n    if (a.completion.kind !== b.completion.kind) {\n        if (a.completion.kind === 27 /* Snippet */) {\n            return 1;\n        }\n        else if (b.completion.kind === 27 /* Snippet */) {\n            return -1;\n        }\n    }\n    return defaultComparator(a, b);\n}\nconst _snippetComparators = new Map();\n_snippetComparators.set(0 /* Top */, snippetUpComparator);\n_snippetComparators.set(2 /* Bottom */, snippetDownComparator);\n_snippetComparators.set(1 /* Inline */, defaultComparator);\nexport function getSuggestionComparator(snippetConfig) {\n    return _snippetComparators.get(snippetConfig);\n}\nCommandsRegistry.registerCommand('_executeCompletionItemProvider', (accessor, ...args) => __awaiter(void 0, void 0, void 0, function* () {\n    const [uri, position, triggerCharacter, maxItemsToResolve] = args;\n    assertType(URI.isUri(uri));\n    assertType(Position.isIPosition(position));\n    assertType(typeof triggerCharacter === 'string' || !triggerCharacter);\n    assertType(typeof maxItemsToResolve === 'number' || !maxItemsToResolve);\n    const { completionProvider } = accessor.get(ILanguageFeaturesService);\n    const ref = yield accessor.get(ITextModelService).createModelReference(uri);\n    try {\n        const result = {\n            incomplete: false,\n            suggestions: []\n        };\n        const resolving = [];\n        const completions = yield provideSuggestionItems(completionProvider, ref.object.textEditorModel, Position.lift(position), undefined, { triggerCharacter, triggerKind: triggerCharacter ? 1 /* TriggerCharacter */ : 0 /* Invoke */ });\n        for (const item of completions.items) {\n            if (resolving.length < (maxItemsToResolve !== null && maxItemsToResolve !== void 0 ? maxItemsToResolve : 0)) {\n                resolving.push(item.resolve(CancellationToken.None));\n            }\n            result.incomplete = result.incomplete || item.container.incomplete;\n            result.suggestions.push(item.completion);\n        }\n        try {\n            yield Promise.all(resolving);\n            return result;\n        }\n        finally {\n            setTimeout(() => completions.disposable.dispose(), 100);\n        }\n    }\n    finally {\n        ref.dispose();\n    }\n}));\nlet _onlyOnceProvider;\nlet _onlyOnceSuggestions = [];\nexport function showSimpleSuggestions(accessor, editor, suggestions) {\n    const { completionProvider } = accessor.get(ILanguageFeaturesService);\n    if (!_onlyOnceProvider) {\n        _onlyOnceProvider = new class {\n            provideCompletionItems() {\n                let suggestions = _onlyOnceSuggestions.slice(0);\n                let result = { suggestions };\n                _onlyOnceSuggestions.length = 0;\n                return result;\n            }\n        };\n        completionProvider.register('*', _onlyOnceProvider);\n    }\n    setTimeout(() => {\n        var _a;\n        _onlyOnceSuggestions.push(...suggestions);\n        (_a = editor.getContribution('editor.contrib.suggestController')) === null || _a === void 0 ? void 0 : _a.triggerSuggest(new Set().add(_onlyOnceProvider));\n    }, 0);\n}\n",
+      "start": 1711096855909,
+      "end": 1711096856011,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856011,
+      "end": 1711096856011,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856011,
+      "end": 1711096856012,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856012,
+      "end": 1711096856012,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856012,
+      "end": 1711096856012,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856012,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    }
+  ]
+}

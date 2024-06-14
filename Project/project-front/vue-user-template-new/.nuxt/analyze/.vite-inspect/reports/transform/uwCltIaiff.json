@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/dropdown/dropdownActionViewItem.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { $, append } from '../../dom.js';\nimport { BaseActionViewItem } from '../actionbar/actionViewItems.js';\nimport { DropdownMenu } from './dropdown.js';\nimport { Emitter } from '../../../common/event.js';\nimport './dropdown.css';\nexport class DropdownMenuActionViewItem extends BaseActionViewItem {\n    constructor(action, menuActionsOrProvider, contextMenuProvider, options = Object.create(null)) {\n        super(null, action, options);\n        this.actionItem = null;\n        this._onDidChangeVisibility = this._register(new Emitter());\n        this.menuActionsOrProvider = menuActionsOrProvider;\n        this.contextMenuProvider = contextMenuProvider;\n        this.options = options;\n        if (this.options.actionRunner) {\n            this.actionRunner = this.options.actionRunner;\n        }\n    }\n    render(container) {\n        this.actionItem = container;\n        const labelRenderer = (el) => {\n            this.element = append(el, $('a.action-label'));\n            let classNames = [];\n            if (typeof this.options.classNames === 'string') {\n                classNames = this.options.classNames.split(/\\s+/g).filter(s => !!s);\n            }\n            else if (this.options.classNames) {\n                classNames = this.options.classNames;\n            }\n            // todo@aeschli: remove codicon, should come through `this.options.classNames`\n            if (!classNames.find(c => c === 'icon')) {\n                classNames.push('codicon');\n            }\n            this.element.classList.add(...classNames);\n            this.element.setAttribute('role', 'button');\n            this.element.setAttribute('aria-haspopup', 'true');\n            this.element.setAttribute('aria-expanded', 'false');\n            this.element.title = this._action.label || '';\n            return null;\n        };\n        const isActionsArray = Array.isArray(this.menuActionsOrProvider);\n        const options = {\n            contextMenuProvider: this.contextMenuProvider,\n            labelRenderer: labelRenderer,\n            menuAsChild: this.options.menuAsChild,\n            actions: isActionsArray ? this.menuActionsOrProvider : undefined,\n            actionProvider: isActionsArray ? undefined : this.menuActionsOrProvider\n        };\n        this.dropdownMenu = this._register(new DropdownMenu(container, options));\n        this._register(this.dropdownMenu.onDidChangeVisibility(visible => {\n            var _a;\n            (_a = this.element) === null || _a === void 0 ? void 0 : _a.setAttribute('aria-expanded', `${visible}`);\n            this._onDidChangeVisibility.fire(visible);\n        }));\n        this.dropdownMenu.menuOptions = {\n            actionViewItemProvider: this.options.actionViewItemProvider,\n            actionRunner: this.actionRunner,\n            getKeyBinding: this.options.keybindingProvider,\n            context: this._context\n        };\n        if (this.options.anchorAlignmentProvider) {\n            const that = this;\n            this.dropdownMenu.menuOptions = Object.assign(Object.assign({}, this.dropdownMenu.menuOptions), { get anchorAlignment() {\n                    return that.options.anchorAlignmentProvider();\n                } });\n        }\n        this.updateEnabled();\n    }\n    setActionContext(newContext) {\n        super.setActionContext(newContext);\n        if (this.dropdownMenu) {\n            if (this.dropdownMenu.menuOptions) {\n                this.dropdownMenu.menuOptions.context = newContext;\n            }\n            else {\n                this.dropdownMenu.menuOptions = { context: newContext };\n            }\n        }\n    }\n    updateEnabled() {\n        var _a, _b;\n        const disabled = !this.getAction().enabled;\n        (_a = this.actionItem) === null || _a === void 0 ? void 0 : _a.classList.toggle('disabled', disabled);\n        (_b = this.element) === null || _b === void 0 ? void 0 : _b.classList.toggle('disabled', disabled);\n    }\n}\n",
+      "start": 1711096857357,
+      "end": 1711096857473,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857474,
+      "end": 1711096857474,
+      "order": "normal"
+    }
+  ]
+}

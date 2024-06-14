@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/smartSelect/browser/bracketSelections.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { LinkedList } from '../../../../base/common/linkedList.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nexport class BracketSelectionRangeProvider {\n    provideSelectionRanges(model, positions) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const result = [];\n            for (const position of positions) {\n                const bucket = [];\n                result.push(bucket);\n                const ranges = new Map();\n                yield new Promise(resolve => BracketSelectionRangeProvider._bracketsRightYield(resolve, 0, model, position, ranges));\n                yield new Promise(resolve => BracketSelectionRangeProvider._bracketsLeftYield(resolve, 0, model, position, ranges, bucket));\n            }\n            return result;\n        });\n    }\n    static _bracketsRightYield(resolve, round, model, pos, ranges) {\n        const counts = new Map();\n        const t1 = Date.now();\n        while (true) {\n            if (round >= BracketSelectionRangeProvider._maxRounds) {\n                resolve();\n                break;\n            }\n            if (!pos) {\n                resolve();\n                break;\n            }\n            let bracket = model.bracketPairs.findNextBracket(pos);\n            if (!bracket) {\n                resolve();\n                break;\n            }\n            let d = Date.now() - t1;\n            if (d > BracketSelectionRangeProvider._maxDuration) {\n                setTimeout(() => BracketSelectionRangeProvider._bracketsRightYield(resolve, round + 1, model, pos, ranges));\n                break;\n            }\n            const key = bracket.close[0];\n            if (bracket.isOpen) {\n                // wait for closing\n                let val = counts.has(key) ? counts.get(key) : 0;\n                counts.set(key, val + 1);\n            }\n            else {\n                // process closing\n                let val = counts.has(key) ? counts.get(key) : 0;\n                val -= 1;\n                counts.set(key, Math.max(0, val));\n                if (val < 0) {\n                    let list = ranges.get(key);\n                    if (!list) {\n                        list = new LinkedList();\n                        ranges.set(key, list);\n                    }\n                    list.push(bracket.range);\n                }\n            }\n            pos = bracket.range.getEndPosition();\n        }\n    }\n    static _bracketsLeftYield(resolve, round, model, pos, ranges, bucket) {\n        const counts = new Map();\n        const t1 = Date.now();\n        while (true) {\n            if (round >= BracketSelectionRangeProvider._maxRounds && ranges.size === 0) {\n                resolve();\n                break;\n            }\n            if (!pos) {\n                resolve();\n                break;\n            }\n            let bracket = model.bracketPairs.findPrevBracket(pos);\n            if (!bracket) {\n                resolve();\n                break;\n            }\n            let d = Date.now() - t1;\n            if (d > BracketSelectionRangeProvider._maxDuration) {\n                setTimeout(() => BracketSelectionRangeProvider._bracketsLeftYield(resolve, round + 1, model, pos, ranges, bucket));\n                break;\n            }\n            const key = bracket.close[0];\n            if (!bracket.isOpen) {\n                // wait for opening\n                let val = counts.has(key) ? counts.get(key) : 0;\n                counts.set(key, val + 1);\n            }\n            else {\n                // opening\n                let val = counts.has(key) ? counts.get(key) : 0;\n                val -= 1;\n                counts.set(key, Math.max(0, val));\n                if (val < 0) {\n                    let list = ranges.get(key);\n                    if (list) {\n                        let closing = list.shift();\n                        if (list.size === 0) {\n                            ranges.delete(key);\n                        }\n                        const innerBracket = Range.fromPositions(bracket.range.getEndPosition(), closing.getStartPosition());\n                        const outerBracket = Range.fromPositions(bracket.range.getStartPosition(), closing.getEndPosition());\n                        bucket.push({ range: innerBracket });\n                        bucket.push({ range: outerBracket });\n                        BracketSelectionRangeProvider._addBracketLeading(model, outerBracket, bucket);\n                    }\n                }\n            }\n            pos = bracket.range.getStartPosition();\n        }\n    }\n    static _addBracketLeading(model, bracket, bucket) {\n        if (bracket.startLineNumber === bracket.endLineNumber) {\n            return;\n        }\n        // xxxxxxxx {\n        //\n        // }\n        const startLine = bracket.startLineNumber;\n        const column = model.getLineFirstNonWhitespaceColumn(startLine);\n        if (column !== 0 && column !== bracket.startColumn) {\n            bucket.push({ range: Range.fromPositions(new Position(startLine, column), bracket.getEndPosition()) });\n            bucket.push({ range: Range.fromPositions(new Position(startLine, 1), bracket.getEndPosition()) });\n        }\n        // xxxxxxxx\n        // {\n        //\n        // }\n        const aboveLine = startLine - 1;\n        if (aboveLine > 0) {\n            const column = model.getLineFirstNonWhitespaceColumn(aboveLine);\n            if (column === bracket.startColumn && column !== model.getLineLastNonWhitespaceColumn(aboveLine)) {\n                bucket.push({ range: Range.fromPositions(new Position(aboveLine, column), bracket.getEndPosition()) });\n                bucket.push({ range: Range.fromPositions(new Position(aboveLine, 1), bracket.getEndPosition()) });\n            }\n        }\n    }\n}\nBracketSelectionRangeProvider._maxDuration = 30;\nBracketSelectionRangeProvider._maxRounds = 2;\n",
+      "start": 1711096855905,
+      "end": 1711096856009,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856009,
+      "end": 1711096856009,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856009,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856010,
+      "end": 1711096856010,
+      "order": "normal"
+    }
+  ]
+}

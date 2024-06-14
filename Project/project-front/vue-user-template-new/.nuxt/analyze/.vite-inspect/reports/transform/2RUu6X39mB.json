@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/peek/referencesController.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { createCancelablePromise } from '../../../../../base/common/async.js';\nimport { onUnexpectedError } from '../../../../../base/common/errors.js';\nimport { KeyChord } from '../../../../../base/common/keyCodes.js';\nimport { DisposableStore } from '../../../../../base/common/lifecycle.js';\nimport { ICodeEditorService } from '../../../../browser/services/codeEditorService.js';\nimport { Position } from '../../../../common/core/position.js';\nimport { Range } from '../../../../common/core/range.js';\nimport { getOuterEditor, PeekContext } from '../../../peekView/browser/peekView.js';\nimport * as nls from '../../../../../nls.js';\nimport { CommandsRegistry } from '../../../../../platform/commands/common/commands.js';\nimport { IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';\nimport { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';\nimport { KeybindingsRegistry } from '../../../../../platform/keybinding/common/keybindingsRegistry.js';\nimport { IListService, WorkbenchListFocusContextKey, WorkbenchTreeElementCanCollapse, WorkbenchTreeElementCanExpand } from '../../../../../platform/list/browser/listService.js';\nimport { INotificationService } from '../../../../../platform/notification/common/notification.js';\nimport { IStorageService } from '../../../../../platform/storage/common/storage.js';\nimport { OneReference } from '../referencesModel.js';\nimport { LayoutData, ReferenceWidget } from './referencesWidget.js';\nexport const ctxReferenceSearchVisible = new RawContextKey('referenceSearchVisible', false, nls.localize('referenceSearchVisible', \"Whether reference peek is visible, like 'Peek References' or 'Peek Definition'\"));\nlet ReferencesController = class ReferencesController {\n    constructor(_defaultTreeKeyboardSupport, _editor, contextKeyService, _editorService, _notificationService, _instantiationService, _storageService, _configurationService) {\n        this._defaultTreeKeyboardSupport = _defaultTreeKeyboardSupport;\n        this._editor = _editor;\n        this._editorService = _editorService;\n        this._notificationService = _notificationService;\n        this._instantiationService = _instantiationService;\n        this._storageService = _storageService;\n        this._configurationService = _configurationService;\n        this._disposables = new DisposableStore();\n        this._requestIdPool = 0;\n        this._ignoreModelChangeEvent = false;\n        this._referenceSearchVisible = ctxReferenceSearchVisible.bindTo(contextKeyService);\n    }\n    static get(editor) {\n        return editor.getContribution(ReferencesController.ID);\n    }\n    dispose() {\n        var _a, _b;\n        this._referenceSearchVisible.reset();\n        this._disposables.dispose();\n        (_a = this._widget) === null || _a === void 0 ? void 0 : _a.dispose();\n        (_b = this._model) === null || _b === void 0 ? void 0 : _b.dispose();\n        this._widget = undefined;\n        this._model = undefined;\n    }\n    toggleWidget(range, modelPromise, peekMode) {\n        // close current widget and return early is position didn't change\n        let widgetPosition;\n        if (this._widget) {\n            widgetPosition = this._widget.position;\n        }\n        this.closeWidget();\n        if (!!widgetPosition && range.containsPosition(widgetPosition)) {\n            return;\n        }\n        this._peekMode = peekMode;\n        this._referenceSearchVisible.set(true);\n        // close the widget on model/mode changes\n        this._disposables.add(this._editor.onDidChangeModelLanguage(() => { this.closeWidget(); }));\n        this._disposables.add(this._editor.onDidChangeModel(() => {\n            if (!this._ignoreModelChangeEvent) {\n                this.closeWidget();\n            }\n        }));\n        const storageKey = 'peekViewLayout';\n        const data = LayoutData.fromJSON(this._storageService.get(storageKey, 0 /* GLOBAL */, '{}'));\n        this._widget = this._instantiationService.createInstance(ReferenceWidget, this._editor, this._defaultTreeKeyboardSupport, data);\n        this._widget.setTitle(nls.localize('labelLoading', \"Loading...\"));\n        this._widget.show(range);\n        this._disposables.add(this._widget.onDidClose(() => {\n            modelPromise.cancel();\n            if (this._widget) {\n                this._storageService.store(storageKey, JSON.stringify(this._widget.layoutData), 0 /* GLOBAL */, 1 /* MACHINE */);\n                this._widget = undefined;\n            }\n            this.closeWidget();\n        }));\n        this._disposables.add(this._widget.onDidSelectReference(event => {\n            let { element, kind } = event;\n            if (!element) {\n                return;\n            }\n            switch (kind) {\n                case 'open':\n                    if (event.source !== 'editor' || !this._configurationService.getValue('editor.stablePeek')) {\n                        // when stable peek is configured we don't close\n                        // the peek window on selecting the editor\n                        this.openReference(element, false, false);\n                    }\n                    break;\n                case 'side':\n                    this.openReference(element, true, false);\n                    break;\n                case 'goto':\n                    if (peekMode) {\n                        this._gotoReference(element);\n                    }\n                    else {\n                        this.openReference(element, false, true);\n                    }\n                    break;\n            }\n        }));\n        const requestId = ++this._requestIdPool;\n        modelPromise.then(model => {\n            var _a;\n            // still current request? widget still open?\n            if (requestId !== this._requestIdPool || !this._widget) {\n                model.dispose();\n                return undefined;\n            }\n            (_a = this._model) === null || _a === void 0 ? void 0 : _a.dispose();\n            this._model = model;\n            // show widget\n            return this._widget.setModel(this._model).then(() => {\n                if (this._widget && this._model && this._editor.hasModel()) { // might have been closed\n                    // set title\n                    if (!this._model.isEmpty) {\n                        this._widget.setMetaTitle(nls.localize('metaTitle.N', \"{0} ({1})\", this._model.title, this._model.references.length));\n                    }\n                    else {\n                        this._widget.setMetaTitle('');\n                    }\n                    // set 'best' selection\n                    let uri = this._editor.getModel().uri;\n                    let pos = new Position(range.startLineNumber, range.startColumn);\n                    let selection = this._model.nearestReference(uri, pos);\n                    if (selection) {\n                        return this._widget.setSelection(selection).then(() => {\n                            if (this._widget && this._editor.getOption(77 /* peekWidgetDefaultFocus */) === 'editor') {\n                                this._widget.focusOnPreviewEditor();\n                            }\n                        });\n                    }\n                }\n                return undefined;\n            });\n        }, error => {\n            this._notificationService.error(error);\n        });\n    }\n    changeFocusBetweenPreviewAndReferences() {\n        if (!this._widget) {\n            // can be called while still resolving...\n            return;\n        }\n        if (this._widget.isPreviewEditorFocused()) {\n            this._widget.focusOnReferenceTree();\n        }\n        else {\n            this._widget.focusOnPreviewEditor();\n        }\n    }\n    goToNextOrPreviousReference(fwd) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._editor.hasModel() || !this._model || !this._widget) {\n                // can be called while still resolving...\n                return;\n            }\n            const currentPosition = this._widget.position;\n            if (!currentPosition) {\n                return;\n            }\n            const source = this._model.nearestReference(this._editor.getModel().uri, currentPosition);\n            if (!source) {\n                return;\n            }\n            const target = this._model.nextOrPreviousReference(source, fwd);\n            const editorFocus = this._editor.hasTextFocus();\n            const previewEditorFocus = this._widget.isPreviewEditorFocused();\n            yield this._widget.setSelection(target);\n            yield this._gotoReference(target);\n            if (editorFocus) {\n                this._editor.focus();\n            }\n            else if (this._widget && previewEditorFocus) {\n                this._widget.focusOnPreviewEditor();\n            }\n        });\n    }\n    revealReference(reference) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._editor.hasModel() || !this._model || !this._widget) {\n                // can be called while still resolving...\n                return;\n            }\n            yield this._widget.revealReference(reference);\n        });\n    }\n    closeWidget(focusEditor = true) {\n        var _a, _b;\n        (_a = this._widget) === null || _a === void 0 ? void 0 : _a.dispose();\n        (_b = this._model) === null || _b === void 0 ? void 0 : _b.dispose();\n        this._referenceSearchVisible.reset();\n        this._disposables.clear();\n        this._widget = undefined;\n        this._model = undefined;\n        if (focusEditor) {\n            this._editor.focus();\n        }\n        this._requestIdPool += 1; // Cancel pending requests\n    }\n    _gotoReference(ref) {\n        if (this._widget) {\n            this._widget.hide();\n        }\n        this._ignoreModelChangeEvent = true;\n        const range = Range.lift(ref.range).collapseToStart();\n        return this._editorService.openCodeEditor({\n            resource: ref.uri,\n            options: { selection: range, selectionSource: \"code.jump\" /* JUMP */ }\n        }, this._editor).then(openedEditor => {\n            var _a;\n            this._ignoreModelChangeEvent = false;\n            if (!openedEditor || !this._widget) {\n                // something went wrong...\n                this.closeWidget();\n                return;\n            }\n            if (this._editor === openedEditor) {\n                //\n                this._widget.show(range);\n                this._widget.focusOnReferenceTree();\n            }\n            else {\n                // we opened a different editor instance which means a different controller instance.\n                // therefore we stop with this controller and continue with the other\n                const other = ReferencesController.get(openedEditor);\n                const model = this._model.clone();\n                this.closeWidget();\n                openedEditor.focus();\n                other === null || other === void 0 ? void 0 : other.toggleWidget(range, createCancelablePromise(_ => Promise.resolve(model)), (_a = this._peekMode) !== null && _a !== void 0 ? _a : false);\n            }\n        }, (err) => {\n            this._ignoreModelChangeEvent = false;\n            onUnexpectedError(err);\n        });\n    }\n    openReference(ref, sideBySide, pinned) {\n        // clear stage\n        if (!sideBySide) {\n            this.closeWidget();\n        }\n        const { uri, range } = ref;\n        this._editorService.openCodeEditor({\n            resource: uri,\n            options: { selection: range, selectionSource: \"code.jump\" /* JUMP */, pinned }\n        }, this._editor, sideBySide);\n    }\n};\nReferencesController.ID = 'editor.contrib.referencesController';\nReferencesController = __decorate([\n    __param(2, IContextKeyService),\n    __param(3, ICodeEditorService),\n    __param(4, INotificationService),\n    __param(5, IInstantiationService),\n    __param(6, IStorageService),\n    __param(7, IConfigurationService)\n], ReferencesController);\nexport { ReferencesController };\nfunction withController(accessor, fn) {\n    const outerEditor = getOuterEditor(accessor);\n    if (!outerEditor) {\n        return;\n    }\n    const controller = ReferencesController.get(outerEditor);\n    if (controller) {\n        fn(controller);\n    }\n}\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'togglePeekWidgetFocus',\n    weight: 100 /* EditorContrib */,\n    primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, 60 /* F2 */),\n    when: ContextKeyExpr.or(ctxReferenceSearchVisible, PeekContext.inPeekEditor),\n    handler(accessor) {\n        withController(accessor, controller => {\n            controller.changeFocusBetweenPreviewAndReferences();\n        });\n    }\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'goToNextReference',\n    weight: 100 /* EditorContrib */ - 10,\n    primary: 62 /* F4 */,\n    secondary: [70 /* F12 */],\n    when: ContextKeyExpr.or(ctxReferenceSearchVisible, PeekContext.inPeekEditor),\n    handler(accessor) {\n        withController(accessor, controller => {\n            controller.goToNextOrPreviousReference(true);\n        });\n    }\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'goToPreviousReference',\n    weight: 100 /* EditorContrib */ - 10,\n    primary: 1024 /* Shift */ | 62 /* F4 */,\n    secondary: [1024 /* Shift */ | 70 /* F12 */],\n    when: ContextKeyExpr.or(ctxReferenceSearchVisible, PeekContext.inPeekEditor),\n    handler(accessor) {\n        withController(accessor, controller => {\n            controller.goToNextOrPreviousReference(false);\n        });\n    }\n});\n// commands that aren't needed anymore because there is now ContextKeyExpr.OR\nCommandsRegistry.registerCommandAlias('goToNextReferenceFromEmbeddedEditor', 'goToNextReference');\nCommandsRegistry.registerCommandAlias('goToPreviousReferenceFromEmbeddedEditor', 'goToPreviousReference');\n// close\nCommandsRegistry.registerCommandAlias('closeReferenceSearchEditor', 'closeReferenceSearch');\nCommandsRegistry.registerCommand('closeReferenceSearch', accessor => withController(accessor, controller => controller.closeWidget()));\nKeybindingsRegistry.registerKeybindingRule({\n    id: 'closeReferenceSearch',\n    weight: 100 /* EditorContrib */ - 101,\n    primary: 9 /* Escape */,\n    secondary: [1024 /* Shift */ | 9 /* Escape */],\n    when: ContextKeyExpr.and(PeekContext.inPeekEditor, ContextKeyExpr.not('config.editor.stablePeek'))\n});\nKeybindingsRegistry.registerKeybindingRule({\n    id: 'closeReferenceSearch',\n    weight: 200 /* WorkbenchContrib */ + 50,\n    primary: 9 /* Escape */,\n    secondary: [1024 /* Shift */ | 9 /* Escape */],\n    when: ContextKeyExpr.and(ctxReferenceSearchVisible, ContextKeyExpr.not('config.editor.stablePeek'))\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'revealReference',\n    weight: 200 /* WorkbenchContrib */,\n    primary: 3 /* Enter */,\n    mac: {\n        primary: 3 /* Enter */,\n        secondary: [2048 /* CtrlCmd */ | 18 /* DownArrow */]\n    },\n    when: ContextKeyExpr.and(ctxReferenceSearchVisible, WorkbenchListFocusContextKey, WorkbenchTreeElementCanCollapse.negate(), WorkbenchTreeElementCanExpand.negate()),\n    handler(accessor) {\n        var _a;\n        const listService = accessor.get(IListService);\n        const focus = (_a = listService.lastFocusedList) === null || _a === void 0 ? void 0 : _a.getFocus();\n        if (Array.isArray(focus) && focus[0] instanceof OneReference) {\n            withController(accessor, controller => controller.revealReference(focus[0]));\n        }\n    }\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'openReferenceToSide',\n    weight: 100 /* EditorContrib */,\n    primary: 2048 /* CtrlCmd */ | 3 /* Enter */,\n    mac: {\n        primary: 256 /* WinCtrl */ | 3 /* Enter */\n    },\n    when: ContextKeyExpr.and(ctxReferenceSearchVisible, WorkbenchListFocusContextKey, WorkbenchTreeElementCanCollapse.negate(), WorkbenchTreeElementCanExpand.negate()),\n    handler(accessor) {\n        var _a;\n        const listService = accessor.get(IListService);\n        const focus = (_a = listService.lastFocusedList) === null || _a === void 0 ? void 0 : _a.getFocus();\n        if (Array.isArray(focus) && focus[0] instanceof OneReference) {\n            withController(accessor, controller => controller.openReference(focus[0], true, true));\n        }\n    }\n});\nCommandsRegistry.registerCommand('openReference', (accessor) => {\n    var _a;\n    const listService = accessor.get(IListService);\n    const focus = (_a = listService.lastFocusedList) === null || _a === void 0 ? void 0 : _a.getFocus();\n    if (Array.isArray(focus) && focus[0] instanceof OneReference) {\n        withController(accessor, controller => controller.openReference(focus[0], false, true));\n    }\n});\n",
+      "start": 1711096855017,
+      "end": 1711096855084,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855084,
+      "end": 1711096855084,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855084,
+      "end": 1711096855086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855086,
+      "end": 1711096855086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855086,
+      "end": 1711096855086,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855086,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855087,
+      "end": 1711096855087,
+      "order": "normal"
+    }
+  ]
+}

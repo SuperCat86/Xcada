@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/caretOperations/browser/moveCaretCommand.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nexport class MoveCaretCommand {\n    constructor(selection, isMovingLeft) {\n        this._selection = selection;\n        this._isMovingLeft = isMovingLeft;\n    }\n    getEditOperations(model, builder) {\n        if (this._selection.startLineNumber !== this._selection.endLineNumber || this._selection.isEmpty()) {\n            return;\n        }\n        const lineNumber = this._selection.startLineNumber;\n        const startColumn = this._selection.startColumn;\n        const endColumn = this._selection.endColumn;\n        if (this._isMovingLeft && startColumn === 1) {\n            return;\n        }\n        if (!this._isMovingLeft && endColumn === model.getLineMaxColumn(lineNumber)) {\n            return;\n        }\n        if (this._isMovingLeft) {\n            const rangeBefore = new Range(lineNumber, startColumn - 1, lineNumber, startColumn);\n            const charBefore = model.getValueInRange(rangeBefore);\n            builder.addEditOperation(rangeBefore, null);\n            builder.addEditOperation(new Range(lineNumber, endColumn, lineNumber, endColumn), charBefore);\n        }\n        else {\n            const rangeAfter = new Range(lineNumber, endColumn, lineNumber, endColumn + 1);\n            const charAfter = model.getValueInRange(rangeAfter);\n            builder.addEditOperation(rangeAfter, null);\n            builder.addEditOperation(new Range(lineNumber, startColumn, lineNumber, startColumn), charAfter);\n        }\n    }\n    computeCursorState(model, helper) {\n        if (this._isMovingLeft) {\n            return new Selection(this._selection.startLineNumber, this._selection.startColumn - 1, this._selection.endLineNumber, this._selection.endColumn - 1);\n        }\n        else {\n            return new Selection(this._selection.startLineNumber, this._selection.startColumn + 1, this._selection.endLineNumber, this._selection.endColumn + 1);\n        }\n    }\n}\n",
+      "start": 1711096855437,
+      "end": 1711096855578,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855578,
+      "end": 1711096855578,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855579,
+      "end": 1711096855579,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855582,
+      "end": 1711096855582,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/textToHtmlTokenizer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as strings from '../../../base/common/strings.js';\nimport { LineTokens } from '../tokens/lineTokens.js';\nimport { TokenizationRegistry } from '../languages.js';\nimport { NullState, nullTokenizeEncoded } from './nullTokenize.js';\nconst fallback = {\n    getInitialState: () => NullState,\n    tokenizeEncoded: (buffer, hasEOL, state) => nullTokenizeEncoded(0 /* Null */, state)\n};\nexport function tokenizeToString(languageService, text, languageId) {\n    return __awaiter(this, void 0, void 0, function* () {\n        if (!languageId) {\n            return _tokenizeToString(text, languageService.languageIdCodec, fallback);\n        }\n        const tokenizationSupport = yield TokenizationRegistry.getOrCreate(languageId);\n        return _tokenizeToString(text, languageService.languageIdCodec, tokenizationSupport || fallback);\n    });\n}\nexport function tokenizeLineToHTML(text, viewLineTokens, colorMap, startOffset, endOffset, tabSize, useNbsp) {\n    let result = `<div>`;\n    let charIndex = startOffset;\n    let tabsCharDelta = 0;\n    let prevIsSpace = true;\n    for (let tokenIndex = 0, tokenCount = viewLineTokens.getCount(); tokenIndex < tokenCount; tokenIndex++) {\n        const tokenEndIndex = viewLineTokens.getEndOffset(tokenIndex);\n        if (tokenEndIndex <= startOffset) {\n            continue;\n        }\n        let partContent = '';\n        for (; charIndex < tokenEndIndex && charIndex < endOffset; charIndex++) {\n            const charCode = text.charCodeAt(charIndex);\n            switch (charCode) {\n                case 9 /* Tab */: {\n                    let insertSpacesCount = tabSize - (charIndex + tabsCharDelta) % tabSize;\n                    tabsCharDelta += insertSpacesCount - 1;\n                    while (insertSpacesCount > 0) {\n                        if (useNbsp && prevIsSpace) {\n                            partContent += '&#160;';\n                            prevIsSpace = false;\n                        }\n                        else {\n                            partContent += ' ';\n                            prevIsSpace = true;\n                        }\n                        insertSpacesCount--;\n                    }\n                    break;\n                }\n                case 60 /* LessThan */:\n                    partContent += '&lt;';\n                    prevIsSpace = false;\n                    break;\n                case 62 /* GreaterThan */:\n                    partContent += '&gt;';\n                    prevIsSpace = false;\n                    break;\n                case 38 /* Ampersand */:\n                    partContent += '&amp;';\n                    prevIsSpace = false;\n                    break;\n                case 0 /* Null */:\n                    partContent += '&#00;';\n                    prevIsSpace = false;\n                    break;\n                case 65279 /* UTF8_BOM */:\n                case 8232 /* LINE_SEPARATOR */:\n                case 8233 /* PARAGRAPH_SEPARATOR */:\n                case 133 /* NEXT_LINE */:\n                    partContent += '\\ufffd';\n                    prevIsSpace = false;\n                    break;\n                case 13 /* CarriageReturn */:\n                    // zero width space, because carriage return would introduce a line break\n                    partContent += '&#8203';\n                    prevIsSpace = false;\n                    break;\n                case 32 /* Space */:\n                    if (useNbsp && prevIsSpace) {\n                        partContent += '&#160;';\n                        prevIsSpace = false;\n                    }\n                    else {\n                        partContent += ' ';\n                        prevIsSpace = true;\n                    }\n                    break;\n                default:\n                    partContent += String.fromCharCode(charCode);\n                    prevIsSpace = false;\n            }\n        }\n        result += `<span style=\"${viewLineTokens.getInlineStyle(tokenIndex, colorMap)}\">${partContent}</span>`;\n        if (tokenEndIndex > endOffset || charIndex >= endOffset) {\n            break;\n        }\n    }\n    result += `</div>`;\n    return result;\n}\nexport function _tokenizeToString(text, languageIdCodec, tokenizationSupport) {\n    let result = `<div class=\"monaco-tokenized-source\">`;\n    const lines = strings.splitLines(text);\n    let currentState = tokenizationSupport.getInitialState();\n    for (let i = 0, len = lines.length; i < len; i++) {\n        const line = lines[i];\n        if (i > 0) {\n            result += `<br/>`;\n        }\n        const tokenizationResult = tokenizationSupport.tokenizeEncoded(line, true, currentState);\n        LineTokens.convertToEndOffset(tokenizationResult.tokens, line.length);\n        const lineTokens = new LineTokens(tokenizationResult.tokens, line, languageIdCodec);\n        const viewLineTokens = lineTokens.inflate();\n        let startOffset = 0;\n        for (let j = 0, lenJ = viewLineTokens.getCount(); j < lenJ; j++) {\n            const type = viewLineTokens.getClassName(j);\n            const endIndex = viewLineTokens.getEndOffset(j);\n            result += `<span class=\"${type}\">${strings.escape(line.substring(startOffset, endIndex))}</span>`;\n            startOffset = endIndex;\n        }\n        currentState = tokenizationResult.endState;\n    }\n    result += `</div>`;\n    return result;\n}\n",
+      "start": 1711096856454,
+      "end": 1711096856534,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856535,
+      "end": 1711096856535,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856535,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/dom.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as browser from './browser.js';\nimport { BrowserFeatures } from './canIUse.js';\nimport { StandardKeyboardEvent } from './keyboardEvent.js';\nimport { StandardMouseEvent } from './mouseEvent.js';\nimport { TimeoutTimer } from '../common/async.js';\nimport { onUnexpectedError } from '../common/errors.js';\nimport * as event from '../common/event.js';\nimport { Disposable, DisposableStore, toDisposable } from '../common/lifecycle.js';\nimport { FileAccess, RemoteAuthorities } from '../common/network.js';\nimport * as platform from '../common/platform.js';\nexport function clearNode(node) {\n    while (node.firstChild) {\n        node.firstChild.remove();\n    }\n}\n/**\n * @deprecated Use node.isConnected directly\n */\nexport function isInDOM(node) {\n    var _a;\n    return (_a = node === null || node === void 0 ? void 0 : node.isConnected) !== null && _a !== void 0 ? _a : false;\n}\nclass DomListener {\n    constructor(node, type, handler, options) {\n        this._node = node;\n        this._type = type;\n        this._handler = handler;\n        this._options = (options || false);\n        this._node.addEventListener(this._type, this._handler, this._options);\n    }\n    dispose() {\n        if (!this._handler) {\n            // Already disposed\n            return;\n        }\n        this._node.removeEventListener(this._type, this._handler, this._options);\n        // Prevent leakers from holding on to the dom or handler func\n        this._node = null;\n        this._handler = null;\n    }\n}\nexport function addDisposableListener(node, type, handler, useCaptureOrOptions) {\n    return new DomListener(node, type, handler, useCaptureOrOptions);\n}\nfunction _wrapAsStandardMouseEvent(handler) {\n    return function (e) {\n        return handler(new StandardMouseEvent(e));\n    };\n}\nfunction _wrapAsStandardKeyboardEvent(handler) {\n    return function (e) {\n        return handler(new StandardKeyboardEvent(e));\n    };\n}\nexport let addStandardDisposableListener = function addStandardDisposableListener(node, type, handler, useCapture) {\n    let wrapHandler = handler;\n    if (type === 'click' || type === 'mousedown') {\n        wrapHandler = _wrapAsStandardMouseEvent(handler);\n    }\n    else if (type === 'keydown' || type === 'keypress' || type === 'keyup') {\n        wrapHandler = _wrapAsStandardKeyboardEvent(handler);\n    }\n    return addDisposableListener(node, type, wrapHandler, useCapture);\n};\nexport let addStandardDisposableGenericMouseDownListener = function addStandardDisposableListener(node, handler, useCapture) {\n    let wrapHandler = _wrapAsStandardMouseEvent(handler);\n    return addDisposableGenericMouseDownListener(node, wrapHandler, useCapture);\n};\nexport let addStandardDisposableGenericMouseUpListener = function addStandardDisposableListener(node, handler, useCapture) {\n    let wrapHandler = _wrapAsStandardMouseEvent(handler);\n    return addDisposableGenericMouseUpListener(node, wrapHandler, useCapture);\n};\nexport function addDisposableGenericMouseDownListener(node, handler, useCapture) {\n    return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_DOWN : EventType.MOUSE_DOWN, handler, useCapture);\n}\nexport function addDisposableGenericMouseUpListener(node, handler, useCapture) {\n    return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_UP : EventType.MOUSE_UP, handler, useCapture);\n}\nexport function addDisposableNonBubblingMouseOutListener(node, handler) {\n    return addDisposableListener(node, 'mouseout', (e) => {\n        // Mouse out bubbles, so this is an attempt to ignore faux mouse outs coming from children elements\n        let toElement = (e.relatedTarget);\n        while (toElement && toElement !== node) {\n            toElement = toElement.parentNode;\n        }\n        if (toElement === node) {\n            return;\n        }\n        handler(e);\n    });\n}\nexport function addDisposableNonBubblingPointerOutListener(node, handler) {\n    return addDisposableListener(node, 'pointerout', (e) => {\n        // Mouse out bubbles, so this is an attempt to ignore faux mouse outs coming from children elements\n        let toElement = (e.relatedTarget);\n        while (toElement && toElement !== node) {\n            toElement = toElement.parentNode;\n        }\n        if (toElement === node) {\n            return;\n        }\n        handler(e);\n    });\n}\nexport function createEventEmitter(target, type, options) {\n    let domListener = null;\n    const handler = (e) => result.fire(e);\n    const onFirstListenerAdd = () => {\n        if (!domListener) {\n            domListener = new DomListener(target, type, handler, options);\n        }\n    };\n    const onLastListenerRemove = () => {\n        if (domListener) {\n            domListener.dispose();\n            domListener = null;\n        }\n    };\n    const result = new event.Emitter({ onFirstListenerAdd, onLastListenerRemove });\n    return result;\n}\nlet _animationFrame = null;\nfunction doRequestAnimationFrame(callback) {\n    if (!_animationFrame) {\n        const emulatedRequestAnimationFrame = (callback) => {\n            return setTimeout(() => callback(new Date().getTime()), 0);\n        };\n        _animationFrame = (self.requestAnimationFrame\n            || self.msRequestAnimationFrame\n            || self.webkitRequestAnimationFrame\n            || self.mozRequestAnimationFrame\n            || self.oRequestAnimationFrame\n            || emulatedRequestAnimationFrame);\n    }\n    return _animationFrame.call(self, callback);\n}\n/**\n * Schedule a callback to be run at the next animation frame.\n * This allows multiple parties to register callbacks that should run at the next animation frame.\n * If currently in an animation frame, `runner` will be executed immediately.\n * @return token that can be used to cancel the scheduled runner (only if `runner` was not executed immediately).\n */\nexport let runAtThisOrScheduleAtNextAnimationFrame;\n/**\n * Schedule a callback to be run at the next animation frame.\n * This allows multiple parties to register callbacks that should run at the next animation frame.\n * If currently in an animation frame, `runner` will be executed at the next animation frame.\n * @return token that can be used to cancel the scheduled runner.\n */\nexport let scheduleAtNextAnimationFrame;\nclass AnimationFrameQueueItem {\n    constructor(runner, priority = 0) {\n        this._runner = runner;\n        this.priority = priority;\n        this._canceled = false;\n    }\n    dispose() {\n        this._canceled = true;\n    }\n    execute() {\n        if (this._canceled) {\n            return;\n        }\n        try {\n            this._runner();\n        }\n        catch (e) {\n            onUnexpectedError(e);\n        }\n    }\n    // Sort by priority (largest to lowest)\n    static sort(a, b) {\n        return b.priority - a.priority;\n    }\n}\n(function () {\n    /**\n     * The runners scheduled at the next animation frame\n     */\n    let NEXT_QUEUE = [];\n    /**\n     * The runners scheduled at the current animation frame\n     */\n    let CURRENT_QUEUE = null;\n    /**\n     * A flag to keep track if the native requestAnimationFrame was already called\n     */\n    let animFrameRequested = false;\n    /**\n     * A flag to indicate if currently handling a native requestAnimationFrame callback\n     */\n    let inAnimationFrameRunner = false;\n    let animationFrameRunner = () => {\n        animFrameRequested = false;\n        CURRENT_QUEUE = NEXT_QUEUE;\n        NEXT_QUEUE = [];\n        inAnimationFrameRunner = true;\n        while (CURRENT_QUEUE.length > 0) {\n            CURRENT_QUEUE.sort(AnimationFrameQueueItem.sort);\n            let top = CURRENT_QUEUE.shift();\n            top.execute();\n        }\n        inAnimationFrameRunner = false;\n    };\n    scheduleAtNextAnimationFrame = (runner, priority = 0) => {\n        let item = new AnimationFrameQueueItem(runner, priority);\n        NEXT_QUEUE.push(item);\n        if (!animFrameRequested) {\n            animFrameRequested = true;\n            doRequestAnimationFrame(animationFrameRunner);\n        }\n        return item;\n    };\n    runAtThisOrScheduleAtNextAnimationFrame = (runner, priority) => {\n        if (inAnimationFrameRunner) {\n            let item = new AnimationFrameQueueItem(runner, priority);\n            CURRENT_QUEUE.push(item);\n            return item;\n        }\n        else {\n            return scheduleAtNextAnimationFrame(runner, priority);\n        }\n    };\n})();\nconst MINIMUM_TIME_MS = 8;\nconst DEFAULT_EVENT_MERGER = function (lastEvent, currentEvent) {\n    return currentEvent;\n};\nclass TimeoutThrottledDomListener extends Disposable {\n    constructor(node, type, handler, eventMerger = DEFAULT_EVENT_MERGER, minimumTimeMs = MINIMUM_TIME_MS) {\n        super();\n        let lastEvent = null;\n        let lastHandlerTime = 0;\n        let timeout = this._register(new TimeoutTimer());\n        let invokeHandler = () => {\n            lastHandlerTime = (new Date()).getTime();\n            handler(lastEvent);\n            lastEvent = null;\n        };\n        this._register(addDisposableListener(node, type, (e) => {\n            lastEvent = eventMerger(lastEvent, e);\n            let elapsedTime = (new Date()).getTime() - lastHandlerTime;\n            if (elapsedTime >= minimumTimeMs) {\n                timeout.cancel();\n                invokeHandler();\n            }\n            else {\n                timeout.setIfNotSet(invokeHandler, minimumTimeMs - elapsedTime);\n            }\n        }));\n    }\n}\nexport function addDisposableThrottledListener(node, type, handler, eventMerger, minimumTimeMs) {\n    return new TimeoutThrottledDomListener(node, type, handler, eventMerger, minimumTimeMs);\n}\nexport function getComputedStyle(el) {\n    return document.defaultView.getComputedStyle(el, null);\n}\nexport function getClientArea(element) {\n    // Try with DOM clientWidth / clientHeight\n    if (element !== document.body) {\n        return new Dimension(element.clientWidth, element.clientHeight);\n    }\n    // If visual view port exits and it's on mobile, it should be used instead of window innerWidth / innerHeight, or document.body.clientWidth / document.body.clientHeight\n    if (platform.isIOS && window.visualViewport) {\n        return new Dimension(window.visualViewport.width, window.visualViewport.height);\n    }\n    // Try innerWidth / innerHeight\n    if (window.innerWidth && window.innerHeight) {\n        return new Dimension(window.innerWidth, window.innerHeight);\n    }\n    // Try with document.body.clientWidth / document.body.clientHeight\n    if (document.body && document.body.clientWidth && document.body.clientHeight) {\n        return new Dimension(document.body.clientWidth, document.body.clientHeight);\n    }\n    // Try with document.documentElement.clientWidth / document.documentElement.clientHeight\n    if (document.documentElement && document.documentElement.clientWidth && document.documentElement.clientHeight) {\n        return new Dimension(document.documentElement.clientWidth, document.documentElement.clientHeight);\n    }\n    throw new Error('Unable to figure out browser width and height');\n}\nclass SizeUtils {\n    // Adapted from WinJS\n    // Converts a CSS positioning string for the specified element to pixels.\n    static convertToPixels(element, value) {\n        return parseFloat(value) || 0;\n    }\n    static getDimension(element, cssPropertyName, jsPropertyName) {\n        let computedStyle = getComputedStyle(element);\n        let value = '0';\n        if (computedStyle) {\n            if (computedStyle.getPropertyValue) {\n                value = computedStyle.getPropertyValue(cssPropertyName);\n            }\n            else {\n                // IE8\n                value = computedStyle.getAttribute(jsPropertyName);\n            }\n        }\n        return SizeUtils.convertToPixels(element, value);\n    }\n    static getBorderLeftWidth(element) {\n        return SizeUtils.getDimension(element, 'border-left-width', 'borderLeftWidth');\n    }\n    static getBorderRightWidth(element) {\n        return SizeUtils.getDimension(element, 'border-right-width', 'borderRightWidth');\n    }\n    static getBorderTopWidth(element) {\n        return SizeUtils.getDimension(element, 'border-top-width', 'borderTopWidth');\n    }\n    static getBorderBottomWidth(element) {\n        return SizeUtils.getDimension(element, 'border-bottom-width', 'borderBottomWidth');\n    }\n    static getPaddingLeft(element) {\n        return SizeUtils.getDimension(element, 'padding-left', 'paddingLeft');\n    }\n    static getPaddingRight(element) {\n        return SizeUtils.getDimension(element, 'padding-right', 'paddingRight');\n    }\n    static getPaddingTop(element) {\n        return SizeUtils.getDimension(element, 'padding-top', 'paddingTop');\n    }\n    static getPaddingBottom(element) {\n        return SizeUtils.getDimension(element, 'padding-bottom', 'paddingBottom');\n    }\n    static getMarginLeft(element) {\n        return SizeUtils.getDimension(element, 'margin-left', 'marginLeft');\n    }\n    static getMarginTop(element) {\n        return SizeUtils.getDimension(element, 'margin-top', 'marginTop');\n    }\n    static getMarginRight(element) {\n        return SizeUtils.getDimension(element, 'margin-right', 'marginRight');\n    }\n    static getMarginBottom(element) {\n        return SizeUtils.getDimension(element, 'margin-bottom', 'marginBottom');\n    }\n}\nexport class Dimension {\n    constructor(width, height) {\n        this.width = width;\n        this.height = height;\n    }\n    with(width = this.width, height = this.height) {\n        if (width !== this.width || height !== this.height) {\n            return new Dimension(width, height);\n        }\n        else {\n            return this;\n        }\n    }\n    static is(obj) {\n        return typeof obj === 'object' && typeof obj.height === 'number' && typeof obj.width === 'number';\n    }\n    static lift(obj) {\n        if (obj instanceof Dimension) {\n            return obj;\n        }\n        else {\n            return new Dimension(obj.width, obj.height);\n        }\n    }\n    static equals(a, b) {\n        if (a === b) {\n            return true;\n        }\n        if (!a || !b) {\n            return false;\n        }\n        return a.width === b.width && a.height === b.height;\n    }\n}\nDimension.None = new Dimension(0, 0);\nexport function getTopLeftOffset(element) {\n    // Adapted from WinJS.Utilities.getPosition\n    // and added borders to the mix\n    let offsetParent = element.offsetParent;\n    let top = element.offsetTop;\n    let left = element.offsetLeft;\n    while ((element = element.parentNode) !== null\n        && element !== document.body\n        && element !== document.documentElement) {\n        top -= element.scrollTop;\n        const c = isShadowRoot(element) ? null : getComputedStyle(element);\n        if (c) {\n            left -= c.direction !== 'rtl' ? element.scrollLeft : -element.scrollLeft;\n        }\n        if (element === offsetParent) {\n            left += SizeUtils.getBorderLeftWidth(element);\n            top += SizeUtils.getBorderTopWidth(element);\n            top += element.offsetTop;\n            left += element.offsetLeft;\n            offsetParent = element.offsetParent;\n        }\n    }\n    return {\n        left: left,\n        top: top\n    };\n}\nexport function size(element, width, height) {\n    if (typeof width === 'number') {\n        element.style.width = `${width}px`;\n    }\n    if (typeof height === 'number') {\n        element.style.height = `${height}px`;\n    }\n}\n/**\n * Returns the position of a dom node relative to the entire page.\n */\nexport function getDomNodePagePosition(domNode) {\n    let bb = domNode.getBoundingClientRect();\n    return {\n        left: bb.left + StandardWindow.scrollX,\n        top: bb.top + StandardWindow.scrollY,\n        width: bb.width,\n        height: bb.height\n    };\n}\nexport const StandardWindow = new class {\n    get scrollX() {\n        if (typeof window.scrollX === 'number') {\n            // modern browsers\n            return window.scrollX;\n        }\n        else {\n            return document.body.scrollLeft + document.documentElement.scrollLeft;\n        }\n    }\n    get scrollY() {\n        if (typeof window.scrollY === 'number') {\n            // modern browsers\n            return window.scrollY;\n        }\n        else {\n            return document.body.scrollTop + document.documentElement.scrollTop;\n        }\n    }\n};\n// Adapted from WinJS\n// Gets the width of the element, including margins.\nexport function getTotalWidth(element) {\n    let margin = SizeUtils.getMarginLeft(element) + SizeUtils.getMarginRight(element);\n    return element.offsetWidth + margin;\n}\nexport function getContentWidth(element) {\n    let border = SizeUtils.getBorderLeftWidth(element) + SizeUtils.getBorderRightWidth(element);\n    let padding = SizeUtils.getPaddingLeft(element) + SizeUtils.getPaddingRight(element);\n    return element.offsetWidth - border - padding;\n}\n// Adapted from WinJS\n// Gets the height of the content of the specified element. The content height does not include borders or padding.\nexport function getContentHeight(element) {\n    let border = SizeUtils.getBorderTopWidth(element) + SizeUtils.getBorderBottomWidth(element);\n    let padding = SizeUtils.getPaddingTop(element) + SizeUtils.getPaddingBottom(element);\n    return element.offsetHeight - border - padding;\n}\n// Adapted from WinJS\n// Gets the height of the element, including its margins.\nexport function getTotalHeight(element) {\n    let margin = SizeUtils.getMarginTop(element) + SizeUtils.getMarginBottom(element);\n    return element.offsetHeight + margin;\n}\n// ----------------------------------------------------------------------------------------\nexport function isAncestor(testChild, testAncestor) {\n    while (testChild) {\n        if (testChild === testAncestor) {\n            return true;\n        }\n        testChild = testChild.parentNode;\n    }\n    return false;\n}\nexport function findParentWithClass(node, clazz, stopAtClazzOrNode) {\n    while (node && node.nodeType === node.ELEMENT_NODE) {\n        if (node.classList.contains(clazz)) {\n            return node;\n        }\n        if (stopAtClazzOrNode) {\n            if (typeof stopAtClazzOrNode === 'string') {\n                if (node.classList.contains(stopAtClazzOrNode)) {\n                    return null;\n                }\n            }\n            else {\n                if (node === stopAtClazzOrNode) {\n                    return null;\n                }\n            }\n        }\n        node = node.parentNode;\n    }\n    return null;\n}\nexport function hasParentWithClass(node, clazz, stopAtClazzOrNode) {\n    return !!findParentWithClass(node, clazz, stopAtClazzOrNode);\n}\nexport function isShadowRoot(node) {\n    return (node && !!node.host && !!node.mode);\n}\nexport function isInShadowDOM(domNode) {\n    return !!getShadowRoot(domNode);\n}\nexport function getShadowRoot(domNode) {\n    while (domNode.parentNode) {\n        if (domNode === document.body) {\n            // reached the body\n            return null;\n        }\n        domNode = domNode.parentNode;\n    }\n    return isShadowRoot(domNode) ? domNode : null;\n}\nexport function getActiveElement() {\n    let result = document.activeElement;\n    while (result === null || result === void 0 ? void 0 : result.shadowRoot) {\n        result = result.shadowRoot.activeElement;\n    }\n    return result;\n}\nexport function createStyleSheet(container = document.getElementsByTagName('head')[0]) {\n    let style = document.createElement('style');\n    style.type = 'text/css';\n    style.media = 'screen';\n    container.appendChild(style);\n    return style;\n}\nlet _sharedStyleSheet = null;\nfunction getSharedStyleSheet() {\n    if (!_sharedStyleSheet) {\n        _sharedStyleSheet = createStyleSheet();\n    }\n    return _sharedStyleSheet;\n}\nfunction getDynamicStyleSheetRules(style) {\n    var _a, _b;\n    if ((_a = style === null || style === void 0 ? void 0 : style.sheet) === null || _a === void 0 ? void 0 : _a.rules) {\n        // Chrome, IE\n        return style.sheet.rules;\n    }\n    if ((_b = style === null || style === void 0 ? void 0 : style.sheet) === null || _b === void 0 ? void 0 : _b.cssRules) {\n        // FF\n        return style.sheet.cssRules;\n    }\n    return [];\n}\nexport function createCSSRule(selector, cssText, style = getSharedStyleSheet()) {\n    if (!style || !cssText) {\n        return;\n    }\n    style.sheet.insertRule(selector + '{' + cssText + '}', 0);\n}\nexport function removeCSSRulesContainingSelector(ruleName, style = getSharedStyleSheet()) {\n    if (!style) {\n        return;\n    }\n    let rules = getDynamicStyleSheetRules(style);\n    let toDelete = [];\n    for (let i = 0; i < rules.length; i++) {\n        let rule = rules[i];\n        if (rule.selectorText.indexOf(ruleName) !== -1) {\n            toDelete.push(i);\n        }\n    }\n    for (let i = toDelete.length - 1; i >= 0; i--) {\n        style.sheet.deleteRule(toDelete[i]);\n    }\n}\nexport function isHTMLElement(o) {\n    if (typeof HTMLElement === 'object') {\n        return o instanceof HTMLElement;\n    }\n    return o && typeof o === 'object' && o.nodeType === 1 && typeof o.nodeName === 'string';\n}\nexport const EventType = {\n    // Mouse\n    CLICK: 'click',\n    AUXCLICK: 'auxclick',\n    DBLCLICK: 'dblclick',\n    MOUSE_UP: 'mouseup',\n    MOUSE_DOWN: 'mousedown',\n    MOUSE_OVER: 'mouseover',\n    MOUSE_MOVE: 'mousemove',\n    MOUSE_OUT: 'mouseout',\n    MOUSE_ENTER: 'mouseenter',\n    MOUSE_LEAVE: 'mouseleave',\n    MOUSE_WHEEL: 'wheel',\n    POINTER_UP: 'pointerup',\n    POINTER_DOWN: 'pointerdown',\n    POINTER_MOVE: 'pointermove',\n    CONTEXT_MENU: 'contextmenu',\n    WHEEL: 'wheel',\n    // Keyboard\n    KEY_DOWN: 'keydown',\n    KEY_PRESS: 'keypress',\n    KEY_UP: 'keyup',\n    // HTML Document\n    LOAD: 'load',\n    BEFORE_UNLOAD: 'beforeunload',\n    UNLOAD: 'unload',\n    PAGE_SHOW: 'pageshow',\n    PAGE_HIDE: 'pagehide',\n    ABORT: 'abort',\n    ERROR: 'error',\n    RESIZE: 'resize',\n    SCROLL: 'scroll',\n    FULLSCREEN_CHANGE: 'fullscreenchange',\n    WK_FULLSCREEN_CHANGE: 'webkitfullscreenchange',\n    // Form\n    SELECT: 'select',\n    CHANGE: 'change',\n    SUBMIT: 'submit',\n    RESET: 'reset',\n    FOCUS: 'focus',\n    FOCUS_IN: 'focusin',\n    FOCUS_OUT: 'focusout',\n    BLUR: 'blur',\n    INPUT: 'input',\n    // Local Storage\n    STORAGE: 'storage',\n    // Drag\n    DRAG_START: 'dragstart',\n    DRAG: 'drag',\n    DRAG_ENTER: 'dragenter',\n    DRAG_LEAVE: 'dragleave',\n    DRAG_OVER: 'dragover',\n    DROP: 'drop',\n    DRAG_END: 'dragend',\n    // Animation\n    ANIMATION_START: browser.isWebKit ? 'webkitAnimationStart' : 'animationstart',\n    ANIMATION_END: browser.isWebKit ? 'webkitAnimationEnd' : 'animationend',\n    ANIMATION_ITERATION: browser.isWebKit ? 'webkitAnimationIteration' : 'animationiteration'\n};\nexport const EventHelper = {\n    stop: function (e, cancelBubble) {\n        if (e.preventDefault) {\n            e.preventDefault();\n        }\n        else {\n            // IE8\n            e.returnValue = false;\n        }\n        if (cancelBubble) {\n            if (e.stopPropagation) {\n                e.stopPropagation();\n            }\n            else {\n                // IE8\n                e.cancelBubble = true;\n            }\n        }\n    }\n};\nexport function saveParentsScrollTop(node) {\n    let r = [];\n    for (let i = 0; node && node.nodeType === node.ELEMENT_NODE; i++) {\n        r[i] = node.scrollTop;\n        node = node.parentNode;\n    }\n    return r;\n}\nexport function restoreParentsScrollTop(node, state) {\n    for (let i = 0; node && node.nodeType === node.ELEMENT_NODE; i++) {\n        if (node.scrollTop !== state[i]) {\n            node.scrollTop = state[i];\n        }\n        node = node.parentNode;\n    }\n}\nclass FocusTracker extends Disposable {\n    constructor(element) {\n        super();\n        this._onDidFocus = this._register(new event.Emitter());\n        this.onDidFocus = this._onDidFocus.event;\n        this._onDidBlur = this._register(new event.Emitter());\n        this.onDidBlur = this._onDidBlur.event;\n        let hasFocus = FocusTracker.hasFocusWithin(element);\n        let loosingFocus = false;\n        const onFocus = () => {\n            loosingFocus = false;\n            if (!hasFocus) {\n                hasFocus = true;\n                this._onDidFocus.fire();\n            }\n        };\n        const onBlur = () => {\n            if (hasFocus) {\n                loosingFocus = true;\n                window.setTimeout(() => {\n                    if (loosingFocus) {\n                        loosingFocus = false;\n                        hasFocus = false;\n                        this._onDidBlur.fire();\n                    }\n                }, 0);\n            }\n        };\n        this._refreshStateHandler = () => {\n            let currentNodeHasFocus = FocusTracker.hasFocusWithin(element);\n            if (currentNodeHasFocus !== hasFocus) {\n                if (hasFocus) {\n                    onBlur();\n                }\n                else {\n                    onFocus();\n                }\n            }\n        };\n        this._register(addDisposableListener(element, EventType.FOCUS, onFocus, true));\n        this._register(addDisposableListener(element, EventType.BLUR, onBlur, true));\n        this._register(addDisposableListener(element, EventType.FOCUS_IN, () => this._refreshStateHandler()));\n        this._register(addDisposableListener(element, EventType.FOCUS_OUT, () => this._refreshStateHandler()));\n    }\n    static hasFocusWithin(element) {\n        const shadowRoot = getShadowRoot(element);\n        const activeElement = (shadowRoot ? shadowRoot.activeElement : document.activeElement);\n        return isAncestor(activeElement, element);\n    }\n}\nexport function trackFocus(element) {\n    return new FocusTracker(element);\n}\nexport function append(parent, ...children) {\n    parent.append(...children);\n    if (children.length === 1 && typeof children[0] !== 'string') {\n        return children[0];\n    }\n}\nexport function prepend(parent, child) {\n    parent.insertBefore(child, parent.firstChild);\n    return child;\n}\n/**\n * Removes all children from `parent` and appends `children`\n */\nexport function reset(parent, ...children) {\n    parent.innerText = '';\n    append(parent, ...children);\n}\nconst SELECTOR_REGEX = /([\\w\\-]+)?(#([\\w\\-]+))?((\\.([\\w\\-]+))*)/;\nexport var Namespace;\n(function (Namespace) {\n    Namespace[\"HTML\"] = \"http://www.w3.org/1999/xhtml\";\n    Namespace[\"SVG\"] = \"http://www.w3.org/2000/svg\";\n})(Namespace || (Namespace = {}));\nfunction _$(namespace, description, attrs, ...children) {\n    let match = SELECTOR_REGEX.exec(description);\n    if (!match) {\n        throw new Error('Bad use of emmet');\n    }\n    attrs = Object.assign({}, (attrs || {}));\n    let tagName = match[1] || 'div';\n    let result;\n    if (namespace !== Namespace.HTML) {\n        result = document.createElementNS(namespace, tagName);\n    }\n    else {\n        result = document.createElement(tagName);\n    }\n    if (match[3]) {\n        result.id = match[3];\n    }\n    if (match[4]) {\n        result.className = match[4].replace(/\\./g, ' ').trim();\n    }\n    Object.keys(attrs).forEach(name => {\n        const value = attrs[name];\n        if (typeof value === 'undefined') {\n            return;\n        }\n        if (/^on\\w+$/.test(name)) {\n            result[name] = value;\n        }\n        else if (name === 'selected') {\n            if (value) {\n                result.setAttribute(name, 'true');\n            }\n        }\n        else {\n            result.setAttribute(name, value);\n        }\n    });\n    result.append(...children);\n    return result;\n}\nexport function $(description, attrs, ...children) {\n    return _$(Namespace.HTML, description, attrs, ...children);\n}\n$.SVG = function (description, attrs, ...children) {\n    return _$(Namespace.SVG, description, attrs, ...children);\n};\nexport function show(...elements) {\n    for (let element of elements) {\n        element.style.display = '';\n        element.removeAttribute('aria-hidden');\n    }\n}\nexport function hide(...elements) {\n    for (let element of elements) {\n        element.style.display = 'none';\n        element.setAttribute('aria-hidden', 'true');\n    }\n}\nexport function getElementsByTagName(tag) {\n    return Array.prototype.slice.call(document.getElementsByTagName(tag), 0);\n}\n/**\n * Find a value usable for a dom node size such that the likelihood that it would be\n * displayed with constant screen pixels size is as high as possible.\n *\n * e.g. We would desire for the cursors to be 2px (CSS px) wide. Under a devicePixelRatio\n * of 1.25, the cursor will be 2.5 screen pixels wide. Depending on how the dom node aligns/\"snaps\"\n * with the screen pixels, it will sometimes be rendered with 2 screen pixels, and sometimes with 3 screen pixels.\n */\nexport function computeScreenAwareSize(cssPx) {\n    const screenPx = window.devicePixelRatio * cssPx;\n    return Math.max(1, Math.floor(screenPx)) / window.devicePixelRatio;\n}\n/**\n * Open safely a new window. This is the best way to do so, but you cannot tell\n * if the window was opened or if it was blocked by the browser's popup blocker.\n * If you want to tell if the browser blocked the new window, use {@link windowOpenWithSuccess}.\n *\n * See https://github.com/microsoft/monaco-editor/issues/601\n * To protect against malicious code in the linked site, particularly phishing attempts,\n * the window.opener should be set to null to prevent the linked site from having access\n * to change the location of the current page.\n * See https://mathiasbynens.github.io/rel-noopener/\n */\nexport function windowOpenNoOpener(url) {\n    // By using 'noopener' in the `windowFeatures` argument, the newly created window will\n    // not be able to use `window.opener` to reach back to the current page.\n    // See https://stackoverflow.com/a/46958731\n    // See https://developer.mozilla.org/en-US/docs/Web/API/Window/open#noopener\n    // However, this also doesn't allow us to realize if the browser blocked\n    // the creation of the window.\n    window.open(url, '_blank', 'noopener');\n}\nexport function animate(fn) {\n    const step = () => {\n        fn();\n        stepDisposable = scheduleAtNextAnimationFrame(step);\n    };\n    let stepDisposable = scheduleAtNextAnimationFrame(step);\n    return toDisposable(() => stepDisposable.dispose());\n}\nRemoteAuthorities.setPreferredWebSchema(/^https:/.test(window.location.href) ? 'https' : 'http');\n/**\n * returns url('...')\n */\nexport function asCSSUrl(uri) {\n    if (!uri) {\n        return `url('')`;\n    }\n    return `url('${FileAccess.asBrowserUri(uri).toString(true).replace(/'/g, '%27')}')`;\n}\nexport function asCSSPropertyValue(value) {\n    return `'${value.replace(/'/g, '%27')}'`;\n}\nexport class ModifierKeyEmitter extends event.Emitter {\n    constructor() {\n        super();\n        this._subscriptions = new DisposableStore();\n        this._keyStatus = {\n            altKey: false,\n            shiftKey: false,\n            ctrlKey: false,\n            metaKey: false\n        };\n        this._subscriptions.add(addDisposableListener(window, 'keydown', e => {\n            if (e.defaultPrevented) {\n                return;\n            }\n            const event = new StandardKeyboardEvent(e);\n            // If Alt-key keydown event is repeated, ignore it #112347\n            // Only known to be necessary for Alt-Key at the moment #115810\n            if (event.keyCode === 6 /* Alt */ && e.repeat) {\n                return;\n            }\n            if (e.altKey && !this._keyStatus.altKey) {\n                this._keyStatus.lastKeyPressed = 'alt';\n            }\n            else if (e.ctrlKey && !this._keyStatus.ctrlKey) {\n                this._keyStatus.lastKeyPressed = 'ctrl';\n            }\n            else if (e.metaKey && !this._keyStatus.metaKey) {\n                this._keyStatus.lastKeyPressed = 'meta';\n            }\n            else if (e.shiftKey && !this._keyStatus.shiftKey) {\n                this._keyStatus.lastKeyPressed = 'shift';\n            }\n            else if (event.keyCode !== 6 /* Alt */) {\n                this._keyStatus.lastKeyPressed = undefined;\n            }\n            else {\n                return;\n            }\n            this._keyStatus.altKey = e.altKey;\n            this._keyStatus.ctrlKey = e.ctrlKey;\n            this._keyStatus.metaKey = e.metaKey;\n            this._keyStatus.shiftKey = e.shiftKey;\n            if (this._keyStatus.lastKeyPressed) {\n                this._keyStatus.event = e;\n                this.fire(this._keyStatus);\n            }\n        }, true));\n        this._subscriptions.add(addDisposableListener(window, 'keyup', e => {\n            if (e.defaultPrevented) {\n                return;\n            }\n            if (!e.altKey && this._keyStatus.altKey) {\n                this._keyStatus.lastKeyReleased = 'alt';\n            }\n            else if (!e.ctrlKey && this._keyStatus.ctrlKey) {\n                this._keyStatus.lastKeyReleased = 'ctrl';\n            }\n            else if (!e.metaKey && this._keyStatus.metaKey) {\n                this._keyStatus.lastKeyReleased = 'meta';\n            }\n            else if (!e.shiftKey && this._keyStatus.shiftKey) {\n                this._keyStatus.lastKeyReleased = 'shift';\n            }\n            else {\n                this._keyStatus.lastKeyReleased = undefined;\n            }\n            if (this._keyStatus.lastKeyPressed !== this._keyStatus.lastKeyReleased) {\n                this._keyStatus.lastKeyPressed = undefined;\n            }\n            this._keyStatus.altKey = e.altKey;\n            this._keyStatus.ctrlKey = e.ctrlKey;\n            this._keyStatus.metaKey = e.metaKey;\n            this._keyStatus.shiftKey = e.shiftKey;\n            if (this._keyStatus.lastKeyReleased) {\n                this._keyStatus.event = e;\n                this.fire(this._keyStatus);\n            }\n        }, true));\n        this._subscriptions.add(addDisposableListener(document.body, 'mousedown', () => {\n            this._keyStatus.lastKeyPressed = undefined;\n        }, true));\n        this._subscriptions.add(addDisposableListener(document.body, 'mouseup', () => {\n            this._keyStatus.lastKeyPressed = undefined;\n        }, true));\n        this._subscriptions.add(addDisposableListener(document.body, 'mousemove', e => {\n            if (e.buttons) {\n                this._keyStatus.lastKeyPressed = undefined;\n            }\n        }, true));\n        this._subscriptions.add(addDisposableListener(window, 'blur', () => {\n            this.resetKeyStatus();\n        }));\n    }\n    get keyStatus() {\n        return this._keyStatus;\n    }\n    /**\n     * Allows to explicitly reset the key status based on more knowledge (#109062)\n     */\n    resetKeyStatus() {\n        this.doResetKeyStatus();\n        this.fire(this._keyStatus);\n    }\n    doResetKeyStatus() {\n        this._keyStatus = {\n            altKey: false,\n            shiftKey: false,\n            ctrlKey: false,\n            metaKey: false\n        };\n    }\n    static getInstance() {\n        if (!ModifierKeyEmitter.instance) {\n            ModifierKeyEmitter.instance = new ModifierKeyEmitter();\n        }\n        return ModifierKeyEmitter.instance;\n    }\n    dispose() {\n        super.dispose();\n        this._subscriptions.dispose();\n    }\n}\nexport function addMatchMediaChangeListener(query, callback) {\n    const mediaQueryList = window.matchMedia(query);\n    mediaQueryList.addEventListener('change', callback);\n}\n",
+      "start": 1711096854643,
+      "end": 1711096854844,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854844,
+      "end": 1711096854844,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854844,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854845,
+      "end": 1711096854845,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854845,
+      "end": 1711096854847,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854847,
+      "end": 1711096854847,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854847,
+      "end": 1711096854848,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854848,
+      "end": 1711096854848,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854848,
+      "end": 1711096854848,
+      "order": "normal"
+    }
+  ]
+}

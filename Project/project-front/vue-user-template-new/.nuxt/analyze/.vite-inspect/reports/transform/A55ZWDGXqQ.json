@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/view/viewUserInputEvents.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nexport class ViewUserInputEvents {\n    constructor(coordinatesConverter) {\n        this.onKeyDown = null;\n        this.onKeyUp = null;\n        this.onContextMenu = null;\n        this.onMouseMove = null;\n        this.onMouseLeave = null;\n        this.onMouseDown = null;\n        this.onMouseUp = null;\n        this.onMouseDrag = null;\n        this.onMouseDrop = null;\n        this.onMouseDropCanceled = null;\n        this.onMouseWheel = null;\n        this._coordinatesConverter = coordinatesConverter;\n    }\n    emitKeyDown(e) {\n        if (this.onKeyDown) {\n            this.onKeyDown(e);\n        }\n    }\n    emitKeyUp(e) {\n        if (this.onKeyUp) {\n            this.onKeyUp(e);\n        }\n    }\n    emitContextMenu(e) {\n        if (this.onContextMenu) {\n            this.onContextMenu(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseMove(e) {\n        if (this.onMouseMove) {\n            this.onMouseMove(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseLeave(e) {\n        if (this.onMouseLeave) {\n            this.onMouseLeave(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseDown(e) {\n        if (this.onMouseDown) {\n            this.onMouseDown(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseUp(e) {\n        if (this.onMouseUp) {\n            this.onMouseUp(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseDrag(e) {\n        if (this.onMouseDrag) {\n            this.onMouseDrag(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseDrop(e) {\n        if (this.onMouseDrop) {\n            this.onMouseDrop(this._convertViewToModelMouseEvent(e));\n        }\n    }\n    emitMouseDropCanceled() {\n        if (this.onMouseDropCanceled) {\n            this.onMouseDropCanceled();\n        }\n    }\n    emitMouseWheel(e) {\n        if (this.onMouseWheel) {\n            this.onMouseWheel(e);\n        }\n    }\n    _convertViewToModelMouseEvent(e) {\n        if (e.target) {\n            return {\n                event: e.event,\n                target: this._convertViewToModelMouseTarget(e.target)\n            };\n        }\n        return e;\n    }\n    _convertViewToModelMouseTarget(target) {\n        return ViewUserInputEvents.convertViewToModelMouseTarget(target, this._coordinatesConverter);\n    }\n    static convertViewToModelMouseTarget(target, coordinatesConverter) {\n        const result = Object.assign({}, target);\n        if (result.position) {\n            result.position = coordinatesConverter.convertViewPositionToModelPosition(result.position);\n        }\n        if (result.range) {\n            result.range = coordinatesConverter.convertViewRangeToModelRange(result.range);\n        }\n        return result;\n    }\n}\n",
+      "start": 1711096855288,
+      "end": 1711096855366,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855366,
+      "end": 1711096855366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855372,
+      "end": 1711096855372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855373,
+      "end": 1711096855373,
+      "order": "normal"
+    }
+  ]
+}

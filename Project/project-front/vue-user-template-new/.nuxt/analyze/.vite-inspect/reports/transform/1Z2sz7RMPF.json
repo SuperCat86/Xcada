@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/colorizer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nvar _a;\nimport * as strings from '../../../base/common/strings.js';\nimport { LineTokens } from '../../common/tokens/lineTokens.js';\nimport { TokenizationRegistry } from '../../common/languages.js';\nimport { RenderLineInput, renderViewLine2 as renderViewLine } from '../../common/viewLayout/viewLineRenderer.js';\nimport { ViewLineRenderingData } from '../../common/viewModel.js';\nimport { MonarchTokenizer } from '../common/monarch/monarchLexer.js';\nconst ttPolicy = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('standaloneColorizer', { createHTML: value => value });\nexport class Colorizer {\n    static colorizeElement(themeService, languageService, domNode, options) {\n        options = options || {};\n        const theme = options.theme || 'vs';\n        const mimeType = options.mimeType || domNode.getAttribute('lang') || domNode.getAttribute('data-lang');\n        if (!mimeType) {\n            console.error('Mode not detected');\n            return Promise.resolve();\n        }\n        const languageId = languageService.getLanguageIdByMimeType(mimeType) || mimeType;\n        themeService.setTheme(theme);\n        const text = domNode.firstChild ? domNode.firstChild.nodeValue : '';\n        domNode.className += ' ' + theme;\n        const render = (str) => {\n            var _a;\n            const trustedhtml = (_a = ttPolicy === null || ttPolicy === void 0 ? void 0 : ttPolicy.createHTML(str)) !== null && _a !== void 0 ? _a : str;\n            domNode.innerHTML = trustedhtml;\n        };\n        return this.colorize(languageService, text || '', languageId, options).then(render, (err) => console.error(err));\n    }\n    static colorize(languageService, text, languageId, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const languageIdCodec = languageService.languageIdCodec;\n            let tabSize = 4;\n            if (options && typeof options.tabSize === 'number') {\n                tabSize = options.tabSize;\n            }\n            if (strings.startsWithUTF8BOM(text)) {\n                text = text.substr(1);\n            }\n            const lines = strings.splitLines(text);\n            if (!languageService.isRegisteredLanguageId(languageId)) {\n                return _fakeColorize(lines, tabSize, languageIdCodec);\n            }\n            const tokenizationSupport = yield TokenizationRegistry.getOrCreate(languageId);\n            if (tokenizationSupport) {\n                return _colorize(lines, tabSize, tokenizationSupport, languageIdCodec);\n            }\n            return _fakeColorize(lines, tabSize, languageIdCodec);\n        });\n    }\n    static colorizeLine(line, mightContainNonBasicASCII, mightContainRTL, tokens, tabSize = 4) {\n        const isBasicASCII = ViewLineRenderingData.isBasicASCII(line, mightContainNonBasicASCII);\n        const containsRTL = ViewLineRenderingData.containsRTL(line, isBasicASCII, mightContainRTL);\n        const renderResult = renderViewLine(new RenderLineInput(false, true, line, false, isBasicASCII, containsRTL, 0, tokens, [], tabSize, 0, 0, 0, 0, -1, 'none', false, false, null));\n        return renderResult.html;\n    }\n    static colorizeModelLine(model, lineNumber, tabSize = 4) {\n        const content = model.getLineContent(lineNumber);\n        model.forceTokenization(lineNumber);\n        const tokens = model.getLineTokens(lineNumber);\n        const inflatedTokens = tokens.inflate();\n        return this.colorizeLine(content, model.mightContainNonBasicASCII(), model.mightContainRTL(), inflatedTokens, tabSize);\n    }\n}\nfunction _colorize(lines, tabSize, tokenizationSupport, languageIdCodec) {\n    return new Promise((c, e) => {\n        const execute = () => {\n            const result = _actualColorize(lines, tabSize, tokenizationSupport, languageIdCodec);\n            if (tokenizationSupport instanceof MonarchTokenizer) {\n                const status = tokenizationSupport.getLoadStatus();\n                if (status.loaded === false) {\n                    status.promise.then(execute, e);\n                    return;\n                }\n            }\n            c(result);\n        };\n        execute();\n    });\n}\nfunction _fakeColorize(lines, tabSize, languageIdCodec) {\n    let html = [];\n    const defaultMetadata = ((0 /* None */ << 10 /* FONT_STYLE_OFFSET */)\n        | (1 /* DefaultForeground */ << 14 /* FOREGROUND_OFFSET */)\n        | (2 /* DefaultBackground */ << 23 /* BACKGROUND_OFFSET */)) >>> 0;\n    const tokens = new Uint32Array(2);\n    tokens[0] = 0;\n    tokens[1] = defaultMetadata;\n    for (let i = 0, length = lines.length; i < length; i++) {\n        const line = lines[i];\n        tokens[0] = line.length;\n        const lineTokens = new LineTokens(tokens, line, languageIdCodec);\n        const isBasicASCII = ViewLineRenderingData.isBasicASCII(line, /* check for basic ASCII */ true);\n        const containsRTL = ViewLineRenderingData.containsRTL(line, isBasicASCII, /* check for RTL */ true);\n        const renderResult = renderViewLine(new RenderLineInput(false, true, line, false, isBasicASCII, containsRTL, 0, lineTokens, [], tabSize, 0, 0, 0, 0, -1, 'none', false, false, null));\n        html = html.concat(renderResult.html);\n        html.push('<br/>');\n    }\n    return html.join('');\n}\nfunction _actualColorize(lines, tabSize, tokenizationSupport, languageIdCodec) {\n    let html = [];\n    let state = tokenizationSupport.getInitialState();\n    for (let i = 0, length = lines.length; i < length; i++) {\n        const line = lines[i];\n        const tokenizeResult = tokenizationSupport.tokenizeEncoded(line, true, state);\n        LineTokens.convertToEndOffset(tokenizeResult.tokens, line.length);\n        const lineTokens = new LineTokens(tokenizeResult.tokens, line, languageIdCodec);\n        const isBasicASCII = ViewLineRenderingData.isBasicASCII(line, /* check for basic ASCII */ true);\n        const containsRTL = ViewLineRenderingData.containsRTL(line, isBasicASCII, /* check for RTL */ true);\n        const renderResult = renderViewLine(new RenderLineInput(false, true, line, false, isBasicASCII, containsRTL, 0, lineTokens.inflate(), [], tabSize, 0, 0, 0, 0, -1, 'none', false, false, null));\n        html = html.concat(renderResult.html);\n        html.push('<br/>');\n        state = tokenizeResult.endState;\n    }\n    return html.join('');\n}\n",
+      "start": 1711096855069,
+      "end": 1711096855144,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855144,
+      "end": 1711096855144,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855144,
+      "end": 1711096855144,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855144,
+      "end": 1711096855144,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855144,
+      "end": 1711096855144,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855144,
+      "end": 1711096855144,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855144,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855145,
+      "end": 1711096855145,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855145,
+      "end": 1711096855149,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855149,
+      "end": 1711096855149,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855149,
+      "end": 1711096855149,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855149,
+      "end": 1711096855149,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855149,
+      "end": 1711096855149,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855149,
+      "end": 1711096855149,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855150,
+      "end": 1711096855150,
+      "order": "normal"
+    }
+  ]
+}

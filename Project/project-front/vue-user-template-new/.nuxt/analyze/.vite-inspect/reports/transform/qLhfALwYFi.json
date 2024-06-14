@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/dnd/browser/dragAndDropCommand.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nexport class DragAndDropCommand {\n    constructor(selection, targetPosition, copy) {\n        this.selection = selection;\n        this.targetPosition = targetPosition;\n        this.copy = copy;\n        this.targetSelection = null;\n    }\n    getEditOperations(model, builder) {\n        let text = model.getValueInRange(this.selection);\n        if (!this.copy) {\n            builder.addEditOperation(this.selection, null);\n        }\n        builder.addEditOperation(new Range(this.targetPosition.lineNumber, this.targetPosition.column, this.targetPosition.lineNumber, this.targetPosition.column), text);\n        if (this.selection.containsPosition(this.targetPosition) && !(this.copy && (this.selection.getEndPosition().equals(this.targetPosition) || this.selection.getStartPosition().equals(this.targetPosition)) // we allow users to paste content beside the selection\n        )) {\n            this.targetSelection = this.selection;\n            return;\n        }\n        if (this.copy) {\n            this.targetSelection = new Selection(this.targetPosition.lineNumber, this.targetPosition.column, this.selection.endLineNumber - this.selection.startLineNumber + this.targetPosition.lineNumber, this.selection.startLineNumber === this.selection.endLineNumber ?\n                this.targetPosition.column + this.selection.endColumn - this.selection.startColumn :\n                this.selection.endColumn);\n            return;\n        }\n        if (this.targetPosition.lineNumber > this.selection.endLineNumber) {\n            // Drag the selection downwards\n            this.targetSelection = new Selection(this.targetPosition.lineNumber - this.selection.endLineNumber + this.selection.startLineNumber, this.targetPosition.column, this.targetPosition.lineNumber, this.selection.startLineNumber === this.selection.endLineNumber ?\n                this.targetPosition.column + this.selection.endColumn - this.selection.startColumn :\n                this.selection.endColumn);\n            return;\n        }\n        if (this.targetPosition.lineNumber < this.selection.endLineNumber) {\n            // Drag the selection upwards\n            this.targetSelection = new Selection(this.targetPosition.lineNumber, this.targetPosition.column, this.targetPosition.lineNumber + this.selection.endLineNumber - this.selection.startLineNumber, this.selection.startLineNumber === this.selection.endLineNumber ?\n                this.targetPosition.column + this.selection.endColumn - this.selection.startColumn :\n                this.selection.endColumn);\n            return;\n        }\n        // The target position is at the same line as the selection's end position.\n        if (this.selection.endColumn <= this.targetPosition.column) {\n            // The target position is after the selection's end position\n            this.targetSelection = new Selection(this.targetPosition.lineNumber - this.selection.endLineNumber + this.selection.startLineNumber, this.selection.startLineNumber === this.selection.endLineNumber ?\n                this.targetPosition.column - this.selection.endColumn + this.selection.startColumn :\n                this.targetPosition.column - this.selection.endColumn + this.selection.startColumn, this.targetPosition.lineNumber, this.selection.startLineNumber === this.selection.endLineNumber ?\n                this.targetPosition.column :\n                this.selection.endColumn);\n        }\n        else {\n            // The target position is before the selection's end position. Since the selection doesn't contain the target position, the selection is one-line and target position is before this selection.\n            this.targetSelection = new Selection(this.targetPosition.lineNumber - this.selection.endLineNumber + this.selection.startLineNumber, this.targetPosition.column, this.targetPosition.lineNumber, this.targetPosition.column + this.selection.endColumn - this.selection.startColumn);\n        }\n    }\n    computeCursorState(model, helper) {\n        return this.targetSelection;\n    }\n}\n",
+      "start": 1711096855578,
+      "end": 1711096855674,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855674,
+      "end": 1711096855674,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    }
+  ]
+}

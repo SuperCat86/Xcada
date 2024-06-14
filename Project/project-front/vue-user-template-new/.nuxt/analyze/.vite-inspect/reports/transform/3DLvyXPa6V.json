@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/storage/common/storage.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "import { Emitter, PauseableEmitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { isUndefinedOrNull } from '../../../base/common/types.js';\nimport { InMemoryStorageDatabase, Storage } from '../../../base/parts/storage/common/storage.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nconst TARGET_KEY = '__$__targetStorageMarker';\nexport const IStorageService = createDecorator('storageService');\nexport var WillSaveStateReason;\n(function (WillSaveStateReason) {\n    /**\n     * No specific reason to save state.\n     */\n    WillSaveStateReason[WillSaveStateReason[\"NONE\"] = 0] = \"NONE\";\n    /**\n     * A hint that the workbench is about to shutdown.\n     */\n    WillSaveStateReason[WillSaveStateReason[\"SHUTDOWN\"] = 1] = \"SHUTDOWN\";\n})(WillSaveStateReason || (WillSaveStateReason = {}));\nexport class AbstractStorageService extends Disposable {\n    constructor(options = { flushInterval: AbstractStorageService.DEFAULT_FLUSH_INTERVAL }) {\n        super();\n        this.options = options;\n        this._onDidChangeValue = this._register(new PauseableEmitter());\n        this._onDidChangeTarget = this._register(new PauseableEmitter());\n        this._onWillSaveState = this._register(new Emitter());\n        this.onWillSaveState = this._onWillSaveState.event;\n        this._workspaceKeyTargets = undefined;\n        this._globalKeyTargets = undefined;\n    }\n    emitDidChangeValue(scope, key) {\n        // Specially handle `TARGET_KEY`\n        if (key === TARGET_KEY) {\n            // Clear our cached version which is now out of date\n            if (scope === 0 /* GLOBAL */) {\n                this._globalKeyTargets = undefined;\n            }\n            else if (scope === 1 /* WORKSPACE */) {\n                this._workspaceKeyTargets = undefined;\n            }\n            // Emit as `didChangeTarget` event\n            this._onDidChangeTarget.fire({ scope });\n        }\n        // Emit any other key to outside\n        else {\n            this._onDidChangeValue.fire({ scope, key, target: this.getKeyTargets(scope)[key] });\n        }\n    }\n    get(key, scope, fallbackValue) {\n        var _a;\n        return (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.get(key, fallbackValue);\n    }\n    getBoolean(key, scope, fallbackValue) {\n        var _a;\n        return (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.getBoolean(key, fallbackValue);\n    }\n    getNumber(key, scope, fallbackValue) {\n        var _a;\n        return (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.getNumber(key, fallbackValue);\n    }\n    store(key, value, scope, target) {\n        // We remove the key for undefined/null values\n        if (isUndefinedOrNull(value)) {\n            this.remove(key, scope);\n            return;\n        }\n        // Update our datastructures but send events only after\n        this.withPausedEmitters(() => {\n            var _a;\n            // Update key-target map\n            this.updateKeyTarget(key, scope, target);\n            // Store actual value\n            (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.set(key, value);\n        });\n    }\n    remove(key, scope) {\n        // Update our datastructures but send events only after\n        this.withPausedEmitters(() => {\n            var _a;\n            // Update key-target map\n            this.updateKeyTarget(key, scope, undefined);\n            // Remove actual key\n            (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.delete(key);\n        });\n    }\n    withPausedEmitters(fn) {\n        // Pause emitters\n        this._onDidChangeValue.pause();\n        this._onDidChangeTarget.pause();\n        try {\n            fn();\n        }\n        finally {\n            // Resume emitters\n            this._onDidChangeValue.resume();\n            this._onDidChangeTarget.resume();\n        }\n    }\n    updateKeyTarget(key, scope, target) {\n        var _a, _b;\n        // Add\n        const keyTargets = this.getKeyTargets(scope);\n        if (typeof target === 'number') {\n            if (keyTargets[key] !== target) {\n                keyTargets[key] = target;\n                (_a = this.getStorage(scope)) === null || _a === void 0 ? void 0 : _a.set(TARGET_KEY, JSON.stringify(keyTargets));\n            }\n        }\n        // Remove\n        else {\n            if (typeof keyTargets[key] === 'number') {\n                delete keyTargets[key];\n                (_b = this.getStorage(scope)) === null || _b === void 0 ? void 0 : _b.set(TARGET_KEY, JSON.stringify(keyTargets));\n            }\n        }\n    }\n    get workspaceKeyTargets() {\n        if (!this._workspaceKeyTargets) {\n            this._workspaceKeyTargets = this.loadKeyTargets(1 /* WORKSPACE */);\n        }\n        return this._workspaceKeyTargets;\n    }\n    get globalKeyTargets() {\n        if (!this._globalKeyTargets) {\n            this._globalKeyTargets = this.loadKeyTargets(0 /* GLOBAL */);\n        }\n        return this._globalKeyTargets;\n    }\n    getKeyTargets(scope) {\n        return scope === 0 /* GLOBAL */ ? this.globalKeyTargets : this.workspaceKeyTargets;\n    }\n    loadKeyTargets(scope) {\n        const keysRaw = this.get(TARGET_KEY, scope);\n        if (keysRaw) {\n            try {\n                return JSON.parse(keysRaw);\n            }\n            catch (error) {\n                // Fail gracefully\n            }\n        }\n        return Object.create(null);\n    }\n}\nAbstractStorageService.DEFAULT_FLUSH_INTERVAL = 60 * 1000; // every minute\nexport class InMemoryStorageService extends AbstractStorageService {\n    constructor() {\n        super();\n        this.globalStorage = this._register(new Storage(new InMemoryStorageDatabase()));\n        this.workspaceStorage = this._register(new Storage(new InMemoryStorageDatabase()));\n        this._register(this.workspaceStorage.onDidChangeStorage(key => this.emitDidChangeValue(1 /* WORKSPACE */, key)));\n        this._register(this.globalStorage.onDidChangeStorage(key => this.emitDidChangeValue(0 /* GLOBAL */, key)));\n    }\n    getStorage(scope) {\n        return scope === 0 /* GLOBAL */ ? this.globalStorage : this.workspaceStorage;\n    }\n}\n",
+      "start": 1711096855022,
+      "end": 1711096855091,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855091,
+      "end": 1711096855091,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855091,
+      "end": 1711096855092,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855092,
+      "end": 1711096855092,
+      "order": "normal"
+    }
+  ]
+}

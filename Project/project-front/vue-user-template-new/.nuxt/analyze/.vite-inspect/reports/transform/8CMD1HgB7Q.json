@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/widget/diffReview.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nvar _a;\nimport './media/diffReview.css';\nimport * as nls from '../../../nls.js';\nimport * as dom from '../../../base/browser/dom.js';\nimport { createFastDomNode } from '../../../base/browser/fastDomNode.js';\nimport { ActionBar } from '../../../base/browser/ui/actionbar/actionbar.js';\nimport { DomScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';\nimport { Action } from '../../../base/common/actions.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { applyFontInfo } from '../config/domFontInfo.js';\nimport { EditorAction, registerEditorAction } from '../editorExtensions.js';\nimport { ICodeEditorService } from '../services/codeEditorService.js';\nimport { EditorFontLigatures } from '../../common/config/editorOptions.js';\nimport { LineTokens } from '../../common/tokens/lineTokens.js';\nimport { Position } from '../../common/core/position.js';\nimport { editorLineNumbers } from '../../common/core/editorColorRegistry.js';\nimport { RenderLineInput, renderViewLine2 as renderViewLine } from '../../common/viewLayout/viewLineRenderer.js';\nimport { ViewLineRenderingData } from '../../common/viewModel.js';\nimport { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';\nimport { scrollbarShadow } from '../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant, ThemeIcon } from '../../../platform/theme/common/themeService.js';\nimport { Codicon } from '../../../base/common/codicons.js';\nimport { registerIcon } from '../../../platform/theme/common/iconRegistry.js';\nimport { ILanguageService } from '../../common/languages/language.js';\nconst DIFF_LINES_PADDING = 3;\nclass DiffEntry {\n    constructor(originalLineStart, originalLineEnd, modifiedLineStart, modifiedLineEnd) {\n        this.originalLineStart = originalLineStart;\n        this.originalLineEnd = originalLineEnd;\n        this.modifiedLineStart = modifiedLineStart;\n        this.modifiedLineEnd = modifiedLineEnd;\n    }\n    getType() {\n        if (this.originalLineStart === 0) {\n            return 1 /* Insert */;\n        }\n        if (this.modifiedLineStart === 0) {\n            return 2 /* Delete */;\n        }\n        return 0 /* Equal */;\n    }\n}\nclass Diff {\n    constructor(entries) {\n        this.entries = entries;\n    }\n}\nconst diffReviewInsertIcon = registerIcon('diff-review-insert', Codicon.add, nls.localize('diffReviewInsertIcon', 'Icon for \\'Insert\\' in diff review.'));\nconst diffReviewRemoveIcon = registerIcon('diff-review-remove', Codicon.remove, nls.localize('diffReviewRemoveIcon', 'Icon for \\'Remove\\' in diff review.'));\nconst diffReviewCloseIcon = registerIcon('diff-review-close', Codicon.close, nls.localize('diffReviewCloseIcon', 'Icon for \\'Close\\' in diff review.'));\nlet DiffReview = class DiffReview extends Disposable {\n    constructor(diffEditor, _languageService) {\n        super();\n        this._languageService = _languageService;\n        this._width = 0;\n        this._diffEditor = diffEditor;\n        this._isVisible = false;\n        this.shadow = createFastDomNode(document.createElement('div'));\n        this.shadow.setClassName('diff-review-shadow');\n        this.actionBarContainer = createFastDomNode(document.createElement('div'));\n        this.actionBarContainer.setClassName('diff-review-actions');\n        this._actionBar = this._register(new ActionBar(this.actionBarContainer.domNode));\n        this._actionBar.push(new Action('diffreview.close', nls.localize('label.close', \"Close\"), 'close-diff-review ' + ThemeIcon.asClassName(diffReviewCloseIcon), true, () => __awaiter(this, void 0, void 0, function* () { return this.hide(); })), { label: false, icon: true });\n        this.domNode = createFastDomNode(document.createElement('div'));\n        this.domNode.setClassName('diff-review monaco-editor-background');\n        this._content = createFastDomNode(document.createElement('div'));\n        this._content.setClassName('diff-review-content');\n        this._content.setAttribute('role', 'code');\n        this.scrollbar = this._register(new DomScrollableElement(this._content.domNode, {}));\n        this.domNode.domNode.appendChild(this.scrollbar.getDomNode());\n        this._register(diffEditor.onDidUpdateDiff(() => {\n            if (!this._isVisible) {\n                return;\n            }\n            this._diffs = this._compute();\n            this._render();\n        }));\n        this._register(diffEditor.getModifiedEditor().onDidChangeCursorPosition(() => {\n            if (!this._isVisible) {\n                return;\n            }\n            this._render();\n        }));\n        this._register(dom.addStandardDisposableListener(this.domNode.domNode, 'click', (e) => {\n            e.preventDefault();\n            const row = dom.findParentWithClass(e.target, 'diff-review-row');\n            if (row) {\n                this._goToRow(row);\n            }\n        }));\n        this._register(dom.addStandardDisposableListener(this.domNode.domNode, 'keydown', (e) => {\n            if (e.equals(18 /* DownArrow */)\n                || e.equals(2048 /* CtrlCmd */ | 18 /* DownArrow */)\n                || e.equals(512 /* Alt */ | 18 /* DownArrow */)) {\n                e.preventDefault();\n                this._goToRow(this._getNextRow());\n            }\n            if (e.equals(16 /* UpArrow */)\n                || e.equals(2048 /* CtrlCmd */ | 16 /* UpArrow */)\n                || e.equals(512 /* Alt */ | 16 /* UpArrow */)) {\n                e.preventDefault();\n                this._goToRow(this._getPrevRow());\n            }\n            if (e.equals(9 /* Escape */)\n                || e.equals(2048 /* CtrlCmd */ | 9 /* Escape */)\n                || e.equals(512 /* Alt */ | 9 /* Escape */)\n                || e.equals(1024 /* Shift */ | 9 /* Escape */)) {\n                e.preventDefault();\n                this.hide();\n            }\n            if (e.equals(10 /* Space */)\n                || e.equals(3 /* Enter */)) {\n                e.preventDefault();\n                this.accept();\n            }\n        }));\n        this._diffs = [];\n        this._currentDiff = null;\n    }\n    prev() {\n        let index = 0;\n        if (!this._isVisible) {\n            this._diffs = this._compute();\n        }\n        if (this._isVisible) {\n            let currentIndex = -1;\n            for (let i = 0, len = this._diffs.length; i < len; i++) {\n                if (this._diffs[i] === this._currentDiff) {\n                    currentIndex = i;\n                    break;\n                }\n            }\n            index = (this._diffs.length + currentIndex - 1);\n        }\n        else {\n            index = this._findDiffIndex(this._diffEditor.getPosition());\n        }\n        if (this._diffs.length === 0) {\n            // Nothing to do\n            return;\n        }\n        index = index % this._diffs.length;\n        const entries = this._diffs[index].entries;\n        this._diffEditor.setPosition(new Position(entries[0].modifiedLineStart, 1));\n        this._diffEditor.setSelection({ startColumn: 1, startLineNumber: entries[0].modifiedLineStart, endColumn: 1073741824 /* MAX_SAFE_SMALL_INTEGER */, endLineNumber: entries[entries.length - 1].modifiedLineEnd });\n        this._isVisible = true;\n        this._diffEditor.doLayout();\n        this._render();\n        this._goToRow(this._getNextRow());\n    }\n    next() {\n        let index = 0;\n        if (!this._isVisible) {\n            this._diffs = this._compute();\n        }\n        if (this._isVisible) {\n            let currentIndex = -1;\n            for (let i = 0, len = this._diffs.length; i < len; i++) {\n                if (this._diffs[i] === this._currentDiff) {\n                    currentIndex = i;\n                    break;\n                }\n            }\n            index = (currentIndex + 1);\n        }\n        else {\n            index = this._findDiffIndex(this._diffEditor.getPosition());\n        }\n        if (this._diffs.length === 0) {\n            // Nothing to do\n            return;\n        }\n        index = index % this._diffs.length;\n        const entries = this._diffs[index].entries;\n        this._diffEditor.setPosition(new Position(entries[0].modifiedLineStart, 1));\n        this._diffEditor.setSelection({ startColumn: 1, startLineNumber: entries[0].modifiedLineStart, endColumn: 1073741824 /* MAX_SAFE_SMALL_INTEGER */, endLineNumber: entries[entries.length - 1].modifiedLineEnd });\n        this._isVisible = true;\n        this._diffEditor.doLayout();\n        this._render();\n        this._goToRow(this._getNextRow());\n    }\n    accept() {\n        let jumpToLineNumber = -1;\n        const current = this._getCurrentFocusedRow();\n        if (current) {\n            const lineNumber = parseInt(current.getAttribute('data-line'), 10);\n            if (!isNaN(lineNumber)) {\n                jumpToLineNumber = lineNumber;\n            }\n        }\n        this.hide();\n        if (jumpToLineNumber !== -1) {\n            this._diffEditor.setPosition(new Position(jumpToLineNumber, 1));\n            this._diffEditor.revealPosition(new Position(jumpToLineNumber, 1), 1 /* Immediate */);\n        }\n    }\n    hide() {\n        this._isVisible = false;\n        this._diffEditor.updateOptions({ readOnly: false });\n        this._diffEditor.focus();\n        this._diffEditor.doLayout();\n        this._render();\n    }\n    _getPrevRow() {\n        const current = this._getCurrentFocusedRow();\n        if (!current) {\n            return this._getFirstRow();\n        }\n        if (current.previousElementSibling) {\n            return current.previousElementSibling;\n        }\n        return current;\n    }\n    _getNextRow() {\n        const current = this._getCurrentFocusedRow();\n        if (!current) {\n            return this._getFirstRow();\n        }\n        if (current.nextElementSibling) {\n            return current.nextElementSibling;\n        }\n        return current;\n    }\n    _getFirstRow() {\n        return this.domNode.domNode.querySelector('.diff-review-row');\n    }\n    _getCurrentFocusedRow() {\n        const result = document.activeElement;\n        if (result && /diff-review-row/.test(result.className)) {\n            return result;\n        }\n        return null;\n    }\n    _goToRow(row) {\n        const prev = this._getCurrentFocusedRow();\n        row.tabIndex = 0;\n        row.focus();\n        if (prev && prev !== row) {\n            prev.tabIndex = -1;\n        }\n        this.scrollbar.scanDomNode();\n    }\n    isVisible() {\n        return this._isVisible;\n    }\n    layout(top, width, height) {\n        this._width = width;\n        this.shadow.setTop(top - 6);\n        this.shadow.setWidth(width);\n        this.shadow.setHeight(this._isVisible ? 6 : 0);\n        this.domNode.setTop(top);\n        this.domNode.setWidth(width);\n        this.domNode.setHeight(height);\n        this._content.setHeight(height);\n        this._content.setWidth(width);\n        if (this._isVisible) {\n            this.actionBarContainer.setAttribute('aria-hidden', 'false');\n            this.actionBarContainer.setDisplay('block');\n        }\n        else {\n            this.actionBarContainer.setAttribute('aria-hidden', 'true');\n            this.actionBarContainer.setDisplay('none');\n        }\n    }\n    _compute() {\n        const lineChanges = this._diffEditor.getLineChanges();\n        if (!lineChanges || lineChanges.length === 0) {\n            return [];\n        }\n        const originalModel = this._diffEditor.getOriginalEditor().getModel();\n        const modifiedModel = this._diffEditor.getModifiedEditor().getModel();\n        if (!originalModel || !modifiedModel) {\n            return [];\n        }\n        return DiffReview._mergeAdjacent(lineChanges, originalModel.getLineCount(), modifiedModel.getLineCount());\n    }\n    static _mergeAdjacent(lineChanges, originalLineCount, modifiedLineCount) {\n        if (!lineChanges || lineChanges.length === 0) {\n            return [];\n        }\n        const diffs = [];\n        let diffsLength = 0;\n        for (let i = 0, len = lineChanges.length; i < len; i++) {\n            const lineChange = lineChanges[i];\n            const originalStart = lineChange.originalStartLineNumber;\n            const originalEnd = lineChange.originalEndLineNumber;\n            const modifiedStart = lineChange.modifiedStartLineNumber;\n            const modifiedEnd = lineChange.modifiedEndLineNumber;\n            const r = [];\n            let rLength = 0;\n            // Emit before anchors\n            {\n                const originalEqualAbove = (originalEnd === 0 ? originalStart : originalStart - 1);\n                const modifiedEqualAbove = (modifiedEnd === 0 ? modifiedStart : modifiedStart - 1);\n                // Make sure we don't step into the previous diff\n                let minOriginal = 1;\n                let minModified = 1;\n                if (i > 0) {\n                    const prevLineChange = lineChanges[i - 1];\n                    if (prevLineChange.originalEndLineNumber === 0) {\n                        minOriginal = prevLineChange.originalStartLineNumber + 1;\n                    }\n                    else {\n                        minOriginal = prevLineChange.originalEndLineNumber + 1;\n                    }\n                    if (prevLineChange.modifiedEndLineNumber === 0) {\n                        minModified = prevLineChange.modifiedStartLineNumber + 1;\n                    }\n                    else {\n                        minModified = prevLineChange.modifiedEndLineNumber + 1;\n                    }\n                }\n                let fromOriginal = originalEqualAbove - DIFF_LINES_PADDING + 1;\n                let fromModified = modifiedEqualAbove - DIFF_LINES_PADDING + 1;\n                if (fromOriginal < minOriginal) {\n                    const delta = minOriginal - fromOriginal;\n                    fromOriginal = fromOriginal + delta;\n                    fromModified = fromModified + delta;\n                }\n                if (fromModified < minModified) {\n                    const delta = minModified - fromModified;\n                    fromOriginal = fromOriginal + delta;\n                    fromModified = fromModified + delta;\n                }\n                r[rLength++] = new DiffEntry(fromOriginal, originalEqualAbove, fromModified, modifiedEqualAbove);\n            }\n            // Emit deleted lines\n            {\n                if (originalEnd !== 0) {\n                    r[rLength++] = new DiffEntry(originalStart, originalEnd, 0, 0);\n                }\n            }\n            // Emit inserted lines\n            {\n                if (modifiedEnd !== 0) {\n                    r[rLength++] = new DiffEntry(0, 0, modifiedStart, modifiedEnd);\n                }\n            }\n            // Emit after anchors\n            {\n                const originalEqualBelow = (originalEnd === 0 ? originalStart + 1 : originalEnd + 1);\n                const modifiedEqualBelow = (modifiedEnd === 0 ? modifiedStart + 1 : modifiedEnd + 1);\n                // Make sure we don't step into the next diff\n                let maxOriginal = originalLineCount;\n                let maxModified = modifiedLineCount;\n                if (i + 1 < len) {\n                    const nextLineChange = lineChanges[i + 1];\n                    if (nextLineChange.originalEndLineNumber === 0) {\n                        maxOriginal = nextLineChange.originalStartLineNumber;\n                    }\n                    else {\n                        maxOriginal = nextLineChange.originalStartLineNumber - 1;\n                    }\n                    if (nextLineChange.modifiedEndLineNumber === 0) {\n                        maxModified = nextLineChange.modifiedStartLineNumber;\n                    }\n                    else {\n                        maxModified = nextLineChange.modifiedStartLineNumber - 1;\n                    }\n                }\n                let toOriginal = originalEqualBelow + DIFF_LINES_PADDING - 1;\n                let toModified = modifiedEqualBelow + DIFF_LINES_PADDING - 1;\n                if (toOriginal > maxOriginal) {\n                    const delta = maxOriginal - toOriginal;\n                    toOriginal = toOriginal + delta;\n                    toModified = toModified + delta;\n                }\n                if (toModified > maxModified) {\n                    const delta = maxModified - toModified;\n                    toOriginal = toOriginal + delta;\n                    toModified = toModified + delta;\n                }\n                r[rLength++] = new DiffEntry(originalEqualBelow, toOriginal, modifiedEqualBelow, toModified);\n            }\n            diffs[diffsLength++] = new Diff(r);\n        }\n        // Merge adjacent diffs\n        let curr = diffs[0].entries;\n        const r = [];\n        let rLength = 0;\n        for (let i = 1, len = diffs.length; i < len; i++) {\n            const thisDiff = diffs[i].entries;\n            const currLast = curr[curr.length - 1];\n            const thisFirst = thisDiff[0];\n            if (currLast.getType() === 0 /* Equal */\n                && thisFirst.getType() === 0 /* Equal */\n                && thisFirst.originalLineStart <= currLast.originalLineEnd) {\n                // We are dealing with equal lines that overlap\n                curr[curr.length - 1] = new DiffEntry(currLast.originalLineStart, thisFirst.originalLineEnd, currLast.modifiedLineStart, thisFirst.modifiedLineEnd);\n                curr = curr.concat(thisDiff.slice(1));\n                continue;\n            }\n            r[rLength++] = new Diff(curr);\n            curr = thisDiff;\n        }\n        r[rLength++] = new Diff(curr);\n        return r;\n    }\n    _findDiffIndex(pos) {\n        const lineNumber = pos.lineNumber;\n        for (let i = 0, len = this._diffs.length; i < len; i++) {\n            const diff = this._diffs[i].entries;\n            const lastModifiedLine = diff[diff.length - 1].modifiedLineEnd;\n            if (lineNumber <= lastModifiedLine) {\n                return i;\n            }\n        }\n        return 0;\n    }\n    _render() {\n        const originalOptions = this._diffEditor.getOriginalEditor().getOptions();\n        const modifiedOptions = this._diffEditor.getModifiedEditor().getOptions();\n        const originalModel = this._diffEditor.getOriginalEditor().getModel();\n        const modifiedModel = this._diffEditor.getModifiedEditor().getModel();\n        const originalModelOpts = originalModel.getOptions();\n        const modifiedModelOpts = modifiedModel.getOptions();\n        if (!this._isVisible || !originalModel || !modifiedModel) {\n            dom.clearNode(this._content.domNode);\n            this._currentDiff = null;\n            this.scrollbar.scanDomNode();\n            return;\n        }\n        this._diffEditor.updateOptions({ readOnly: true });\n        const diffIndex = this._findDiffIndex(this._diffEditor.getPosition());\n        if (this._diffs[diffIndex] === this._currentDiff) {\n            return;\n        }\n        this._currentDiff = this._diffs[diffIndex];\n        const diffs = this._diffs[diffIndex].entries;\n        const container = document.createElement('div');\n        container.className = 'diff-review-table';\n        container.setAttribute('role', 'list');\n        container.setAttribute('aria-label', 'Difference review. Use \"Stage | Unstage | Revert Selected Ranges\" commands');\n        applyFontInfo(container, modifiedOptions.get(44 /* fontInfo */));\n        let minOriginalLine = 0;\n        let maxOriginalLine = 0;\n        let minModifiedLine = 0;\n        let maxModifiedLine = 0;\n        for (let i = 0, len = diffs.length; i < len; i++) {\n            const diffEntry = diffs[i];\n            const originalLineStart = diffEntry.originalLineStart;\n            const originalLineEnd = diffEntry.originalLineEnd;\n            const modifiedLineStart = diffEntry.modifiedLineStart;\n            const modifiedLineEnd = diffEntry.modifiedLineEnd;\n            if (originalLineStart !== 0 && ((minOriginalLine === 0 || originalLineStart < minOriginalLine))) {\n                minOriginalLine = originalLineStart;\n            }\n            if (originalLineEnd !== 0 && ((maxOriginalLine === 0 || originalLineEnd > maxOriginalLine))) {\n                maxOriginalLine = originalLineEnd;\n            }\n            if (modifiedLineStart !== 0 && ((minModifiedLine === 0 || modifiedLineStart < minModifiedLine))) {\n                minModifiedLine = modifiedLineStart;\n            }\n            if (modifiedLineEnd !== 0 && ((maxModifiedLine === 0 || modifiedLineEnd > maxModifiedLine))) {\n                maxModifiedLine = modifiedLineEnd;\n            }\n        }\n        const header = document.createElement('div');\n        header.className = 'diff-review-row';\n        const cell = document.createElement('div');\n        cell.className = 'diff-review-cell diff-review-summary';\n        const originalChangedLinesCnt = maxOriginalLine - minOriginalLine + 1;\n        const modifiedChangedLinesCnt = maxModifiedLine - minModifiedLine + 1;\n        cell.appendChild(document.createTextNode(`${diffIndex + 1}/${this._diffs.length}: @@ -${minOriginalLine},${originalChangedLinesCnt} +${minModifiedLine},${modifiedChangedLinesCnt} @@`));\n        header.setAttribute('data-line', String(minModifiedLine));\n        const getAriaLines = (lines) => {\n            if (lines === 0) {\n                return nls.localize('no_lines_changed', \"no lines changed\");\n            }\n            else if (lines === 1) {\n                return nls.localize('one_line_changed', \"1 line changed\");\n            }\n            else {\n                return nls.localize('more_lines_changed', \"{0} lines changed\", lines);\n            }\n        };\n        const originalChangedLinesCntAria = getAriaLines(originalChangedLinesCnt);\n        const modifiedChangedLinesCntAria = getAriaLines(modifiedChangedLinesCnt);\n        header.setAttribute('aria-label', nls.localize({\n            key: 'header',\n            comment: [\n                'This is the ARIA label for a git diff header.',\n                'A git diff header looks like this: @@ -154,12 +159,39 @@.',\n                'That encodes that at original line 154 (which is now line 159), 12 lines were removed/changed with 39 lines.',\n                'Variables 0 and 1 refer to the diff index out of total number of diffs.',\n                'Variables 2 and 4 will be numbers (a line number).',\n                'Variables 3 and 5 will be \"no lines changed\", \"1 line changed\" or \"X lines changed\", localized separately.'\n            ]\n        }, \"Difference {0} of {1}: original line {2}, {3}, modified line {4}, {5}\", (diffIndex + 1), this._diffs.length, minOriginalLine, originalChangedLinesCntAria, minModifiedLine, modifiedChangedLinesCntAria));\n        header.appendChild(cell);\n        // @@ -504,7 +517,7 @@\n        header.setAttribute('role', 'listitem');\n        container.appendChild(header);\n        const lineHeight = modifiedOptions.get(59 /* lineHeight */);\n        let modLine = minModifiedLine;\n        for (let i = 0, len = diffs.length; i < len; i++) {\n            const diffEntry = diffs[i];\n            DiffReview._renderSection(container, diffEntry, modLine, lineHeight, this._width, originalOptions, originalModel, originalModelOpts, modifiedOptions, modifiedModel, modifiedModelOpts, this._languageService.languageIdCodec);\n            if (diffEntry.modifiedLineStart !== 0) {\n                modLine = diffEntry.modifiedLineEnd;\n            }\n        }\n        dom.clearNode(this._content.domNode);\n        this._content.domNode.appendChild(container);\n        this.scrollbar.scanDomNode();\n    }\n    static _renderSection(dest, diffEntry, modLine, lineHeight, width, originalOptions, originalModel, originalModelOpts, modifiedOptions, modifiedModel, modifiedModelOpts, languageIdCodec) {\n        const type = diffEntry.getType();\n        let rowClassName = 'diff-review-row';\n        let lineNumbersExtraClassName = '';\n        const spacerClassName = 'diff-review-spacer';\n        let spacerIcon = null;\n        switch (type) {\n            case 1 /* Insert */:\n                rowClassName = 'diff-review-row line-insert';\n                lineNumbersExtraClassName = ' char-insert';\n                spacerIcon = diffReviewInsertIcon;\n                break;\n            case 2 /* Delete */:\n                rowClassName = 'diff-review-row line-delete';\n                lineNumbersExtraClassName = ' char-delete';\n                spacerIcon = diffReviewRemoveIcon;\n                break;\n        }\n        const originalLineStart = diffEntry.originalLineStart;\n        const originalLineEnd = diffEntry.originalLineEnd;\n        const modifiedLineStart = diffEntry.modifiedLineStart;\n        const modifiedLineEnd = diffEntry.modifiedLineEnd;\n        const cnt = Math.max(modifiedLineEnd - modifiedLineStart, originalLineEnd - originalLineStart);\n        const originalLayoutInfo = originalOptions.get(131 /* layoutInfo */);\n        const originalLineNumbersWidth = originalLayoutInfo.glyphMarginWidth + originalLayoutInfo.lineNumbersWidth;\n        const modifiedLayoutInfo = modifiedOptions.get(131 /* layoutInfo */);\n        const modifiedLineNumbersWidth = 10 + modifiedLayoutInfo.glyphMarginWidth + modifiedLayoutInfo.lineNumbersWidth;\n        for (let i = 0; i <= cnt; i++) {\n            const originalLine = (originalLineStart === 0 ? 0 : originalLineStart + i);\n            const modifiedLine = (modifiedLineStart === 0 ? 0 : modifiedLineStart + i);\n            const row = document.createElement('div');\n            row.style.minWidth = width + 'px';\n            row.className = rowClassName;\n            row.setAttribute('role', 'listitem');\n            if (modifiedLine !== 0) {\n                modLine = modifiedLine;\n            }\n            row.setAttribute('data-line', String(modLine));\n            const cell = document.createElement('div');\n            cell.className = 'diff-review-cell';\n            cell.style.height = `${lineHeight}px`;\n            row.appendChild(cell);\n            const originalLineNumber = document.createElement('span');\n            originalLineNumber.style.width = (originalLineNumbersWidth + 'px');\n            originalLineNumber.style.minWidth = (originalLineNumbersWidth + 'px');\n            originalLineNumber.className = 'diff-review-line-number' + lineNumbersExtraClassName;\n            if (originalLine !== 0) {\n                originalLineNumber.appendChild(document.createTextNode(String(originalLine)));\n            }\n            else {\n                originalLineNumber.innerText = '\\u00a0';\n            }\n            cell.appendChild(originalLineNumber);\n            const modifiedLineNumber = document.createElement('span');\n            modifiedLineNumber.style.width = (modifiedLineNumbersWidth + 'px');\n            modifiedLineNumber.style.minWidth = (modifiedLineNumbersWidth + 'px');\n            modifiedLineNumber.style.paddingRight = '10px';\n            modifiedLineNumber.className = 'diff-review-line-number' + lineNumbersExtraClassName;\n            if (modifiedLine !== 0) {\n                modifiedLineNumber.appendChild(document.createTextNode(String(modifiedLine)));\n            }\n            else {\n                modifiedLineNumber.innerText = '\\u00a0';\n            }\n            cell.appendChild(modifiedLineNumber);\n            const spacer = document.createElement('span');\n            spacer.className = spacerClassName;\n            if (spacerIcon) {\n                const spacerCodicon = document.createElement('span');\n                spacerCodicon.className = ThemeIcon.asClassName(spacerIcon);\n                spacerCodicon.innerText = '\\u00a0\\u00a0';\n                spacer.appendChild(spacerCodicon);\n            }\n            else {\n                spacer.innerText = '\\u00a0\\u00a0';\n            }\n            cell.appendChild(spacer);\n            let lineContent;\n            if (modifiedLine !== 0) {\n                let html = this._renderLine(modifiedModel, modifiedOptions, modifiedModelOpts.tabSize, modifiedLine, languageIdCodec);\n                if (DiffReview._ttPolicy) {\n                    html = DiffReview._ttPolicy.createHTML(html);\n                }\n                cell.insertAdjacentHTML('beforeend', html);\n                lineContent = modifiedModel.getLineContent(modifiedLine);\n            }\n            else {\n                let html = this._renderLine(originalModel, originalOptions, originalModelOpts.tabSize, originalLine, languageIdCodec);\n                if (DiffReview._ttPolicy) {\n                    html = DiffReview._ttPolicy.createHTML(html);\n                }\n                cell.insertAdjacentHTML('beforeend', html);\n                lineContent = originalModel.getLineContent(originalLine);\n            }\n            if (lineContent.length === 0) {\n                lineContent = nls.localize('blankLine', \"blank\");\n            }\n            let ariaLabel = '';\n            switch (type) {\n                case 0 /* Equal */:\n                    if (originalLine === modifiedLine) {\n                        ariaLabel = nls.localize({ key: 'unchangedLine', comment: ['The placeholders are contents of the line and should not be translated.'] }, \"{0} unchanged line {1}\", lineContent, originalLine);\n                    }\n                    else {\n                        ariaLabel = nls.localize('equalLine', \"{0} original line {1} modified line {2}\", lineContent, originalLine, modifiedLine);\n                    }\n                    break;\n                case 1 /* Insert */:\n                    ariaLabel = nls.localize('insertLine', \"+ {0} modified line {1}\", lineContent, modifiedLine);\n                    break;\n                case 2 /* Delete */:\n                    ariaLabel = nls.localize('deleteLine', \"- {0} original line {1}\", lineContent, originalLine);\n                    break;\n            }\n            row.setAttribute('aria-label', ariaLabel);\n            dest.appendChild(row);\n        }\n    }\n    static _renderLine(model, options, tabSize, lineNumber, languageIdCodec) {\n        const lineContent = model.getLineContent(lineNumber);\n        const fontInfo = options.get(44 /* fontInfo */);\n        const lineTokens = LineTokens.createEmpty(lineContent, languageIdCodec);\n        const isBasicASCII = ViewLineRenderingData.isBasicASCII(lineContent, model.mightContainNonBasicASCII());\n        const containsRTL = ViewLineRenderingData.containsRTL(lineContent, isBasicASCII, model.mightContainRTL());\n        const r = renderViewLine(new RenderLineInput((fontInfo.isMonospace && !options.get(29 /* disableMonospaceOptimizations */)), fontInfo.canUseHalfwidthRightwardsArrow, lineContent, false, isBasicASCII, containsRTL, 0, lineTokens, [], tabSize, 0, fontInfo.spaceWidth, fontInfo.middotWidth, fontInfo.wsmiddotWidth, options.get(105 /* stopRenderingLineAfter */), options.get(88 /* renderWhitespace */), options.get(83 /* renderControlCharacters */), options.get(45 /* fontLigatures */) !== EditorFontLigatures.OFF, null));\n        return r.html;\n    }\n};\nDiffReview._ttPolicy = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('diffReview', { createHTML: value => value });\nDiffReview = __decorate([\n    __param(1, ILanguageService)\n], DiffReview);\nexport { DiffReview };\n// theming\nregisterThemingParticipant((theme, collector) => {\n    const lineNumbers = theme.getColor(editorLineNumbers);\n    if (lineNumbers) {\n        collector.addRule(`.monaco-diff-editor .diff-review-line-number { color: ${lineNumbers}; }`);\n    }\n    const shadow = theme.getColor(scrollbarShadow);\n    if (shadow) {\n        collector.addRule(`.monaco-diff-editor .diff-review-shadow { box-shadow: ${shadow} 0 -6px 6px -6px inset; }`);\n    }\n});\nclass DiffReviewNext extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.diffReview.next',\n            label: nls.localize('editor.action.diffReview.next', \"Go to Next Difference\"),\n            alias: 'Go to Next Difference',\n            precondition: ContextKeyExpr.has('isInDiffEditor'),\n            kbOpts: {\n                kbExpr: null,\n                primary: 65 /* F7 */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        const diffEditor = findFocusedDiffEditor(accessor);\n        if (diffEditor) {\n            diffEditor.diffReviewNext();\n        }\n    }\n}\nclass DiffReviewPrev extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.diffReview.prev',\n            label: nls.localize('editor.action.diffReview.prev', \"Go to Previous Difference\"),\n            alias: 'Go to Previous Difference',\n            precondition: ContextKeyExpr.has('isInDiffEditor'),\n            kbOpts: {\n                kbExpr: null,\n                primary: 1024 /* Shift */ | 65 /* F7 */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        const diffEditor = findFocusedDiffEditor(accessor);\n        if (diffEditor) {\n            diffEditor.diffReviewPrev();\n        }\n    }\n}\nfunction findFocusedDiffEditor(accessor) {\n    const codeEditorService = accessor.get(ICodeEditorService);\n    const diffEditors = codeEditorService.listDiffEditors();\n    const activeCodeEditor = codeEditorService.getActiveCodeEditor();\n    if (!activeCodeEditor) {\n        return null;\n    }\n    for (let i = 0, len = diffEditors.length; i < len; i++) {\n        const diffEditor = diffEditors[i];\n        if (diffEditor.getModifiedEditor().getId() === activeCodeEditor.getId() || diffEditor.getOriginalEditor().getId() === activeCodeEditor.getId()) {\n            return diffEditor;\n        }\n    }\n    return null;\n}\nregisterEditorAction(DiffReviewNext);\nregisterEditorAction(DiffReviewPrev);\n",
+      "start": 1711096855324,
+      "end": 1711096855446,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855446,
+      "end": 1711096855446,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855446,
+      "end": 1711096855447,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855447,
+      "end": 1711096855447,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855447,
+      "end": 1711096855451,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855451,
+      "end": 1711096855451,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855451,
+      "end": 1711096855452,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855452,
+      "end": 1711096855452,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855452,
+      "end": 1711096855452,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/keybindingLabel/keybindingLabel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { UILabelProvider } from '../../../common/keybindingLabels.js';\nimport { equals } from '../../../common/objects.js';\nimport './keybindingLabel.css';\nimport { localize } from '../../../../nls.js';\nconst $ = dom.$;\nexport class KeybindingLabel {\n    constructor(container, os, options) {\n        this.os = os;\n        this.keyElements = new Set();\n        this.options = options || Object.create(null);\n        this.labelBackground = this.options.keybindingLabelBackground;\n        this.labelForeground = this.options.keybindingLabelForeground;\n        this.labelBorder = this.options.keybindingLabelBorder;\n        this.labelBottomBorder = this.options.keybindingLabelBottomBorder;\n        this.labelShadow = this.options.keybindingLabelShadow;\n        this.domNode = dom.append(container, $('.monaco-keybinding'));\n        this.didEverRender = false;\n        container.appendChild(this.domNode);\n    }\n    get element() {\n        return this.domNode;\n    }\n    set(keybinding, matches) {\n        if (this.didEverRender && this.keybinding === keybinding && KeybindingLabel.areSame(this.matches, matches)) {\n            return;\n        }\n        this.keybinding = keybinding;\n        this.matches = matches;\n        this.render();\n    }\n    render() {\n        this.clear();\n        if (this.keybinding) {\n            let [firstPart, chordPart] = this.keybinding.getParts();\n            if (firstPart) {\n                this.renderPart(this.domNode, firstPart, this.matches ? this.matches.firstPart : null);\n            }\n            if (chordPart) {\n                dom.append(this.domNode, $('span.monaco-keybinding-key-chord-separator', undefined, ' '));\n                this.renderPart(this.domNode, chordPart, this.matches ? this.matches.chordPart : null);\n            }\n            this.domNode.title = this.keybinding.getAriaLabel() || '';\n        }\n        else if (this.options && this.options.renderUnboundKeybindings) {\n            this.renderUnbound(this.domNode);\n        }\n        this.applyStyles();\n        this.didEverRender = true;\n    }\n    clear() {\n        dom.clearNode(this.domNode);\n        this.keyElements.clear();\n    }\n    renderPart(parent, part, match) {\n        const modifierLabels = UILabelProvider.modifierLabels[this.os];\n        if (part.ctrlKey) {\n            this.renderKey(parent, modifierLabels.ctrlKey, Boolean(match === null || match === void 0 ? void 0 : match.ctrlKey), modifierLabels.separator);\n        }\n        if (part.shiftKey) {\n            this.renderKey(parent, modifierLabels.shiftKey, Boolean(match === null || match === void 0 ? void 0 : match.shiftKey), modifierLabels.separator);\n        }\n        if (part.altKey) {\n            this.renderKey(parent, modifierLabels.altKey, Boolean(match === null || match === void 0 ? void 0 : match.altKey), modifierLabels.separator);\n        }\n        if (part.metaKey) {\n            this.renderKey(parent, modifierLabels.metaKey, Boolean(match === null || match === void 0 ? void 0 : match.metaKey), modifierLabels.separator);\n        }\n        const keyLabel = part.keyLabel;\n        if (keyLabel) {\n            this.renderKey(parent, keyLabel, Boolean(match === null || match === void 0 ? void 0 : match.keyCode), '');\n        }\n    }\n    renderKey(parent, label, highlight, separator) {\n        dom.append(parent, this.createKeyElement(label, highlight ? '.highlight' : ''));\n        if (separator) {\n            dom.append(parent, $('span.monaco-keybinding-key-separator', undefined, separator));\n        }\n    }\n    renderUnbound(parent) {\n        dom.append(parent, this.createKeyElement(localize('unbound', \"Unbound\")));\n    }\n    createKeyElement(label, extraClass = '') {\n        const keyElement = $('span.monaco-keybinding-key' + extraClass, undefined, label);\n        this.keyElements.add(keyElement);\n        return keyElement;\n    }\n    style(styles) {\n        this.labelBackground = styles.keybindingLabelBackground;\n        this.labelForeground = styles.keybindingLabelForeground;\n        this.labelBorder = styles.keybindingLabelBorder;\n        this.labelBottomBorder = styles.keybindingLabelBottomBorder;\n        this.labelShadow = styles.keybindingLabelShadow;\n        this.applyStyles();\n    }\n    applyStyles() {\n        var _a;\n        if (this.element) {\n            for (const keyElement of this.keyElements) {\n                if (this.labelBackground) {\n                    keyElement.style.backgroundColor = (_a = this.labelBackground) === null || _a === void 0 ? void 0 : _a.toString();\n                }\n                if (this.labelBorder) {\n                    keyElement.style.borderColor = this.labelBorder.toString();\n                }\n                if (this.labelBottomBorder) {\n                    keyElement.style.borderBottomColor = this.labelBottomBorder.toString();\n                }\n                if (this.labelShadow) {\n                    keyElement.style.boxShadow = `inset 0 -1px 0 ${this.labelShadow}`;\n                }\n            }\n            if (this.labelForeground) {\n                this.element.style.color = this.labelForeground.toString();\n            }\n        }\n    }\n    static areSame(a, b) {\n        if (a === b || (!a && !b)) {\n            return true;\n        }\n        return !!a && !!b && equals(a.firstPart, b.firstPart) && equals(a.chordPart, b.chordPart);\n    }\n}\n",
+      "start": 1711096857872,
+      "end": 1711096857909,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857909,
+      "end": 1711096857909,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857909,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    }
+  ]
+}

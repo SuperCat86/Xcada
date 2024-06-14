@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/list/rangeMap.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Range } from '../../../common/range.js';\n/**\n * Returns the intersection between a ranged group and a range.\n * Returns `[]` if the intersection is empty.\n */\nexport function groupIntersect(range, groups) {\n    const result = [];\n    for (let r of groups) {\n        if (range.start >= r.range.end) {\n            continue;\n        }\n        if (range.end < r.range.start) {\n            break;\n        }\n        const intersection = Range.intersect(range, r.range);\n        if (Range.isEmpty(intersection)) {\n            continue;\n        }\n        result.push({\n            range: intersection,\n            size: r.size\n        });\n    }\n    return result;\n}\n/**\n * Shifts a range by that `much`.\n */\nexport function shift({ start, end }, much) {\n    return { start: start + much, end: end + much };\n}\n/**\n * Consolidates a collection of ranged groups.\n *\n * Consolidation is the process of merging consecutive ranged groups\n * that share the same `size`.\n */\nexport function consolidate(groups) {\n    const result = [];\n    let previousGroup = null;\n    for (let group of groups) {\n        const start = group.range.start;\n        const end = group.range.end;\n        const size = group.size;\n        if (previousGroup && size === previousGroup.size) {\n            previousGroup.range.end = end;\n            continue;\n        }\n        previousGroup = { range: { start, end }, size };\n        result.push(previousGroup);\n    }\n    return result;\n}\n/**\n * Concatenates several collections of ranged groups into a single\n * collection.\n */\nfunction concat(...groups) {\n    return consolidate(groups.reduce((r, g) => r.concat(g), []));\n}\nexport class RangeMap {\n    constructor() {\n        this.groups = [];\n        this._size = 0;\n    }\n    splice(index, deleteCount, items = []) {\n        const diff = items.length - deleteCount;\n        const before = groupIntersect({ start: 0, end: index }, this.groups);\n        const after = groupIntersect({ start: index + deleteCount, end: Number.POSITIVE_INFINITY }, this.groups)\n            .map(g => ({ range: shift(g.range, diff), size: g.size }));\n        const middle = items.map((item, i) => ({\n            range: { start: index + i, end: index + i + 1 },\n            size: item.size\n        }));\n        this.groups = concat(before, middle, after);\n        this._size = this.groups.reduce((t, g) => t + (g.size * (g.range.end - g.range.start)), 0);\n    }\n    /**\n     * Returns the number of items in the range map.\n     */\n    get count() {\n        const len = this.groups.length;\n        if (!len) {\n            return 0;\n        }\n        return this.groups[len - 1].range.end;\n    }\n    /**\n     * Returns the sum of the sizes of all items in the range map.\n     */\n    get size() {\n        return this._size;\n    }\n    /**\n     * Returns the index of the item at the given position.\n     */\n    indexAt(position) {\n        if (position < 0) {\n            return -1;\n        }\n        let index = 0;\n        let size = 0;\n        for (let group of this.groups) {\n            const count = group.range.end - group.range.start;\n            const newSize = size + (count * group.size);\n            if (position < newSize) {\n                return index + Math.floor((position - size) / group.size);\n            }\n            index += count;\n            size = newSize;\n        }\n        return index;\n    }\n    /**\n     * Returns the index of the item right after the item at the\n     * index of the given position.\n     */\n    indexAfter(position) {\n        return Math.min(this.indexAt(position) + 1, this.count);\n    }\n    /**\n     * Returns the start position of the item at the given index.\n     */\n    positionAt(index) {\n        if (index < 0) {\n            return -1;\n        }\n        let position = 0;\n        let count = 0;\n        for (let group of this.groups) {\n            const groupCount = group.range.end - group.range.start;\n            const newCount = count + groupCount;\n            if (index < newCount) {\n                return position + ((index - count) * group.size);\n            }\n            position += groupCount * group.size;\n            count = newCount;\n        }\n        return -1;\n    }\n}\n",
+      "start": 1711096857678,
+      "end": 1711096857780,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857780,
+      "end": 1711096857780,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857780,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    }
+  ]
+}

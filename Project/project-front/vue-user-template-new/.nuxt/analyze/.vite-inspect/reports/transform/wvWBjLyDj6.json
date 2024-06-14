@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/find/browser/findWidget.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n/* Find widget */\n.monaco-editor .find-widget {\n\tposition: absolute;\n\tz-index: 35;\n\theight: 33px;\n\toverflow: hidden;\n\tline-height: 19px;\n\ttransition: transform 200ms linear;\n\tpadding: 0 4px;\n\tbox-sizing: border-box;\n\ttransform: translateY(calc(-100% - 10px)); /* shadow (10px) */\n}\n\n.monaco-editor .find-widget textarea {\n\tmargin: 0px;\n}\n\n.monaco-editor .find-widget.hiddenEditor {\n\tdisplay: none;\n}\n\n/* Find widget when replace is toggled on */\n.monaco-editor .find-widget.replaceToggled > .replace-part {\n\tdisplay: flex;\n}\n\n.monaco-editor .find-widget.visible  {\n\ttransform: translateY(0);\n}\n\n.monaco-editor .find-widget .monaco-inputbox.synthetic-focus {\n\toutline: 1px solid -webkit-focus-ring-color;\n\toutline-offset: -1px;\n}\n\n.monaco-editor .find-widget .monaco-inputbox .input {\n\tbackground-color: transparent;\n\tmin-height: 0;\n}\n\n.monaco-editor .find-widget .monaco-findInput .input {\n\tfont-size: 13px;\n}\n\n.monaco-editor .find-widget > .find-part,\n.monaco-editor .find-widget > .replace-part {\n\tmargin: 4px 0 0 17px;\n\tfont-size: 12px;\n\tdisplay: flex;\n}\n\n.monaco-editor .find-widget > .find-part .monaco-inputbox,\n.monaco-editor .find-widget > .replace-part .monaco-inputbox {\n\tmin-height: 25px;\n}\n\n\n.monaco-editor .find-widget > .replace-part .monaco-inputbox > .ibwrapper > .mirror {\n\tpadding-right: 22px;\n}\n\n.monaco-editor .find-widget > .find-part .monaco-inputbox > .ibwrapper > .input,\n.monaco-editor .find-widget > .find-part .monaco-inputbox > .ibwrapper > .mirror,\n.monaco-editor .find-widget > .replace-part .monaco-inputbox > .ibwrapper > .input,\n.monaco-editor .find-widget > .replace-part .monaco-inputbox > .ibwrapper > .mirror {\n\tpadding-top: 2px;\n\tpadding-bottom: 2px;\n}\n\n.monaco-editor .find-widget > .find-part .find-actions {\n\theight: 25px;\n\tdisplay: flex;\n\talign-items: center;\n}\n\n.monaco-editor .find-widget > .replace-part .replace-actions {\n\theight: 25px;\n\tdisplay: flex;\n\talign-items: center;\n}\n\n.monaco-editor .find-widget .monaco-findInput {\n\tvertical-align: middle;\n\tdisplay: flex;\n\tflex:1;\n}\n\n.monaco-editor .find-widget .monaco-findInput .monaco-scrollable-element {\n\t/* Make sure textarea inherits the width correctly */\n\twidth: 100%;\n}\n\n.monaco-editor .find-widget .monaco-findInput .monaco-scrollable-element .scrollbar.vertical {\n\t/* Hide vertical scrollbar */\n\topacity: 0;\n}\n\n.monaco-editor .find-widget .matchesCount {\n\tdisplay: flex;\n\tflex: initial;\n\tmargin: 0 0 0 3px;\n\tpadding: 2px 0 0 2px;\n\theight: 25px;\n\tvertical-align: middle;\n\tbox-sizing: border-box;\n\ttext-align: center;\n\tline-height: 23px;\n}\n\n.monaco-editor .find-widget .button {\n\twidth: 16px;\n\theight: 16px;\n\tpadding: 3px;\n\tborder-radius: 5px;\n\tdisplay: flex;\n\tflex: initial;\n\tmargin-left: 3px;\n\tbackground-position: center center;\n\tbackground-repeat: no-repeat;\n\tcursor: pointer;\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n}\n\n/* find in selection button */\n.monaco-editor .find-widget .codicon-find-selection {\n\twidth: 22px;\n\theight: 22px;\n\tpadding: 3px;\n\tborder-radius: 5px;\n}\n\n.monaco-editor .find-widget .button.left {\n\tmargin-left: 0;\n\tmargin-right: 3px;\n}\n\n.monaco-editor .find-widget .button.wide {\n\twidth: auto;\n\tpadding: 1px 6px;\n\ttop: -1px;\n}\n\n.monaco-editor .find-widget .button.toggle {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 3px;\n\twidth: 18px;\n\theight: 100%;\n\tborder-radius: 0;\n\tbox-sizing: border-box;\n}\n\n.monaco-editor .find-widget .button.toggle.disabled {\n\tdisplay: none;\n}\n\n.monaco-editor .find-widget .disabled {\n\topacity: 0.3;\n\tcursor: default;\n}\n\n.monaco-editor .find-widget > .replace-part {\n\tdisplay: none;\n}\n\n.monaco-editor .find-widget > .replace-part > .monaco-findInput {\n\tposition: relative;\n\tdisplay: flex;\n\tvertical-align: middle;\n\tflex: auto;\n\tflex-grow: 0;\n\tflex-shrink: 0;\n}\n\n.monaco-editor .find-widget > .replace-part > .monaco-findInput > .controls {\n\tposition: absolute;\n\ttop: 3px;\n\tright: 2px;\n}\n\n/* REDUCED */\n.monaco-editor .find-widget.reduced-find-widget .matchesCount {\n\tdisplay:none;\n}\n\n/* NARROW (SMALLER THAN REDUCED) */\n.monaco-editor .find-widget.narrow-find-widget {\n\tmax-width: 257px !important;\n}\n\n/* COLLAPSED (SMALLER THAN NARROW) */\n.monaco-editor .find-widget.collapsed-find-widget {\n\tmax-width: 170px !important;\n}\n\n.monaco-editor .find-widget.collapsed-find-widget .button.previous,\n.monaco-editor .find-widget.collapsed-find-widget .button.next,\n.monaco-editor .find-widget.collapsed-find-widget .button.replace,\n.monaco-editor .find-widget.collapsed-find-widget .button.replace-all,\n.monaco-editor .find-widget.collapsed-find-widget > .find-part .monaco-findInput .controls {\n\tdisplay:none;\n}\n\n.monaco-editor .findMatch {\n\tanimation-duration: 0;\n\tanimation-name: inherit !important;\n}\n\n.monaco-editor .find-widget .monaco-sash {\n\tleft: 0 !important;\n}\n\n.monaco-editor.hc-black .find-widget .button:before {\n\tposition: relative;\n\ttop: 1px;\n\tleft: 2px;\n}\n",
+      "start": 1711096856681,
+      "end": 1711096856775,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856775,
+      "end": 1711096856775,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856775,
+      "end": 1711096856775,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856775,
+      "end": 1711096856775,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .find-widget{box-sizing:border-box;height:33px;line-height:19px;overflow:hidden;padding:0 4px;position:absolute;transform:translateY(calc(-100% - 10px));transition:transform .2s linear;z-index:35}.monaco-editor .find-widget textarea{margin:0}.monaco-editor .find-widget.hiddenEditor{display:none}.monaco-editor .find-widget.replaceToggled>.replace-part{display:flex}.monaco-editor .find-widget.visible{transform:translateY(0)}.monaco-editor .find-widget .monaco-inputbox.synthetic-focus{outline:1px solid -webkit-focus-ring-color;outline-offset:-1px}.monaco-editor .find-widget .monaco-inputbox .input{background-color:transparent;min-height:0}.monaco-editor .find-widget .monaco-findInput .input{font-size:13px}.monaco-editor .find-widget>.find-part,.monaco-editor .find-widget>.replace-part{display:flex;font-size:12px;margin:4px 0 0 17px}.monaco-editor .find-widget>.find-part .monaco-inputbox,.monaco-editor .find-widget>.replace-part .monaco-inputbox{min-height:25px}.monaco-editor .find-widget>.replace-part .monaco-inputbox>.ibwrapper>.mirror{padding-right:22px}.monaco-editor .find-widget>.find-part .monaco-inputbox>.ibwrapper>.input,.monaco-editor .find-widget>.find-part .monaco-inputbox>.ibwrapper>.mirror,.monaco-editor .find-widget>.replace-part .monaco-inputbox>.ibwrapper>.input,.monaco-editor .find-widget>.replace-part .monaco-inputbox>.ibwrapper>.mirror{padding-bottom:2px;padding-top:2px}.monaco-editor .find-widget>.find-part .find-actions,.monaco-editor .find-widget>.replace-part .replace-actions{align-items:center;display:flex;height:25px}.monaco-editor .find-widget .monaco-findInput{display:flex;flex:1;vertical-align:middle}.monaco-editor .find-widget .monaco-findInput .monaco-scrollable-element{width:100%}.monaco-editor .find-widget .monaco-findInput .monaco-scrollable-element .scrollbar.vertical{opacity:0}.monaco-editor .find-widget .matchesCount{box-sizing:border-box;display:flex;flex:initial;height:25px;line-height:23px;margin:0 0 0 3px;padding:2px 0 0 2px;text-align:center;vertical-align:middle}.monaco-editor .find-widget .button{align-items:center;background-position:50%;background-repeat:no-repeat;border-radius:5px;cursor:pointer;display:flex;flex:initial;height:16px;justify-content:center;margin-left:3px;padding:3px;width:16px}.monaco-editor .find-widget .codicon-find-selection{border-radius:5px;height:22px;padding:3px;width:22px}.monaco-editor .find-widget .button.left{margin-left:0;margin-right:3px}.monaco-editor .find-widget .button.wide{padding:1px 6px;top:-1px;width:auto}.monaco-editor .find-widget .button.toggle{border-radius:0;box-sizing:border-box;height:100%;left:3px;position:absolute;top:0;width:18px}.monaco-editor .find-widget .button.toggle.disabled{display:none}.monaco-editor .find-widget .disabled{cursor:default;opacity:.3}.monaco-editor .find-widget>.replace-part{display:none}.monaco-editor .find-widget>.replace-part>.monaco-findInput{display:flex;flex:auto;flex-grow:0;flex-shrink:0;position:relative;vertical-align:middle}.monaco-editor .find-widget>.replace-part>.monaco-findInput>.controls{position:absolute;right:2px;top:3px}.monaco-editor .find-widget.reduced-find-widget .matchesCount{display:none}.monaco-editor .find-widget.narrow-find-widget{max-width:257px!important}.monaco-editor .find-widget.collapsed-find-widget{max-width:170px!important}.monaco-editor .find-widget.collapsed-find-widget .button.next,.monaco-editor .find-widget.collapsed-find-widget .button.previous,.monaco-editor .find-widget.collapsed-find-widget .button.replace,.monaco-editor .find-widget.collapsed-find-widget .button.replace-all,.monaco-editor .find-widget.collapsed-find-widget>.find-part .monaco-findInput .controls{display:none}.monaco-editor .findMatch{animation-duration:0;animation-name:inherit!important}.monaco-editor .find-widget .monaco-sash{left:0!important}.monaco-editor.hc-black .find-widget .button:before{left:2px;position:relative;top:1px}",
+      "start": 1711096856775,
+      "end": 1711096856797,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856797,
+      "end": 1711096856797,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856798,
+      "end": 1711096856798,
+      "order": "normal"
+    }
+  ]
+}

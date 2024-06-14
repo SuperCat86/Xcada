@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsController.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { RunOnceScheduler } from '../../../../base/common/async.js';\nimport { CancellationToken, CancellationTokenSource } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { LRUCache } from '../../../../base/common/map.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { DynamicCssRules } from '../../../browser/editorDom.js';\nimport { EDITOR_FONT_DEFAULTS } from '../../../common/config/editorOptions.js';\nimport { Range } from '../../../common/core/range.js';\nimport * as languages from '../../../common/languages.js';\nimport { InjectedTextCursorStops } from '../../../common/model.js';\nimport { ModelDecorationInjectedTextOptions } from '../../../common/model/textModel.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { ITextModelService } from '../../../common/services/resolverService.js';\nimport { ClickLinkGesture } from '../../gotoSymbol/browser/link/clickLinkGesture.js';\nimport { InlayHintAnchor, InlayHintsFragments } from './inlayHints.js';\nimport { goToDefinitionWithLocation, showGoToContextMenu } from './inlayHintsLocations.js';\nimport { CommandsRegistry, ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator, IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';\nimport * as colors from '../../../../platform/theme/common/colorRegistry.js';\nimport { themeColorFromId } from '../../../../platform/theme/common/themeService.js';\n// --- hint caching service (per session)\nclass InlayHintsCache {\n    constructor() {\n        this._entries = new LRUCache(50);\n    }\n    get(model) {\n        const key = InlayHintsCache._key(model);\n        return this._entries.get(key);\n    }\n    set(model, value) {\n        const key = InlayHintsCache._key(model);\n        this._entries.set(key, value);\n    }\n    static _key(model) {\n        return `${model.uri.toString()}/${model.getVersionId()}`;\n    }\n}\nconst IInlayHintsCache = createDecorator('IInlayHintsCache');\nregisterSingleton(IInlayHintsCache, InlayHintsCache, true);\n// --- rendered label\nexport class RenderedInlayHintLabelPart {\n    constructor(item, index) {\n        this.item = item;\n        this.index = index;\n    }\n    get part() {\n        const label = this.item.hint.label;\n        if (typeof label === 'string') {\n            return { label };\n        }\n        else {\n            return label[this.index];\n        }\n    }\n}\nclass ActiveInlayHintInfo {\n    constructor(part, hasTriggerModifier) {\n        this.part = part;\n        this.hasTriggerModifier = hasTriggerModifier;\n    }\n}\n// --- controller\nlet InlayHintsController = class InlayHintsController {\n    constructor(_editor, _languageFeaturesService, _featureDebounce, _inlayHintsCache, _commandService, _notificationService, _instaService) {\n        this._editor = _editor;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._inlayHintsCache = _inlayHintsCache;\n        this._commandService = _commandService;\n        this._notificationService = _notificationService;\n        this._instaService = _instaService;\n        this._disposables = new DisposableStore();\n        this._sessionDisposables = new DisposableStore();\n        this._decorationsMetadata = new Map();\n        this._ruleFactory = new DynamicCssRules(this._editor);\n        this._debounceInfo = _featureDebounce.for(_languageFeaturesService.inlayHintsProvider, 'InlayHint', { min: 25 });\n        this._disposables.add(_languageFeaturesService.inlayHintsProvider.onDidChange(() => this._update()));\n        this._disposables.add(_editor.onDidChangeModel(() => this._update()));\n        this._disposables.add(_editor.onDidChangeModelLanguage(() => this._update()));\n        this._disposables.add(_editor.onDidChangeConfiguration(e => {\n            if (e.hasChanged(127 /* inlayHints */)) {\n                this._update();\n            }\n        }));\n        this._update();\n    }\n    static get(editor) {\n        var _a;\n        return (_a = editor.getContribution(InlayHintsController.ID)) !== null && _a !== void 0 ? _a : undefined;\n    }\n    dispose() {\n        this._sessionDisposables.dispose();\n        this._removeAllDecorations();\n        this._disposables.dispose();\n    }\n    _update() {\n        this._sessionDisposables.clear();\n        this._removeAllDecorations();\n        if (!this._editor.getOption(127 /* inlayHints */).enabled) {\n            return;\n        }\n        const model = this._editor.getModel();\n        if (!model || !this._languageFeaturesService.inlayHintsProvider.has(model)) {\n            return;\n        }\n        // iff possible, quickly update from cache\n        const cached = this._inlayHintsCache.get(model);\n        if (cached) {\n            this._updateHintsDecorators([model.getFullModelRange()], cached);\n        }\n        this._sessionDisposables.add(toDisposable(() => {\n            // cache items when switching files etc\n            if (!model.isDisposed()) {\n                this._cacheHintsForFastRestore(model);\n            }\n        }));\n        let cts;\n        let watchedProviders = new Set();\n        const scheduler = new RunOnceScheduler(() => __awaiter(this, void 0, void 0, function* () {\n            const t1 = Date.now();\n            cts === null || cts === void 0 ? void 0 : cts.dispose(true);\n            cts = new CancellationTokenSource();\n            const listener = model.onWillDispose(() => cts === null || cts === void 0 ? void 0 : cts.cancel());\n            try {\n                const myToken = cts.token;\n                const inlayHints = yield InlayHintsFragments.create(this._languageFeaturesService.inlayHintsProvider, model, this._getHintsRanges(), myToken);\n                scheduler.delay = this._debounceInfo.update(model, Date.now() - t1);\n                if (myToken.isCancellationRequested) {\n                    inlayHints.dispose();\n                    return;\n                }\n                // listen to provider changes\n                for (const provider of inlayHints.provider) {\n                    if (typeof provider.onDidChangeInlayHints === 'function' && !watchedProviders.has(provider)) {\n                        watchedProviders.add(provider);\n                        this._sessionDisposables.add(provider.onDidChangeInlayHints(() => {\n                            if (!scheduler.isScheduled()) { // ignore event when request is already scheduled\n                                scheduler.schedule();\n                            }\n                        }));\n                    }\n                }\n                this._sessionDisposables.add(inlayHints);\n                this._updateHintsDecorators(inlayHints.ranges, inlayHints.items);\n                this._cacheHintsForFastRestore(model);\n            }\n            catch (err) {\n                onUnexpectedError(err);\n            }\n            finally {\n                cts.dispose();\n                listener.dispose();\n            }\n        }), this._debounceInfo.get(model));\n        this._sessionDisposables.add(scheduler);\n        this._sessionDisposables.add(toDisposable(() => cts === null || cts === void 0 ? void 0 : cts.dispose(true)));\n        scheduler.schedule(0);\n        this._sessionDisposables.add(this._editor.onDidScrollChange((e) => {\n            // update when scroll position changes\n            // uses scrollTopChanged has weak heuristic to differenatiate between scrolling due to\n            // typing or due to \"actual\" scrolling\n            if (e.scrollTopChanged || !scheduler.isScheduled()) {\n                scheduler.schedule();\n            }\n        }));\n        this._sessionDisposables.add(this._editor.onDidChangeModelContent((e) => {\n            // update less aggressive when typing\n            const delay = Math.max(scheduler.delay, 1250);\n            scheduler.schedule(delay);\n        }));\n        // mouse gestures\n        this._sessionDisposables.add(this._installLinkGesture());\n        this._sessionDisposables.add(this._installDblClickGesture());\n        this._sessionDisposables.add(this._installContextMenu());\n    }\n    _installLinkGesture() {\n        const store = new DisposableStore();\n        const gesture = store.add(new ClickLinkGesture(this._editor));\n        // let removeHighlight = () => { };\n        const sessionStore = new DisposableStore();\n        store.add(sessionStore);\n        store.add(gesture.onMouseMoveOrRelevantKeyDown(e => {\n            const [mouseEvent] = e;\n            const labelPart = this._getInlayHintLabelPart(mouseEvent);\n            const model = this._editor.getModel();\n            if (!labelPart || !model) {\n                sessionStore.clear();\n                return;\n            }\n            // resolve the item\n            const cts = new CancellationTokenSource();\n            sessionStore.add(toDisposable(() => cts.dispose(true)));\n            labelPart.item.resolve(cts.token);\n            // render link => when the modifier is pressed and when there is a command or location\n            this._activeInlayHintPart = labelPart.part.command || labelPart.part.location\n                ? new ActiveInlayHintInfo(labelPart, mouseEvent.hasTriggerModifier)\n                : undefined;\n            const lineNumber = labelPart.item.hint.position.lineNumber;\n            const range = new Range(lineNumber, 1, lineNumber, model.getLineMaxColumn(lineNumber));\n            const lineHints = new Set();\n            for (const data of this._decorationsMetadata.values()) {\n                if (range.containsRange(data.item.anchor.range)) {\n                    lineHints.add(data.item);\n                }\n            }\n            this._updateHintsDecorators([range], Array.from(lineHints));\n            sessionStore.add(toDisposable(() => {\n                this._activeInlayHintPart = undefined;\n                this._updateHintsDecorators([range], Array.from(lineHints));\n            }));\n        }));\n        store.add(gesture.onCancel(() => sessionStore.clear()));\n        store.add(gesture.onExecute((e) => __awaiter(this, void 0, void 0, function* () {\n            const label = this._getInlayHintLabelPart(e);\n            if (label) {\n                const part = label.part;\n                if (part.location) {\n                    // location -> execute go to def\n                    this._instaService.invokeFunction(goToDefinitionWithLocation, e, this._editor, part.location);\n                }\n                else if (languages.Command.is(part.command)) {\n                    // command -> execute it\n                    yield this._invokeCommand(part.command, label.item);\n                }\n            }\n        })));\n        return store;\n    }\n    _installDblClickGesture() {\n        return this._editor.onMouseUp((e) => __awaiter(this, void 0, void 0, function* () {\n            if (e.event.detail !== 2) {\n                return;\n            }\n            const part = this._getInlayHintLabelPart(e);\n            if (!part) {\n                return;\n            }\n            e.event.preventDefault();\n            yield part.item.resolve(CancellationToken.None);\n            if (part.item.hint.command) {\n                yield this._invokeCommand(part.item.hint.command, part.item);\n            }\n        }));\n    }\n    _installContextMenu() {\n        return this._editor.onContextMenu((e) => __awaiter(this, void 0, void 0, function* () {\n            if (!(e.event.target instanceof HTMLElement)) {\n                return;\n            }\n            const part = this._getInlayHintLabelPart(e);\n            if (part) {\n                yield this._instaService.invokeFunction(showGoToContextMenu, this._editor, e.event.target, part);\n            }\n        }));\n    }\n    _getInlayHintLabelPart(e) {\n        var _a;\n        if (e.target.type !== 6 /* CONTENT_TEXT */) {\n            return undefined;\n        }\n        const options = (_a = e.target.detail.injectedText) === null || _a === void 0 ? void 0 : _a.options;\n        if (options instanceof ModelDecorationInjectedTextOptions && (options === null || options === void 0 ? void 0 : options.attachedData) instanceof RenderedInlayHintLabelPart) {\n            return options.attachedData;\n        }\n        return undefined;\n    }\n    _invokeCommand(command, item) {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            try {\n                yield this._commandService.executeCommand(command.id, ...((_a = command.arguments) !== null && _a !== void 0 ? _a : []));\n            }\n            catch (err) {\n                this._notificationService.notify({\n                    severity: Severity.Error,\n                    source: item.provider.displayName,\n                    message: err\n                });\n            }\n        });\n    }\n    _cacheHintsForFastRestore(model) {\n        const items = new Map();\n        for (const [id, obj] of this._decorationsMetadata) {\n            if (items.has(obj.item)) {\n                // an inlay item can be rendered as multiple decorations\n                // but they will all uses the same range\n                continue;\n            }\n            let value = obj.item;\n            const range = model.getDecorationRange(id);\n            if (range) {\n                // update range with whatever the editor has tweaked it to\n                const anchor = new InlayHintAnchor(range, obj.item.anchor.direction);\n                value = obj.item.with({ anchor });\n            }\n            items.set(obj.item, value);\n        }\n        this._inlayHintsCache.set(model, Array.from(items.values()));\n    }\n    _getHintsRanges() {\n        const extra = 30;\n        const model = this._editor.getModel();\n        const visibleRanges = this._editor.getVisibleRangesPlusViewportAboveBelow();\n        const result = [];\n        for (const range of visibleRanges.sort(Range.compareRangesUsingStarts)) {\n            const extendedRange = model.validateRange(new Range(range.startLineNumber - extra, range.startColumn, range.endLineNumber + extra, range.endColumn));\n            if (result.length === 0 || !Range.areIntersectingOrTouching(result[result.length - 1], extendedRange)) {\n                result.push(extendedRange);\n            }\n            else {\n                result[result.length - 1] = Range.plusRange(result[result.length - 1], extendedRange);\n            }\n        }\n        return result;\n    }\n    _updateHintsDecorators(ranges, items) {\n        var _a, _b;\n        // utils to collect/create injected text decorations\n        const newDecorationsData = [];\n        const addInjectedText = (item, ref, content, cursorStops, attachedData) => {\n            newDecorationsData.push({\n                item,\n                classNameRef: ref,\n                decoration: {\n                    range: item.anchor.range,\n                    options: {\n                        // className: \"rangeHighlight\", // DEBUG highlight to see to what range a hint is attached\n                        description: 'InlayHint',\n                        showIfCollapsed: item.anchor.range.isEmpty(),\n                        collapseOnReplaceEdit: !item.anchor.range.isEmpty(),\n                        stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */,\n                        [item.anchor.direction]: {\n                            content,\n                            inlineClassNameAffectsLetterSpacing: true,\n                            inlineClassName: ref.className,\n                            cursorStops,\n                            attachedData\n                        }\n                    }\n                }\n            });\n        };\n        const addInjectedWhitespace = (item, isLast) => {\n            const marginRule = this._ruleFactory.createClassNameRef({\n                width: `${(fontSize / 3) | 0}px`,\n                display: 'inline-block'\n            });\n            addInjectedText(item, marginRule, '\\u200a', isLast ? InjectedTextCursorStops.Right : InjectedTextCursorStops.None);\n        };\n        //\n        const { fontSize, fontFamily } = this._getLayoutInfo();\n        const fontFamilyVar = '--code-editorInlayHintsFontFamily';\n        this._editor.getContainerDomNode().style.setProperty(fontFamilyVar, fontFamily);\n        for (const item of items) {\n            // whitespace leading the actual label\n            if (item.hint.paddingLeft) {\n                addInjectedWhitespace(item, false);\n            }\n            // the label with its parts\n            const parts = typeof item.hint.label === 'string'\n                ? [{ label: item.hint.label }]\n                : item.hint.label;\n            for (let i = 0; i < parts.length; i++) {\n                const part = parts[i];\n                const isFirst = i === 0;\n                const isLast = i === parts.length - 1;\n                const cssProperties = {\n                    fontSize: `${fontSize}px`,\n                    fontFamily: `var(${fontFamilyVar}), ${EDITOR_FONT_DEFAULTS.fontFamily}`,\n                    verticalAlign: 'middle',\n                };\n                if (item.hint.command) {\n                    // user pointer whenever an inlay hint has a command\n                    cssProperties.cursor = 'pointer';\n                }\n                this._fillInColors(cssProperties, item.hint);\n                if ((part.command || part.location) && ((_a = this._activeInlayHintPart) === null || _a === void 0 ? void 0 : _a.part.item) === item && this._activeInlayHintPart.part.index === i) {\n                    // active link!\n                    cssProperties.textDecoration = 'underline';\n                    if (this._activeInlayHintPart.hasTriggerModifier) {\n                        cssProperties.color = themeColorFromId(colors.editorActiveLinkForeground);\n                        cssProperties.cursor = 'pointer';\n                    }\n                }\n                if (isFirst && isLast) {\n                    // only element\n                    cssProperties.padding = `1px ${Math.max(1, fontSize / 4) | 0}px`;\n                    cssProperties.borderRadius = `${(fontSize / 4) | 0}px`;\n                }\n                else if (isFirst) {\n                    // first element\n                    cssProperties.padding = `1px 0 1px ${Math.max(1, fontSize / 4) | 0}px`;\n                    cssProperties.borderRadius = `${(fontSize / 4) | 0}px 0 0 ${(fontSize / 4) | 0}px`;\n                }\n                else if (isLast) {\n                    // last element\n                    cssProperties.padding = `1px ${Math.max(1, fontSize / 4) | 0}px 1px 0`;\n                    cssProperties.borderRadius = `0 ${(fontSize / 4) | 0}px ${(fontSize / 4) | 0}px 0`;\n                }\n                else {\n                    cssProperties.padding = `1px 0 1px 0`;\n                }\n                addInjectedText(item, this._ruleFactory.createClassNameRef(cssProperties), fixSpace(part.label), isLast && !item.hint.paddingRight ? InjectedTextCursorStops.Right : InjectedTextCursorStops.None, new RenderedInlayHintLabelPart(item, i));\n            }\n            // whitespace trailing the actual label\n            if (item.hint.paddingRight) {\n                addInjectedWhitespace(item, true);\n            }\n            if (newDecorationsData.length > InlayHintsController._MAX_DECORATORS) {\n                break;\n            }\n        }\n        // collect all decoration ids that are affected by the ranges\n        // and only update those decorations\n        const decorationIdsToReplace = [];\n        for (const range of ranges) {\n            for (const { id } of (_b = this._editor.getDecorationsInRange(range)) !== null && _b !== void 0 ? _b : []) {\n                const metadata = this._decorationsMetadata.get(id);\n                if (metadata) {\n                    decorationIdsToReplace.push(id);\n                    metadata.classNameRef.dispose();\n                    this._decorationsMetadata.delete(id);\n                }\n            }\n        }\n        const newDecorationIds = this._editor.deltaDecorations(decorationIdsToReplace, newDecorationsData.map(d => d.decoration));\n        for (let i = 0; i < newDecorationIds.length; i++) {\n            const data = newDecorationsData[i];\n            this._decorationsMetadata.set(newDecorationIds[i], { item: data.item, classNameRef: data.classNameRef });\n        }\n    }\n    _fillInColors(props, hint) {\n        if (hint.kind === languages.InlayHintKind.Parameter) {\n            props.backgroundColor = themeColorFromId(colors.editorInlayHintParameterBackground);\n            props.color = themeColorFromId(colors.editorInlayHintParameterForeground);\n        }\n        else if (hint.kind === languages.InlayHintKind.Type) {\n            props.backgroundColor = themeColorFromId(colors.editorInlayHintTypeBackground);\n            props.color = themeColorFromId(colors.editorInlayHintTypeForeground);\n        }\n        else {\n            props.backgroundColor = themeColorFromId(colors.editorInlayHintBackground);\n            props.color = themeColorFromId(colors.editorInlayHintForeground);\n        }\n    }\n    _getLayoutInfo() {\n        const options = this._editor.getOption(127 /* inlayHints */);\n        const editorFontSize = this._editor.getOption(46 /* fontSize */);\n        let fontSize = options.fontSize;\n        if (!fontSize || fontSize < 5 || fontSize > editorFontSize) {\n            fontSize = (editorFontSize * .9) | 0;\n        }\n        const fontFamily = options.fontFamily || this._editor.getOption(43 /* fontFamily */);\n        return { fontSize, fontFamily };\n    }\n    _removeAllDecorations() {\n        this._editor.deltaDecorations(Array.from(this._decorationsMetadata.keys()), []);\n        for (let obj of this._decorationsMetadata.values()) {\n            obj.classNameRef.dispose();\n        }\n        this._decorationsMetadata.clear();\n    }\n};\nInlayHintsController.ID = 'editor.contrib.InlayHints';\nInlayHintsController._MAX_DECORATORS = 1500;\nInlayHintsController = __decorate([\n    __param(1, ILanguageFeaturesService),\n    __param(2, ILanguageFeatureDebounceService),\n    __param(3, IInlayHintsCache),\n    __param(4, ICommandService),\n    __param(5, INotificationService),\n    __param(6, IInstantiationService)\n], InlayHintsController);\nexport { InlayHintsController };\n// Prevents the view from potentially visible whitespace\nfunction fixSpace(str) {\n    const noBreakWhitespace = '\\xa0';\n    return str.replace(/[ \\t]/g, noBreakWhitespace);\n}\nCommandsRegistry.registerCommand('_executeInlayHintProvider', (accessor, ...args) => __awaiter(void 0, void 0, void 0, function* () {\n    const [uri, range] = args;\n    assertType(URI.isUri(uri));\n    assertType(Range.isIRange(range));\n    const { inlayHintsProvider } = accessor.get(ILanguageFeaturesService);\n    const ref = yield accessor.get(ITextModelService).createModelReference(uri);\n    try {\n        const model = yield InlayHintsFragments.create(inlayHintsProvider, ref.object.textEditorModel, [Range.lift(range)], CancellationToken.None);\n        const result = model.items.map(i => i.hint);\n        setTimeout(() => model.dispose(), 0); // dispose after sending to ext host\n        return result;\n    }\n    finally {\n        ref.dispose();\n    }\n}));\n",
+      "start": 1711096855775,
+      "end": 1711096855905,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855905,
+      "end": 1711096855905,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855905,
+      "end": 1711096855908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855908,
+      "end": 1711096855908,
+      "order": "normal"
+    }
+  ]
+}

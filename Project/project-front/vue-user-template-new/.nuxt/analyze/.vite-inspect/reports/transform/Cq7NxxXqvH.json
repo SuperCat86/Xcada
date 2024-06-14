@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/find/browser/replacePattern.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { buildReplaceStringWithCasePreserved } from '../../../../base/common/search.js';\n/**\n * Assigned when the replace pattern is entirely static.\n */\nclass StaticValueReplacePattern {\n    constructor(staticValue) {\n        this.staticValue = staticValue;\n        this.kind = 0 /* StaticValue */;\n    }\n}\n/**\n * Assigned when the replace pattern has replacement patterns.\n */\nclass DynamicPiecesReplacePattern {\n    constructor(pieces) {\n        this.pieces = pieces;\n        this.kind = 1 /* DynamicPieces */;\n    }\n}\nexport class ReplacePattern {\n    constructor(pieces) {\n        if (!pieces || pieces.length === 0) {\n            this._state = new StaticValueReplacePattern('');\n        }\n        else if (pieces.length === 1 && pieces[0].staticValue !== null) {\n            this._state = new StaticValueReplacePattern(pieces[0].staticValue);\n        }\n        else {\n            this._state = new DynamicPiecesReplacePattern(pieces);\n        }\n    }\n    static fromStaticValue(value) {\n        return new ReplacePattern([ReplacePiece.staticValue(value)]);\n    }\n    get hasReplacementPatterns() {\n        return (this._state.kind === 1 /* DynamicPieces */);\n    }\n    buildReplaceString(matches, preserveCase) {\n        if (this._state.kind === 0 /* StaticValue */) {\n            if (preserveCase) {\n                return buildReplaceStringWithCasePreserved(matches, this._state.staticValue);\n            }\n            else {\n                return this._state.staticValue;\n            }\n        }\n        let result = '';\n        for (let i = 0, len = this._state.pieces.length; i < len; i++) {\n            let piece = this._state.pieces[i];\n            if (piece.staticValue !== null) {\n                // static value ReplacePiece\n                result += piece.staticValue;\n                continue;\n            }\n            // match index ReplacePiece\n            let match = ReplacePattern._substitute(piece.matchIndex, matches);\n            if (piece.caseOps !== null && piece.caseOps.length > 0) {\n                let repl = [];\n                let lenOps = piece.caseOps.length;\n                let opIdx = 0;\n                for (let idx = 0, len = match.length; idx < len; idx++) {\n                    if (opIdx >= lenOps) {\n                        repl.push(match.slice(idx));\n                        break;\n                    }\n                    switch (piece.caseOps[opIdx]) {\n                        case 'U':\n                            repl.push(match[idx].toUpperCase());\n                            break;\n                        case 'u':\n                            repl.push(match[idx].toUpperCase());\n                            opIdx++;\n                            break;\n                        case 'L':\n                            repl.push(match[idx].toLowerCase());\n                            break;\n                        case 'l':\n                            repl.push(match[idx].toLowerCase());\n                            opIdx++;\n                            break;\n                        default:\n                            repl.push(match[idx]);\n                    }\n                }\n                match = repl.join('');\n            }\n            result += match;\n        }\n        return result;\n    }\n    static _substitute(matchIndex, matches) {\n        if (matches === null) {\n            return '';\n        }\n        if (matchIndex === 0) {\n            return matches[0];\n        }\n        let remainder = '';\n        while (matchIndex > 0) {\n            if (matchIndex < matches.length) {\n                // A match can be undefined\n                let match = (matches[matchIndex] || '');\n                return match + remainder;\n            }\n            remainder = String(matchIndex % 10) + remainder;\n            matchIndex = Math.floor(matchIndex / 10);\n        }\n        return '$' + remainder;\n    }\n}\n/**\n * A replace piece can either be a static string or an index to a specific match.\n */\nexport class ReplacePiece {\n    constructor(staticValue, matchIndex, caseOps) {\n        this.staticValue = staticValue;\n        this.matchIndex = matchIndex;\n        if (!caseOps || caseOps.length === 0) {\n            this.caseOps = null;\n        }\n        else {\n            this.caseOps = caseOps.slice(0);\n        }\n    }\n    static staticValue(value) {\n        return new ReplacePiece(value, -1, null);\n    }\n    static caseOps(index, caseOps) {\n        return new ReplacePiece(null, index, caseOps);\n    }\n}\nclass ReplacePieceBuilder {\n    constructor(source) {\n        this._source = source;\n        this._lastCharIndex = 0;\n        this._result = [];\n        this._resultLen = 0;\n        this._currentStaticPiece = '';\n    }\n    emitUnchanged(toCharIndex) {\n        this._emitStatic(this._source.substring(this._lastCharIndex, toCharIndex));\n        this._lastCharIndex = toCharIndex;\n    }\n    emitStatic(value, toCharIndex) {\n        this._emitStatic(value);\n        this._lastCharIndex = toCharIndex;\n    }\n    _emitStatic(value) {\n        if (value.length === 0) {\n            return;\n        }\n        this._currentStaticPiece += value;\n    }\n    emitMatchIndex(index, toCharIndex, caseOps) {\n        if (this._currentStaticPiece.length !== 0) {\n            this._result[this._resultLen++] = ReplacePiece.staticValue(this._currentStaticPiece);\n            this._currentStaticPiece = '';\n        }\n        this._result[this._resultLen++] = ReplacePiece.caseOps(index, caseOps);\n        this._lastCharIndex = toCharIndex;\n    }\n    finalize() {\n        this.emitUnchanged(this._source.length);\n        if (this._currentStaticPiece.length !== 0) {\n            this._result[this._resultLen++] = ReplacePiece.staticValue(this._currentStaticPiece);\n            this._currentStaticPiece = '';\n        }\n        return new ReplacePattern(this._result);\n    }\n}\n/**\n * \\n\t\t\t=> inserts a LF\n * \\t\t\t\t=> inserts a TAB\n * \\\\\t\t\t=> inserts a \"\\\".\n * \\u\t\t\t=> upper-cases one character in a match.\n * \\U\t\t\t=> upper-cases ALL remaining characters in a match.\n * \\l\t\t\t=> lower-cases one character in a match.\n * \\L\t\t\t=> lower-cases ALL remaining characters in a match.\n * $$\t\t\t=> inserts a \"$\".\n * $& and $0\t=> inserts the matched substring.\n * $n\t\t\t=> Where n is a non-negative integer lesser than 100, inserts the nth parenthesized submatch string\n * everything else stays untouched\n *\n * Also see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_string_as_a_parameter\n */\nexport function parseReplaceString(replaceString) {\n    if (!replaceString || replaceString.length === 0) {\n        return new ReplacePattern(null);\n    }\n    let caseOps = [];\n    let result = new ReplacePieceBuilder(replaceString);\n    for (let i = 0, len = replaceString.length; i < len; i++) {\n        let chCode = replaceString.charCodeAt(i);\n        if (chCode === 92 /* Backslash */) {\n            // move to next char\n            i++;\n            if (i >= len) {\n                // string ends with a \\\n                break;\n            }\n            let nextChCode = replaceString.charCodeAt(i);\n            // let replaceWithCharacter: string | null = null;\n            switch (nextChCode) {\n                case 92 /* Backslash */:\n                    // \\\\ => inserts a \"\\\"\n                    result.emitUnchanged(i - 1);\n                    result.emitStatic('\\\\', i + 1);\n                    break;\n                case 110 /* n */:\n                    // \\n => inserts a LF\n                    result.emitUnchanged(i - 1);\n                    result.emitStatic('\\n', i + 1);\n                    break;\n                case 116 /* t */:\n                    // \\t => inserts a TAB\n                    result.emitUnchanged(i - 1);\n                    result.emitStatic('\\t', i + 1);\n                    break;\n                // Case modification of string replacements, patterned after Boost, but only applied\n                // to the replacement text, not subsequent content.\n                case 117 /* u */:\n                // \\u => upper-cases one character.\n                case 85 /* U */:\n                // \\U => upper-cases ALL following characters.\n                case 108 /* l */:\n                // \\l => lower-cases one character.\n                case 76 /* L */:\n                    // \\L => lower-cases ALL following characters.\n                    result.emitUnchanged(i - 1);\n                    result.emitStatic('', i + 1);\n                    caseOps.push(String.fromCharCode(nextChCode));\n                    break;\n            }\n            continue;\n        }\n        if (chCode === 36 /* DollarSign */) {\n            // move to next char\n            i++;\n            if (i >= len) {\n                // string ends with a $\n                break;\n            }\n            let nextChCode = replaceString.charCodeAt(i);\n            if (nextChCode === 36 /* DollarSign */) {\n                // $$ => inserts a \"$\"\n                result.emitUnchanged(i - 1);\n                result.emitStatic('$', i + 1);\n                continue;\n            }\n            if (nextChCode === 48 /* Digit0 */ || nextChCode === 38 /* Ampersand */) {\n                // $& and $0 => inserts the matched substring.\n                result.emitUnchanged(i - 1);\n                result.emitMatchIndex(0, i + 1, caseOps);\n                caseOps.length = 0;\n                continue;\n            }\n            if (49 /* Digit1 */ <= nextChCode && nextChCode <= 57 /* Digit9 */) {\n                // $n\n                let matchIndex = nextChCode - 48 /* Digit0 */;\n                // peek next char to probe for $nn\n                if (i + 1 < len) {\n                    let nextNextChCode = replaceString.charCodeAt(i + 1);\n                    if (48 /* Digit0 */ <= nextNextChCode && nextNextChCode <= 57 /* Digit9 */) {\n                        // $nn\n                        // move to next char\n                        i++;\n                        matchIndex = matchIndex * 10 + (nextNextChCode - 48 /* Digit0 */);\n                        result.emitUnchanged(i - 2);\n                        result.emitMatchIndex(matchIndex, i + 1, caseOps);\n                        caseOps.length = 0;\n                        continue;\n                    }\n                }\n                result.emitUnchanged(i - 1);\n                result.emitMatchIndex(matchIndex, i + 1, caseOps);\n                caseOps.length = 0;\n                continue;\n            }\n        }\n    }\n    return result.finalize();\n}\n",
+      "start": 1711096856670,
+      "end": 1711096856769,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856769,
+      "end": 1711096856769,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856769,
+      "end": 1711096856770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856770,
+      "end": 1711096856770,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856771,
+      "end": 1711096856771,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/touch.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nimport * as DomUtils from './dom.js';\nimport * as arrays from '../common/arrays.js';\nimport { memoize } from '../common/decorators.js';\nimport { Disposable } from '../common/lifecycle.js';\nexport var EventType;\n(function (EventType) {\n    EventType.Tap = '-monaco-gesturetap';\n    EventType.Change = '-monaco-gesturechange';\n    EventType.Start = '-monaco-gesturestart';\n    EventType.End = '-monaco-gesturesend';\n    EventType.Contextmenu = '-monaco-gesturecontextmenu';\n})(EventType || (EventType = {}));\nexport class Gesture extends Disposable {\n    constructor() {\n        super();\n        this.dispatched = false;\n        this.activeTouches = {};\n        this.handle = null;\n        this.targets = [];\n        this.ignoreTargets = [];\n        this._lastSetTapCountTime = 0;\n        this._register(DomUtils.addDisposableListener(document, 'touchstart', (e) => this.onTouchStart(e), { passive: false }));\n        this._register(DomUtils.addDisposableListener(document, 'touchend', (e) => this.onTouchEnd(e)));\n        this._register(DomUtils.addDisposableListener(document, 'touchmove', (e) => this.onTouchMove(e), { passive: false }));\n    }\n    static addTarget(element) {\n        if (!Gesture.isTouchDevice()) {\n            return Disposable.None;\n        }\n        if (!Gesture.INSTANCE) {\n            Gesture.INSTANCE = new Gesture();\n        }\n        Gesture.INSTANCE.targets.push(element);\n        return {\n            dispose: () => {\n                Gesture.INSTANCE.targets = Gesture.INSTANCE.targets.filter(t => t !== element);\n            }\n        };\n    }\n    static ignoreTarget(element) {\n        if (!Gesture.isTouchDevice()) {\n            return Disposable.None;\n        }\n        if (!Gesture.INSTANCE) {\n            Gesture.INSTANCE = new Gesture();\n        }\n        Gesture.INSTANCE.ignoreTargets.push(element);\n        return {\n            dispose: () => {\n                Gesture.INSTANCE.ignoreTargets = Gesture.INSTANCE.ignoreTargets.filter(t => t !== element);\n            }\n        };\n    }\n    static isTouchDevice() {\n        // `'ontouchstart' in window` always evaluates to true with typescript's modern typings. This causes `window` to be\n        // `never` later in `window.navigator`. That's why we need the explicit `window as Window` cast\n        return 'ontouchstart' in window || navigator.maxTouchPoints > 0;\n    }\n    dispose() {\n        if (this.handle) {\n            this.handle.dispose();\n            this.handle = null;\n        }\n        super.dispose();\n    }\n    onTouchStart(e) {\n        let timestamp = Date.now(); // use Date.now() because on FF e.timeStamp is not epoch based.\n        if (this.handle) {\n            this.handle.dispose();\n            this.handle = null;\n        }\n        for (let i = 0, len = e.targetTouches.length; i < len; i++) {\n            let touch = e.targetTouches.item(i);\n            this.activeTouches[touch.identifier] = {\n                id: touch.identifier,\n                initialTarget: touch.target,\n                initialTimeStamp: timestamp,\n                initialPageX: touch.pageX,\n                initialPageY: touch.pageY,\n                rollingTimestamps: [timestamp],\n                rollingPageX: [touch.pageX],\n                rollingPageY: [touch.pageY]\n            };\n            let evt = this.newGestureEvent(EventType.Start, touch.target);\n            evt.pageX = touch.pageX;\n            evt.pageY = touch.pageY;\n            this.dispatchEvent(evt);\n        }\n        if (this.dispatched) {\n            e.preventDefault();\n            e.stopPropagation();\n            this.dispatched = false;\n        }\n    }\n    onTouchEnd(e) {\n        let timestamp = Date.now(); // use Date.now() because on FF e.timeStamp is not epoch based.\n        let activeTouchCount = Object.keys(this.activeTouches).length;\n        for (let i = 0, len = e.changedTouches.length; i < len; i++) {\n            let touch = e.changedTouches.item(i);\n            if (!this.activeTouches.hasOwnProperty(String(touch.identifier))) {\n                console.warn('move of an UNKNOWN touch', touch);\n                continue;\n            }\n            let data = this.activeTouches[touch.identifier], holdTime = Date.now() - data.initialTimeStamp;\n            if (holdTime < Gesture.HOLD_DELAY\n                && Math.abs(data.initialPageX - arrays.tail(data.rollingPageX)) < 30\n                && Math.abs(data.initialPageY - arrays.tail(data.rollingPageY)) < 30) {\n                let evt = this.newGestureEvent(EventType.Tap, data.initialTarget);\n                evt.pageX = arrays.tail(data.rollingPageX);\n                evt.pageY = arrays.tail(data.rollingPageY);\n                this.dispatchEvent(evt);\n            }\n            else if (holdTime >= Gesture.HOLD_DELAY\n                && Math.abs(data.initialPageX - arrays.tail(data.rollingPageX)) < 30\n                && Math.abs(data.initialPageY - arrays.tail(data.rollingPageY)) < 30) {\n                let evt = this.newGestureEvent(EventType.Contextmenu, data.initialTarget);\n                evt.pageX = arrays.tail(data.rollingPageX);\n                evt.pageY = arrays.tail(data.rollingPageY);\n                this.dispatchEvent(evt);\n            }\n            else if (activeTouchCount === 1) {\n                let finalX = arrays.tail(data.rollingPageX);\n                let finalY = arrays.tail(data.rollingPageY);\n                let deltaT = arrays.tail(data.rollingTimestamps) - data.rollingTimestamps[0];\n                let deltaX = finalX - data.rollingPageX[0];\n                let deltaY = finalY - data.rollingPageY[0];\n                // We need to get all the dispatch targets on the start of the inertia event\n                const dispatchTo = this.targets.filter(t => data.initialTarget instanceof Node && t.contains(data.initialTarget));\n                this.inertia(dispatchTo, timestamp, // time now\n                Math.abs(deltaX) / deltaT, // speed\n                deltaX > 0 ? 1 : -1, // x direction\n                finalX, // x now\n                Math.abs(deltaY) / deltaT, // y speed\n                deltaY > 0 ? 1 : -1, // y direction\n                finalY // y now\n                );\n            }\n            this.dispatchEvent(this.newGestureEvent(EventType.End, data.initialTarget));\n            // forget about this touch\n            delete this.activeTouches[touch.identifier];\n        }\n        if (this.dispatched) {\n            e.preventDefault();\n            e.stopPropagation();\n            this.dispatched = false;\n        }\n    }\n    newGestureEvent(type, initialTarget) {\n        let event = document.createEvent('CustomEvent');\n        event.initEvent(type, false, true);\n        event.initialTarget = initialTarget;\n        event.tapCount = 0;\n        return event;\n    }\n    dispatchEvent(event) {\n        if (event.type === EventType.Tap) {\n            const currentTime = (new Date()).getTime();\n            let setTapCount = 0;\n            if (currentTime - this._lastSetTapCountTime > Gesture.CLEAR_TAP_COUNT_TIME) {\n                setTapCount = 1;\n            }\n            else {\n                setTapCount = 2;\n            }\n            this._lastSetTapCountTime = currentTime;\n            event.tapCount = setTapCount;\n        }\n        else if (event.type === EventType.Change || event.type === EventType.Contextmenu) {\n            // tap is canceled by scrolling or context menu\n            this._lastSetTapCountTime = 0;\n        }\n        for (let i = 0; i < this.ignoreTargets.length; i++) {\n            if (event.initialTarget instanceof Node && this.ignoreTargets[i].contains(event.initialTarget)) {\n                return;\n            }\n        }\n        this.targets.forEach(target => {\n            if (event.initialTarget instanceof Node && target.contains(event.initialTarget)) {\n                target.dispatchEvent(event);\n                this.dispatched = true;\n            }\n        });\n    }\n    inertia(dispatchTo, t1, vX, dirX, x, vY, dirY, y) {\n        this.handle = DomUtils.scheduleAtNextAnimationFrame(() => {\n            let now = Date.now();\n            // velocity: old speed + accel_over_time\n            let deltaT = now - t1, delta_pos_x = 0, delta_pos_y = 0, stopped = true;\n            vX += Gesture.SCROLL_FRICTION * deltaT;\n            vY += Gesture.SCROLL_FRICTION * deltaT;\n            if (vX > 0) {\n                stopped = false;\n                delta_pos_x = dirX * vX * deltaT;\n            }\n            if (vY > 0) {\n                stopped = false;\n                delta_pos_y = dirY * vY * deltaT;\n            }\n            // dispatch translation event\n            let evt = this.newGestureEvent(EventType.Change);\n            evt.translationX = delta_pos_x;\n            evt.translationY = delta_pos_y;\n            dispatchTo.forEach(d => d.dispatchEvent(evt));\n            if (!stopped) {\n                this.inertia(dispatchTo, now, vX, dirX, x + delta_pos_x, vY, dirY, y + delta_pos_y);\n            }\n        });\n    }\n    onTouchMove(e) {\n        let timestamp = Date.now(); // use Date.now() because on FF e.timeStamp is not epoch based.\n        for (let i = 0, len = e.changedTouches.length; i < len; i++) {\n            let touch = e.changedTouches.item(i);\n            if (!this.activeTouches.hasOwnProperty(String(touch.identifier))) {\n                console.warn('end of an UNKNOWN touch', touch);\n                continue;\n            }\n            let data = this.activeTouches[touch.identifier];\n            let evt = this.newGestureEvent(EventType.Change, data.initialTarget);\n            evt.translationX = touch.pageX - arrays.tail(data.rollingPageX);\n            evt.translationY = touch.pageY - arrays.tail(data.rollingPageY);\n            evt.pageX = touch.pageX;\n            evt.pageY = touch.pageY;\n            this.dispatchEvent(evt);\n            // only keep a few data points, to average the final speed\n            if (data.rollingPageX.length > 3) {\n                data.rollingPageX.shift();\n                data.rollingPageY.shift();\n                data.rollingTimestamps.shift();\n            }\n            data.rollingPageX.push(touch.pageX);\n            data.rollingPageY.push(touch.pageY);\n            data.rollingTimestamps.push(timestamp);\n        }\n        if (this.dispatched) {\n            e.preventDefault();\n            e.stopPropagation();\n            this.dispatched = false;\n        }\n    }\n}\nGesture.SCROLL_FRICTION = -0.005;\nGesture.HOLD_DELAY = 700;\nGesture.CLEAR_TAP_COUNT_TIME = 400; // ms\n__decorate([\n    memoize\n], Gesture, \"isTouchDevice\", null);\n",
+      "start": 1711096856066,
+      "end": 1711096856181,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856181,
+      "end": 1711096856181,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856182,
+      "end": 1711096856182,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856182,
+      "end": 1711096856182,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856182,
+      "end": 1711096856182,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856182,
+      "end": 1711096856182,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856183,
+      "end": 1711096856183,
+      "order": "normal"
+    }
+  ]
+}

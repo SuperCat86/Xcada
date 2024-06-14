@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/snippet/browser/snippetSession.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { groupBy } from '../../../../base/common/arrays.js';\nimport { dispose } from '../../../../base/common/lifecycle.js';\nimport { getLeadingWhitespace } from '../../../../base/common/strings.js';\nimport './snippetSession.css';\nimport { EditOperation } from '../../../common/core/editOperation.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { ILabelService } from '../../../../platform/label/common/label.js';\nimport { IWorkspaceContextService } from '../../../../platform/workspace/common/workspace.js';\nimport { Choice, Placeholder, SnippetParser, Text } from './snippetParser.js';\nimport { ClipboardBasedVariableResolver, CommentBasedVariableResolver, CompositeSnippetVariableResolver, ModelBasedVariableResolver, RandomBasedVariableResolver, SelectionBasedVariableResolver, TimeBasedVariableResolver, WorkspaceBasedVariableResolver } from './snippetVariables.js';\nexport class OneSnippet {\n    constructor(_editor, _snippet, _offset, _snippetLineLeadingWhitespace) {\n        this._editor = _editor;\n        this._snippet = _snippet;\n        this._offset = _offset;\n        this._snippetLineLeadingWhitespace = _snippetLineLeadingWhitespace;\n        this._nestingLevel = 1;\n        this._placeholderGroups = groupBy(_snippet.placeholders, Placeholder.compareByIndex);\n        this._placeholderGroupsIdx = -1;\n    }\n    dispose() {\n        if (this._placeholderDecorations) {\n            this._editor.deltaDecorations([...this._placeholderDecorations.values()], []);\n        }\n        this._placeholderGroups.length = 0;\n    }\n    _initDecorations() {\n        if (this._placeholderDecorations) {\n            // already initialized\n            return;\n        }\n        this._placeholderDecorations = new Map();\n        const model = this._editor.getModel();\n        this._editor.changeDecorations(accessor => {\n            // create a decoration for each placeholder\n            for (const placeholder of this._snippet.placeholders) {\n                const placeholderOffset = this._snippet.offset(placeholder);\n                const placeholderLen = this._snippet.fullLen(placeholder);\n                const range = Range.fromPositions(model.getPositionAt(this._offset + placeholderOffset), model.getPositionAt(this._offset + placeholderOffset + placeholderLen));\n                const options = placeholder.isFinalTabstop ? OneSnippet._decor.inactiveFinal : OneSnippet._decor.inactive;\n                const handle = accessor.addDecoration(range, options);\n                this._placeholderDecorations.set(placeholder, handle);\n            }\n        });\n    }\n    move(fwd) {\n        if (!this._editor.hasModel()) {\n            return [];\n        }\n        this._initDecorations();\n        // Transform placeholder text if necessary\n        if (this._placeholderGroupsIdx >= 0) {\n            let operations = [];\n            for (const placeholder of this._placeholderGroups[this._placeholderGroupsIdx]) {\n                // Check if the placeholder has a transformation\n                if (placeholder.transform) {\n                    const id = this._placeholderDecorations.get(placeholder);\n                    const range = this._editor.getModel().getDecorationRange(id);\n                    const currentValue = this._editor.getModel().getValueInRange(range);\n                    const transformedValueLines = placeholder.transform.resolve(currentValue).split(/\\r\\n|\\r|\\n/);\n                    // fix indentation for transformed lines\n                    for (let i = 1; i < transformedValueLines.length; i++) {\n                        transformedValueLines[i] = this._editor.getModel().normalizeIndentation(this._snippetLineLeadingWhitespace + transformedValueLines[i]);\n                    }\n                    operations.push(EditOperation.replace(range, transformedValueLines.join(this._editor.getModel().getEOL())));\n                }\n            }\n            if (operations.length > 0) {\n                this._editor.executeEdits('snippet.placeholderTransform', operations);\n            }\n        }\n        let couldSkipThisPlaceholder = false;\n        if (fwd === true && this._placeholderGroupsIdx < this._placeholderGroups.length - 1) {\n            this._placeholderGroupsIdx += 1;\n            couldSkipThisPlaceholder = true;\n        }\n        else if (fwd === false && this._placeholderGroupsIdx > 0) {\n            this._placeholderGroupsIdx -= 1;\n            couldSkipThisPlaceholder = true;\n        }\n        else {\n            // the selection of the current placeholder might\n            // not acurate any more -> simply restore it\n        }\n        const newSelections = this._editor.getModel().changeDecorations(accessor => {\n            const activePlaceholders = new Set();\n            // change stickiness to always grow when typing at its edges\n            // because these decorations represent the currently active\n            // tabstop.\n            // Special case #1: reaching the final tabstop\n            // Special case #2: placeholders enclosing active placeholders\n            const selections = [];\n            for (const placeholder of this._placeholderGroups[this._placeholderGroupsIdx]) {\n                const id = this._placeholderDecorations.get(placeholder);\n                const range = this._editor.getModel().getDecorationRange(id);\n                selections.push(new Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn));\n                // consider to skip this placeholder index when the decoration\n                // range is empty but when the placeholder wasn't. that's a strong\n                // hint that the placeholder has been deleted. (all placeholder must match this)\n                couldSkipThisPlaceholder = couldSkipThisPlaceholder && this._hasPlaceholderBeenCollapsed(placeholder);\n                accessor.changeDecorationOptions(id, placeholder.isFinalTabstop ? OneSnippet._decor.activeFinal : OneSnippet._decor.active);\n                activePlaceholders.add(placeholder);\n                for (const enclosingPlaceholder of this._snippet.enclosingPlaceholders(placeholder)) {\n                    const id = this._placeholderDecorations.get(enclosingPlaceholder);\n                    accessor.changeDecorationOptions(id, enclosingPlaceholder.isFinalTabstop ? OneSnippet._decor.activeFinal : OneSnippet._decor.active);\n                    activePlaceholders.add(enclosingPlaceholder);\n                }\n            }\n            // change stickness to never grow when typing at its edges\n            // so that in-active tabstops never grow\n            for (const [placeholder, id] of this._placeholderDecorations) {\n                if (!activePlaceholders.has(placeholder)) {\n                    accessor.changeDecorationOptions(id, placeholder.isFinalTabstop ? OneSnippet._decor.inactiveFinal : OneSnippet._decor.inactive);\n                }\n            }\n            return selections;\n        });\n        return !couldSkipThisPlaceholder ? newSelections !== null && newSelections !== void 0 ? newSelections : [] : this.move(fwd);\n    }\n    _hasPlaceholderBeenCollapsed(placeholder) {\n        // A placeholder is empty when it wasn't empty when authored but\n        // when its tracking decoration is empty. This also applies to all\n        // potential parent placeholders\n        let marker = placeholder;\n        while (marker) {\n            if (marker instanceof Placeholder) {\n                const id = this._placeholderDecorations.get(marker);\n                const range = this._editor.getModel().getDecorationRange(id);\n                if (range.isEmpty() && marker.toString().length > 0) {\n                    return true;\n                }\n            }\n            marker = marker.parent;\n        }\n        return false;\n    }\n    get isAtFirstPlaceholder() {\n        return this._placeholderGroupsIdx <= 0 || this._placeholderGroups.length === 0;\n    }\n    get isAtLastPlaceholder() {\n        return this._placeholderGroupsIdx === this._placeholderGroups.length - 1;\n    }\n    get hasPlaceholder() {\n        return this._snippet.placeholders.length > 0;\n    }\n    computePossibleSelections() {\n        const result = new Map();\n        for (const placeholdersWithEqualIndex of this._placeholderGroups) {\n            let ranges;\n            for (const placeholder of placeholdersWithEqualIndex) {\n                if (placeholder.isFinalTabstop) {\n                    // ignore those\n                    break;\n                }\n                if (!ranges) {\n                    ranges = [];\n                    result.set(placeholder.index, ranges);\n                }\n                const id = this._placeholderDecorations.get(placeholder);\n                const range = this._editor.getModel().getDecorationRange(id);\n                if (!range) {\n                    // one of the placeholder lost its decoration and\n                    // therefore we bail out and pretend the placeholder\n                    // (with its mirrors) doesn't exist anymore.\n                    result.delete(placeholder.index);\n                    break;\n                }\n                ranges.push(range);\n            }\n        }\n        return result;\n    }\n    get choice() {\n        return this._placeholderGroups[this._placeholderGroupsIdx][0].choice;\n    }\n    merge(others) {\n        const model = this._editor.getModel();\n        this._nestingLevel *= 10;\n        this._editor.changeDecorations(accessor => {\n            // For each active placeholder take one snippet and merge it\n            // in that the placeholder (can be many for `$1foo$1foo`). Because\n            // everything is sorted by editor selection we can simply remove\n            // elements from the beginning of the array\n            for (const placeholder of this._placeholderGroups[this._placeholderGroupsIdx]) {\n                const nested = others.shift();\n                console.assert(!nested._placeholderDecorations);\n                // Massage placeholder-indicies of the nested snippet to be\n                // sorted right after the insertion point. This ensures we move\n                // through the placeholders in the correct order\n                const indexLastPlaceholder = nested._snippet.placeholderInfo.last.index;\n                for (const nestedPlaceholder of nested._snippet.placeholderInfo.all) {\n                    if (nestedPlaceholder.isFinalTabstop) {\n                        nestedPlaceholder.index = placeholder.index + ((indexLastPlaceholder + 1) / this._nestingLevel);\n                    }\n                    else {\n                        nestedPlaceholder.index = placeholder.index + (nestedPlaceholder.index / this._nestingLevel);\n                    }\n                }\n                this._snippet.replace(placeholder, nested._snippet.children);\n                // Remove the placeholder at which position are inserting\n                // the snippet and also remove its decoration.\n                const id = this._placeholderDecorations.get(placeholder);\n                accessor.removeDecoration(id);\n                this._placeholderDecorations.delete(placeholder);\n                // For each *new* placeholder we create decoration to monitor\n                // how and if it grows/shrinks.\n                for (const placeholder of nested._snippet.placeholders) {\n                    const placeholderOffset = nested._snippet.offset(placeholder);\n                    const placeholderLen = nested._snippet.fullLen(placeholder);\n                    const range = Range.fromPositions(model.getPositionAt(nested._offset + placeholderOffset), model.getPositionAt(nested._offset + placeholderOffset + placeholderLen));\n                    const handle = accessor.addDecoration(range, OneSnippet._decor.inactive);\n                    this._placeholderDecorations.set(placeholder, handle);\n                }\n            }\n            // Last, re-create the placeholder groups by sorting placeholders by their index.\n            this._placeholderGroups = groupBy(this._snippet.placeholders, Placeholder.compareByIndex);\n        });\n    }\n}\nOneSnippet._decor = {\n    active: ModelDecorationOptions.register({ description: 'snippet-placeholder-1', stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),\n    inactive: ModelDecorationOptions.register({ description: 'snippet-placeholder-2', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),\n    activeFinal: ModelDecorationOptions.register({ description: 'snippet-placeholder-3', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),\n    inactiveFinal: ModelDecorationOptions.register({ description: 'snippet-placeholder-4', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),\n};\nconst _defaultOptions = {\n    overwriteBefore: 0,\n    overwriteAfter: 0,\n    adjustWhitespace: true,\n    clipboardText: undefined,\n    overtypingCapturer: undefined\n};\nexport class SnippetSession {\n    constructor(editor, template, options = _defaultOptions) {\n        this._templateMerges = [];\n        this._snippets = [];\n        this._editor = editor;\n        this._template = template;\n        this._options = options;\n    }\n    static adjustWhitespace(model, position, snippet, adjustIndentation, adjustNewlines) {\n        const line = model.getLineContent(position.lineNumber);\n        const lineLeadingWhitespace = getLeadingWhitespace(line, 0, position.column - 1);\n        // the snippet as inserted\n        let snippetTextString;\n        snippet.walk(marker => {\n            // all text elements that are not inside choice\n            if (!(marker instanceof Text) || marker.parent instanceof Choice) {\n                return true;\n            }\n            const lines = marker.value.split(/\\r\\n|\\r|\\n/);\n            if (adjustIndentation) {\n                // adjust indentation of snippet test\n                // -the snippet-start doesn't get extra-indented (lineLeadingWhitespace), only normalized\n                // -all N+1 lines get extra-indented and normalized\n                // -the text start get extra-indented and normalized when following a linebreak\n                const offset = snippet.offset(marker);\n                if (offset === 0) {\n                    // snippet start\n                    lines[0] = model.normalizeIndentation(lines[0]);\n                }\n                else {\n                    // check if text start is after a linebreak\n                    snippetTextString = snippetTextString !== null && snippetTextString !== void 0 ? snippetTextString : snippet.toString();\n                    let prevChar = snippetTextString.charCodeAt(offset - 1);\n                    if (prevChar === 10 /* LineFeed */ || prevChar === 13 /* CarriageReturn */) {\n                        lines[0] = model.normalizeIndentation(lineLeadingWhitespace + lines[0]);\n                    }\n                }\n                for (let i = 1; i < lines.length; i++) {\n                    lines[i] = model.normalizeIndentation(lineLeadingWhitespace + lines[i]);\n                }\n            }\n            const newValue = lines.join(model.getEOL());\n            if (newValue !== marker.value) {\n                marker.parent.replace(marker, [new Text(newValue)]);\n                snippetTextString = undefined;\n            }\n            return true;\n        });\n        return lineLeadingWhitespace;\n    }\n    static adjustSelection(model, selection, overwriteBefore, overwriteAfter) {\n        if (overwriteBefore !== 0 || overwriteAfter !== 0) {\n            // overwrite[Before|After] is compute using the position, not the whole\n            // selection. therefore we adjust the selection around that position\n            const { positionLineNumber, positionColumn } = selection;\n            const positionColumnBefore = positionColumn - overwriteBefore;\n            const positionColumnAfter = positionColumn + overwriteAfter;\n            const range = model.validateRange({\n                startLineNumber: positionLineNumber,\n                startColumn: positionColumnBefore,\n                endLineNumber: positionLineNumber,\n                endColumn: positionColumnAfter\n            });\n            selection = Selection.createWithDirection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn, selection.getDirection());\n        }\n        return selection;\n    }\n    static createEditsAndSnippets(editor, template, overwriteBefore, overwriteAfter, enforceFinalTabstop, adjustWhitespace, clipboardText, overtypingCapturer) {\n        const edits = [];\n        const snippets = [];\n        if (!editor.hasModel()) {\n            return { edits, snippets };\n        }\n        const model = editor.getModel();\n        const workspaceService = editor.invokeWithinContext(accessor => accessor.get(IWorkspaceContextService));\n        const modelBasedVariableResolver = editor.invokeWithinContext(accessor => new ModelBasedVariableResolver(accessor.get(ILabelService), model));\n        const readClipboardText = () => clipboardText;\n        let delta = 0;\n        // know what text the overwrite[Before|After] extensions\n        // of the primary curser have selected because only when\n        // secondary selections extend to the same text we can grow them\n        let firstBeforeText = model.getValueInRange(SnippetSession.adjustSelection(model, editor.getSelection(), overwriteBefore, 0));\n        let firstAfterText = model.getValueInRange(SnippetSession.adjustSelection(model, editor.getSelection(), 0, overwriteAfter));\n        // remember the first non-whitespace column to decide if\n        // `keepWhitespace` should be overruled for secondary selections\n        let firstLineFirstNonWhitespace = model.getLineFirstNonWhitespaceColumn(editor.getSelection().positionLineNumber);\n        // sort selections by their start position but remeber\n        // the original index. that allows you to create correct\n        // offset-based selection logic without changing the\n        // primary selection\n        const indexedSelections = editor.getSelections()\n            .map((selection, idx) => ({ selection, idx }))\n            .sort((a, b) => Range.compareRangesUsingStarts(a.selection, b.selection));\n        for (const { selection, idx } of indexedSelections) {\n            // extend selection with the `overwriteBefore` and `overwriteAfter` and then\n            // compare if this matches the extensions of the primary selection\n            let extensionBefore = SnippetSession.adjustSelection(model, selection, overwriteBefore, 0);\n            let extensionAfter = SnippetSession.adjustSelection(model, selection, 0, overwriteAfter);\n            if (firstBeforeText !== model.getValueInRange(extensionBefore)) {\n                extensionBefore = selection;\n            }\n            if (firstAfterText !== model.getValueInRange(extensionAfter)) {\n                extensionAfter = selection;\n            }\n            // merge the before and after selection into one\n            const snippetSelection = selection\n                .setStartPosition(extensionBefore.startLineNumber, extensionBefore.startColumn)\n                .setEndPosition(extensionAfter.endLineNumber, extensionAfter.endColumn);\n            const snippet = new SnippetParser().parse(template, true, enforceFinalTabstop);\n            // adjust the template string to match the indentation and\n            // whitespace rules of this insert location (can be different for each cursor)\n            // happens when being asked for (default) or when this is a secondary\n            // cursor and the leading whitespace is different\n            const start = snippetSelection.getStartPosition();\n            const snippetLineLeadingWhitespace = SnippetSession.adjustWhitespace(model, start, snippet, adjustWhitespace || (idx > 0 && firstLineFirstNonWhitespace !== model.getLineFirstNonWhitespaceColumn(selection.positionLineNumber)), true);\n            snippet.resolveVariables(new CompositeSnippetVariableResolver([\n                modelBasedVariableResolver,\n                new ClipboardBasedVariableResolver(readClipboardText, idx, indexedSelections.length, editor.getOption(71 /* multiCursorPaste */) === 'spread'),\n                new SelectionBasedVariableResolver(model, selection, idx, overtypingCapturer),\n                new CommentBasedVariableResolver(model, selection),\n                new TimeBasedVariableResolver,\n                new WorkspaceBasedVariableResolver(workspaceService),\n                new RandomBasedVariableResolver,\n            ]));\n            const offset = model.getOffsetAt(start) + delta;\n            delta += snippet.toString().length - model.getValueLengthInRange(snippetSelection);\n            // store snippets with the index of their originating selection.\n            // that ensures the primiary cursor stays primary despite not being\n            // the one with lowest start position\n            edits[idx] = EditOperation.replace(snippetSelection, snippet.toString());\n            edits[idx].identifier = { major: idx, minor: 0 }; // mark the edit so only our undo edits will be used to generate end cursors\n            snippets[idx] = new OneSnippet(editor, snippet, offset, snippetLineLeadingWhitespace);\n        }\n        return { edits, snippets };\n    }\n    dispose() {\n        dispose(this._snippets);\n    }\n    _logInfo() {\n        return `template=\"${this._template}\", merged_templates=\"${this._templateMerges.join(' -> ')}\"`;\n    }\n    insert() {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        // make insert edit and start with first selections\n        const { edits, snippets } = SnippetSession.createEditsAndSnippets(this._editor, this._template, this._options.overwriteBefore, this._options.overwriteAfter, false, this._options.adjustWhitespace, this._options.clipboardText, this._options.overtypingCapturer);\n        this._snippets = snippets;\n        this._editor.executeEdits('snippet', edits, undoEdits => {\n            if (this._snippets[0].hasPlaceholder) {\n                return this._move(true);\n            }\n            else {\n                return undoEdits\n                    .filter(edit => !!edit.identifier) // only use our undo edits\n                    .map(edit => Selection.fromPositions(edit.range.getEndPosition()));\n            }\n        });\n        this._editor.revealRange(this._editor.getSelections()[0]);\n    }\n    merge(template, options = _defaultOptions) {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        this._templateMerges.push([this._snippets[0]._nestingLevel, this._snippets[0]._placeholderGroupsIdx, template]);\n        const { edits, snippets } = SnippetSession.createEditsAndSnippets(this._editor, template, options.overwriteBefore, options.overwriteAfter, true, options.adjustWhitespace, options.clipboardText, options.overtypingCapturer);\n        this._editor.executeEdits('snippet', edits, undoEdits => {\n            for (const snippet of this._snippets) {\n                snippet.merge(snippets);\n            }\n            console.assert(snippets.length === 0);\n            if (this._snippets[0].hasPlaceholder) {\n                return this._move(undefined);\n            }\n            else {\n                return (undoEdits\n                    .filter(edit => !!edit.identifier) // only use our undo edits\n                    .map(edit => Selection.fromPositions(edit.range.getEndPosition())));\n            }\n        });\n    }\n    next() {\n        const newSelections = this._move(true);\n        this._editor.setSelections(newSelections);\n        this._editor.revealPositionInCenterIfOutsideViewport(newSelections[0].getPosition());\n    }\n    prev() {\n        const newSelections = this._move(false);\n        this._editor.setSelections(newSelections);\n        this._editor.revealPositionInCenterIfOutsideViewport(newSelections[0].getPosition());\n    }\n    _move(fwd) {\n        const selections = [];\n        for (const snippet of this._snippets) {\n            const oneSelection = snippet.move(fwd);\n            selections.push(...oneSelection);\n        }\n        return selections;\n    }\n    get isAtFirstPlaceholder() {\n        return this._snippets[0].isAtFirstPlaceholder;\n    }\n    get isAtLastPlaceholder() {\n        return this._snippets[0].isAtLastPlaceholder;\n    }\n    get hasPlaceholder() {\n        return this._snippets[0].hasPlaceholder;\n    }\n    get choice() {\n        return this._snippets[0].choice;\n    }\n    isSelectionWithinPlaceholders() {\n        if (!this.hasPlaceholder) {\n            return false;\n        }\n        const selections = this._editor.getSelections();\n        if (selections.length < this._snippets.length) {\n            // this means we started snippet mode with N\n            // selections and have M (N > M) selections.\n            // So one snippet is without selection -> cancel\n            return false;\n        }\n        let allPossibleSelections = new Map();\n        for (const snippet of this._snippets) {\n            const possibleSelections = snippet.computePossibleSelections();\n            // for the first snippet find the placeholder (and its ranges)\n            // that contain at least one selection. for all remaining snippets\n            // the same placeholder (and their ranges) must be used.\n            if (allPossibleSelections.size === 0) {\n                for (const [index, ranges] of possibleSelections) {\n                    ranges.sort(Range.compareRangesUsingStarts);\n                    for (const selection of selections) {\n                        if (ranges[0].containsRange(selection)) {\n                            allPossibleSelections.set(index, []);\n                            break;\n                        }\n                    }\n                }\n            }\n            if (allPossibleSelections.size === 0) {\n                // return false if we couldn't associate a selection to\n                // this (the first) snippet\n                return false;\n            }\n            // add selections from 'this' snippet so that we know all\n            // selections for this placeholder\n            allPossibleSelections.forEach((array, index) => {\n                array.push(...possibleSelections.get(index));\n            });\n        }\n        // sort selections (and later placeholder-ranges). then walk both\n        // arrays and make sure the placeholder-ranges contain the corresponding\n        // selection\n        selections.sort(Range.compareRangesUsingStarts);\n        for (let [index, ranges] of allPossibleSelections) {\n            if (ranges.length !== selections.length) {\n                allPossibleSelections.delete(index);\n                continue;\n            }\n            ranges.sort(Range.compareRangesUsingStarts);\n            for (let i = 0; i < ranges.length; i++) {\n                if (!ranges[i].containsRange(selections[i])) {\n                    allPossibleSelections.delete(index);\n                    continue;\n                }\n            }\n        }\n        // from all possible selections we have deleted those\n        // that don't match with the current selection. if we don't\n        // have any left, we don't have a selection anymore\n        return allPossibleSelections.size > 0;\n    }\n}\n",
+      "start": 1711096855911,
+      "end": 1711096856013,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856013,
+      "end": 1711096856013,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856013,
+      "end": 1711096856015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856015,
+      "end": 1711096856015,
+      "order": "normal"
+    }
+  ]
+}

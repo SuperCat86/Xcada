@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/supports/tokenization.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Color } from '../../../../base/common/color.js';\nexport class ParsedTokenThemeRule {\n    constructor(token, index, fontStyle, foreground, background) {\n        this._parsedThemeRuleBrand = undefined;\n        this.token = token;\n        this.index = index;\n        this.fontStyle = fontStyle;\n        this.foreground = foreground;\n        this.background = background;\n    }\n}\n/**\n * Parse a raw theme into rules.\n */\nexport function parseTokenTheme(source) {\n    if (!source || !Array.isArray(source)) {\n        return [];\n    }\n    const result = [];\n    let resultLen = 0;\n    for (let i = 0, len = source.length; i < len; i++) {\n        const entry = source[i];\n        let fontStyle = -1 /* NotSet */;\n        if (typeof entry.fontStyle === 'string') {\n            fontStyle = 0 /* None */;\n            const segments = entry.fontStyle.split(' ');\n            for (let j = 0, lenJ = segments.length; j < lenJ; j++) {\n                const segment = segments[j];\n                switch (segment) {\n                    case 'italic':\n                        fontStyle = fontStyle | 1 /* Italic */;\n                        break;\n                    case 'bold':\n                        fontStyle = fontStyle | 2 /* Bold */;\n                        break;\n                    case 'underline':\n                        fontStyle = fontStyle | 4 /* Underline */;\n                        break;\n                    case 'strikethrough':\n                        fontStyle = fontStyle | 8 /* Strikethrough */;\n                        break;\n                }\n            }\n        }\n        let foreground = null;\n        if (typeof entry.foreground === 'string') {\n            foreground = entry.foreground;\n        }\n        let background = null;\n        if (typeof entry.background === 'string') {\n            background = entry.background;\n        }\n        result[resultLen++] = new ParsedTokenThemeRule(entry.token || '', i, fontStyle, foreground, background);\n    }\n    return result;\n}\n/**\n * Resolve rules (i.e. inheritance).\n */\nfunction resolveParsedTokenThemeRules(parsedThemeRules, customTokenColors) {\n    // Sort rules lexicographically, and then by index if necessary\n    parsedThemeRules.sort((a, b) => {\n        const r = strcmp(a.token, b.token);\n        if (r !== 0) {\n            return r;\n        }\n        return a.index - b.index;\n    });\n    // Determine defaults\n    let defaultFontStyle = 0 /* None */;\n    let defaultForeground = '000000';\n    let defaultBackground = 'ffffff';\n    while (parsedThemeRules.length >= 1 && parsedThemeRules[0].token === '') {\n        const incomingDefaults = parsedThemeRules.shift();\n        if (incomingDefaults.fontStyle !== -1 /* NotSet */) {\n            defaultFontStyle = incomingDefaults.fontStyle;\n        }\n        if (incomingDefaults.foreground !== null) {\n            defaultForeground = incomingDefaults.foreground;\n        }\n        if (incomingDefaults.background !== null) {\n            defaultBackground = incomingDefaults.background;\n        }\n    }\n    const colorMap = new ColorMap();\n    // start with token colors from custom token themes\n    for (let color of customTokenColors) {\n        colorMap.getId(color);\n    }\n    const foregroundColorId = colorMap.getId(defaultForeground);\n    const backgroundColorId = colorMap.getId(defaultBackground);\n    const defaults = new ThemeTrieElementRule(defaultFontStyle, foregroundColorId, backgroundColorId);\n    const root = new ThemeTrieElement(defaults);\n    for (let i = 0, len = parsedThemeRules.length; i < len; i++) {\n        const rule = parsedThemeRules[i];\n        root.insert(rule.token, rule.fontStyle, colorMap.getId(rule.foreground), colorMap.getId(rule.background));\n    }\n    return new TokenTheme(colorMap, root);\n}\nconst colorRegExp = /^#?([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$/;\nexport class ColorMap {\n    constructor() {\n        this._lastColorId = 0;\n        this._id2color = [];\n        this._color2id = new Map();\n    }\n    getId(color) {\n        if (color === null) {\n            return 0;\n        }\n        const match = color.match(colorRegExp);\n        if (!match) {\n            throw new Error('Illegal value for token color: ' + color);\n        }\n        color = match[1].toUpperCase();\n        let value = this._color2id.get(color);\n        if (value) {\n            return value;\n        }\n        value = ++this._lastColorId;\n        this._color2id.set(color, value);\n        this._id2color[value] = Color.fromHex('#' + color);\n        return value;\n    }\n    getColorMap() {\n        return this._id2color.slice(0);\n    }\n}\nexport class TokenTheme {\n    constructor(colorMap, root) {\n        this._colorMap = colorMap;\n        this._root = root;\n        this._cache = new Map();\n    }\n    static createFromRawTokenTheme(source, customTokenColors) {\n        return this.createFromParsedTokenTheme(parseTokenTheme(source), customTokenColors);\n    }\n    static createFromParsedTokenTheme(source, customTokenColors) {\n        return resolveParsedTokenThemeRules(source, customTokenColors);\n    }\n    getColorMap() {\n        return this._colorMap.getColorMap();\n    }\n    _match(token) {\n        return this._root.match(token);\n    }\n    match(languageId, token) {\n        // The cache contains the metadata without the language bits set.\n        let result = this._cache.get(token);\n        if (typeof result === 'undefined') {\n            const rule = this._match(token);\n            const standardToken = toStandardTokenType(token);\n            result = (rule.metadata\n                | (standardToken << 8 /* TOKEN_TYPE_OFFSET */)) >>> 0;\n            this._cache.set(token, result);\n        }\n        return (result\n            | (languageId << 0 /* LANGUAGEID_OFFSET */)) >>> 0;\n    }\n}\nconst STANDARD_TOKEN_TYPE_REGEXP = /\\b(comment|string|regex|regexp)\\b/;\nexport function toStandardTokenType(tokenType) {\n    const m = tokenType.match(STANDARD_TOKEN_TYPE_REGEXP);\n    if (!m) {\n        return 0 /* Other */;\n    }\n    switch (m[1]) {\n        case 'comment':\n            return 1 /* Comment */;\n        case 'string':\n            return 2 /* String */;\n        case 'regex':\n            return 3 /* RegEx */;\n        case 'regexp':\n            return 3 /* RegEx */;\n    }\n    throw new Error('Unexpected match for standard token type!');\n}\nexport function strcmp(a, b) {\n    if (a < b) {\n        return -1;\n    }\n    if (a > b) {\n        return 1;\n    }\n    return 0;\n}\nexport class ThemeTrieElementRule {\n    constructor(fontStyle, foreground, background) {\n        this._themeTrieElementRuleBrand = undefined;\n        this._fontStyle = fontStyle;\n        this._foreground = foreground;\n        this._background = background;\n        this.metadata = ((this._fontStyle << 10 /* FONT_STYLE_OFFSET */)\n            | (this._foreground << 14 /* FOREGROUND_OFFSET */)\n            | (this._background << 23 /* BACKGROUND_OFFSET */)) >>> 0;\n    }\n    clone() {\n        return new ThemeTrieElementRule(this._fontStyle, this._foreground, this._background);\n    }\n    acceptOverwrite(fontStyle, foreground, background) {\n        if (fontStyle !== -1 /* NotSet */) {\n            this._fontStyle = fontStyle;\n        }\n        if (foreground !== 0 /* None */) {\n            this._foreground = foreground;\n        }\n        if (background !== 0 /* None */) {\n            this._background = background;\n        }\n        this.metadata = ((this._fontStyle << 10 /* FONT_STYLE_OFFSET */)\n            | (this._foreground << 14 /* FOREGROUND_OFFSET */)\n            | (this._background << 23 /* BACKGROUND_OFFSET */)) >>> 0;\n    }\n}\nexport class ThemeTrieElement {\n    constructor(mainRule) {\n        this._themeTrieElementBrand = undefined;\n        this._mainRule = mainRule;\n        this._children = new Map();\n    }\n    match(token) {\n        if (token === '') {\n            return this._mainRule;\n        }\n        const dotIndex = token.indexOf('.');\n        let head;\n        let tail;\n        if (dotIndex === -1) {\n            head = token;\n            tail = '';\n        }\n        else {\n            head = token.substring(0, dotIndex);\n            tail = token.substring(dotIndex + 1);\n        }\n        const child = this._children.get(head);\n        if (typeof child !== 'undefined') {\n            return child.match(tail);\n        }\n        return this._mainRule;\n    }\n    insert(token, fontStyle, foreground, background) {\n        if (token === '') {\n            // Merge into the main rule\n            this._mainRule.acceptOverwrite(fontStyle, foreground, background);\n            return;\n        }\n        const dotIndex = token.indexOf('.');\n        let head;\n        let tail;\n        if (dotIndex === -1) {\n            head = token;\n            tail = '';\n        }\n        else {\n            head = token.substring(0, dotIndex);\n            tail = token.substring(dotIndex + 1);\n        }\n        let child = this._children.get(head);\n        if (typeof child === 'undefined') {\n            child = new ThemeTrieElement(this._mainRule.clone());\n            this._children.set(head, child);\n        }\n        child.insert(tail, fontStyle, foreground, background);\n    }\n}\nexport function generateTokensCSSForColorMap(colorMap) {\n    const rules = [];\n    for (let i = 1, len = colorMap.length; i < len; i++) {\n        const color = colorMap[i];\n        rules[i] = `.mtk${i} { color: ${color}; }`;\n    }\n    rules.push('.mtki { font-style: italic; }');\n    rules.push('.mtkb { font-weight: bold; }');\n    rules.push('.mtku { text-decoration: underline; text-underline-position: under; }');\n    rules.push('.mtks { text-decoration: line-through; }');\n    rules.push('.mtks.mtku { text-decoration: underline line-through; text-underline-position: under; }');\n    return rules.join('\\n');\n}\n",
+      "start": 1711096857076,
+      "end": 1711096857174,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857174,
+      "end": 1711096857174,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857174,
+      "end": 1711096857175,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857175,
+      "end": 1711096857175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857175,
+      "end": 1711096857176,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857176,
+      "end": 1711096857176,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857176,
+      "end": 1711096857176,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857176,
+      "end": 1711096857176,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857176,
+      "end": 1711096857176,
+      "order": "normal"
+    }
+  ]
+}

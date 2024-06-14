@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/widget/inlineDiffMargin.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as nls from '../../../nls.js';\nimport * as dom from '../../../base/browser/dom.js';\nimport { Action } from '../../../base/common/actions.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { Range } from '../../common/core/range.js';\nimport { Codicon } from '../../../base/common/codicons.js';\nexport class InlineDiffMargin extends Disposable {\n    constructor(_viewZoneId, _marginDomNode, editor, diff, _contextMenuService, _clipboardService) {\n        super();\n        this._viewZoneId = _viewZoneId;\n        this._marginDomNode = _marginDomNode;\n        this.editor = editor;\n        this.diff = diff;\n        this._contextMenuService = _contextMenuService;\n        this._clipboardService = _clipboardService;\n        this._visibility = false;\n        // make sure the diff margin shows above overlay.\n        this._marginDomNode.style.zIndex = '10';\n        this._diffActions = document.createElement('div');\n        this._diffActions.className = Codicon.lightBulb.classNames + ' lightbulb-glyph';\n        this._diffActions.style.position = 'absolute';\n        const lineHeight = editor.getOption(59 /* lineHeight */);\n        const lineFeed = editor.getModel().getEOL();\n        this._diffActions.style.right = '0px';\n        this._diffActions.style.visibility = 'hidden';\n        this._diffActions.style.height = `${lineHeight}px`;\n        this._diffActions.style.lineHeight = `${lineHeight}px`;\n        this._marginDomNode.appendChild(this._diffActions);\n        const actions = [];\n        const isDeletion = diff.modifiedEndLineNumber === 0;\n        // default action\n        actions.push(new Action('diff.clipboard.copyDeletedContent', isDeletion\n            ? (diff.originalEndLineNumber > diff.modifiedStartLineNumber\n                ? nls.localize('diff.clipboard.copyDeletedLinesContent.label', \"Copy deleted lines\")\n                : nls.localize('diff.clipboard.copyDeletedLinesContent.single.label', \"Copy deleted line\"))\n            : (diff.originalEndLineNumber > diff.modifiedStartLineNumber\n                ? nls.localize('diff.clipboard.copyChangedLinesContent.label', \"Copy changed lines\")\n                : nls.localize('diff.clipboard.copyChangedLinesContent.single.label', \"Copy changed line\")), undefined, true, () => __awaiter(this, void 0, void 0, function* () {\n            const range = new Range(diff.originalStartLineNumber, 1, diff.originalEndLineNumber + 1, 1);\n            const deletedText = diff.originalModel.getValueInRange(range);\n            yield this._clipboardService.writeText(deletedText);\n        })));\n        let currentLineNumberOffset = 0;\n        let copyLineAction = undefined;\n        if (diff.originalEndLineNumber > diff.modifiedStartLineNumber) {\n            copyLineAction = new Action('diff.clipboard.copyDeletedLineContent', isDeletion\n                ? nls.localize('diff.clipboard.copyDeletedLineContent.label', \"Copy deleted line ({0})\", diff.originalStartLineNumber)\n                : nls.localize('diff.clipboard.copyChangedLineContent.label', \"Copy changed line ({0})\", diff.originalStartLineNumber), undefined, true, () => __awaiter(this, void 0, void 0, function* () {\n                const lineContent = diff.originalModel.getLineContent(diff.originalStartLineNumber + currentLineNumberOffset);\n                if (lineContent === '') {\n                    // empty line\n                    const eof = diff.originalModel.getEndOfLineSequence();\n                    yield this._clipboardService.writeText(eof === 0 /* LF */ ? '\\n' : '\\r\\n');\n                }\n                else {\n                    yield this._clipboardService.writeText(lineContent);\n                }\n            }));\n            actions.push(copyLineAction);\n        }\n        const readOnly = editor.getOption(81 /* readOnly */);\n        if (!readOnly) {\n            actions.push(new Action('diff.inline.revertChange', nls.localize('diff.inline.revertChange.label', \"Revert this change\"), undefined, true, () => __awaiter(this, void 0, void 0, function* () {\n                const range = new Range(diff.originalStartLineNumber, 1, diff.originalEndLineNumber, diff.originalModel.getLineMaxColumn(diff.originalEndLineNumber));\n                const deletedText = diff.originalModel.getValueInRange(range);\n                if (diff.modifiedEndLineNumber === 0) {\n                    // deletion only\n                    const column = editor.getModel().getLineMaxColumn(diff.modifiedStartLineNumber);\n                    editor.executeEdits('diffEditor', [\n                        {\n                            range: new Range(diff.modifiedStartLineNumber, column, diff.modifiedStartLineNumber, column),\n                            text: lineFeed + deletedText\n                        }\n                    ]);\n                }\n                else {\n                    const column = editor.getModel().getLineMaxColumn(diff.modifiedEndLineNumber);\n                    editor.executeEdits('diffEditor', [\n                        {\n                            range: new Range(diff.modifiedStartLineNumber, 1, diff.modifiedEndLineNumber, column),\n                            text: deletedText\n                        }\n                    ]);\n                }\n            })));\n        }\n        const showContextMenu = (x, y) => {\n            this._contextMenuService.showContextMenu({\n                getAnchor: () => {\n                    return {\n                        x,\n                        y\n                    };\n                },\n                getActions: () => {\n                    if (copyLineAction) {\n                        copyLineAction.label =\n                            isDeletion\n                                ? nls.localize('diff.clipboard.copyDeletedLineContent.label', \"Copy deleted line ({0})\", diff.originalStartLineNumber + currentLineNumberOffset)\n                                : nls.localize('diff.clipboard.copyChangedLineContent.label', \"Copy changed line ({0})\", diff.originalStartLineNumber + currentLineNumberOffset);\n                    }\n                    return actions;\n                },\n                autoSelectFirstItem: true\n            });\n        };\n        this._register(dom.addStandardDisposableListener(this._diffActions, 'mousedown', e => {\n            const { top, height } = dom.getDomNodePagePosition(this._diffActions);\n            const pad = Math.floor(lineHeight / 3);\n            e.preventDefault();\n            showContextMenu(e.posx, top + height + pad);\n        }));\n        this._register(editor.onMouseMove((e) => {\n            if (e.target.type === 8 /* CONTENT_VIEW_ZONE */ || e.target.type === 5 /* GUTTER_VIEW_ZONE */) {\n                const viewZoneId = e.target.detail.viewZoneId;\n                if (viewZoneId === this._viewZoneId) {\n                    this.visibility = true;\n                    currentLineNumberOffset = this._updateLightBulbPosition(this._marginDomNode, e.event.browserEvent.y, lineHeight);\n                }\n                else {\n                    this.visibility = false;\n                }\n            }\n            else {\n                this.visibility = false;\n            }\n        }));\n        this._register(editor.onMouseDown((e) => {\n            if (!e.event.rightButton) {\n                return;\n            }\n            if (e.target.type === 8 /* CONTENT_VIEW_ZONE */ || e.target.type === 5 /* GUTTER_VIEW_ZONE */) {\n                const viewZoneId = e.target.detail.viewZoneId;\n                if (viewZoneId === this._viewZoneId) {\n                    e.event.preventDefault();\n                    currentLineNumberOffset = this._updateLightBulbPosition(this._marginDomNode, e.event.browserEvent.y, lineHeight);\n                    showContextMenu(e.event.posx, e.event.posy + lineHeight);\n                }\n            }\n        }));\n    }\n    get visibility() {\n        return this._visibility;\n    }\n    set visibility(_visibility) {\n        if (this._visibility !== _visibility) {\n            this._visibility = _visibility;\n            if (_visibility) {\n                this._diffActions.style.visibility = 'visible';\n            }\n            else {\n                this._diffActions.style.visibility = 'hidden';\n            }\n        }\n    }\n    _updateLightBulbPosition(marginDomNode, y, lineHeight) {\n        const { top } = dom.getDomNodePagePosition(marginDomNode);\n        const offset = y - top;\n        const lineNumberOffset = Math.floor(offset / lineHeight);\n        const newTop = lineNumberOffset * lineHeight;\n        this._diffActions.style.top = `${newTop}px`;\n        if (this.diff.viewLineCounts) {\n            let acc = 0;\n            for (let i = 0; i < this.diff.viewLineCounts.length; i++) {\n                acc += this.diff.viewLineCounts[i];\n                if (lineNumberOffset < acc) {\n                    return i;\n                }\n            }\n        }\n        return lineNumberOffset;\n    }\n}\n",
+      "start": 1711096855397,
+      "end": 1711096855557,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855557,
+      "end": 1711096855557,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855557,
+      "end": 1711096855558,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855558,
+      "end": 1711096855558,
+      "order": "normal"
+    }
+  ]
+}

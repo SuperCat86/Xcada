@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/intervalTree.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nexport function getNodeColor(node) {\n    return ((node.metadata & 1 /* ColorMask */) >>> 0 /* ColorOffset */);\n}\nfunction setNodeColor(node, color) {\n    node.metadata = ((node.metadata & 254 /* ColorMaskInverse */) | (color << 0 /* ColorOffset */));\n}\nfunction getNodeIsVisited(node) {\n    return ((node.metadata & 2 /* IsVisitedMask */) >>> 1 /* IsVisitedOffset */) === 1;\n}\nfunction setNodeIsVisited(node, value) {\n    node.metadata = ((node.metadata & 253 /* IsVisitedMaskInverse */) | ((value ? 1 : 0) << 1 /* IsVisitedOffset */));\n}\nfunction getNodeIsForValidation(node) {\n    return ((node.metadata & 4 /* IsForValidationMask */) >>> 2 /* IsForValidationOffset */) === 1;\n}\nfunction setNodeIsForValidation(node, value) {\n    node.metadata = ((node.metadata & 251 /* IsForValidationMaskInverse */) | ((value ? 1 : 0) << 2 /* IsForValidationOffset */));\n}\nfunction getNodeStickiness(node) {\n    return ((node.metadata & 24 /* StickinessMask */) >>> 3 /* StickinessOffset */);\n}\nfunction _setNodeStickiness(node, stickiness) {\n    node.metadata = ((node.metadata & 231 /* StickinessMaskInverse */) | (stickiness << 3 /* StickinessOffset */));\n}\nfunction getCollapseOnReplaceEdit(node) {\n    return ((node.metadata & 32 /* CollapseOnReplaceEditMask */) >>> 5 /* CollapseOnReplaceEditOffset */) === 1;\n}\nfunction setCollapseOnReplaceEdit(node, value) {\n    node.metadata = ((node.metadata & 223 /* CollapseOnReplaceEditMaskInverse */) | ((value ? 1 : 0) << 5 /* CollapseOnReplaceEditOffset */));\n}\nexport class IntervalNode {\n    constructor(id, start, end) {\n        this.metadata = 0;\n        this.parent = this;\n        this.left = this;\n        this.right = this;\n        setNodeColor(this, 1 /* Red */);\n        this.start = start;\n        this.end = end;\n        // FORCE_OVERFLOWING_TEST: this.delta = start;\n        this.delta = 0;\n        this.maxEnd = end;\n        this.id = id;\n        this.ownerId = 0;\n        this.options = null;\n        setNodeIsForValidation(this, false);\n        _setNodeStickiness(this, 1 /* NeverGrowsWhenTypingAtEdges */);\n        setCollapseOnReplaceEdit(this, false);\n        this.cachedVersionId = 0;\n        this.cachedAbsoluteStart = start;\n        this.cachedAbsoluteEnd = end;\n        this.range = null;\n        setNodeIsVisited(this, false);\n    }\n    reset(versionId, start, end, range) {\n        this.start = start;\n        this.end = end;\n        this.maxEnd = end;\n        this.cachedVersionId = versionId;\n        this.cachedAbsoluteStart = start;\n        this.cachedAbsoluteEnd = end;\n        this.range = range;\n    }\n    setOptions(options) {\n        this.options = options;\n        const className = this.options.className;\n        setNodeIsForValidation(this, (className === \"squiggly-error\" /* EditorErrorDecoration */\n            || className === \"squiggly-warning\" /* EditorWarningDecoration */\n            || className === \"squiggly-info\" /* EditorInfoDecoration */));\n        _setNodeStickiness(this, this.options.stickiness);\n        setCollapseOnReplaceEdit(this, this.options.collapseOnReplaceEdit);\n    }\n    setCachedOffsets(absoluteStart, absoluteEnd, cachedVersionId) {\n        if (this.cachedVersionId !== cachedVersionId) {\n            this.range = null;\n        }\n        this.cachedVersionId = cachedVersionId;\n        this.cachedAbsoluteStart = absoluteStart;\n        this.cachedAbsoluteEnd = absoluteEnd;\n    }\n    detach() {\n        this.parent = null;\n        this.left = null;\n        this.right = null;\n    }\n}\nexport const SENTINEL = new IntervalNode(null, 0, 0);\nSENTINEL.parent = SENTINEL;\nSENTINEL.left = SENTINEL;\nSENTINEL.right = SENTINEL;\nsetNodeColor(SENTINEL, 0 /* Black */);\nexport class IntervalTree {\n    constructor() {\n        this.root = SENTINEL;\n        this.requestNormalizeDelta = false;\n    }\n    intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId) {\n        if (this.root === SENTINEL) {\n            return [];\n        }\n        return intervalSearch(this, start, end, filterOwnerId, filterOutValidation, cachedVersionId);\n    }\n    search(filterOwnerId, filterOutValidation, cachedVersionId) {\n        if (this.root === SENTINEL) {\n            return [];\n        }\n        return search(this, filterOwnerId, filterOutValidation, cachedVersionId);\n    }\n    /**\n     * Will not set `cachedAbsoluteStart` nor `cachedAbsoluteEnd` on the returned nodes!\n     */\n    collectNodesFromOwner(ownerId) {\n        return collectNodesFromOwner(this, ownerId);\n    }\n    /**\n     * Will not set `cachedAbsoluteStart` nor `cachedAbsoluteEnd` on the returned nodes!\n     */\n    collectNodesPostOrder() {\n        return collectNodesPostOrder(this);\n    }\n    insert(node) {\n        rbTreeInsert(this, node);\n        this._normalizeDeltaIfNecessary();\n    }\n    delete(node) {\n        rbTreeDelete(this, node);\n        this._normalizeDeltaIfNecessary();\n    }\n    resolveNode(node, cachedVersionId) {\n        const initialNode = node;\n        let delta = 0;\n        while (node !== this.root) {\n            if (node === node.parent.right) {\n                delta += node.parent.delta;\n            }\n            node = node.parent;\n        }\n        const nodeStart = initialNode.start + delta;\n        const nodeEnd = initialNode.end + delta;\n        initialNode.setCachedOffsets(nodeStart, nodeEnd, cachedVersionId);\n    }\n    acceptReplace(offset, length, textLength, forceMoveMarkers) {\n        // Our strategy is to remove all directly impacted nodes, and then add them back to the tree.\n        // (1) collect all nodes that are intersecting this edit as nodes of interest\n        const nodesOfInterest = searchForEditing(this, offset, offset + length);\n        // (2) remove all nodes that are intersecting this edit\n        for (let i = 0, len = nodesOfInterest.length; i < len; i++) {\n            const node = nodesOfInterest[i];\n            rbTreeDelete(this, node);\n        }\n        this._normalizeDeltaIfNecessary();\n        // (3) edit all tree nodes except the nodes of interest\n        noOverlapReplace(this, offset, offset + length, textLength);\n        this._normalizeDeltaIfNecessary();\n        // (4) edit the nodes of interest and insert them back in the tree\n        for (let i = 0, len = nodesOfInterest.length; i < len; i++) {\n            const node = nodesOfInterest[i];\n            node.start = node.cachedAbsoluteStart;\n            node.end = node.cachedAbsoluteEnd;\n            nodeAcceptEdit(node, offset, (offset + length), textLength, forceMoveMarkers);\n            node.maxEnd = node.end;\n            rbTreeInsert(this, node);\n        }\n        this._normalizeDeltaIfNecessary();\n    }\n    _normalizeDeltaIfNecessary() {\n        if (!this.requestNormalizeDelta) {\n            return;\n        }\n        this.requestNormalizeDelta = false;\n        normalizeDelta(this);\n    }\n}\n//#region Delta Normalization\nfunction normalizeDelta(T) {\n    let node = T.root;\n    let delta = 0;\n    while (node !== SENTINEL) {\n        if (node.left !== SENTINEL && !getNodeIsVisited(node.left)) {\n            // go left\n            node = node.left;\n            continue;\n        }\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            delta += node.delta;\n            node = node.right;\n            continue;\n        }\n        // handle current node\n        node.start = delta + node.start;\n        node.end = delta + node.end;\n        node.delta = 0;\n        recomputeMaxEnd(node);\n        setNodeIsVisited(node, true);\n        // going up from this node\n        setNodeIsVisited(node.left, false);\n        setNodeIsVisited(node.right, false);\n        if (node === node.parent.right) {\n            delta -= node.parent.delta;\n        }\n        node = node.parent;\n    }\n    setNodeIsVisited(T.root, false);\n}\nfunction adjustMarkerBeforeColumn(markerOffset, markerStickToPreviousCharacter, checkOffset, moveSemantics) {\n    if (markerOffset < checkOffset) {\n        return true;\n    }\n    if (markerOffset > checkOffset) {\n        return false;\n    }\n    if (moveSemantics === 1 /* ForceMove */) {\n        return false;\n    }\n    if (moveSemantics === 2 /* ForceStay */) {\n        return true;\n    }\n    return markerStickToPreviousCharacter;\n}\n/**\n * This is a lot more complicated than strictly necessary to maintain the same behaviour\n * as when decorations were implemented using two markers.\n */\nexport function nodeAcceptEdit(node, start, end, textLength, forceMoveMarkers) {\n    const nodeStickiness = getNodeStickiness(node);\n    const startStickToPreviousCharacter = (nodeStickiness === 0 /* AlwaysGrowsWhenTypingAtEdges */\n        || nodeStickiness === 2 /* GrowsOnlyWhenTypingBefore */);\n    const endStickToPreviousCharacter = (nodeStickiness === 1 /* NeverGrowsWhenTypingAtEdges */\n        || nodeStickiness === 2 /* GrowsOnlyWhenTypingBefore */);\n    const deletingCnt = (end - start);\n    const insertingCnt = textLength;\n    const commonLength = Math.min(deletingCnt, insertingCnt);\n    const nodeStart = node.start;\n    let startDone = false;\n    const nodeEnd = node.end;\n    let endDone = false;\n    if (start <= nodeStart && nodeEnd <= end && getCollapseOnReplaceEdit(node)) {\n        // This edit encompasses the entire decoration range\n        // and the decoration has asked to become collapsed\n        node.start = start;\n        startDone = true;\n        node.end = start;\n        endDone = true;\n    }\n    {\n        const moveSemantics = forceMoveMarkers ? 1 /* ForceMove */ : (deletingCnt > 0 ? 2 /* ForceStay */ : 0 /* MarkerDefined */);\n        if (!startDone && adjustMarkerBeforeColumn(nodeStart, startStickToPreviousCharacter, start, moveSemantics)) {\n            startDone = true;\n        }\n        if (!endDone && adjustMarkerBeforeColumn(nodeEnd, endStickToPreviousCharacter, start, moveSemantics)) {\n            endDone = true;\n        }\n    }\n    if (commonLength > 0 && !forceMoveMarkers) {\n        const moveSemantics = (deletingCnt > insertingCnt ? 2 /* ForceStay */ : 0 /* MarkerDefined */);\n        if (!startDone && adjustMarkerBeforeColumn(nodeStart, startStickToPreviousCharacter, start + commonLength, moveSemantics)) {\n            startDone = true;\n        }\n        if (!endDone && adjustMarkerBeforeColumn(nodeEnd, endStickToPreviousCharacter, start + commonLength, moveSemantics)) {\n            endDone = true;\n        }\n    }\n    {\n        const moveSemantics = forceMoveMarkers ? 1 /* ForceMove */ : 0 /* MarkerDefined */;\n        if (!startDone && adjustMarkerBeforeColumn(nodeStart, startStickToPreviousCharacter, end, moveSemantics)) {\n            node.start = start + insertingCnt;\n            startDone = true;\n        }\n        if (!endDone && adjustMarkerBeforeColumn(nodeEnd, endStickToPreviousCharacter, end, moveSemantics)) {\n            node.end = start + insertingCnt;\n            endDone = true;\n        }\n    }\n    // Finish\n    const deltaColumn = (insertingCnt - deletingCnt);\n    if (!startDone) {\n        node.start = Math.max(0, nodeStart + deltaColumn);\n    }\n    if (!endDone) {\n        node.end = Math.max(0, nodeEnd + deltaColumn);\n    }\n    if (node.start > node.end) {\n        node.end = node.start;\n    }\n}\nfunction searchForEditing(T, start, end) {\n    // https://en.wikipedia.org/wiki/Interval_tree#Augmented_tree\n    // Now, it is known that two intervals A and B overlap only when both\n    // A.low <= B.high and A.high >= B.low. When searching the trees for\n    // nodes overlapping with a given interval, you can immediately skip:\n    //  a) all nodes to the right of nodes whose low value is past the end of the given interval.\n    //  b) all nodes that have their maximum 'high' value below the start of the given interval.\n    let node = T.root;\n    let delta = 0;\n    let nodeMaxEnd = 0;\n    let nodeStart = 0;\n    let nodeEnd = 0;\n    const result = [];\n    let resultLen = 0;\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            if (node === node.parent.right) {\n                delta -= node.parent.delta;\n            }\n            node = node.parent;\n            continue;\n        }\n        if (!getNodeIsVisited(node.left)) {\n            // first time seeing this node\n            nodeMaxEnd = delta + node.maxEnd;\n            if (nodeMaxEnd < start) {\n                // cover case b) from above\n                // there is no need to search this node or its children\n                setNodeIsVisited(node, true);\n                continue;\n            }\n            if (node.left !== SENTINEL) {\n                // go left\n                node = node.left;\n                continue;\n            }\n        }\n        // handle current node\n        nodeStart = delta + node.start;\n        if (nodeStart > end) {\n            // cover case a) from above\n            // there is no need to search this node or its right subtree\n            setNodeIsVisited(node, true);\n            continue;\n        }\n        nodeEnd = delta + node.end;\n        if (nodeEnd >= start) {\n            node.setCachedOffsets(nodeStart, nodeEnd, 0);\n            result[resultLen++] = node;\n        }\n        setNodeIsVisited(node, true);\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            delta += node.delta;\n            node = node.right;\n            continue;\n        }\n    }\n    setNodeIsVisited(T.root, false);\n    return result;\n}\nfunction noOverlapReplace(T, start, end, textLength) {\n    // https://en.wikipedia.org/wiki/Interval_tree#Augmented_tree\n    // Now, it is known that two intervals A and B overlap only when both\n    // A.low <= B.high and A.high >= B.low. When searching the trees for\n    // nodes overlapping with a given interval, you can immediately skip:\n    //  a) all nodes to the right of nodes whose low value is past the end of the given interval.\n    //  b) all nodes that have their maximum 'high' value below the start of the given interval.\n    let node = T.root;\n    let delta = 0;\n    let nodeMaxEnd = 0;\n    let nodeStart = 0;\n    const editDelta = (textLength - (end - start));\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            if (node === node.parent.right) {\n                delta -= node.parent.delta;\n            }\n            recomputeMaxEnd(node);\n            node = node.parent;\n            continue;\n        }\n        if (!getNodeIsVisited(node.left)) {\n            // first time seeing this node\n            nodeMaxEnd = delta + node.maxEnd;\n            if (nodeMaxEnd < start) {\n                // cover case b) from above\n                // there is no need to search this node or its children\n                setNodeIsVisited(node, true);\n                continue;\n            }\n            if (node.left !== SENTINEL) {\n                // go left\n                node = node.left;\n                continue;\n            }\n        }\n        // handle current node\n        nodeStart = delta + node.start;\n        if (nodeStart > end) {\n            node.start += editDelta;\n            node.end += editDelta;\n            node.delta += editDelta;\n            if (node.delta < -1073741824 /* MIN_SAFE_DELTA */ || node.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n                T.requestNormalizeDelta = true;\n            }\n            // cover case a) from above\n            // there is no need to search this node or its right subtree\n            setNodeIsVisited(node, true);\n            continue;\n        }\n        setNodeIsVisited(node, true);\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            delta += node.delta;\n            node = node.right;\n            continue;\n        }\n    }\n    setNodeIsVisited(T.root, false);\n}\n//#endregion\n//#region Searching\nfunction collectNodesFromOwner(T, ownerId) {\n    let node = T.root;\n    const result = [];\n    let resultLen = 0;\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            node = node.parent;\n            continue;\n        }\n        if (node.left !== SENTINEL && !getNodeIsVisited(node.left)) {\n            // go left\n            node = node.left;\n            continue;\n        }\n        // handle current node\n        if (node.ownerId === ownerId) {\n            result[resultLen++] = node;\n        }\n        setNodeIsVisited(node, true);\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            node = node.right;\n            continue;\n        }\n    }\n    setNodeIsVisited(T.root, false);\n    return result;\n}\nfunction collectNodesPostOrder(T) {\n    let node = T.root;\n    const result = [];\n    let resultLen = 0;\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            node = node.parent;\n            continue;\n        }\n        if (node.left !== SENTINEL && !getNodeIsVisited(node.left)) {\n            // go left\n            node = node.left;\n            continue;\n        }\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            node = node.right;\n            continue;\n        }\n        // handle current node\n        result[resultLen++] = node;\n        setNodeIsVisited(node, true);\n    }\n    setNodeIsVisited(T.root, false);\n    return result;\n}\nfunction search(T, filterOwnerId, filterOutValidation, cachedVersionId) {\n    let node = T.root;\n    let delta = 0;\n    let nodeStart = 0;\n    let nodeEnd = 0;\n    const result = [];\n    let resultLen = 0;\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            if (node === node.parent.right) {\n                delta -= node.parent.delta;\n            }\n            node = node.parent;\n            continue;\n        }\n        if (node.left !== SENTINEL && !getNodeIsVisited(node.left)) {\n            // go left\n            node = node.left;\n            continue;\n        }\n        // handle current node\n        nodeStart = delta + node.start;\n        nodeEnd = delta + node.end;\n        node.setCachedOffsets(nodeStart, nodeEnd, cachedVersionId);\n        let include = true;\n        if (filterOwnerId && node.ownerId && node.ownerId !== filterOwnerId) {\n            include = false;\n        }\n        if (filterOutValidation && getNodeIsForValidation(node)) {\n            include = false;\n        }\n        if (include) {\n            result[resultLen++] = node;\n        }\n        setNodeIsVisited(node, true);\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            delta += node.delta;\n            node = node.right;\n            continue;\n        }\n    }\n    setNodeIsVisited(T.root, false);\n    return result;\n}\nfunction intervalSearch(T, intervalStart, intervalEnd, filterOwnerId, filterOutValidation, cachedVersionId) {\n    // https://en.wikipedia.org/wiki/Interval_tree#Augmented_tree\n    // Now, it is known that two intervals A and B overlap only when both\n    // A.low <= B.high and A.high >= B.low. When searching the trees for\n    // nodes overlapping with a given interval, you can immediately skip:\n    //  a) all nodes to the right of nodes whose low value is past the end of the given interval.\n    //  b) all nodes that have their maximum 'high' value below the start of the given interval.\n    let node = T.root;\n    let delta = 0;\n    let nodeMaxEnd = 0;\n    let nodeStart = 0;\n    let nodeEnd = 0;\n    const result = [];\n    let resultLen = 0;\n    while (node !== SENTINEL) {\n        if (getNodeIsVisited(node)) {\n            // going up from this node\n            setNodeIsVisited(node.left, false);\n            setNodeIsVisited(node.right, false);\n            if (node === node.parent.right) {\n                delta -= node.parent.delta;\n            }\n            node = node.parent;\n            continue;\n        }\n        if (!getNodeIsVisited(node.left)) {\n            // first time seeing this node\n            nodeMaxEnd = delta + node.maxEnd;\n            if (nodeMaxEnd < intervalStart) {\n                // cover case b) from above\n                // there is no need to search this node or its children\n                setNodeIsVisited(node, true);\n                continue;\n            }\n            if (node.left !== SENTINEL) {\n                // go left\n                node = node.left;\n                continue;\n            }\n        }\n        // handle current node\n        nodeStart = delta + node.start;\n        if (nodeStart > intervalEnd) {\n            // cover case a) from above\n            // there is no need to search this node or its right subtree\n            setNodeIsVisited(node, true);\n            continue;\n        }\n        nodeEnd = delta + node.end;\n        if (nodeEnd >= intervalStart) {\n            // There is overlap\n            node.setCachedOffsets(nodeStart, nodeEnd, cachedVersionId);\n            let include = true;\n            if (filterOwnerId && node.ownerId && node.ownerId !== filterOwnerId) {\n                include = false;\n            }\n            if (filterOutValidation && getNodeIsForValidation(node)) {\n                include = false;\n            }\n            if (include) {\n                result[resultLen++] = node;\n            }\n        }\n        setNodeIsVisited(node, true);\n        if (node.right !== SENTINEL && !getNodeIsVisited(node.right)) {\n            // go right\n            delta += node.delta;\n            node = node.right;\n            continue;\n        }\n    }\n    setNodeIsVisited(T.root, false);\n    return result;\n}\n//#endregion\n//#region Insertion\nfunction rbTreeInsert(T, newNode) {\n    if (T.root === SENTINEL) {\n        newNode.parent = SENTINEL;\n        newNode.left = SENTINEL;\n        newNode.right = SENTINEL;\n        setNodeColor(newNode, 0 /* Black */);\n        T.root = newNode;\n        return T.root;\n    }\n    treeInsert(T, newNode);\n    recomputeMaxEndWalkToRoot(newNode.parent);\n    // repair tree\n    let x = newNode;\n    while (x !== T.root && getNodeColor(x.parent) === 1 /* Red */) {\n        if (x.parent === x.parent.parent.left) {\n            const y = x.parent.parent.right;\n            if (getNodeColor(y) === 1 /* Red */) {\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(y, 0 /* Black */);\n                setNodeColor(x.parent.parent, 1 /* Red */);\n                x = x.parent.parent;\n            }\n            else {\n                if (x === x.parent.right) {\n                    x = x.parent;\n                    leftRotate(T, x);\n                }\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(x.parent.parent, 1 /* Red */);\n                rightRotate(T, x.parent.parent);\n            }\n        }\n        else {\n            const y = x.parent.parent.left;\n            if (getNodeColor(y) === 1 /* Red */) {\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(y, 0 /* Black */);\n                setNodeColor(x.parent.parent, 1 /* Red */);\n                x = x.parent.parent;\n            }\n            else {\n                if (x === x.parent.left) {\n                    x = x.parent;\n                    rightRotate(T, x);\n                }\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(x.parent.parent, 1 /* Red */);\n                leftRotate(T, x.parent.parent);\n            }\n        }\n    }\n    setNodeColor(T.root, 0 /* Black */);\n    return newNode;\n}\nfunction treeInsert(T, z) {\n    let delta = 0;\n    let x = T.root;\n    const zAbsoluteStart = z.start;\n    const zAbsoluteEnd = z.end;\n    while (true) {\n        const cmp = intervalCompare(zAbsoluteStart, zAbsoluteEnd, x.start + delta, x.end + delta);\n        if (cmp < 0) {\n            // this node should be inserted to the left\n            // => it is not affected by the node's delta\n            if (x.left === SENTINEL) {\n                z.start -= delta;\n                z.end -= delta;\n                z.maxEnd -= delta;\n                x.left = z;\n                break;\n            }\n            else {\n                x = x.left;\n            }\n        }\n        else {\n            // this node should be inserted to the right\n            // => it is not affected by the node's delta\n            if (x.right === SENTINEL) {\n                z.start -= (delta + x.delta);\n                z.end -= (delta + x.delta);\n                z.maxEnd -= (delta + x.delta);\n                x.right = z;\n                break;\n            }\n            else {\n                delta += x.delta;\n                x = x.right;\n            }\n        }\n    }\n    z.parent = x;\n    z.left = SENTINEL;\n    z.right = SENTINEL;\n    setNodeColor(z, 1 /* Red */);\n}\n//#endregion\n//#region Deletion\nfunction rbTreeDelete(T, z) {\n    let x;\n    let y;\n    // RB-DELETE except we don't swap z and y in case c)\n    // i.e. we always delete what's pointed at by z.\n    if (z.left === SENTINEL) {\n        x = z.right;\n        y = z;\n        // x's delta is no longer influenced by z's delta\n        x.delta += z.delta;\n        if (x.delta < -1073741824 /* MIN_SAFE_DELTA */ || x.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n            T.requestNormalizeDelta = true;\n        }\n        x.start += z.delta;\n        x.end += z.delta;\n    }\n    else if (z.right === SENTINEL) {\n        x = z.left;\n        y = z;\n    }\n    else {\n        y = leftest(z.right);\n        x = y.right;\n        // y's delta is no longer influenced by z's delta,\n        // but we don't want to walk the entire right-hand-side subtree of x.\n        // we therefore maintain z's delta in y, and adjust only x\n        x.start += y.delta;\n        x.end += y.delta;\n        x.delta += y.delta;\n        if (x.delta < -1073741824 /* MIN_SAFE_DELTA */ || x.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n            T.requestNormalizeDelta = true;\n        }\n        y.start += z.delta;\n        y.end += z.delta;\n        y.delta = z.delta;\n        if (y.delta < -1073741824 /* MIN_SAFE_DELTA */ || y.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n            T.requestNormalizeDelta = true;\n        }\n    }\n    if (y === T.root) {\n        T.root = x;\n        setNodeColor(x, 0 /* Black */);\n        z.detach();\n        resetSentinel();\n        recomputeMaxEnd(x);\n        T.root.parent = SENTINEL;\n        return;\n    }\n    const yWasRed = (getNodeColor(y) === 1 /* Red */);\n    if (y === y.parent.left) {\n        y.parent.left = x;\n    }\n    else {\n        y.parent.right = x;\n    }\n    if (y === z) {\n        x.parent = y.parent;\n    }\n    else {\n        if (y.parent === z) {\n            x.parent = y;\n        }\n        else {\n            x.parent = y.parent;\n        }\n        y.left = z.left;\n        y.right = z.right;\n        y.parent = z.parent;\n        setNodeColor(y, getNodeColor(z));\n        if (z === T.root) {\n            T.root = y;\n        }\n        else {\n            if (z === z.parent.left) {\n                z.parent.left = y;\n            }\n            else {\n                z.parent.right = y;\n            }\n        }\n        if (y.left !== SENTINEL) {\n            y.left.parent = y;\n        }\n        if (y.right !== SENTINEL) {\n            y.right.parent = y;\n        }\n    }\n    z.detach();\n    if (yWasRed) {\n        recomputeMaxEndWalkToRoot(x.parent);\n        if (y !== z) {\n            recomputeMaxEndWalkToRoot(y);\n            recomputeMaxEndWalkToRoot(y.parent);\n        }\n        resetSentinel();\n        return;\n    }\n    recomputeMaxEndWalkToRoot(x);\n    recomputeMaxEndWalkToRoot(x.parent);\n    if (y !== z) {\n        recomputeMaxEndWalkToRoot(y);\n        recomputeMaxEndWalkToRoot(y.parent);\n    }\n    // RB-DELETE-FIXUP\n    let w;\n    while (x !== T.root && getNodeColor(x) === 0 /* Black */) {\n        if (x === x.parent.left) {\n            w = x.parent.right;\n            if (getNodeColor(w) === 1 /* Red */) {\n                setNodeColor(w, 0 /* Black */);\n                setNodeColor(x.parent, 1 /* Red */);\n                leftRotate(T, x.parent);\n                w = x.parent.right;\n            }\n            if (getNodeColor(w.left) === 0 /* Black */ && getNodeColor(w.right) === 0 /* Black */) {\n                setNodeColor(w, 1 /* Red */);\n                x = x.parent;\n            }\n            else {\n                if (getNodeColor(w.right) === 0 /* Black */) {\n                    setNodeColor(w.left, 0 /* Black */);\n                    setNodeColor(w, 1 /* Red */);\n                    rightRotate(T, w);\n                    w = x.parent.right;\n                }\n                setNodeColor(w, getNodeColor(x.parent));\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(w.right, 0 /* Black */);\n                leftRotate(T, x.parent);\n                x = T.root;\n            }\n        }\n        else {\n            w = x.parent.left;\n            if (getNodeColor(w) === 1 /* Red */) {\n                setNodeColor(w, 0 /* Black */);\n                setNodeColor(x.parent, 1 /* Red */);\n                rightRotate(T, x.parent);\n                w = x.parent.left;\n            }\n            if (getNodeColor(w.left) === 0 /* Black */ && getNodeColor(w.right) === 0 /* Black */) {\n                setNodeColor(w, 1 /* Red */);\n                x = x.parent;\n            }\n            else {\n                if (getNodeColor(w.left) === 0 /* Black */) {\n                    setNodeColor(w.right, 0 /* Black */);\n                    setNodeColor(w, 1 /* Red */);\n                    leftRotate(T, w);\n                    w = x.parent.left;\n                }\n                setNodeColor(w, getNodeColor(x.parent));\n                setNodeColor(x.parent, 0 /* Black */);\n                setNodeColor(w.left, 0 /* Black */);\n                rightRotate(T, x.parent);\n                x = T.root;\n            }\n        }\n    }\n    setNodeColor(x, 0 /* Black */);\n    resetSentinel();\n}\nfunction leftest(node) {\n    while (node.left !== SENTINEL) {\n        node = node.left;\n    }\n    return node;\n}\nfunction resetSentinel() {\n    SENTINEL.parent = SENTINEL;\n    SENTINEL.delta = 0; // optional\n    SENTINEL.start = 0; // optional\n    SENTINEL.end = 0; // optional\n}\n//#endregion\n//#region Rotations\nfunction leftRotate(T, x) {\n    const y = x.right; // set y.\n    y.delta += x.delta; // y's delta is no longer influenced by x's delta\n    if (y.delta < -1073741824 /* MIN_SAFE_DELTA */ || y.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n        T.requestNormalizeDelta = true;\n    }\n    y.start += x.delta;\n    y.end += x.delta;\n    x.right = y.left; // turn y's left subtree into x's right subtree.\n    if (y.left !== SENTINEL) {\n        y.left.parent = x;\n    }\n    y.parent = x.parent; // link x's parent to y.\n    if (x.parent === SENTINEL) {\n        T.root = y;\n    }\n    else if (x === x.parent.left) {\n        x.parent.left = y;\n    }\n    else {\n        x.parent.right = y;\n    }\n    y.left = x; // put x on y's left.\n    x.parent = y;\n    recomputeMaxEnd(x);\n    recomputeMaxEnd(y);\n}\nfunction rightRotate(T, y) {\n    const x = y.left;\n    y.delta -= x.delta;\n    if (y.delta < -1073741824 /* MIN_SAFE_DELTA */ || y.delta > 1073741824 /* MAX_SAFE_DELTA */) {\n        T.requestNormalizeDelta = true;\n    }\n    y.start -= x.delta;\n    y.end -= x.delta;\n    y.left = x.right;\n    if (x.right !== SENTINEL) {\n        x.right.parent = y;\n    }\n    x.parent = y.parent;\n    if (y.parent === SENTINEL) {\n        T.root = x;\n    }\n    else if (y === y.parent.right) {\n        y.parent.right = x;\n    }\n    else {\n        y.parent.left = x;\n    }\n    x.right = y;\n    y.parent = x;\n    recomputeMaxEnd(y);\n    recomputeMaxEnd(x);\n}\n//#endregion\n//#region max end computation\nfunction computeMaxEnd(node) {\n    let maxEnd = node.end;\n    if (node.left !== SENTINEL) {\n        const leftMaxEnd = node.left.maxEnd;\n        if (leftMaxEnd > maxEnd) {\n            maxEnd = leftMaxEnd;\n        }\n    }\n    if (node.right !== SENTINEL) {\n        const rightMaxEnd = node.right.maxEnd + node.delta;\n        if (rightMaxEnd > maxEnd) {\n            maxEnd = rightMaxEnd;\n        }\n    }\n    return maxEnd;\n}\nexport function recomputeMaxEnd(node) {\n    node.maxEnd = computeMaxEnd(node);\n}\nfunction recomputeMaxEndWalkToRoot(node) {\n    while (node !== SENTINEL) {\n        const maxEnd = computeMaxEnd(node);\n        if (node.maxEnd === maxEnd) {\n            // no need to go further\n            return;\n        }\n        node.maxEnd = maxEnd;\n        node = node.parent;\n    }\n}\n//#endregion\n//#region utils\nexport function intervalCompare(aStart, aEnd, bStart, bEnd) {\n    if (aStart === bStart) {\n        return aEnd - bEnd;\n    }\n    return aStart - bStart;\n}\n//#endregion\n",
+      "start": 1711096856530,
+      "end": 1711096856629,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856629,
+      "end": 1711096856629,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856629,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856630,
+      "end": 1711096856630,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856630,
+      "end": 1711096856632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856632,
+      "end": 1711096856632,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/pages/index.vue",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "<template>\r\n  <div class=\"index\">\r\n    <video autoplay muted loop src=\"/video/lighthouse.mp4\"></video>\r\n    <div class=\"introduce\">欢迎来到Xcada：在线教育平台</div>\r\n    <div>\r\n      <h3 class=\"advertise1\">时间自由，学您想学</h3>\r\n      <h3 class=\"advertise2\">实践探索，创新思维</h3>\r\n      <h3 class=\"advertise3\">交流互动，共同学习</h3>\r\n    </div>\r\n    <hr class=\"hr1\"/>\r\n    <div class=\"ads1\">\r\n      <h3>通过Xcada快速提升个人技能</h3>\r\n      <ul class=\"publicize\">\r\n        <li>多元教学方式，打造个性化学习路径，让您的学习之旅更加丰富多彩。</li>\r\n        <li>我们致力于提供交互性强、内容丰富的学习平台，让您尽情享受学习的乐趣，不断提升自我。</li>\r\n        <li>Xcada为您量身定制学习计划，结合个人兴趣和学习目标，助您快速提升技能。</li>\r\n      </ul>\r\n      <img src=\"/img/people-meeting.jpg\">\r\n    </div>\r\n    <hr class=\"hr2\"/>\r\n    <div class=\"ads2\">\r\n      <h3>Xcada助您实现目标</h3>\r\n      <ul class=\"publicize\">\r\n        <li>多元学习资源，满足不同需求，让您随时随地无限制访问Xcada的顶尖课程</li>\r\n        <li>实时更新的课程内容，跟上时代潮流，掌握最新知识和技能，保持竞争力。</li>\r\n        <li>全球化视野，打开国际化学习之门，与世界接轨，拓展您的国际视野。</li>\r\n      </ul>\r\n      <img src=\"/img/campus.jpg\">\r\n    </div>\r\n    <hr class=\"hr3\"/>\r\n\r\n    <div class=\"advertise4\">\r\n      <h3>我们理念是</h3>\r\n    </div>\r\n    <div class=\"advertise5\">\r\n      <h3>让每一个有意愿提升自己的人，都可以获得更优质的教育</h3>\r\n    </div>\r\n\r\n    <div class=\"bottom_img\">\r\n      <img src=\"/img/commencement.jpg\">\r\n    </div>\r\n\r\n    <div class=\"advertise6\">\r\n      <h3>好的教育，没有围墙</h3>\r\n    </div>\r\n\r\n    <footer>\r\n      <ul>SuperCat © 2024</ul>\r\n      <li>备案号：辽ICP备2023003957号</li>\r\n      <li>地址：辽宁省沈阳市道义南大街37号沈阳航空航天大学</li>\r\n      <li>联系邮箱：supercat_86@163.com</li>\r\n      <li></li>\r\n    </footer>\r\n    <div style=\"margin-top: -23px;position: absolute; top: 4100px; width:100%;\" aria-hidden=\"true\">\r\n      <hr class=\"bg-primary\" style=\"margin-top: 0px; height:23px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 1px; height:22px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 2px; height:21px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 3px; height:20px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 4px; height:19px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 5px; height:18px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 6px; height:17px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 7px; height:16px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 8px; height:15px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 9px; height:14px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 10px; height:13px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 11px; height:12px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 12px; height:11px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 13px; height:10px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 14px; height:9px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 15px; height:8px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 16px; height:7px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 17px; height:6px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 18px; height:5px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 19px; height:4px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 20px; height:3px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 21px; height:2px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 22px; height:1px\"/>\r\n      <hr class=\"bg-primary\" style=\"margin-top: 23px; height:0px\"/>\r\n    </div>\r\n\r\n    \r\n  </div>\r\n</template>\r\n\r\n<script>\r\nimport \"~/assets/css/index.css\";\r\n</script>\r\n",
+      "start": 1711096853017,
+      "end": 1711096853214,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853214,
+      "end": 1711096853214,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "result": "\r\nimport \"~/assets/css/index.css\";\r\n\nconst _sfc_main = {}\nimport { createElementVNode as _createElementVNode, createStaticVNode as _createStaticVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\"\nimport _imports_0 from '/video/lighthouse.mp4'\nimport _imports_1 from '/img/people-meeting.jpg'\nimport _imports_2 from '/img/campus.jpg'\nimport _imports_3 from '/img/commencement.jpg'\n\n\nconst _hoisted_1 = { class: \"index\" }\nconst _hoisted_2 = /*#__PURE__*/_createStaticVNode(\"<video autoplay muted loop src=\\\"\" + _imports_0 + \"\\\"></video><div class=\\\"introduce\\\">欢迎来到Xcada：在线教育平台</div><div><h3 class=\\\"advertise1\\\">时间自由，学您想学</h3><h3 class=\\\"advertise2\\\">实践探索，创新思维</h3><h3 class=\\\"advertise3\\\">交流互动，共同学习</h3></div><hr class=\\\"hr1\\\"><div class=\\\"ads1\\\"><h3>通过Xcada快速提升个人技能</h3><ul class=\\\"publicize\\\"><li>多元教学方式，打造个性化学习路径，让您的学习之旅更加丰富多彩。</li><li>我们致力于提供交互性强、内容丰富的学习平台，让您尽情享受学习的乐趣，不断提升自我。</li><li>Xcada为您量身定制学习计划，结合个人兴趣和学习目标，助您快速提升技能。</li></ul><img src=\\\"\" + _imports_1 + \"\\\"></div><hr class=\\\"hr2\\\"><div class=\\\"ads2\\\"><h3>Xcada助您实现目标</h3><ul class=\\\"publicize\\\"><li>多元学习资源，满足不同需求，让您随时随地无限制访问Xcada的顶尖课程</li><li>实时更新的课程内容，跟上时代潮流，掌握最新知识和技能，保持竞争力。</li><li>全球化视野，打开国际化学习之门，与世界接轨，拓展您的国际视野。</li></ul><img src=\\\"\" + _imports_2 + \"\\\"></div><hr class=\\\"hr3\\\"><div class=\\\"advertise4\\\"><h3>我们理念是</h3></div><div class=\\\"advertise5\\\"><h3>让每一个有意愿提升自己的人，都可以获得更优质的教育</h3></div><div class=\\\"bottom_img\\\"><img src=\\\"\" + _imports_3 + \"\\\"></div><div class=\\\"advertise6\\\"><h3>好的教育，没有围墙</h3></div><footer><ul>SuperCat © 2024</ul><li>备案号：辽ICP备2023003957号</li><li>地址：辽宁省沈阳市道义南大街37号沈阳航空航天大学</li><li>联系邮箱：supercat_86@163.com</li><li></li></footer><div style=\\\"margin-top:-23px;position:absolute;top:4100px;width:100%;\\\" aria-hidden=\\\"true\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:0px;height:23px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:1px;height:22px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:2px;height:21px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:3px;height:20px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:4px;height:19px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:5px;height:18px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:6px;height:17px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:7px;height:16px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:8px;height:15px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:9px;height:14px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:10px;height:13px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:11px;height:12px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:12px;height:11px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:13px;height:10px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:14px;height:9px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:15px;height:8px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:16px;height:7px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:17px;height:6px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:18px;height:5px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:19px;height:4px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:20px;height:3px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:21px;height:2px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:22px;height:1px;\\\"><hr class=\\\"bg-primary\\\" style=\\\"margin-top:23px;height:0px;\\\"></div>\", 14)\nconst _hoisted_16 = [\n  _hoisted_2\n]\n\nfunction _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {\n  return (_openBlock(), _createElementBlock(\"div\", _hoisted_1, _hoisted_16))\n}\n\n\nimport _export_sfc from '\u0000plugin-vue:export-helper'\nexport default /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render]])",
+      "start": 1711096853214,
+      "end": 1711096853216,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853216,
+      "end": 1711096853216,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853216,
+      "end": 1711096853217,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853217,
+      "end": 1711096853217,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096853217,
+      "end": 1711096853218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853218,
+      "end": 1711096853218,
+      "order": "normal"
+    }
+  ]
+}

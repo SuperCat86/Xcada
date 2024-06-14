@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickInput/standaloneQuickInputService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport './standaloneQuickInput.css';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { IThemeService } from '../../../../platform/theme/common/themeService.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IAccessibilityService } from '../../../../platform/accessibility/common/accessibility.js';\nimport { EditorScopedLayoutService } from '../standaloneLayoutService.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { QuickInputService } from '../../../../platform/quickinput/browser/quickInput.js';\nimport { once } from '../../../../base/common/functional.js';\nlet EditorScopedQuickInputService = class EditorScopedQuickInputService extends QuickInputService {\n    constructor(editor, instantiationService, contextKeyService, themeService, accessibilityService, codeEditorService) {\n        super(instantiationService, contextKeyService, themeService, accessibilityService, new EditorScopedLayoutService(editor.getContainerDomNode(), codeEditorService));\n        this.host = undefined;\n        // Use the passed in code editor as host for the quick input widget\n        const contribution = QuickInputEditorContribution.get(editor);\n        if (contribution) {\n            const widget = contribution.widget;\n            this.host = {\n                _serviceBrand: undefined,\n                get hasContainer() { return true; },\n                get container() { return widget.getDomNode(); },\n                get dimension() { return editor.getLayoutInfo(); },\n                get onDidLayout() { return editor.onDidLayoutChange; },\n                focus: () => editor.focus()\n            };\n        }\n        else {\n            this.host = undefined;\n        }\n    }\n    createController() {\n        return super.createController(this.host);\n    }\n};\nEditorScopedQuickInputService = __decorate([\n    __param(1, IInstantiationService),\n    __param(2, IContextKeyService),\n    __param(3, IThemeService),\n    __param(4, IAccessibilityService),\n    __param(5, ICodeEditorService)\n], EditorScopedQuickInputService);\nexport { EditorScopedQuickInputService };\nlet StandaloneQuickInputService = class StandaloneQuickInputService {\n    constructor(instantiationService, codeEditorService) {\n        this.instantiationService = instantiationService;\n        this.codeEditorService = codeEditorService;\n        this.mapEditorToService = new Map();\n    }\n    get activeService() {\n        const editor = this.codeEditorService.getFocusedCodeEditor();\n        if (!editor) {\n            throw new Error('Quick input service needs a focused editor to work.');\n        }\n        // Find the quick input implementation for the focused\n        // editor or create it lazily if not yet created\n        let quickInputService = this.mapEditorToService.get(editor);\n        if (!quickInputService) {\n            const newQuickInputService = quickInputService = this.instantiationService.createInstance(EditorScopedQuickInputService, editor);\n            this.mapEditorToService.set(editor, quickInputService);\n            once(editor.onDidDispose)(() => {\n                newQuickInputService.dispose();\n                this.mapEditorToService.delete(editor);\n            });\n        }\n        return quickInputService;\n    }\n    get quickAccess() { return this.activeService.quickAccess; }\n    pick(picks, options = {}, token = CancellationToken.None) {\n        return this.activeService /* TS fail */.pick(picks, options, token);\n    }\n    createQuickPick() {\n        return this.activeService.createQuickPick();\n    }\n};\nStandaloneQuickInputService = __decorate([\n    __param(0, IInstantiationService),\n    __param(1, ICodeEditorService)\n], StandaloneQuickInputService);\nexport { StandaloneQuickInputService };\nexport class QuickInputEditorContribution {\n    constructor(editor) {\n        this.editor = editor;\n        this.widget = new QuickInputEditorWidget(this.editor);\n    }\n    static get(editor) {\n        return editor.getContribution(QuickInputEditorContribution.ID);\n    }\n    dispose() {\n        this.widget.dispose();\n    }\n}\nQuickInputEditorContribution.ID = 'editor.controller.quickInput';\nexport class QuickInputEditorWidget {\n    constructor(codeEditor) {\n        this.codeEditor = codeEditor;\n        this.domNode = document.createElement('div');\n        this.codeEditor.addOverlayWidget(this);\n    }\n    getId() {\n        return QuickInputEditorWidget.ID;\n    }\n    getDomNode() {\n        return this.domNode;\n    }\n    getPosition() {\n        return { preference: 2 /* TOP_CENTER */ };\n    }\n    dispose() {\n        this.codeEditor.removeOverlayWidget(this);\n    }\n}\nQuickInputEditorWidget.ID = 'editor.contrib.quickInputWidget';\nregisterEditorContribution(QuickInputEditorContribution.ID, QuickInputEditorContribution);\n",
+      "start": 1711096856281,
+      "end": 1711096856365,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856366,
+      "end": 1711096856366,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856366,
+      "end": 1711096856367,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856367,
+      "end": 1711096856367,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856367,
+      "end": 1711096856367,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856367,
+      "end": 1711096856367,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856367,
+      "end": 1711096856367,
+      "order": "normal"
+    }
+  ]
+}

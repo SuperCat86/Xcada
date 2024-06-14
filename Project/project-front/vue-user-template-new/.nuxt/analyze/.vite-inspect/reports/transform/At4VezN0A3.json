@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/overviewRuler/decorationsOverviewRuler.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { Color } from '../../../../base/common/color.js';\nimport { ViewPart } from '../../view/viewPart.js';\nimport { Position } from '../../../common/core/position.js';\nimport { TokenizationRegistry } from '../../../common/languages.js';\nimport { editorCursorForeground, editorOverviewRulerBorder, editorOverviewRulerBackground } from '../../../common/core/editorColorRegistry.js';\nimport { OverviewRulerDecorationsGroup } from '../../../common/viewModel.js';\nclass Settings {\n    constructor(config, theme) {\n        const options = config.options;\n        this.lineHeight = options.get(59 /* lineHeight */);\n        this.pixelRatio = options.get(129 /* pixelRatio */);\n        this.overviewRulerLanes = options.get(74 /* overviewRulerLanes */);\n        this.renderBorder = options.get(73 /* overviewRulerBorder */);\n        const borderColor = theme.getColor(editorOverviewRulerBorder);\n        this.borderColor = borderColor ? borderColor.toString() : null;\n        this.hideCursor = options.get(52 /* hideCursorInOverviewRuler */);\n        const cursorColor = theme.getColor(editorCursorForeground);\n        this.cursorColor = cursorColor ? cursorColor.transparent(0.7).toString() : null;\n        this.themeType = theme.type;\n        const minimapOpts = options.get(65 /* minimap */);\n        const minimapEnabled = minimapOpts.enabled;\n        const minimapSide = minimapOpts.side;\n        const backgroundColor = minimapEnabled\n            ? theme.getColor(editorOverviewRulerBackground) || TokenizationRegistry.getDefaultBackground()\n            : null;\n        if (backgroundColor === null || minimapSide === 'left') {\n            this.backgroundColor = null;\n        }\n        else {\n            this.backgroundColor = Color.Format.CSS.formatHex(backgroundColor);\n        }\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        const position = layoutInfo.overviewRuler;\n        this.top = position.top;\n        this.right = position.right;\n        this.domWidth = position.width;\n        this.domHeight = position.height;\n        if (this.overviewRulerLanes === 0) {\n            // overview ruler is off\n            this.canvasWidth = 0;\n            this.canvasHeight = 0;\n        }\n        else {\n            this.canvasWidth = (this.domWidth * this.pixelRatio) | 0;\n            this.canvasHeight = (this.domHeight * this.pixelRatio) | 0;\n        }\n        const [x, w] = this._initLanes(1, this.canvasWidth, this.overviewRulerLanes);\n        this.x = x;\n        this.w = w;\n    }\n    _initLanes(canvasLeftOffset, canvasWidth, laneCount) {\n        const remainingWidth = canvasWidth - canvasLeftOffset;\n        if (laneCount >= 3) {\n            const leftWidth = Math.floor(remainingWidth / 3);\n            const rightWidth = Math.floor(remainingWidth / 3);\n            const centerWidth = remainingWidth - leftWidth - rightWidth;\n            const leftOffset = canvasLeftOffset;\n            const centerOffset = leftOffset + leftWidth;\n            const rightOffset = leftOffset + leftWidth + centerWidth;\n            return [\n                [\n                    0,\n                    leftOffset,\n                    centerOffset,\n                    leftOffset,\n                    rightOffset,\n                    leftOffset,\n                    centerOffset,\n                    leftOffset, // Left | Center | Right\n                ], [\n                    0,\n                    leftWidth,\n                    centerWidth,\n                    leftWidth + centerWidth,\n                    rightWidth,\n                    leftWidth + centerWidth + rightWidth,\n                    centerWidth + rightWidth,\n                    leftWidth + centerWidth + rightWidth, // Left | Center | Right\n                ]\n            ];\n        }\n        else if (laneCount === 2) {\n            const leftWidth = Math.floor(remainingWidth / 2);\n            const rightWidth = remainingWidth - leftWidth;\n            const leftOffset = canvasLeftOffset;\n            const rightOffset = leftOffset + leftWidth;\n            return [\n                [\n                    0,\n                    leftOffset,\n                    leftOffset,\n                    leftOffset,\n                    rightOffset,\n                    leftOffset,\n                    leftOffset,\n                    leftOffset, // Left | Center | Right\n                ], [\n                    0,\n                    leftWidth,\n                    leftWidth,\n                    leftWidth,\n                    rightWidth,\n                    leftWidth + rightWidth,\n                    leftWidth + rightWidth,\n                    leftWidth + rightWidth, // Left | Center | Right\n                ]\n            ];\n        }\n        else {\n            const offset = canvasLeftOffset;\n            const width = remainingWidth;\n            return [\n                [\n                    0,\n                    offset,\n                    offset,\n                    offset,\n                    offset,\n                    offset,\n                    offset,\n                    offset, // Left | Center | Right\n                ], [\n                    0,\n                    width,\n                    width,\n                    width,\n                    width,\n                    width,\n                    width,\n                    width, // Left | Center | Right\n                ]\n            ];\n        }\n    }\n    equals(other) {\n        return (this.lineHeight === other.lineHeight\n            && this.pixelRatio === other.pixelRatio\n            && this.overviewRulerLanes === other.overviewRulerLanes\n            && this.renderBorder === other.renderBorder\n            && this.borderColor === other.borderColor\n            && this.hideCursor === other.hideCursor\n            && this.cursorColor === other.cursorColor\n            && this.themeType === other.themeType\n            && this.backgroundColor === other.backgroundColor\n            && this.top === other.top\n            && this.right === other.right\n            && this.domWidth === other.domWidth\n            && this.domHeight === other.domHeight\n            && this.canvasWidth === other.canvasWidth\n            && this.canvasHeight === other.canvasHeight);\n    }\n}\nexport class DecorationsOverviewRuler extends ViewPart {\n    constructor(context) {\n        super(context);\n        this._domNode = createFastDomNode(document.createElement('canvas'));\n        this._domNode.setClassName('decorationsOverviewRuler');\n        this._domNode.setPosition('absolute');\n        this._domNode.setLayerHinting(true);\n        this._domNode.setContain('strict');\n        this._domNode.setAttribute('aria-hidden', 'true');\n        this._updateSettings(false);\n        this._tokensColorTrackerListener = TokenizationRegistry.onDidChange((e) => {\n            if (e.changedColorMap) {\n                this._updateSettings(true);\n            }\n        });\n        this._cursorPositions = [];\n    }\n    dispose() {\n        super.dispose();\n        this._tokensColorTrackerListener.dispose();\n    }\n    _updateSettings(renderNow) {\n        const newSettings = new Settings(this._context.configuration, this._context.theme);\n        if (this._settings && this._settings.equals(newSettings)) {\n            // nothing to do\n            return false;\n        }\n        this._settings = newSettings;\n        this._domNode.setTop(this._settings.top);\n        this._domNode.setRight(this._settings.right);\n        this._domNode.setWidth(this._settings.domWidth);\n        this._domNode.setHeight(this._settings.domHeight);\n        this._domNode.domNode.width = this._settings.canvasWidth;\n        this._domNode.domNode.height = this._settings.canvasHeight;\n        if (renderNow) {\n            this._render();\n        }\n        return true;\n    }\n    // ---- begin view event handlers\n    onConfigurationChanged(e) {\n        return this._updateSettings(false);\n    }\n    onCursorStateChanged(e) {\n        this._cursorPositions = [];\n        for (let i = 0, len = e.selections.length; i < len; i++) {\n            this._cursorPositions[i] = e.selections[i].getPosition();\n        }\n        this._cursorPositions.sort(Position.compare);\n        return true;\n    }\n    onDecorationsChanged(e) {\n        if (e.affectsOverviewRuler) {\n            return true;\n        }\n        return false;\n    }\n    onFlushed(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollHeightChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    onThemeChanged(e) {\n        return this._updateSettings(false);\n    }\n    // ---- end view event handlers\n    getDomNode() {\n        return this._domNode.domNode;\n    }\n    prepareRender(ctx) {\n        // Nothing to read\n    }\n    render(editorCtx) {\n        this._render();\n    }\n    _render() {\n        if (this._settings.overviewRulerLanes === 0) {\n            // overview ruler is off\n            this._domNode.setBackgroundColor(this._settings.backgroundColor ? this._settings.backgroundColor : '');\n            this._domNode.setDisplay('none');\n            return;\n        }\n        this._domNode.setDisplay('block');\n        const canvasWidth = this._settings.canvasWidth;\n        const canvasHeight = this._settings.canvasHeight;\n        const lineHeight = this._settings.lineHeight;\n        const viewLayout = this._context.viewLayout;\n        const outerHeight = this._context.viewLayout.getScrollHeight();\n        const heightRatio = canvasHeight / outerHeight;\n        const decorations = this._context.viewModel.getAllOverviewRulerDecorations(this._context.theme);\n        const minDecorationHeight = (6 /* MIN_DECORATION_HEIGHT */ * this._settings.pixelRatio) | 0;\n        const halfMinDecorationHeight = (minDecorationHeight / 2) | 0;\n        const canvasCtx = this._domNode.domNode.getContext('2d');\n        if (this._settings.backgroundColor === null) {\n            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);\n        }\n        else {\n            canvasCtx.fillStyle = this._settings.backgroundColor;\n            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);\n        }\n        const x = this._settings.x;\n        const w = this._settings.w;\n        decorations.sort(OverviewRulerDecorationsGroup.cmp);\n        for (const decorationGroup of decorations) {\n            const color = decorationGroup.color;\n            const decorationGroupData = decorationGroup.data;\n            canvasCtx.fillStyle = color;\n            let prevLane = 0;\n            let prevY1 = 0;\n            let prevY2 = 0;\n            for (let i = 0, len = decorationGroupData.length / 3; i < len; i++) {\n                const lane = decorationGroupData[3 * i];\n                const startLineNumber = decorationGroupData[3 * i + 1];\n                const endLineNumber = decorationGroupData[3 * i + 2];\n                let y1 = (viewLayout.getVerticalOffsetForLineNumber(startLineNumber) * heightRatio) | 0;\n                let y2 = ((viewLayout.getVerticalOffsetForLineNumber(endLineNumber) + lineHeight) * heightRatio) | 0;\n                const height = y2 - y1;\n                if (height < minDecorationHeight) {\n                    let yCenter = ((y1 + y2) / 2) | 0;\n                    if (yCenter < halfMinDecorationHeight) {\n                        yCenter = halfMinDecorationHeight;\n                    }\n                    else if (yCenter + halfMinDecorationHeight > canvasHeight) {\n                        yCenter = canvasHeight - halfMinDecorationHeight;\n                    }\n                    y1 = yCenter - halfMinDecorationHeight;\n                    y2 = yCenter + halfMinDecorationHeight;\n                }\n                if (y1 > prevY2 + 1 || lane !== prevLane) {\n                    // flush prev\n                    if (i !== 0) {\n                        canvasCtx.fillRect(x[prevLane], prevY1, w[prevLane], prevY2 - prevY1);\n                    }\n                    prevLane = lane;\n                    prevY1 = y1;\n                    prevY2 = y2;\n                }\n                else {\n                    // merge into prev\n                    if (y2 > prevY2) {\n                        prevY2 = y2;\n                    }\n                }\n            }\n            canvasCtx.fillRect(x[prevLane], prevY1, w[prevLane], prevY2 - prevY1);\n        }\n        // Draw cursors\n        if (!this._settings.hideCursor && this._settings.cursorColor) {\n            const cursorHeight = (2 * this._settings.pixelRatio) | 0;\n            const halfCursorHeight = (cursorHeight / 2) | 0;\n            const cursorX = this._settings.x[7 /* Full */];\n            const cursorW = this._settings.w[7 /* Full */];\n            canvasCtx.fillStyle = this._settings.cursorColor;\n            let prevY1 = -100;\n            let prevY2 = -100;\n            for (let i = 0, len = this._cursorPositions.length; i < len; i++) {\n                const cursor = this._cursorPositions[i];\n                let yCenter = (viewLayout.getVerticalOffsetForLineNumber(cursor.lineNumber) * heightRatio) | 0;\n                if (yCenter < halfCursorHeight) {\n                    yCenter = halfCursorHeight;\n                }\n                else if (yCenter + halfCursorHeight > canvasHeight) {\n                    yCenter = canvasHeight - halfCursorHeight;\n                }\n                const y1 = yCenter - halfCursorHeight;\n                const y2 = y1 + cursorHeight;\n                if (y1 > prevY2 + 1) {\n                    // flush prev\n                    if (i !== 0) {\n                        canvasCtx.fillRect(cursorX, prevY1, cursorW, prevY2 - prevY1);\n                    }\n                    prevY1 = y1;\n                    prevY2 = y2;\n                }\n                else {\n                    // merge into prev\n                    if (y2 > prevY2) {\n                        prevY2 = y2;\n                    }\n                }\n            }\n            canvasCtx.fillRect(cursorX, prevY1, cursorW, prevY2 - prevY1);\n        }\n        if (this._settings.renderBorder && this._settings.borderColor && this._settings.overviewRulerLanes > 0) {\n            canvasCtx.beginPath();\n            canvasCtx.lineWidth = 1;\n            canvasCtx.strokeStyle = this._settings.borderColor;\n            canvasCtx.moveTo(0, 0);\n            canvasCtx.lineTo(0, canvasHeight);\n            canvasCtx.stroke();\n            canvasCtx.moveTo(0, 0);\n            canvasCtx.lineTo(canvasWidth, 0);\n            canvasCtx.stroke();\n        }\n    }\n}\n",
+      "start": 1711096856383,
+      "end": 1711096856460,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856460,
+      "end": 1711096856460,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856460,
+      "end": 1711096856461,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856461,
+      "end": 1711096856461,
+      "order": "normal"
+    }
+  ]
+}

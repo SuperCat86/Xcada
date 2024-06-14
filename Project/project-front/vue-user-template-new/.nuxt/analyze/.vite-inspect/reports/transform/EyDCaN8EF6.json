@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/dnd/browser/dnd.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-editor.vs .dnd-target {\n\tborder-right: 2px dotted black;\n\tcolor: white; /* opposite of black */\n}\n.monaco-editor.vs-dark .dnd-target {\n\tborder-right: 2px dotted #AEAFAD;\n\tcolor: #51504f; /* opposite of #AEAFAD */\n}\n.monaco-editor.hc-black .dnd-target {\n\tborder-right: 2px dotted #fff;\n\tcolor: #000; /* opposite of #fff */\n}\n\n.monaco-editor.mouse-default .view-lines,\n.monaco-editor.vs-dark.mac.mouse-default .view-lines,\n.monaco-editor.hc-black.mac.mouse-default .view-lines {\n\tcursor: default;\n}\n.monaco-editor.mouse-copy .view-lines,\n.monaco-editor.vs-dark.mac.mouse-copy .view-lines,\n.monaco-editor.hc-black.mac.mouse-copy .view-lines {\n\tcursor: copy;\n}",
+      "start": 1711096855588,
+      "end": 1711096855678,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855678,
+      "end": 1711096855678,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855678,
+      "end": 1711096855678,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855678,
+      "end": 1711096855678,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor.vs .dnd-target{border-right:2px dotted #000;color:#fff}.monaco-editor.vs-dark .dnd-target{border-right:2px dotted #aeafad;color:#51504f}.monaco-editor.hc-black .dnd-target{border-right:2px dotted #fff;color:#000}.monaco-editor.hc-black.mac.mouse-default .view-lines,.monaco-editor.mouse-default .view-lines,.monaco-editor.vs-dark.mac.mouse-default .view-lines{cursor:default}.monaco-editor.hc-black.mac.mouse-copy .view-lines,.monaco-editor.mouse-copy .view-lines,.monaco-editor.vs-dark.mac.mouse-copy .view-lines{cursor:copy}",
+      "start": 1711096855678,
+      "end": 1711096855686,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855686,
+      "end": 1711096855686,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855687,
+      "end": 1711096855687,
+      "order": "normal"
+    }
+  ]
+}

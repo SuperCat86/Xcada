@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/horizontalScrollbar.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { StandardWheelEvent } from '../../mouseEvent.js';\nimport { AbstractScrollbar } from './abstractScrollbar.js';\nimport { ARROW_IMG_SIZE } from './scrollbarArrow.js';\nimport { ScrollbarState } from './scrollbarState.js';\nimport { Codicon } from '../../../common/codicons.js';\nexport class HorizontalScrollbar extends AbstractScrollbar {\n    constructor(scrollable, options, host) {\n        const scrollDimensions = scrollable.getScrollDimensions();\n        const scrollPosition = scrollable.getCurrentScrollPosition();\n        super({\n            lazyRender: options.lazyRender,\n            host: host,\n            scrollbarState: new ScrollbarState((options.horizontalHasArrows ? options.arrowSize : 0), (options.horizontal === 2 /* Hidden */ ? 0 : options.horizontalScrollbarSize), (options.vertical === 2 /* Hidden */ ? 0 : options.verticalScrollbarSize), scrollDimensions.width, scrollDimensions.scrollWidth, scrollPosition.scrollLeft),\n            visibility: options.horizontal,\n            extraScrollbarClassName: 'horizontal',\n            scrollable: scrollable,\n            scrollByPage: options.scrollByPage\n        });\n        if (options.horizontalHasArrows) {\n            const arrowDelta = (options.arrowSize - ARROW_IMG_SIZE) / 2;\n            const scrollbarDelta = (options.horizontalScrollbarSize - ARROW_IMG_SIZE) / 2;\n            this._createArrow({\n                className: 'scra',\n                icon: Codicon.scrollbarButtonLeft,\n                top: scrollbarDelta,\n                left: arrowDelta,\n                bottom: undefined,\n                right: undefined,\n                bgWidth: options.arrowSize,\n                bgHeight: options.horizontalScrollbarSize,\n                onActivate: () => this._host.onMouseWheel(new StandardWheelEvent(null, 1, 0)),\n            });\n            this._createArrow({\n                className: 'scra',\n                icon: Codicon.scrollbarButtonRight,\n                top: scrollbarDelta,\n                left: undefined,\n                bottom: undefined,\n                right: arrowDelta,\n                bgWidth: options.arrowSize,\n                bgHeight: options.horizontalScrollbarSize,\n                onActivate: () => this._host.onMouseWheel(new StandardWheelEvent(null, -1, 0)),\n            });\n        }\n        this._createSlider(Math.floor((options.horizontalScrollbarSize - options.horizontalSliderSize) / 2), 0, undefined, options.horizontalSliderSize);\n    }\n    _updateSlider(sliderSize, sliderPosition) {\n        this.slider.setWidth(sliderSize);\n        this.slider.setLeft(sliderPosition);\n    }\n    _renderDomNode(largeSize, smallSize) {\n        this.domNode.setWidth(largeSize);\n        this.domNode.setHeight(smallSize);\n        this.domNode.setLeft(0);\n        this.domNode.setBottom(0);\n    }\n    onDidScroll(e) {\n        this._shouldRender = this._onElementScrollSize(e.scrollWidth) || this._shouldRender;\n        this._shouldRender = this._onElementScrollPosition(e.scrollLeft) || this._shouldRender;\n        this._shouldRender = this._onElementSize(e.width) || this._shouldRender;\n        return this._shouldRender;\n    }\n    _mouseDownRelativePosition(offsetX, offsetY) {\n        return offsetX;\n    }\n    _sliderMousePosition(e) {\n        return e.posx;\n    }\n    _sliderOrthogonalMousePosition(e) {\n        return e.posy;\n    }\n    _updateScrollbarSize(size) {\n        this.slider.setHeight(size);\n    }\n    writeScrollPosition(target, scrollPosition) {\n        target.scrollLeft = scrollPosition;\n    }\n    updateOptions(options) {\n        this.updateScrollbarSize(options.horizontal === 2 /* Hidden */ ? 0 : options.horizontalScrollbarSize);\n        this._scrollbarState.setOppositeScrollbarSize(options.vertical === 2 /* Hidden */ ? 0 : options.verticalScrollbarSize);\n        this._visibilityController.setVisibility(options.horizontal);\n        this._scrollByPage = options.scrollByPage;\n    }\n}\n",
+      "start": 1711096857263,
+      "end": 1711096857342,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857342,
+      "end": 1711096857342,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857342,
+      "end": 1711096857343,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857343,
+      "end": 1711096857343,
+      "order": "normal"
+    }
+  ]
+}

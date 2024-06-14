@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/mouseEvent.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as browser from './browser.js';\nimport { IframeUtils } from './iframe.js';\nimport * as platform from '../common/platform.js';\nexport class StandardMouseEvent {\n    constructor(e) {\n        this.timestamp = Date.now();\n        this.browserEvent = e;\n        this.leftButton = e.button === 0;\n        this.middleButton = e.button === 1;\n        this.rightButton = e.button === 2;\n        this.buttons = e.buttons;\n        this.target = e.target;\n        this.detail = e.detail || 1;\n        if (e.type === 'dblclick') {\n            this.detail = 2;\n        }\n        this.ctrlKey = e.ctrlKey;\n        this.shiftKey = e.shiftKey;\n        this.altKey = e.altKey;\n        this.metaKey = e.metaKey;\n        if (typeof e.pageX === 'number') {\n            this.posx = e.pageX;\n            this.posy = e.pageY;\n        }\n        else {\n            // Probably hit by MSGestureEvent\n            this.posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;\n            this.posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;\n        }\n        // Find the position of the iframe this code is executing in relative to the iframe where the event was captured.\n        let iframeOffsets = IframeUtils.getPositionOfChildWindowRelativeToAncestorWindow(self, e.view);\n        this.posx -= iframeOffsets.left;\n        this.posy -= iframeOffsets.top;\n    }\n    preventDefault() {\n        this.browserEvent.preventDefault();\n    }\n    stopPropagation() {\n        this.browserEvent.stopPropagation();\n    }\n}\nexport class StandardWheelEvent {\n    constructor(e, deltaX = 0, deltaY = 0) {\n        this.browserEvent = e || null;\n        this.target = e ? (e.target || e.targetNode || e.srcElement) : null;\n        this.deltaY = deltaY;\n        this.deltaX = deltaX;\n        if (e) {\n            // Old (deprecated) wheel events\n            let e1 = e;\n            let e2 = e;\n            // vertical delta scroll\n            if (typeof e1.wheelDeltaY !== 'undefined') {\n                this.deltaY = e1.wheelDeltaY / 120;\n            }\n            else if (typeof e2.VERTICAL_AXIS !== 'undefined' && e2.axis === e2.VERTICAL_AXIS) {\n                this.deltaY = -e2.detail / 3;\n            }\n            else if (e.type === 'wheel') {\n                // Modern wheel event\n                // https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent\n                const ev = e;\n                if (ev.deltaMode === ev.DOM_DELTA_LINE) {\n                    // the deltas are expressed in lines\n                    if (browser.isFirefox && !platform.isMacintosh) {\n                        this.deltaY = -e.deltaY / 3;\n                    }\n                    else {\n                        this.deltaY = -e.deltaY;\n                    }\n                }\n                else {\n                    this.deltaY = -e.deltaY / 40;\n                }\n            }\n            // horizontal delta scroll\n            if (typeof e1.wheelDeltaX !== 'undefined') {\n                if (browser.isSafari && platform.isWindows) {\n                    this.deltaX = -(e1.wheelDeltaX / 120);\n                }\n                else {\n                    this.deltaX = e1.wheelDeltaX / 120;\n                }\n            }\n            else if (typeof e2.HORIZONTAL_AXIS !== 'undefined' && e2.axis === e2.HORIZONTAL_AXIS) {\n                this.deltaX = -e.detail / 3;\n            }\n            else if (e.type === 'wheel') {\n                // Modern wheel event\n                // https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent\n                const ev = e;\n                if (ev.deltaMode === ev.DOM_DELTA_LINE) {\n                    // the deltas are expressed in lines\n                    if (browser.isFirefox && !platform.isMacintosh) {\n                        this.deltaX = -e.deltaX / 3;\n                    }\n                    else {\n                        this.deltaX = -e.deltaX;\n                    }\n                }\n                else {\n                    this.deltaX = -e.deltaX / 40;\n                }\n            }\n            // Assume a vertical scroll if nothing else worked\n            if (this.deltaY === 0 && this.deltaX === 0 && e.wheelDelta) {\n                this.deltaY = e.wheelDelta / 120;\n            }\n        }\n    }\n    preventDefault() {\n        if (this.browserEvent) {\n            this.browserEvent.preventDefault();\n        }\n    }\n    stopPropagation() {\n        if (this.browserEvent) {\n            this.browserEvent.stopPropagation();\n        }\n    }\n}\n",
+      "start": 1711096856029,
+      "end": 1711096856147,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856147,
+      "end": 1711096856147,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856147,
+      "end": 1711096856147,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856147,
+      "end": 1711096856147,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856147,
+      "end": 1711096856147,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856147,
+      "end": 1711096856147,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856148,
+      "end": 1711096856148,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/goToCommands.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nvar _a, _b, _c, _d, _e, _f, _g, _h;\nimport { isStandalone } from '../../../../base/browser/browser.js';\nimport { alert } from '../../../../base/browser/ui/aria/aria.js';\nimport { createCancelablePromise, raceCancellation } from '../../../../base/common/async.js';\nimport { KeyChord } from '../../../../base/common/keyCodes.js';\nimport { isWeb } from '../../../../base/common/platform.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { EditorStateCancellationTokenSource } from '../../editorState/browser/editorState.js';\nimport { isCodeEditor } from '../../../browser/editorBrowser.js';\nimport { EditorAction, registerInstantiatedEditorAction } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { EmbeddedCodeEditorWidget } from '../../../browser/widget/embeddedCodeEditorWidget.js';\nimport * as corePosition from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { isLocationLink } from '../../../common/languages.js';\nimport { ReferencesController } from './peek/referencesController.js';\nimport { ReferencesModel } from './referencesModel.js';\nimport { ISymbolNavigationService } from './symbolNavigation.js';\nimport { MessageController } from '../../message/browser/messageController.js';\nimport { PeekContext } from '../../peekView/browser/peekView.js';\nimport * as nls from '../../../../nls.js';\nimport { MenuId, MenuRegistry } from '../../../../platform/actions/common/actions.js';\nimport { CommandsRegistry, ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { INotificationService } from '../../../../platform/notification/common/notification.js';\nimport { IEditorProgressService } from '../../../../platform/progress/common/progress.js';\nimport { getDeclarationsAtPosition, getDefinitionsAtPosition, getImplementationsAtPosition, getReferencesAtPosition, getTypeDefinitionsAtPosition } from './goToSymbol.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nMenuRegistry.appendMenuItem(MenuId.EditorContext, {\n    submenu: MenuId.EditorContextPeek,\n    title: nls.localize('peek.submenu', \"Peek\"),\n    group: 'navigation',\n    order: 100\n});\nconst _goToActionIds = new Set();\nfunction registerGoToAction(ctor) {\n    const result = new ctor();\n    registerInstantiatedEditorAction(result);\n    _goToActionIds.add(result.id);\n    return result;\n}\nexport class SymbolNavigationAnchor {\n    constructor(model, position) {\n        this.model = model;\n        this.position = position;\n    }\n    static is(thing) {\n        if (!thing || typeof thing !== 'object') {\n            return false;\n        }\n        if (thing instanceof SymbolNavigationAnchor) {\n            return true;\n        }\n        if (corePosition.Position.isIPosition(thing.position) && thing.model) {\n            return true;\n        }\n        return false;\n    }\n}\nexport class SymbolNavigationAction extends EditorAction {\n    constructor(configuration, opts) {\n        super(opts);\n        this.configuration = configuration;\n    }\n    run(accessor, editor, arg) {\n        if (!editor.hasModel()) {\n            return Promise.resolve(undefined);\n        }\n        const notificationService = accessor.get(INotificationService);\n        const editorService = accessor.get(ICodeEditorService);\n        const progressService = accessor.get(IEditorProgressService);\n        const symbolNavService = accessor.get(ISymbolNavigationService);\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const model = editor.getModel();\n        const position = editor.getPosition();\n        const anchor = SymbolNavigationAnchor.is(arg) ? arg : new SymbolNavigationAnchor(model, position);\n        const cts = new EditorStateCancellationTokenSource(editor, 1 /* Value */ | 4 /* Position */);\n        const promise = raceCancellation(this._getLocationModel(languageFeaturesService, anchor.model, anchor.position, cts.token), cts.token).then((references) => __awaiter(this, void 0, void 0, function* () {\n            var _a;\n            if (!references || cts.token.isCancellationRequested) {\n                return;\n            }\n            alert(references.ariaMessage);\n            let altAction;\n            if (references.referenceAt(model.uri, position)) {\n                const altActionId = this._getAlternativeCommand(editor);\n                if (altActionId !== this.id && _goToActionIds.has(altActionId)) {\n                    altAction = editor.getAction(altActionId);\n                }\n            }\n            const referenceCount = references.references.length;\n            if (referenceCount === 0) {\n                // no result -> show message\n                if (!this.configuration.muteMessage) {\n                    const info = model.getWordAtPosition(position);\n                    (_a = MessageController.get(editor)) === null || _a === void 0 ? void 0 : _a.showMessage(this._getNoResultFoundMessage(info), position);\n                }\n            }\n            else if (referenceCount === 1 && altAction) {\n                // already at the only result, run alternative\n                altAction.run();\n            }\n            else {\n                // normal results handling\n                return this._onResult(editorService, symbolNavService, editor, references);\n            }\n        }), (err) => {\n            // report an error\n            notificationService.error(err);\n        }).finally(() => {\n            cts.dispose();\n        });\n        progressService.showWhile(promise, 250);\n        return promise;\n    }\n    _onResult(editorService, symbolNavService, editor, model) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const gotoLocation = this._getGoToPreference(editor);\n            if (!(editor instanceof EmbeddedCodeEditorWidget) && (this.configuration.openInPeek || (gotoLocation === 'peek' && model.references.length > 1))) {\n                this._openInPeek(editor, model);\n            }\n            else {\n                const next = model.firstReference();\n                const peek = model.references.length > 1 && gotoLocation === 'gotoAndPeek';\n                const targetEditor = yield this._openReference(editor, editorService, next, this.configuration.openToSide, !peek);\n                if (peek && targetEditor) {\n                    this._openInPeek(targetEditor, model);\n                }\n                else {\n                    model.dispose();\n                }\n                // keep remaining locations around when using\n                // 'goto'-mode\n                if (gotoLocation === 'goto') {\n                    symbolNavService.put(next);\n                }\n            }\n        });\n    }\n    _openReference(editor, editorService, reference, sideBySide, highlight) {\n        return __awaiter(this, void 0, void 0, function* () {\n            // range is the target-selection-range when we have one\n            // and the fallback is the 'full' range\n            let range = undefined;\n            if (isLocationLink(reference)) {\n                range = reference.targetSelectionRange;\n            }\n            if (!range) {\n                range = reference.range;\n            }\n            if (!range) {\n                return undefined;\n            }\n            const targetEditor = yield editorService.openCodeEditor({\n                resource: reference.uri,\n                options: {\n                    selection: Range.collapseToStart(range),\n                    selectionRevealType: 3 /* NearTopIfOutsideViewport */,\n                    selectionSource: \"code.jump\" /* JUMP */\n                }\n            }, editor, sideBySide);\n            if (!targetEditor) {\n                return undefined;\n            }\n            if (highlight) {\n                const modelNow = targetEditor.getModel();\n                const ids = targetEditor.deltaDecorations([], [{ range, options: { description: 'symbol-navigate-action-highlight', className: 'symbolHighlight' } }]);\n                setTimeout(() => {\n                    if (targetEditor.getModel() === modelNow) {\n                        targetEditor.deltaDecorations(ids, []);\n                    }\n                }, 350);\n            }\n            return targetEditor;\n        });\n    }\n    _openInPeek(target, model) {\n        const controller = ReferencesController.get(target);\n        if (controller && target.hasModel()) {\n            controller.toggleWidget(target.getSelection(), createCancelablePromise(_ => Promise.resolve(model)), this.configuration.openInPeek);\n        }\n        else {\n            model.dispose();\n        }\n    }\n}\n//#region --- DEFINITION\nexport class DefinitionAction extends SymbolNavigationAction {\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getDefinitionsAtPosition(languageFeaturesService.definitionProvider, model, position, token), nls.localize('def.title', 'Definitions'));\n        });\n    }\n    _getNoResultFoundMessage(info) {\n        return info && info.word\n            ? nls.localize('noResultWord', \"No definition found for '{0}'\", info.word)\n            : nls.localize('generic.noResults', \"No definition found\");\n    }\n    _getAlternativeCommand(editor) {\n        return editor.getOption(51 /* gotoLocation */).alternativeDefinitionCommand;\n    }\n    _getGoToPreference(editor) {\n        return editor.getOption(51 /* gotoLocation */).multipleDefinitions;\n    }\n}\nconst goToDefinitionKb = isWeb && !isStandalone\n    ? 2048 /* CtrlCmd */ | 70 /* F12 */\n    : 70 /* F12 */;\nregisterGoToAction((_a = class GoToDefinitionAction extends DefinitionAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: false,\n                muteMessage: false\n            }, {\n                id: GoToDefinitionAction.id,\n                label: nls.localize('actions.goToDecl.label', \"Go to Definition\"),\n                alias: 'Go to Definition',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasDefinitionProvider, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: goToDefinitionKb,\n                    weight: 100 /* EditorContrib */\n                },\n                contextMenuOpts: {\n                    group: 'navigation',\n                    order: 1.1\n                }\n            });\n            CommandsRegistry.registerCommandAlias('editor.action.goToDeclaration', GoToDefinitionAction.id);\n        }\n    },\n    _a.id = 'editor.action.revealDefinition',\n    _a));\nregisterGoToAction((_b = class OpenDefinitionToSideAction extends DefinitionAction {\n        constructor() {\n            super({\n                openToSide: true,\n                openInPeek: false,\n                muteMessage: false\n            }, {\n                id: OpenDefinitionToSideAction.id,\n                label: nls.localize('actions.goToDeclToSide.label', \"Open Definition to the Side\"),\n                alias: 'Open Definition to the Side',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasDefinitionProvider, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, goToDefinitionKb),\n                    weight: 100 /* EditorContrib */\n                }\n            });\n            CommandsRegistry.registerCommandAlias('editor.action.openDeclarationToTheSide', OpenDefinitionToSideAction.id);\n        }\n    },\n    _b.id = 'editor.action.revealDefinitionAside',\n    _b));\nregisterGoToAction((_c = class PeekDefinitionAction extends DefinitionAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: true,\n                muteMessage: false\n            }, {\n                id: PeekDefinitionAction.id,\n                label: nls.localize('actions.previewDecl.label', \"Peek Definition\"),\n                alias: 'Peek Definition',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasDefinitionProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: 512 /* Alt */ | 70 /* F12 */,\n                    linux: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 68 /* F10 */ },\n                    weight: 100 /* EditorContrib */\n                },\n                contextMenuOpts: {\n                    menuId: MenuId.EditorContextPeek,\n                    group: 'peek',\n                    order: 2\n                }\n            });\n            CommandsRegistry.registerCommandAlias('editor.action.previewDeclaration', PeekDefinitionAction.id);\n        }\n    },\n    _c.id = 'editor.action.peekDefinition',\n    _c));\n//#endregion\n//#region --- DECLARATION\nclass DeclarationAction extends SymbolNavigationAction {\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getDeclarationsAtPosition(languageFeaturesService.declarationProvider, model, position, token), nls.localize('decl.title', 'Declarations'));\n        });\n    }\n    _getNoResultFoundMessage(info) {\n        return info && info.word\n            ? nls.localize('decl.noResultWord', \"No declaration found for '{0}'\", info.word)\n            : nls.localize('decl.generic.noResults', \"No declaration found\");\n    }\n    _getAlternativeCommand(editor) {\n        return editor.getOption(51 /* gotoLocation */).alternativeDeclarationCommand;\n    }\n    _getGoToPreference(editor) {\n        return editor.getOption(51 /* gotoLocation */).multipleDeclarations;\n    }\n}\nregisterGoToAction((_d = class GoToDeclarationAction extends DeclarationAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: false,\n                muteMessage: false\n            }, {\n                id: GoToDeclarationAction.id,\n                label: nls.localize('actions.goToDeclaration.label', \"Go to Declaration\"),\n                alias: 'Go to Declaration',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasDeclarationProvider, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                contextMenuOpts: {\n                    group: 'navigation',\n                    order: 1.3\n                },\n            });\n        }\n        _getNoResultFoundMessage(info) {\n            return info && info.word\n                ? nls.localize('decl.noResultWord', \"No declaration found for '{0}'\", info.word)\n                : nls.localize('decl.generic.noResults', \"No declaration found\");\n        }\n    },\n    _d.id = 'editor.action.revealDeclaration',\n    _d));\nregisterGoToAction(class PeekDeclarationAction extends DeclarationAction {\n    constructor() {\n        super({\n            openToSide: false,\n            openInPeek: true,\n            muteMessage: false\n        }, {\n            id: 'editor.action.peekDeclaration',\n            label: nls.localize('actions.peekDecl.label', \"Peek Declaration\"),\n            alias: 'Peek Declaration',\n            precondition: ContextKeyExpr.and(EditorContextKeys.hasDeclarationProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n            contextMenuOpts: {\n                menuId: MenuId.EditorContextPeek,\n                group: 'peek',\n                order: 3\n            }\n        });\n    }\n});\n//#endregion\n//#region --- TYPE DEFINITION\nclass TypeDefinitionAction extends SymbolNavigationAction {\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getTypeDefinitionsAtPosition(languageFeaturesService.typeDefinitionProvider, model, position, token), nls.localize('typedef.title', 'Type Definitions'));\n        });\n    }\n    _getNoResultFoundMessage(info) {\n        return info && info.word\n            ? nls.localize('goToTypeDefinition.noResultWord', \"No type definition found for '{0}'\", info.word)\n            : nls.localize('goToTypeDefinition.generic.noResults', \"No type definition found\");\n    }\n    _getAlternativeCommand(editor) {\n        return editor.getOption(51 /* gotoLocation */).alternativeTypeDefinitionCommand;\n    }\n    _getGoToPreference(editor) {\n        return editor.getOption(51 /* gotoLocation */).multipleTypeDefinitions;\n    }\n}\nregisterGoToAction((_e = class GoToTypeDefinitionAction extends TypeDefinitionAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: false,\n                muteMessage: false\n            }, {\n                id: GoToTypeDefinitionAction.ID,\n                label: nls.localize('actions.goToTypeDefinition.label', \"Go to Type Definition\"),\n                alias: 'Go to Type Definition',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasTypeDefinitionProvider, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: 0,\n                    weight: 100 /* EditorContrib */\n                },\n                contextMenuOpts: {\n                    group: 'navigation',\n                    order: 1.4\n                }\n            });\n        }\n    },\n    _e.ID = 'editor.action.goToTypeDefinition',\n    _e));\nregisterGoToAction((_f = class PeekTypeDefinitionAction extends TypeDefinitionAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: true,\n                muteMessage: false\n            }, {\n                id: PeekTypeDefinitionAction.ID,\n                label: nls.localize('actions.peekTypeDefinition.label', \"Peek Type Definition\"),\n                alias: 'Peek Type Definition',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasTypeDefinitionProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                contextMenuOpts: {\n                    menuId: MenuId.EditorContextPeek,\n                    group: 'peek',\n                    order: 4\n                }\n            });\n        }\n    },\n    _f.ID = 'editor.action.peekTypeDefinition',\n    _f));\n//#endregion\n//#region --- IMPLEMENTATION\nclass ImplementationAction extends SymbolNavigationAction {\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getImplementationsAtPosition(languageFeaturesService.implementationProvider, model, position, token), nls.localize('impl.title', 'Implementations'));\n        });\n    }\n    _getNoResultFoundMessage(info) {\n        return info && info.word\n            ? nls.localize('goToImplementation.noResultWord', \"No implementation found for '{0}'\", info.word)\n            : nls.localize('goToImplementation.generic.noResults', \"No implementation found\");\n    }\n    _getAlternativeCommand(editor) {\n        return editor.getOption(51 /* gotoLocation */).alternativeImplementationCommand;\n    }\n    _getGoToPreference(editor) {\n        return editor.getOption(51 /* gotoLocation */).multipleImplementations;\n    }\n}\nregisterGoToAction((_g = class GoToImplementationAction extends ImplementationAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: false,\n                muteMessage: false\n            }, {\n                id: GoToImplementationAction.ID,\n                label: nls.localize('actions.goToImplementation.label', \"Go to Implementations\"),\n                alias: 'Go to Implementations',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasImplementationProvider, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: 2048 /* CtrlCmd */ | 70 /* F12 */,\n                    weight: 100 /* EditorContrib */\n                },\n                contextMenuOpts: {\n                    group: 'navigation',\n                    order: 1.45\n                }\n            });\n        }\n    },\n    _g.ID = 'editor.action.goToImplementation',\n    _g));\nregisterGoToAction((_h = class PeekImplementationAction extends ImplementationAction {\n        constructor() {\n            super({\n                openToSide: false,\n                openInPeek: true,\n                muteMessage: false\n            }, {\n                id: PeekImplementationAction.ID,\n                label: nls.localize('actions.peekImplementation.label', \"Peek Implementations\"),\n                alias: 'Peek Implementations',\n                precondition: ContextKeyExpr.and(EditorContextKeys.hasImplementationProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n                kbOpts: {\n                    kbExpr: EditorContextKeys.editorTextFocus,\n                    primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 70 /* F12 */,\n                    weight: 100 /* EditorContrib */\n                },\n                contextMenuOpts: {\n                    menuId: MenuId.EditorContextPeek,\n                    group: 'peek',\n                    order: 5\n                }\n            });\n        }\n    },\n    _h.ID = 'editor.action.peekImplementation',\n    _h));\n//#endregion\n//#region --- REFERENCES\nclass ReferencesAction extends SymbolNavigationAction {\n    _getNoResultFoundMessage(info) {\n        return info\n            ? nls.localize('references.no', \"No references found for '{0}'\", info.word)\n            : nls.localize('references.noGeneric', \"No references found\");\n    }\n    _getAlternativeCommand(editor) {\n        return editor.getOption(51 /* gotoLocation */).alternativeReferenceCommand;\n    }\n    _getGoToPreference(editor) {\n        return editor.getOption(51 /* gotoLocation */).multipleReferences;\n    }\n}\nregisterGoToAction(class GoToReferencesAction extends ReferencesAction {\n    constructor() {\n        super({\n            openToSide: false,\n            openInPeek: false,\n            muteMessage: false\n        }, {\n            id: 'editor.action.goToReferences',\n            label: nls.localize('goToReferences.label', \"Go to References\"),\n            alias: 'Go to References',\n            precondition: ContextKeyExpr.and(EditorContextKeys.hasReferenceProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 70 /* F12 */,\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                group: 'navigation',\n                order: 1.45\n            }\n        });\n    }\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getReferencesAtPosition(languageFeaturesService.referenceProvider, model, position, true, token), nls.localize('ref.title', 'References'));\n        });\n    }\n});\nregisterGoToAction(class PeekReferencesAction extends ReferencesAction {\n    constructor() {\n        super({\n            openToSide: false,\n            openInPeek: true,\n            muteMessage: false\n        }, {\n            id: 'editor.action.referenceSearch.trigger',\n            label: nls.localize('references.action.label', \"Peek References\"),\n            alias: 'Peek References',\n            precondition: ContextKeyExpr.and(EditorContextKeys.hasReferenceProvider, PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n            contextMenuOpts: {\n                menuId: MenuId.EditorContextPeek,\n                group: 'peek',\n                order: 6\n            }\n        });\n    }\n    _getLocationModel(languageFeaturesService, model, position, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(yield getReferencesAtPosition(languageFeaturesService.referenceProvider, model, position, false, token), nls.localize('ref.title', 'References'));\n        });\n    }\n});\n//#endregion\n//#region --- GENERIC goto symbols command\nclass GenericGoToLocationAction extends SymbolNavigationAction {\n    constructor(config, _references, _gotoMultipleBehaviour) {\n        super(config, {\n            id: 'editor.action.goToLocation',\n            label: nls.localize('label.generic', \"Go to Any Symbol\"),\n            alias: 'Go to Any Symbol',\n            precondition: ContextKeyExpr.and(PeekContext.notInPeekEditor, EditorContextKeys.isInWalkThroughSnippet.toNegated()),\n        });\n        this._references = _references;\n        this._gotoMultipleBehaviour = _gotoMultipleBehaviour;\n    }\n    _getLocationModel(languageFeaturesService, _model, _position, _token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            return new ReferencesModel(this._references, nls.localize('generic.title', 'Locations'));\n        });\n    }\n    _getNoResultFoundMessage(info) {\n        return info && nls.localize('generic.noResult', \"No results for '{0}'\", info.word) || '';\n    }\n    _getGoToPreference(editor) {\n        var _a;\n        return (_a = this._gotoMultipleBehaviour) !== null && _a !== void 0 ? _a : editor.getOption(51 /* gotoLocation */).multipleReferences;\n    }\n    _getAlternativeCommand() { return ''; }\n}\nCommandsRegistry.registerCommand({\n    id: 'editor.action.goToLocations',\n    description: {\n        description: 'Go to locations from a position in a file',\n        args: [\n            { name: 'uri', description: 'The text document in which to start', constraint: URI },\n            { name: 'position', description: 'The position at which to start', constraint: corePosition.Position.isIPosition },\n            { name: 'locations', description: 'An array of locations.', constraint: Array },\n            { name: 'multiple', description: 'Define what to do when having multiple results, either `peek`, `gotoAndPeek`, or `goto' },\n            { name: 'noResultsMessage', description: 'Human readable message that shows when locations is empty.' },\n        ]\n    },\n    handler: (accessor, resource, position, references, multiple, noResultsMessage, openInPeek) => __awaiter(void 0, void 0, void 0, function* () {\n        assertType(URI.isUri(resource));\n        assertType(corePosition.Position.isIPosition(position));\n        assertType(Array.isArray(references));\n        assertType(typeof multiple === 'undefined' || typeof multiple === 'string');\n        assertType(typeof openInPeek === 'undefined' || typeof openInPeek === 'boolean');\n        const editorService = accessor.get(ICodeEditorService);\n        const editor = yield editorService.openCodeEditor({ resource }, editorService.getFocusedCodeEditor());\n        if (isCodeEditor(editor)) {\n            editor.setPosition(position);\n            editor.revealPositionInCenterIfOutsideViewport(position, 0 /* Smooth */);\n            return editor.invokeWithinContext(accessor => {\n                const command = new class extends GenericGoToLocationAction {\n                    _getNoResultFoundMessage(info) {\n                        return noResultsMessage || super._getNoResultFoundMessage(info);\n                    }\n                }({\n                    muteMessage: !Boolean(noResultsMessage),\n                    openInPeek: Boolean(openInPeek),\n                    openToSide: false\n                }, references, multiple);\n                accessor.get(IInstantiationService).invokeFunction(command.run.bind(command), editor);\n            });\n        }\n    })\n});\nCommandsRegistry.registerCommand({\n    id: 'editor.action.peekLocations',\n    description: {\n        description: 'Peek locations from a position in a file',\n        args: [\n            { name: 'uri', description: 'The text document in which to start', constraint: URI },\n            { name: 'position', description: 'The position at which to start', constraint: corePosition.Position.isIPosition },\n            { name: 'locations', description: 'An array of locations.', constraint: Array },\n            { name: 'multiple', description: 'Define what to do when having multiple results, either `peek`, `gotoAndPeek`, or `goto' },\n        ]\n    },\n    handler: (accessor, resource, position, references, multiple) => __awaiter(void 0, void 0, void 0, function* () {\n        accessor.get(ICommandService).executeCommand('editor.action.goToLocations', resource, position, references, multiple, undefined, true);\n    })\n});\n//#endregion\n//#region --- REFERENCE search special commands\nCommandsRegistry.registerCommand({\n    id: 'editor.action.findReferences',\n    handler: (accessor, resource, position) => {\n        assertType(URI.isUri(resource));\n        assertType(corePosition.Position.isIPosition(position));\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const codeEditorService = accessor.get(ICodeEditorService);\n        return codeEditorService.openCodeEditor({ resource }, codeEditorService.getFocusedCodeEditor()).then(control => {\n            if (!isCodeEditor(control) || !control.hasModel()) {\n                return undefined;\n            }\n            const controller = ReferencesController.get(control);\n            if (!controller) {\n                return undefined;\n            }\n            const references = createCancelablePromise(token => getReferencesAtPosition(languageFeaturesService.referenceProvider, control.getModel(), corePosition.Position.lift(position), false, token).then(references => new ReferencesModel(references, nls.localize('ref.title', 'References'))));\n            const range = new Range(position.lineNumber, position.column, position.lineNumber, position.column);\n            return Promise.resolve(controller.toggleWidget(range, references, false));\n        });\n    }\n});\n// use NEW command\nCommandsRegistry.registerCommandAlias('editor.action.showReferences', 'editor.action.peekLocations');\n//#endregion\n// -- unconditionally register goto-action\nMenuRegistry.appendMenuItems([\n    {\n        id: MenuId.MenubarGoMenu,\n        item: {\n            command: {\n                id: 'editor.action.revealDefinition',\n                title: nls.localize({ key: 'miGotoDefinition', comment: ['&& denotes a mnemonic'] }, \"Go to &&Definition\")\n            },\n            group: '4_symbol_nav',\n            order: 2,\n        },\n    },\n    {\n        id: MenuId.MenubarGoMenu,\n        item: {\n            command: {\n                id: 'editor.action.revealDeclaration',\n                title: nls.localize({ key: 'miGotoDeclaration', comment: ['&& denotes a mnemonic'] }, \"Go to &&Declaration\")\n            },\n            group: '4_symbol_nav',\n            order: 3,\n        },\n    },\n    {\n        id: MenuId.MenubarGoMenu,\n        item: {\n            command: {\n                id: 'editor.action.goToTypeDefinition',\n                title: nls.localize({ key: 'miGotoTypeDefinition', comment: ['&& denotes a mnemonic'] }, \"Go to &&Type Definition\")\n            },\n            group: '4_symbol_nav',\n            order: 3,\n        },\n    },\n    {\n        id: MenuId.MenubarGoMenu,\n        item: {\n            command: {\n                id: 'editor.action.goToImplementation',\n                title: nls.localize({ key: 'miGotoImplementation', comment: ['&& denotes a mnemonic'] }, \"Go to &&Implementations\")\n            },\n            group: '4_symbol_nav',\n            order: 4,\n        },\n    },\n    {\n        id: MenuId.MenubarGoMenu,\n        item: {\n            command: {\n                id: 'editor.action.goToReferences',\n                title: nls.localize({ key: 'miGotoReference', comment: ['&& denotes a mnemonic'] }, \"Go to &&References\")\n            },\n            group: '4_symbol_nav',\n            order: 5,\n        },\n    },\n]);\n",
+      "start": 1711096854440,
+      "end": 1711096854599,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854599,
+      "end": 1711096854599,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854599,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854600,
+      "end": 1711096854600,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854600,
+      "end": 1711096854602,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854602,
+      "end": 1711096854602,
+      "order": "normal"
+    }
+  ]
+}

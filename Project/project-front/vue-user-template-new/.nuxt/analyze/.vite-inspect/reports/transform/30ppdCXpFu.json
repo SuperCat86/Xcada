@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/viewModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../base/common/strings.js';\nimport { Range } from './core/range.js';\nexport class Viewport {\n    constructor(top, left, width, height) {\n        this._viewportBrand = undefined;\n        this.top = top | 0;\n        this.left = left | 0;\n        this.width = width | 0;\n        this.height = height | 0;\n    }\n}\nexport class MinimapLinesRenderingData {\n    constructor(tabSize, data) {\n        this.tabSize = tabSize;\n        this.data = data;\n    }\n}\nexport class ViewLineData {\n    constructor(content, continuesWithWrappedLine, minColumn, maxColumn, startVisibleColumn, tokens, inlineDecorations) {\n        this._viewLineDataBrand = undefined;\n        this.content = content;\n        this.continuesWithWrappedLine = continuesWithWrappedLine;\n        this.minColumn = minColumn;\n        this.maxColumn = maxColumn;\n        this.startVisibleColumn = startVisibleColumn;\n        this.tokens = tokens;\n        this.inlineDecorations = inlineDecorations;\n    }\n}\nexport class ViewLineRenderingData {\n    constructor(minColumn, maxColumn, content, continuesWithWrappedLine, mightContainRTL, mightContainNonBasicASCII, tokens, inlineDecorations, tabSize, startVisibleColumn) {\n        this.minColumn = minColumn;\n        this.maxColumn = maxColumn;\n        this.content = content;\n        this.continuesWithWrappedLine = continuesWithWrappedLine;\n        this.isBasicASCII = ViewLineRenderingData.isBasicASCII(content, mightContainNonBasicASCII);\n        this.containsRTL = ViewLineRenderingData.containsRTL(content, this.isBasicASCII, mightContainRTL);\n        this.tokens = tokens;\n        this.inlineDecorations = inlineDecorations;\n        this.tabSize = tabSize;\n        this.startVisibleColumn = startVisibleColumn;\n    }\n    static isBasicASCII(lineContent, mightContainNonBasicASCII) {\n        if (mightContainNonBasicASCII) {\n            return strings.isBasicASCII(lineContent);\n        }\n        return true;\n    }\n    static containsRTL(lineContent, isBasicASCII, mightContainRTL) {\n        if (!isBasicASCII && mightContainRTL) {\n            return strings.containsRTL(lineContent);\n        }\n        return false;\n    }\n}\nexport class InlineDecoration {\n    constructor(range, inlineClassName, type) {\n        this.range = range;\n        this.inlineClassName = inlineClassName;\n        this.type = type;\n    }\n}\nexport class SingleLineInlineDecoration {\n    constructor(startOffset, endOffset, inlineClassName, inlineClassNameAffectsLetterSpacing) {\n        this.startOffset = startOffset;\n        this.endOffset = endOffset;\n        this.inlineClassName = inlineClassName;\n        this.inlineClassNameAffectsLetterSpacing = inlineClassNameAffectsLetterSpacing;\n    }\n    toInlineDecoration(lineNumber) {\n        return new InlineDecoration(new Range(lineNumber, this.startOffset + 1, lineNumber, this.endOffset + 1), this.inlineClassName, this.inlineClassNameAffectsLetterSpacing ? 3 /* RegularAffectingLetterSpacing */ : 0 /* Regular */);\n    }\n}\nexport class ViewModelDecoration {\n    constructor(range, options) {\n        this._viewModelDecorationBrand = undefined;\n        this.range = range;\n        this.options = options;\n    }\n}\nexport class OverviewRulerDecorationsGroup {\n    constructor(color, zIndex, \n    /**\n     * Decorations are encoded in a number array using the following scheme:\n     *  - 3*i = lane\n     *  - 3*i+1 = startLineNumber\n     *  - 3*i+2 = endLineNumber\n     */\n    data) {\n        this.color = color;\n        this.zIndex = zIndex;\n        this.data = data;\n    }\n    static cmp(a, b) {\n        if (a.zIndex === b.zIndex) {\n            if (a.color < b.color) {\n                return -1;\n            }\n            if (a.color > b.color) {\n                return 1;\n            }\n            return 0;\n        }\n        return a.zIndex - b.zIndex;\n    }\n}\n",
+      "start": 1711096855377,
+      "end": 1711096855523,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855523,
+      "end": 1711096855523,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855524,
+      "end": 1711096855524,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855524,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855525,
+      "end": 1711096855525,
+      "order": "normal"
+    }
+  ]
+}

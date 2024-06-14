@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/actions/common/menuService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { RunOnceScheduler } from '../../../base/common/async.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { DisposableStore } from '../../../base/common/lifecycle.js';\nimport { IMenuService, isIMenuItem, MenuItemAction, MenuRegistry, SubmenuItemAction } from './actions.js';\nimport { ICommandService } from '../../commands/common/commands.js';\nimport { IContextKeyService } from '../../contextkey/common/contextkey.js';\nlet MenuService = class MenuService {\n    constructor(_commandService) {\n        this._commandService = _commandService;\n        //\n    }\n    /**\n     * Create a new menu for the given menu identifier. A menu sends events when it's entries\n     * have changed (placement, enablement, checked-state). By default it does send events for\n     * sub menu entries. That is more expensive and must be explicitly enabled with the\n     * `emitEventsForSubmenuChanges` flag.\n     */\n    createMenu(id, contextKeyService, options) {\n        return new Menu(id, Object.assign({ emitEventsForSubmenuChanges: false, eventDebounceDelay: 50 }, options), this._commandService, contextKeyService, this);\n    }\n};\nMenuService = __decorate([\n    __param(0, ICommandService)\n], MenuService);\nexport { MenuService };\nlet Menu = class Menu {\n    constructor(_id, _options, _commandService, _contextKeyService, _menuService) {\n        this._id = _id;\n        this._options = _options;\n        this._commandService = _commandService;\n        this._contextKeyService = _contextKeyService;\n        this._menuService = _menuService;\n        this._disposables = new DisposableStore();\n        this._menuGroups = [];\n        this._contextKeys = new Set();\n        this._build();\n        // Rebuild this menu whenever the menu registry reports an event for this MenuId.\n        // This usually happen while code and extensions are loaded and affects the over\n        // structure of the menu\n        const rebuildMenuSoon = new RunOnceScheduler(() => {\n            this._build();\n            this._onDidChange.fire(this);\n        }, _options.eventDebounceDelay);\n        this._disposables.add(rebuildMenuSoon);\n        this._disposables.add(MenuRegistry.onDidChangeMenu(e => {\n            if (e.has(_id)) {\n                rebuildMenuSoon.schedule();\n            }\n        }));\n        // When context keys change we need to check if the menu also has changed. However,\n        // we only do that when someone listens on this menu because (1) context key events are\n        // firing often and (2) menu are often leaked\n        const contextKeyListener = this._disposables.add(new DisposableStore());\n        const startContextKeyListener = () => {\n            const fireChangeSoon = new RunOnceScheduler(() => this._onDidChange.fire(this), _options.eventDebounceDelay);\n            contextKeyListener.add(fireChangeSoon);\n            contextKeyListener.add(_contextKeyService.onDidChangeContext(e => {\n                if (e.affectsSome(this._contextKeys)) {\n                    fireChangeSoon.schedule();\n                }\n            }));\n        };\n        this._onDidChange = new Emitter({\n            // start/stop context key listener\n            onFirstListenerAdd: startContextKeyListener,\n            onLastListenerRemove: contextKeyListener.clear.bind(contextKeyListener)\n        });\n        this.onDidChange = this._onDidChange.event;\n    }\n    dispose() {\n        this._disposables.dispose();\n        this._onDidChange.dispose();\n    }\n    _build() {\n        // reset\n        this._menuGroups.length = 0;\n        this._contextKeys.clear();\n        const menuItems = MenuRegistry.getMenuItems(this._id);\n        let group;\n        menuItems.sort(Menu._compareMenuItems);\n        for (const item of menuItems) {\n            // group by groupId\n            const groupName = item.group || '';\n            if (!group || group[0] !== groupName) {\n                group = [groupName, []];\n                this._menuGroups.push(group);\n            }\n            group[1].push(item);\n            // keep keys for eventing\n            this._collectContextKeys(item);\n        }\n    }\n    _collectContextKeys(item) {\n        Menu._fillInKbExprKeys(item.when, this._contextKeys);\n        if (isIMenuItem(item)) {\n            // keep precondition keys for event if applicable\n            if (item.command.precondition) {\n                Menu._fillInKbExprKeys(item.command.precondition, this._contextKeys);\n            }\n            // keep toggled keys for event if applicable\n            if (item.command.toggled) {\n                const toggledExpression = item.command.toggled.condition || item.command.toggled;\n                Menu._fillInKbExprKeys(toggledExpression, this._contextKeys);\n            }\n        }\n        else if (this._options.emitEventsForSubmenuChanges) {\n            // recursively collect context keys from submenus so that this\n            // menu fires events when context key changes affect submenus\n            MenuRegistry.getMenuItems(item.submenu).forEach(this._collectContextKeys, this);\n        }\n    }\n    getActions(options) {\n        const result = [];\n        for (let group of this._menuGroups) {\n            const [id, items] = group;\n            const activeActions = [];\n            for (const item of items) {\n                if (this._contextKeyService.contextMatchesRules(item.when)) {\n                    const action = isIMenuItem(item)\n                        ? new MenuItemAction(item.command, item.alt, options, this._contextKeyService, this._commandService)\n                        : new SubmenuItemAction(item, this._menuService, this._contextKeyService, options);\n                    activeActions.push(action);\n                }\n            }\n            if (activeActions.length > 0) {\n                result.push([id, activeActions]);\n            }\n        }\n        return result;\n    }\n    static _fillInKbExprKeys(exp, set) {\n        if (exp) {\n            for (let key of exp.keys()) {\n                set.add(key);\n            }\n        }\n    }\n    static _compareMenuItems(a, b) {\n        let aGroup = a.group;\n        let bGroup = b.group;\n        if (aGroup !== bGroup) {\n            // Falsy groups come last\n            if (!aGroup) {\n                return 1;\n            }\n            else if (!bGroup) {\n                return -1;\n            }\n            // 'navigation' group comes first\n            if (aGroup === 'navigation') {\n                return -1;\n            }\n            else if (bGroup === 'navigation') {\n                return 1;\n            }\n            // lexical sort for groups\n            let value = aGroup.localeCompare(bGroup);\n            if (value !== 0) {\n                return value;\n            }\n        }\n        // sort on priority - default is 0\n        let aPrio = a.order || 0;\n        let bPrio = b.order || 0;\n        if (aPrio < bPrio) {\n            return -1;\n        }\n        else if (aPrio > bPrio) {\n            return 1;\n        }\n        // sort on titles\n        return Menu._compareTitles(isIMenuItem(a) ? a.command.title : a.title, isIMenuItem(b) ? b.command.title : b.title);\n    }\n    static _compareTitles(a, b) {\n        const aStr = typeof a === 'string' ? a : a.original;\n        const bStr = typeof b === 'string' ? b : b.original;\n        return aStr.localeCompare(bStr);\n    }\n};\nMenu = __decorate([\n    __param(2, ICommandService),\n    __param(3, IContextKeyService),\n    __param(4, IMenuService)\n], Menu);\n",
+      "start": 1711096856286,
+      "end": 1711096856368,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856368,
+      "end": 1711096856368,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856368,
+      "end": 1711096856369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856369,
+      "end": 1711096856369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856369,
+      "end": 1711096856369,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856369,
+      "end": 1711096856369,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856369,
+      "end": 1711096856369,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856369,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856370,
+      "end": 1711096856370,
+      "order": "normal"
+    }
+  ]
+}

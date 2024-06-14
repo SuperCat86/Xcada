@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/contentHover.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { HoverAction, HoverWidget } from '../../../../base/browser/ui/hover/hoverWidget.js';\nimport { coalesce } from '../../../../base/common/arrays.js';\nimport { Disposable, DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { TokenizationRegistry } from '../../../common/languages.js';\nimport { HoverOperation } from './hoverOperation.js';\nimport { HoverParticipantRegistry, HoverRangeAnchor } from './hoverTypes.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { Context as SuggestContext } from '../../suggest/browser/suggest.js';\nimport { AsyncIterableObject } from '../../../../base/common/async.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { Emitter } from '../../../../base/common/event.js';\nconst $ = dom.$;\nlet ContentHoverController = class ContentHoverController extends Disposable {\n    constructor(_editor, _instantiationService, _keybindingService) {\n        super();\n        this._editor = _editor;\n        this._instantiationService = _instantiationService;\n        this._keybindingService = _keybindingService;\n        this._widget = this._register(this._instantiationService.createInstance(ContentHoverWidget, this._editor));\n        this._decorationsChangerListener = this._register(new EditorDecorationsChangerListener(this._editor));\n        this._messages = [];\n        this._messagesAreComplete = false;\n        // Instantiate participants and sort them by `hoverOrdinal` which is relevant for rendering order.\n        this._participants = [];\n        for (const participant of HoverParticipantRegistry.getAll()) {\n            this._participants.push(this._instantiationService.createInstance(participant, this._editor));\n        }\n        this._participants.sort((p1, p2) => p1.hoverOrdinal - p2.hoverOrdinal);\n        this._computer = new ContentHoverComputer(this._editor, this._participants);\n        this._hoverOperation = this._register(new HoverOperation(this._editor, this._computer));\n        this._register(this._hoverOperation.onResult((result) => {\n            this._withResult(result.value, result.isComplete, result.hasLoadingMessage);\n        }));\n        this._register(this._decorationsChangerListener.onDidChangeModelDecorations(() => this._onModelDecorationsChanged()));\n        this._register(dom.addStandardDisposableListener(this._widget.getDomNode(), 'keydown', (e) => {\n            if (e.equals(9 /* Escape */)) {\n                this.hide();\n            }\n        }));\n        this._register(TokenizationRegistry.onDidChange(() => {\n            if (this._widget.position && this._computer.anchor && this._messages.length > 0) {\n                this._widget.clear();\n                this._renderMessages(this._computer.anchor, this._messages);\n            }\n        }));\n    }\n    _onModelDecorationsChanged() {\n        if (this._widget.position) {\n            // The decorations have changed and the hover is visible,\n            // we need to recompute the displayed text\n            this._hoverOperation.cancel();\n            if (!this._widget.isColorPickerVisible) { // TODO@Michel ensure that displayed text for other decorations is computed even if color picker is in place\n                this._hoverOperation.start(0 /* Delayed */);\n            }\n        }\n    }\n    maybeShowAt(mouseEvent) {\n        const anchorCandidates = [];\n        for (const participant of this._participants) {\n            if (participant.suggestHoverAnchor) {\n                const anchor = participant.suggestHoverAnchor(mouseEvent);\n                if (anchor) {\n                    anchorCandidates.push(anchor);\n                }\n            }\n        }\n        const target = mouseEvent.target;\n        if (target.type === 6 /* CONTENT_TEXT */) {\n            anchorCandidates.push(new HoverRangeAnchor(0, target.range));\n        }\n        if (target.type === 7 /* CONTENT_EMPTY */) {\n            const epsilon = this._editor.getOption(44 /* fontInfo */).typicalHalfwidthCharacterWidth / 2;\n            if (!target.detail.isAfterLines && typeof target.detail.horizontalDistanceToText === 'number' && target.detail.horizontalDistanceToText < epsilon) {\n                // Let hover kick in even when the mouse is technically in the empty area after a line, given the distance is small enough\n                anchorCandidates.push(new HoverRangeAnchor(0, target.range));\n            }\n        }\n        if (anchorCandidates.length === 0) {\n            return false;\n        }\n        anchorCandidates.sort((a, b) => b.priority - a.priority);\n        this._startShowingAt(anchorCandidates[0], 0 /* Delayed */, false);\n        return true;\n    }\n    startShowingAtRange(range, mode, focus) {\n        this._startShowingAt(new HoverRangeAnchor(0, range), mode, focus);\n    }\n    _startShowingAt(anchor, mode, focus) {\n        if (this._computer.anchor && this._computer.anchor.equals(anchor)) {\n            // We have to show the widget at the exact same range as before, so no work is needed\n            return;\n        }\n        this._hoverOperation.cancel();\n        if (this._widget.position) {\n            // The range might have changed, but the hover is visible\n            // Instead of hiding it completely, filter out messages that are still in the new range and\n            // kick off a new computation\n            if (!this._computer.anchor || !anchor.canAdoptVisibleHover(this._computer.anchor, this._widget.position)) {\n                this.hide();\n            }\n            else {\n                const filteredMessages = this._messages.filter((m) => m.isValidForHoverAnchor(anchor));\n                if (filteredMessages.length === 0) {\n                    this.hide();\n                }\n                else if (filteredMessages.length === this._messages.length && this._messagesAreComplete) {\n                    // no change\n                    return;\n                }\n                else {\n                    this._renderMessages(anchor, filteredMessages);\n                }\n            }\n        }\n        this._computer.anchor = anchor;\n        this._computer.shouldFocus = focus;\n        this._hoverOperation.start(mode);\n    }\n    hide() {\n        this._computer.anchor = null;\n        this._hoverOperation.cancel();\n        this._widget.hide();\n    }\n    isColorPickerVisible() {\n        return this._widget.isColorPickerVisible;\n    }\n    _addLoadingMessage(result) {\n        if (this._computer.anchor) {\n            for (const participant of this._participants) {\n                if (participant.createLoadingMessage) {\n                    const loadingMessage = participant.createLoadingMessage(this._computer.anchor);\n                    if (loadingMessage) {\n                        return result.slice(0).concat([loadingMessage]);\n                    }\n                }\n            }\n        }\n        return result;\n    }\n    _withResult(result, isComplete, hasLoadingMessage) {\n        this._messages = (hasLoadingMessage ? this._addLoadingMessage(result) : result);\n        this._messagesAreComplete = isComplete;\n        if (this._computer.anchor && this._messages.length > 0) {\n            this._renderMessages(this._computer.anchor, this._messages);\n        }\n        else if (isComplete) {\n            this.hide();\n        }\n    }\n    _renderMessages(anchor, messages) {\n        // update column from which to show\n        let renderColumn = 1073741824 /* MAX_SAFE_SMALL_INTEGER */;\n        let highlightRange = messages[0].range;\n        let forceShowAtRange = null;\n        for (const msg of messages) {\n            renderColumn = Math.min(renderColumn, msg.range.startColumn);\n            highlightRange = Range.plusRange(highlightRange, msg.range);\n            if (msg.forceShowAtRange) {\n                forceShowAtRange = msg.range;\n            }\n        }\n        const disposables = new DisposableStore();\n        const statusBar = disposables.add(new EditorHoverStatusBar(this._keybindingService));\n        const fragment = document.createDocumentFragment();\n        let colorPicker = null;\n        const context = {\n            fragment,\n            statusBar,\n            setColorPicker: (widget) => colorPicker = widget,\n            onContentsChanged: () => this._widget.onContentsChanged(),\n            hide: () => this.hide()\n        };\n        for (const participant of this._participants) {\n            const hoverParts = messages.filter(msg => msg.owner === participant);\n            if (hoverParts.length > 0) {\n                disposables.add(participant.renderHoverParts(context, hoverParts));\n            }\n        }\n        if (statusBar.hasContent) {\n            fragment.appendChild(statusBar.hoverElement);\n        }\n        if (fragment.hasChildNodes()) {\n            if (highlightRange) {\n                const highlightDecorations = this._decorationsChangerListener.deltaDecorations([], [{\n                        range: highlightRange,\n                        options: ContentHoverController._DECORATION_OPTIONS\n                    }]);\n                disposables.add(toDisposable(() => {\n                    this._decorationsChangerListener.deltaDecorations(highlightDecorations, []);\n                }));\n            }\n            this._widget.showAt(fragment, new ContentHoverVisibleData(colorPicker, forceShowAtRange ? forceShowAtRange.getStartPosition() : new Position(anchor.range.startLineNumber, renderColumn), forceShowAtRange ? forceShowAtRange : highlightRange, this._editor.getOption(53 /* hover */).above, this._computer.shouldFocus, disposables));\n        }\n        else {\n            disposables.dispose();\n        }\n    }\n};\nContentHoverController._DECORATION_OPTIONS = ModelDecorationOptions.register({\n    description: 'content-hover-highlight',\n    className: 'hoverHighlight'\n});\nContentHoverController = __decorate([\n    __param(1, IInstantiationService),\n    __param(2, IKeybindingService)\n], ContentHoverController);\nexport { ContentHoverController };\n/**\n * Allows listening to `ICodeEditor.onDidChangeModelDecorations` and ignores the change caused by itself.\n */\nclass EditorDecorationsChangerListener extends Disposable {\n    constructor(_editor) {\n        super();\n        this._editor = _editor;\n        this._onDidChangeModelDecorations = this._register(new Emitter());\n        this.onDidChangeModelDecorations = this._onDidChangeModelDecorations.event;\n        this._isChangingDecorations = false;\n        this._register(this._editor.onDidChangeModelDecorations((e) => {\n            if (this._isChangingDecorations) {\n                return;\n            }\n            this._onDidChangeModelDecorations.fire(e);\n        }));\n    }\n    deltaDecorations(oldDecorations, newDecorations) {\n        try {\n            this._isChangingDecorations = true;\n            return this._editor.deltaDecorations(oldDecorations, newDecorations);\n        }\n        finally {\n            this._isChangingDecorations = false;\n        }\n    }\n}\nclass ContentHoverVisibleData {\n    constructor(colorPicker, showAtPosition, showAtRange, preferAbove, stoleFocus, disposables) {\n        this.colorPicker = colorPicker;\n        this.showAtPosition = showAtPosition;\n        this.showAtRange = showAtRange;\n        this.preferAbove = preferAbove;\n        this.stoleFocus = stoleFocus;\n        this.disposables = disposables;\n    }\n}\nlet ContentHoverWidget = class ContentHoverWidget extends Disposable {\n    constructor(_editor, _contextKeyService) {\n        super();\n        this._editor = _editor;\n        this._contextKeyService = _contextKeyService;\n        this.allowEditorOverflow = true;\n        this._hoverVisibleKey = EditorContextKeys.hoverVisible.bindTo(this._contextKeyService);\n        this._hover = this._register(new HoverWidget());\n        this._visibleData = null;\n        this._register(this._editor.onDidLayoutChange(() => this._layout()));\n        this._register(this._editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(44 /* fontInfo */)) {\n                this._updateFont();\n            }\n        }));\n        this._setVisibleData(null);\n        this._layout();\n        this._editor.addContentWidget(this);\n    }\n    /**\n     * Returns `null` if the hover is not visible.\n     */\n    get position() {\n        var _a, _b;\n        return (_b = (_a = this._visibleData) === null || _a === void 0 ? void 0 : _a.showAtPosition) !== null && _b !== void 0 ? _b : null;\n    }\n    get isColorPickerVisible() {\n        var _a;\n        return Boolean((_a = this._visibleData) === null || _a === void 0 ? void 0 : _a.colorPicker);\n    }\n    dispose() {\n        this._editor.removeContentWidget(this);\n        if (this._visibleData) {\n            this._visibleData.disposables.dispose();\n        }\n        super.dispose();\n    }\n    getId() {\n        return ContentHoverWidget.ID;\n    }\n    getDomNode() {\n        return this._hover.containerDomNode;\n    }\n    getPosition() {\n        if (!this._visibleData) {\n            return null;\n        }\n        let preferAbove = this._visibleData.preferAbove;\n        if (!preferAbove && this._contextKeyService.getContextKeyValue(SuggestContext.Visible.key)) {\n            // Prefer rendering above if the suggest widget is visible\n            preferAbove = true;\n        }\n        return {\n            position: this._visibleData.showAtPosition,\n            range: this._visibleData.showAtRange,\n            preference: (preferAbove\n                ? [1 /* ABOVE */, 2 /* BELOW */]\n                : [2 /* BELOW */, 1 /* ABOVE */]),\n        };\n    }\n    _setVisibleData(visibleData) {\n        if (this._visibleData) {\n            this._visibleData.disposables.dispose();\n        }\n        this._visibleData = visibleData;\n        this._hoverVisibleKey.set(!!this._visibleData);\n        this._hover.containerDomNode.classList.toggle('hidden', !this._visibleData);\n    }\n    _layout() {\n        const height = Math.max(this._editor.getLayoutInfo().height / 4, 250);\n        const { fontSize, lineHeight } = this._editor.getOption(44 /* fontInfo */);\n        this._hover.contentsDomNode.style.fontSize = `${fontSize}px`;\n        this._hover.contentsDomNode.style.lineHeight = `${lineHeight / fontSize}`;\n        this._hover.contentsDomNode.style.maxHeight = `${height}px`;\n        this._hover.contentsDomNode.style.maxWidth = `${Math.max(this._editor.getLayoutInfo().width * 0.66, 500)}px`;\n    }\n    _updateFont() {\n        const codeClasses = Array.prototype.slice.call(this._hover.contentsDomNode.getElementsByClassName('code'));\n        codeClasses.forEach(node => this._editor.applyFontInfo(node));\n    }\n    showAt(node, visibleData) {\n        this._setVisibleData(visibleData);\n        this._hover.contentsDomNode.textContent = '';\n        this._hover.contentsDomNode.appendChild(node);\n        this._hover.contentsDomNode.style.paddingBottom = '';\n        this._updateFont();\n        this._editor.layoutContentWidget(this);\n        this.onContentsChanged();\n        // Simply force a synchronous render on the editor\n        // such that the widget does not really render with left = '0px'\n        this._editor.render();\n        // See https://github.com/microsoft/vscode/issues/140339\n        // TODO: Doing a second layout of the hover after force rendering the editor\n        this._editor.layoutContentWidget(this);\n        this.onContentsChanged();\n        if (visibleData.stoleFocus) {\n            this._hover.containerDomNode.focus();\n        }\n        if (visibleData.colorPicker) {\n            visibleData.colorPicker.layout();\n        }\n    }\n    hide() {\n        if (this._visibleData) {\n            const stoleFocus = this._visibleData.stoleFocus;\n            this._setVisibleData(null);\n            this._editor.layoutContentWidget(this);\n            if (stoleFocus) {\n                this._editor.focus();\n            }\n        }\n    }\n    onContentsChanged() {\n        this._hover.onContentsChanged();\n        const scrollDimensions = this._hover.scrollbar.getScrollDimensions();\n        const hasHorizontalScrollbar = (scrollDimensions.scrollWidth > scrollDimensions.width);\n        if (hasHorizontalScrollbar) {\n            // There is just a horizontal scrollbar\n            const extraBottomPadding = `${this._hover.scrollbar.options.horizontalScrollbarSize}px`;\n            if (this._hover.contentsDomNode.style.paddingBottom !== extraBottomPadding) {\n                this._hover.contentsDomNode.style.paddingBottom = extraBottomPadding;\n                this._editor.layoutContentWidget(this);\n                this._hover.onContentsChanged();\n            }\n        }\n    }\n    clear() {\n        this._hover.contentsDomNode.textContent = '';\n    }\n};\nContentHoverWidget.ID = 'editor.contrib.contentHoverWidget';\nContentHoverWidget = __decorate([\n    __param(1, IContextKeyService)\n], ContentHoverWidget);\nexport { ContentHoverWidget };\nlet EditorHoverStatusBar = class EditorHoverStatusBar extends Disposable {\n    constructor(_keybindingService) {\n        super();\n        this._keybindingService = _keybindingService;\n        this._hasContent = false;\n        this.hoverElement = $('div.hover-row.status-bar');\n        this.actionsElement = dom.append(this.hoverElement, $('div.actions'));\n    }\n    get hasContent() {\n        return this._hasContent;\n    }\n    addAction(actionOptions) {\n        const keybinding = this._keybindingService.lookupKeybinding(actionOptions.commandId);\n        const keybindingLabel = keybinding ? keybinding.getLabel() : null;\n        this._hasContent = true;\n        return this._register(HoverAction.render(this.actionsElement, actionOptions, keybindingLabel));\n    }\n    append(element) {\n        const result = dom.append(this.actionsElement, element);\n        this._hasContent = true;\n        return result;\n    }\n};\nEditorHoverStatusBar = __decorate([\n    __param(0, IKeybindingService)\n], EditorHoverStatusBar);\nclass ContentHoverComputer {\n    constructor(_editor, _participants) {\n        this._editor = _editor;\n        this._participants = _participants;\n        this._anchor = null;\n        this._shouldFocus = false;\n    }\n    get anchor() { return this._anchor; }\n    set anchor(value) { this._anchor = value; }\n    get shouldFocus() { return this._shouldFocus; }\n    set shouldFocus(value) { this._shouldFocus = value; }\n    static _getLineDecorations(editor, anchor) {\n        if (anchor.type !== 1 /* Range */) {\n            return [];\n        }\n        const model = editor.getModel();\n        const lineNumber = anchor.range.startLineNumber;\n        const maxColumn = model.getLineMaxColumn(lineNumber);\n        return editor.getLineDecorations(lineNumber).filter((d) => {\n            if (d.options.isWholeLine) {\n                return true;\n            }\n            const startColumn = (d.range.startLineNumber === lineNumber) ? d.range.startColumn : 1;\n            const endColumn = (d.range.endLineNumber === lineNumber) ? d.range.endColumn : maxColumn;\n            if (d.options.showIfCollapsed) {\n                // Relax check around `showIfCollapsed` decorations to also include +/- 1 character\n                if (startColumn > anchor.range.startColumn + 1 || anchor.range.endColumn - 1 > endColumn) {\n                    return false;\n                }\n            }\n            else {\n                if (startColumn > anchor.range.startColumn || anchor.range.endColumn > endColumn) {\n                    return false;\n                }\n            }\n            return true;\n        });\n    }\n    computeAsync(token) {\n        const anchor = this._anchor;\n        if (!this._editor.hasModel() || !anchor) {\n            return AsyncIterableObject.EMPTY;\n        }\n        const lineDecorations = ContentHoverComputer._getLineDecorations(this._editor, anchor);\n        return AsyncIterableObject.merge(this._participants.map((participant) => {\n            if (!participant.computeAsync) {\n                return AsyncIterableObject.EMPTY;\n            }\n            return participant.computeAsync(anchor, lineDecorations, token);\n        }));\n    }\n    computeSync() {\n        if (!this._editor.hasModel() || !this._anchor) {\n            return [];\n        }\n        const lineDecorations = ContentHoverComputer._getLineDecorations(this._editor, this._anchor);\n        let result = [];\n        for (const participant of this._participants) {\n            result = result.concat(participant.computeSync(this._anchor, lineDecorations));\n        }\n        return coalesce(result);\n    }\n}\n",
+      "start": 1711096855746,
+      "end": 1711096855849,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855849,
+      "end": 1711096855849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855849,
+      "end": 1711096855849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855849,
+      "end": 1711096855849,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855850,
+      "end": 1711096855850,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855850,
+      "end": 1711096855851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855851,
+      "end": 1711096855851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855851,
+      "end": 1711096855851,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855851,
+      "end": 1711096855851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855851,
+      "end": 1711096855851,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855851,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    }
+  ]
+}

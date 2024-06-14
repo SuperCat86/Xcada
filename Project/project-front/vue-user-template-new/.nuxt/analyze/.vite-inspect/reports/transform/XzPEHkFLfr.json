@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/modelLineProjectionData.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { assertNever } from '../../base/common/types.js';\nimport { Position } from './core/position.js';\nimport { InjectedTextCursorStops } from './model.js';\n/**\n * *input*:\n * ```\n * xxxxxxxxxxxxxxxxxxxxxxxxxxx\n * ```\n *\n * -> Applying injections `[i...i]`, *inputWithInjections*:\n * ```\n * xxxxxx[iiiiiiiiii]xxxxxxxxxxxxxxxxx[ii]xxxx\n * ```\n *\n * -> breaking at offsets `|` in `xxxxxx[iiiiiii|iii]xxxxxxxxxxx|xxxxxx[ii]xxxx|`:\n * ```\n * xxxxxx[iiiiiii\n * iii]xxxxxxxxxxx\n * xxxxxx[ii]xxxx\n * ```\n *\n * -> applying wrappedTextIndentLength, *output*:\n * ```\n * xxxxxx[iiiiiii\n *    iii]xxxxxxxxxxx\n *    xxxxxx[ii]xxxx\n * ```\n */\nexport class ModelLineProjectionData {\n    constructor(injectionOffsets, \n    /**\n     * `injectionOptions.length` must equal `injectionOffsets.length`\n     */\n    injectionOptions, \n    /**\n     * Refers to offsets after applying injections to the source.\n     * The last break offset indicates the length of the source after applying injections.\n     */\n    breakOffsets, \n    /**\n     * Refers to offsets after applying injections\n     */\n    breakOffsetsVisibleColumn, wrappedTextIndentLength) {\n        this.injectionOffsets = injectionOffsets;\n        this.injectionOptions = injectionOptions;\n        this.breakOffsets = breakOffsets;\n        this.breakOffsetsVisibleColumn = breakOffsetsVisibleColumn;\n        this.wrappedTextIndentLength = wrappedTextIndentLength;\n    }\n    getOutputLineCount() {\n        return this.breakOffsets.length;\n    }\n    getMinOutputOffset(outputLineIndex) {\n        if (outputLineIndex > 0) {\n            return this.wrappedTextIndentLength;\n        }\n        return 0;\n    }\n    getLineLength(outputLineIndex) {\n        // These offsets refer to model text with injected text.\n        const startOffset = outputLineIndex > 0 ? this.breakOffsets[outputLineIndex - 1] : 0;\n        const endOffset = this.breakOffsets[outputLineIndex];\n        let lineLength = endOffset - startOffset;\n        if (outputLineIndex > 0) {\n            lineLength += this.wrappedTextIndentLength;\n        }\n        return lineLength;\n    }\n    getMaxOutputOffset(outputLineIndex) {\n        return this.getLineLength(outputLineIndex);\n    }\n    translateToInputOffset(outputLineIndex, outputOffset) {\n        if (outputLineIndex > 0) {\n            outputOffset = Math.max(0, outputOffset - this.wrappedTextIndentLength);\n        }\n        const offsetInInputWithInjection = outputLineIndex === 0 ? outputOffset : this.breakOffsets[outputLineIndex - 1] + outputOffset;\n        let offsetInInput = offsetInInputWithInjection;\n        if (this.injectionOffsets !== null) {\n            for (let i = 0; i < this.injectionOffsets.length; i++) {\n                if (offsetInInput > this.injectionOffsets[i]) {\n                    if (offsetInInput < this.injectionOffsets[i] + this.injectionOptions[i].content.length) {\n                        // `inputOffset` is within injected text\n                        offsetInInput = this.injectionOffsets[i];\n                    }\n                    else {\n                        offsetInInput -= this.injectionOptions[i].content.length;\n                    }\n                }\n                else {\n                    break;\n                }\n            }\n        }\n        return offsetInInput;\n    }\n    translateToOutputPosition(inputOffset, affinity = 2 /* None */) {\n        let inputOffsetInInputWithInjection = inputOffset;\n        if (this.injectionOffsets !== null) {\n            for (let i = 0; i < this.injectionOffsets.length; i++) {\n                if (inputOffset < this.injectionOffsets[i]) {\n                    break;\n                }\n                if (affinity !== 1 /* Right */ && inputOffset === this.injectionOffsets[i]) {\n                    break;\n                }\n                inputOffsetInInputWithInjection += this.injectionOptions[i].content.length;\n            }\n        }\n        return this.offsetInInputWithInjectionsToOutputPosition(inputOffsetInInputWithInjection, affinity);\n    }\n    offsetInInputWithInjectionsToOutputPosition(offsetInInputWithInjections, affinity = 2 /* None */) {\n        let low = 0;\n        let high = this.breakOffsets.length - 1;\n        let mid = 0;\n        let midStart = 0;\n        while (low <= high) {\n            mid = low + ((high - low) / 2) | 0;\n            const midStop = this.breakOffsets[mid];\n            midStart = mid > 0 ? this.breakOffsets[mid - 1] : 0;\n            if (affinity === 0 /* Left */) {\n                if (offsetInInputWithInjections <= midStart) {\n                    high = mid - 1;\n                }\n                else if (offsetInInputWithInjections > midStop) {\n                    low = mid + 1;\n                }\n                else {\n                    break;\n                }\n            }\n            else {\n                if (offsetInInputWithInjections < midStart) {\n                    high = mid - 1;\n                }\n                else if (offsetInInputWithInjections >= midStop) {\n                    low = mid + 1;\n                }\n                else {\n                    break;\n                }\n            }\n        }\n        let outputOffset = offsetInInputWithInjections - midStart;\n        if (mid > 0) {\n            outputOffset += this.wrappedTextIndentLength;\n        }\n        return new OutputPosition(mid, outputOffset);\n    }\n    normalizeOutputPosition(outputLineIndex, outputOffset, affinity) {\n        if (this.injectionOffsets !== null) {\n            const offsetInInputWithInjections = this.outputPositionToOffsetInInputWithInjections(outputLineIndex, outputOffset);\n            const normalizedOffsetInUnwrappedLine = this.normalizeOffsetInInputWithInjectionsAroundInjections(offsetInInputWithInjections, affinity);\n            if (normalizedOffsetInUnwrappedLine !== offsetInInputWithInjections) {\n                // injected text caused a change\n                return this.offsetInInputWithInjectionsToOutputPosition(normalizedOffsetInUnwrappedLine, affinity);\n            }\n        }\n        if (affinity === 0 /* Left */) {\n            if (outputLineIndex > 0 && outputOffset === this.getMinOutputOffset(outputLineIndex)) {\n                return new OutputPosition(outputLineIndex - 1, this.getMaxOutputOffset(outputLineIndex - 1));\n            }\n        }\n        else if (affinity === 1 /* Right */) {\n            const maxOutputLineIndex = this.getOutputLineCount() - 1;\n            if (outputLineIndex < maxOutputLineIndex && outputOffset === this.getMaxOutputOffset(outputLineIndex)) {\n                return new OutputPosition(outputLineIndex + 1, this.getMinOutputOffset(outputLineIndex + 1));\n            }\n        }\n        return new OutputPosition(outputLineIndex, outputOffset);\n    }\n    outputPositionToOffsetInInputWithInjections(outputLineIndex, outputOffset) {\n        if (outputLineIndex > 0) {\n            outputOffset = Math.max(0, outputOffset - this.wrappedTextIndentLength);\n        }\n        const result = (outputLineIndex > 0 ? this.breakOffsets[outputLineIndex - 1] : 0) + outputOffset;\n        return result;\n    }\n    normalizeOffsetInInputWithInjectionsAroundInjections(offsetInInputWithInjections, affinity) {\n        const injectedText = this.getInjectedTextAtOffset(offsetInInputWithInjections);\n        if (!injectedText) {\n            return offsetInInputWithInjections;\n        }\n        if (affinity === 2 /* None */) {\n            if (offsetInInputWithInjections === injectedText.offsetInInputWithInjections + injectedText.length\n                && hasRightCursorStop(this.injectionOptions[injectedText.injectedTextIndex].cursorStops)) {\n                return injectedText.offsetInInputWithInjections + injectedText.length;\n            }\n            else {\n                let result = injectedText.offsetInInputWithInjections;\n                if (hasLeftCursorStop(this.injectionOptions[injectedText.injectedTextIndex].cursorStops)) {\n                    return result;\n                }\n                let index = injectedText.injectedTextIndex - 1;\n                while (index >= 0 && this.injectionOffsets[index] === this.injectionOffsets[injectedText.injectedTextIndex]) {\n                    if (hasRightCursorStop(this.injectionOptions[index].cursorStops)) {\n                        break;\n                    }\n                    result -= this.injectionOptions[index].content.length;\n                    if (hasLeftCursorStop(this.injectionOptions[index].cursorStops)) {\n                        break;\n                    }\n                    index--;\n                }\n                return result;\n            }\n        }\n        else if (affinity === 1 /* Right */) {\n            let result = injectedText.offsetInInputWithInjections + injectedText.length;\n            let index = injectedText.injectedTextIndex;\n            // traverse all injected text that touch each other\n            while (index + 1 < this.injectionOffsets.length && this.injectionOffsets[index + 1] === this.injectionOffsets[index]) {\n                result += this.injectionOptions[index + 1].content.length;\n                index++;\n            }\n            return result;\n        }\n        else if (affinity === 0 /* Left */) {\n            // affinity is left\n            let result = injectedText.offsetInInputWithInjections;\n            let index = injectedText.injectedTextIndex;\n            // traverse all injected text that touch each other\n            while (index - 1 >= 0 && this.injectionOffsets[index - 1] === this.injectionOffsets[index]) {\n                result -= this.injectionOptions[index - 1].content.length;\n                index--;\n            }\n            return result;\n        }\n        assertNever(affinity);\n    }\n    getInjectedText(outputLineIndex, outputOffset) {\n        const offset = this.outputPositionToOffsetInInputWithInjections(outputLineIndex, outputOffset);\n        const injectedText = this.getInjectedTextAtOffset(offset);\n        if (!injectedText) {\n            return null;\n        }\n        return {\n            options: this.injectionOptions[injectedText.injectedTextIndex]\n        };\n    }\n    getInjectedTextAtOffset(offsetInInputWithInjections) {\n        const injectionOffsets = this.injectionOffsets;\n        const injectionOptions = this.injectionOptions;\n        if (injectionOffsets !== null) {\n            let totalInjectedTextLengthBefore = 0;\n            for (let i = 0; i < injectionOffsets.length; i++) {\n                const length = injectionOptions[i].content.length;\n                const injectedTextStartOffsetInInputWithInjections = injectionOffsets[i] + totalInjectedTextLengthBefore;\n                const injectedTextEndOffsetInInputWithInjections = injectionOffsets[i] + totalInjectedTextLengthBefore + length;\n                if (injectedTextStartOffsetInInputWithInjections > offsetInInputWithInjections) {\n                    // Injected text starts later.\n                    break; // All later injected texts have an even larger offset.\n                }\n                if (offsetInInputWithInjections <= injectedTextEndOffsetInInputWithInjections) {\n                    // Injected text ends after or with the given position (but also starts with or before it).\n                    return {\n                        injectedTextIndex: i,\n                        offsetInInputWithInjections: injectedTextStartOffsetInInputWithInjections,\n                        length\n                    };\n                }\n                totalInjectedTextLengthBefore += length;\n            }\n        }\n        return undefined;\n    }\n}\nfunction hasRightCursorStop(cursorStop) {\n    if (cursorStop === null || cursorStop === undefined) {\n        return true;\n    }\n    return cursorStop === InjectedTextCursorStops.Right || cursorStop === InjectedTextCursorStops.Both;\n}\nfunction hasLeftCursorStop(cursorStop) {\n    if (cursorStop === null || cursorStop === undefined) {\n        return true;\n    }\n    return cursorStop === InjectedTextCursorStops.Left || cursorStop === InjectedTextCursorStops.Both;\n}\nexport class InjectedText {\n    constructor(options) {\n        this.options = options;\n    }\n}\nexport class OutputPosition {\n    constructor(outputLineIndex, outputOffset) {\n        this.outputLineIndex = outputLineIndex;\n        this.outputOffset = outputOffset;\n    }\n    toString() {\n        return `${this.outputLineIndex}:${this.outputOffset}`;\n    }\n    toPosition(baseLineNumber) {\n        return new Position(baseLineNumber + this.outputLineIndex, this.outputOffset + 1);\n    }\n}\n",
+      "start": 1711096856453,
+      "end": 1711096856533,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856533,
+      "end": 1711096856533,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856533,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856534,
+      "end": 1711096856534,
+      "order": "normal"
+    }
+  ]
+}

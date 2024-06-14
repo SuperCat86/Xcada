@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/services/languageFeaturesService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { LanguageFeatureRegistry } from '../languageFeatureRegistry.js';\nimport { ILanguageFeaturesService } from './languageFeatures.js';\nimport { registerSingleton } from '../../../platform/instantiation/common/extensions.js';\nexport class LanguageFeaturesService {\n    constructor() {\n        this.referenceProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.renameProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.codeActionProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.definitionProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.typeDefinitionProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.declarationProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.implementationProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentSymbolProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.inlayHintsProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.colorProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.codeLensProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentFormattingEditProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentRangeFormattingEditProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.onTypeFormattingEditProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.signatureHelpProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.hoverProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentHighlightProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.selectionRangeProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.foldingRangeProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.linkProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.inlineCompletionsProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.completionProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.linkedEditingRangeProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentRangeSemanticTokensProvider = new LanguageFeatureRegistry(this._score.bind(this));\n        this.documentSemanticTokensProvider = new LanguageFeatureRegistry(this._score.bind(this));\n    }\n    _score(uri) {\n        var _a;\n        return (_a = this._notebookTypeResolver) === null || _a === void 0 ? void 0 : _a.call(this, uri);\n    }\n}\nregisterSingleton(ILanguageFeaturesService, LanguageFeaturesService, true);\n",
+      "start": 1711096856301,
+      "end": 1711096856380,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856380,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    }
+  ]
+}

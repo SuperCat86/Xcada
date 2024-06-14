@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/config/fontMeasurements.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as browser from '../../../base/browser/browser.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { CharWidthRequest, readCharWidths } from './charWidthReader.js';\nimport { EditorFontLigatures } from '../../common/config/editorOptions.js';\nimport { FontInfo } from '../../common/config/fontInfo.js';\nclass FontMeasurementsImpl extends Disposable {\n    constructor() {\n        super();\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        this._cache = new FontMeasurementsCache();\n        this._evictUntrustedReadingsTimeout = -1;\n    }\n    dispose() {\n        if (this._evictUntrustedReadingsTimeout !== -1) {\n            window.clearTimeout(this._evictUntrustedReadingsTimeout);\n            this._evictUntrustedReadingsTimeout = -1;\n        }\n        super.dispose();\n    }\n    /**\n     * Clear all cached font information and trigger a change event.\n     */\n    clearAllFontInfos() {\n        this._cache = new FontMeasurementsCache();\n        this._onDidChange.fire();\n    }\n    _writeToCache(item, value) {\n        this._cache.put(item, value);\n        if (!value.isTrusted && this._evictUntrustedReadingsTimeout === -1) {\n            // Try reading again after some time\n            this._evictUntrustedReadingsTimeout = window.setTimeout(() => {\n                this._evictUntrustedReadingsTimeout = -1;\n                this._evictUntrustedReadings();\n            }, 5000);\n        }\n    }\n    _evictUntrustedReadings() {\n        const values = this._cache.getValues();\n        let somethingRemoved = false;\n        for (const item of values) {\n            if (!item.isTrusted) {\n                somethingRemoved = true;\n                this._cache.remove(item);\n            }\n        }\n        if (somethingRemoved) {\n            this._onDidChange.fire();\n        }\n    }\n    /**\n     * Read font information.\n     */\n    readFontInfo(bareFontInfo) {\n        if (!this._cache.has(bareFontInfo)) {\n            let readConfig = this._actualReadFontInfo(bareFontInfo);\n            if (readConfig.typicalHalfwidthCharacterWidth <= 2 || readConfig.typicalFullwidthCharacterWidth <= 2 || readConfig.spaceWidth <= 2 || readConfig.maxDigitWidth <= 2) {\n                // Hey, it's Bug 14341 ... we couldn't read\n                readConfig = new FontInfo({\n                    pixelRatio: browser.PixelRatio.value,\n                    fontFamily: readConfig.fontFamily,\n                    fontWeight: readConfig.fontWeight,\n                    fontSize: readConfig.fontSize,\n                    fontFeatureSettings: readConfig.fontFeatureSettings,\n                    lineHeight: readConfig.lineHeight,\n                    letterSpacing: readConfig.letterSpacing,\n                    isMonospace: readConfig.isMonospace,\n                    typicalHalfwidthCharacterWidth: Math.max(readConfig.typicalHalfwidthCharacterWidth, 5),\n                    typicalFullwidthCharacterWidth: Math.max(readConfig.typicalFullwidthCharacterWidth, 5),\n                    canUseHalfwidthRightwardsArrow: readConfig.canUseHalfwidthRightwardsArrow,\n                    spaceWidth: Math.max(readConfig.spaceWidth, 5),\n                    middotWidth: Math.max(readConfig.middotWidth, 5),\n                    wsmiddotWidth: Math.max(readConfig.wsmiddotWidth, 5),\n                    maxDigitWidth: Math.max(readConfig.maxDigitWidth, 5),\n                }, false);\n            }\n            this._writeToCache(bareFontInfo, readConfig);\n        }\n        return this._cache.get(bareFontInfo);\n    }\n    _createRequest(chr, type, all, monospace) {\n        const result = new CharWidthRequest(chr, type);\n        all.push(result);\n        if (monospace) {\n            monospace.push(result);\n        }\n        return result;\n    }\n    _actualReadFontInfo(bareFontInfo) {\n        const all = [];\n        const monospace = [];\n        const typicalHalfwidthCharacter = this._createRequest('n', 0 /* Regular */, all, monospace);\n        const typicalFullwidthCharacter = this._createRequest('\\uff4d', 0 /* Regular */, all, null);\n        const space = this._createRequest(' ', 0 /* Regular */, all, monospace);\n        const digit0 = this._createRequest('0', 0 /* Regular */, all, monospace);\n        const digit1 = this._createRequest('1', 0 /* Regular */, all, monospace);\n        const digit2 = this._createRequest('2', 0 /* Regular */, all, monospace);\n        const digit3 = this._createRequest('3', 0 /* Regular */, all, monospace);\n        const digit4 = this._createRequest('4', 0 /* Regular */, all, monospace);\n        const digit5 = this._createRequest('5', 0 /* Regular */, all, monospace);\n        const digit6 = this._createRequest('6', 0 /* Regular */, all, monospace);\n        const digit7 = this._createRequest('7', 0 /* Regular */, all, monospace);\n        const digit8 = this._createRequest('8', 0 /* Regular */, all, monospace);\n        const digit9 = this._createRequest('9', 0 /* Regular */, all, monospace);\n        // monospace test: used for whitespace rendering\n        const rightwardsArrow = this._createRequest('→', 0 /* Regular */, all, monospace);\n        const halfwidthRightwardsArrow = this._createRequest('￫', 0 /* Regular */, all, null);\n        // U+00B7 - MIDDLE DOT\n        const middot = this._createRequest('·', 0 /* Regular */, all, monospace);\n        // U+2E31 - WORD SEPARATOR MIDDLE DOT\n        const wsmiddotWidth = this._createRequest(String.fromCharCode(0x2E31), 0 /* Regular */, all, null);\n        // monospace test: some characters\n        const monospaceTestChars = '|/-_ilm%';\n        for (let i = 0, len = monospaceTestChars.length; i < len; i++) {\n            this._createRequest(monospaceTestChars.charAt(i), 0 /* Regular */, all, monospace);\n            this._createRequest(monospaceTestChars.charAt(i), 1 /* Italic */, all, monospace);\n            this._createRequest(monospaceTestChars.charAt(i), 2 /* Bold */, all, monospace);\n        }\n        readCharWidths(bareFontInfo, all);\n        const maxDigitWidth = Math.max(digit0.width, digit1.width, digit2.width, digit3.width, digit4.width, digit5.width, digit6.width, digit7.width, digit8.width, digit9.width);\n        let isMonospace = (bareFontInfo.fontFeatureSettings === EditorFontLigatures.OFF);\n        const referenceWidth = monospace[0].width;\n        for (let i = 1, len = monospace.length; isMonospace && i < len; i++) {\n            const diff = referenceWidth - monospace[i].width;\n            if (diff < -0.001 || diff > 0.001) {\n                isMonospace = false;\n                break;\n            }\n        }\n        let canUseHalfwidthRightwardsArrow = true;\n        if (isMonospace && halfwidthRightwardsArrow.width !== referenceWidth) {\n            // using a halfwidth rightwards arrow would break monospace...\n            canUseHalfwidthRightwardsArrow = false;\n        }\n        if (halfwidthRightwardsArrow.width > rightwardsArrow.width) {\n            // using a halfwidth rightwards arrow would paint a larger arrow than a regular rightwards arrow\n            canUseHalfwidthRightwardsArrow = false;\n        }\n        return new FontInfo({\n            pixelRatio: browser.PixelRatio.value,\n            fontFamily: bareFontInfo.fontFamily,\n            fontWeight: bareFontInfo.fontWeight,\n            fontSize: bareFontInfo.fontSize,\n            fontFeatureSettings: bareFontInfo.fontFeatureSettings,\n            lineHeight: bareFontInfo.lineHeight,\n            letterSpacing: bareFontInfo.letterSpacing,\n            isMonospace: isMonospace,\n            typicalHalfwidthCharacterWidth: typicalHalfwidthCharacter.width,\n            typicalFullwidthCharacterWidth: typicalFullwidthCharacter.width,\n            canUseHalfwidthRightwardsArrow: canUseHalfwidthRightwardsArrow,\n            spaceWidth: space.width,\n            middotWidth: middot.width,\n            wsmiddotWidth: wsmiddotWidth.width,\n            maxDigitWidth: maxDigitWidth\n        }, true);\n    }\n}\nclass FontMeasurementsCache {\n    constructor() {\n        this._keys = Object.create(null);\n        this._values = Object.create(null);\n    }\n    has(item) {\n        const itemId = item.getId();\n        return !!this._values[itemId];\n    }\n    get(item) {\n        const itemId = item.getId();\n        return this._values[itemId];\n    }\n    put(item, value) {\n        const itemId = item.getId();\n        this._keys[itemId] = item;\n        this._values[itemId] = value;\n    }\n    remove(item) {\n        const itemId = item.getId();\n        delete this._keys[itemId];\n        delete this._values[itemId];\n    }\n    getValues() {\n        return Object.keys(this._keys).map(id => this._values[id]);\n    }\n}\nexport const FontMeasurements = new FontMeasurementsImpl();\n",
+      "start": 1711096855033,
+      "end": 1711096855094,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855094,
+      "end": 1711096855094,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855094,
+      "end": 1711096855095,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855095,
+      "end": 1711096855095,
+      "order": "normal"
+    }
+  ]
+}

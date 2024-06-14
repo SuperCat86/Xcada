@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/list/rowCache.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { $ } from '../../dom.js';\nfunction removeFromParent(element) {\n    try {\n        if (element.parentElement) {\n            element.parentElement.removeChild(element);\n        }\n    }\n    catch (e) {\n        // this will throw if this happens due to a blur event, nasty business\n    }\n}\nexport class RowCache {\n    constructor(renderers) {\n        this.renderers = renderers;\n        this.cache = new Map();\n    }\n    /**\n     * Returns a row either by creating a new one or reusing\n     * a previously released row which shares the same templateId.\n     */\n    alloc(templateId) {\n        let result = this.getTemplateCache(templateId).pop();\n        if (!result) {\n            const domNode = $('.monaco-list-row');\n            const renderer = this.getRenderer(templateId);\n            const templateData = renderer.renderTemplate(domNode);\n            result = { domNode, templateId, templateData };\n        }\n        return result;\n    }\n    /**\n     * Releases the row for eventual reuse.\n     */\n    release(row) {\n        if (!row) {\n            return;\n        }\n        this.releaseRow(row);\n    }\n    releaseRow(row) {\n        const { domNode, templateId } = row;\n        if (domNode) {\n            domNode.classList.remove('scrolling');\n            removeFromParent(domNode);\n        }\n        const cache = this.getTemplateCache(templateId);\n        cache.push(row);\n    }\n    getTemplateCache(templateId) {\n        let result = this.cache.get(templateId);\n        if (!result) {\n            result = [];\n            this.cache.set(templateId, result);\n        }\n        return result;\n    }\n    dispose() {\n        this.cache.forEach((cachedRows, templateId) => {\n            for (const cachedRow of cachedRows) {\n                const renderer = this.getRenderer(templateId);\n                renderer.disposeTemplate(cachedRow.templateData);\n                cachedRow.templateData = null;\n            }\n        });\n        this.cache.clear();\n    }\n    getRenderer(templateId) {\n        const renderer = this.renderers.get(templateId);\n        if (!renderer) {\n            throw new Error(`No renderer found for ${templateId}`);\n        }\n        return renderer;\n    }\n}\n",
+      "start": 1711096857680,
+      "end": 1711096857782,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857782,
+      "end": 1711096857783,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "normal"
+    }
+  ]
+}

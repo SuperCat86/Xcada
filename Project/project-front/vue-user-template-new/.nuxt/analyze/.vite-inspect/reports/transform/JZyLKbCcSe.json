@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneCodeEditorService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { windowOpenNoOpener } from '../../../base/browser/dom.js';\nimport { Schemas } from '../../../base/common/network.js';\nimport { AbstractCodeEditorService } from '../../browser/services/abstractCodeEditorService.js';\nimport { ICodeEditorService } from '../../browser/services/codeEditorService.js';\nimport { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';\nimport { registerSingleton } from '../../../platform/instantiation/common/extensions.js';\nimport { IThemeService } from '../../../platform/theme/common/themeService.js';\nlet StandaloneCodeEditorService = class StandaloneCodeEditorService extends AbstractCodeEditorService {\n    constructor(contextKeyService, themeService) {\n        super(themeService);\n        this.onCodeEditorAdd(() => this._checkContextKey());\n        this.onCodeEditorRemove(() => this._checkContextKey());\n        this._editorIsOpen = contextKeyService.createKey('editorIsOpen', false);\n        this._activeCodeEditor = null;\n    }\n    _checkContextKey() {\n        let hasCodeEditor = false;\n        for (const editor of this.listCodeEditors()) {\n            if (!editor.isSimpleWidget) {\n                hasCodeEditor = true;\n                break;\n            }\n        }\n        this._editorIsOpen.set(hasCodeEditor);\n    }\n    setActiveCodeEditor(activeCodeEditor) {\n        this._activeCodeEditor = activeCodeEditor;\n    }\n    getActiveCodeEditor() {\n        return this._activeCodeEditor;\n    }\n    openCodeEditor(input, source, sideBySide) {\n        if (!source) {\n            return Promise.resolve(null);\n        }\n        return Promise.resolve(this.doOpenEditor(source, input));\n    }\n    doOpenEditor(editor, input) {\n        const model = this.findModel(editor, input.resource);\n        if (!model) {\n            if (input.resource) {\n                const schema = input.resource.scheme;\n                if (schema === Schemas.http || schema === Schemas.https) {\n                    // This is a fully qualified http or https URL\n                    windowOpenNoOpener(input.resource.toString());\n                    return editor;\n                }\n            }\n            return null;\n        }\n        const selection = (input.options ? input.options.selection : null);\n        if (selection) {\n            if (typeof selection.endLineNumber === 'number' && typeof selection.endColumn === 'number') {\n                editor.setSelection(selection);\n                editor.revealRangeInCenter(selection, 1 /* Immediate */);\n            }\n            else {\n                const pos = {\n                    lineNumber: selection.startLineNumber,\n                    column: selection.startColumn\n                };\n                editor.setPosition(pos);\n                editor.revealPositionInCenter(pos, 1 /* Immediate */);\n            }\n        }\n        return editor;\n    }\n    findModel(editor, resource) {\n        const model = editor.getModel();\n        if (model && model.uri.toString() !== resource.toString()) {\n            return null;\n        }\n        return model;\n    }\n};\nStandaloneCodeEditorService = __decorate([\n    __param(0, IContextKeyService),\n    __param(1, IThemeService)\n], StandaloneCodeEditorService);\nexport { StandaloneCodeEditorService };\nregisterSingleton(ICodeEditorService, StandaloneCodeEditorService);\n",
+      "start": 1711096856193,
+      "end": 1711096856283,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856283,
+      "end": 1711096856283,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856284,
+      "end": 1711096856284,
+      "order": "normal"
+    }
+  ]
+}

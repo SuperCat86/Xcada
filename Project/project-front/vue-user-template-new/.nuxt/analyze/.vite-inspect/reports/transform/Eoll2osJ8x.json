@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/cursor/cursorCollection.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { compareBy, findLastMaxBy, findMinBy } from '../../../base/common/arrays.js';\nimport { CursorState } from '../cursorCommon.js';\nimport { Cursor } from './oneCursor.js';\nimport { Position } from '../core/position.js';\nimport { Range } from '../core/range.js';\nimport { Selection } from '../core/selection.js';\nexport class CursorCollection {\n    constructor(context) {\n        this.context = context;\n        this.cursors = [new Cursor(context)];\n        this.lastAddedCursorIndex = 0;\n    }\n    dispose() {\n        for (const cursor of this.cursors) {\n            cursor.dispose(this.context);\n        }\n    }\n    startTrackingSelections() {\n        for (const cursor of this.cursors) {\n            cursor.startTrackingSelection(this.context);\n        }\n    }\n    stopTrackingSelections() {\n        for (const cursor of this.cursors) {\n            cursor.stopTrackingSelection(this.context);\n        }\n    }\n    updateContext(context) {\n        this.context = context;\n    }\n    ensureValidState() {\n        for (const cursor of this.cursors) {\n            cursor.ensureValidState(this.context);\n        }\n    }\n    readSelectionFromMarkers() {\n        return this.cursors.map(c => c.readSelectionFromMarkers(this.context));\n    }\n    getAll() {\n        return this.cursors.map(c => c.asCursorState());\n    }\n    getViewPositions() {\n        return this.cursors.map(c => c.viewState.position);\n    }\n    getTopMostViewPosition() {\n        return findMinBy(this.cursors, compareBy(c => c.viewState.position, Position.compare)).viewState.position;\n    }\n    getBottomMostViewPosition() {\n        return findLastMaxBy(this.cursors, compareBy(c => c.viewState.position, Position.compare)).viewState.position;\n    }\n    getSelections() {\n        return this.cursors.map(c => c.modelState.selection);\n    }\n    getViewSelections() {\n        return this.cursors.map(c => c.viewState.selection);\n    }\n    setSelections(selections) {\n        this.setStates(CursorState.fromModelSelections(selections));\n    }\n    getPrimaryCursor() {\n        return this.cursors[0].asCursorState();\n    }\n    setStates(states) {\n        if (states === null) {\n            return;\n        }\n        this.cursors[0].setState(this.context, states[0].modelState, states[0].viewState);\n        this._setSecondaryStates(states.slice(1));\n    }\n    /**\n     * Creates or disposes secondary cursors as necessary to match the number of `secondarySelections`.\n     */\n    _setSecondaryStates(secondaryStates) {\n        const secondaryCursorsLength = this.cursors.length - 1;\n        const secondaryStatesLength = secondaryStates.length;\n        if (secondaryCursorsLength < secondaryStatesLength) {\n            const createCnt = secondaryStatesLength - secondaryCursorsLength;\n            for (let i = 0; i < createCnt; i++) {\n                this._addSecondaryCursor();\n            }\n        }\n        else if (secondaryCursorsLength > secondaryStatesLength) {\n            const removeCnt = secondaryCursorsLength - secondaryStatesLength;\n            for (let i = 0; i < removeCnt; i++) {\n                this._removeSecondaryCursor(this.cursors.length - 2);\n            }\n        }\n        for (let i = 0; i < secondaryStatesLength; i++) {\n            this.cursors[i + 1].setState(this.context, secondaryStates[i].modelState, secondaryStates[i].viewState);\n        }\n    }\n    killSecondaryCursors() {\n        this._setSecondaryStates([]);\n    }\n    _addSecondaryCursor() {\n        this.cursors.push(new Cursor(this.context));\n        this.lastAddedCursorIndex = this.cursors.length - 1;\n    }\n    getLastAddedCursorIndex() {\n        if (this.cursors.length === 1 || this.lastAddedCursorIndex === 0) {\n            return 0;\n        }\n        return this.lastAddedCursorIndex;\n    }\n    _removeSecondaryCursor(removeIndex) {\n        if (this.lastAddedCursorIndex >= removeIndex + 1) {\n            this.lastAddedCursorIndex--;\n        }\n        this.cursors[removeIndex + 1].dispose(this.context);\n        this.cursors.splice(removeIndex + 1, 1);\n    }\n    normalize() {\n        if (this.cursors.length === 1) {\n            return;\n        }\n        const cursors = this.cursors.slice(0);\n        const sortedCursors = [];\n        for (let i = 0, len = cursors.length; i < len; i++) {\n            sortedCursors.push({\n                index: i,\n                selection: cursors[i].modelState.selection,\n            });\n        }\n        sortedCursors.sort(compareBy(s => s.selection, Range.compareRangesUsingStarts));\n        for (let sortedCursorIndex = 0; sortedCursorIndex < sortedCursors.length - 1; sortedCursorIndex++) {\n            const current = sortedCursors[sortedCursorIndex];\n            const next = sortedCursors[sortedCursorIndex + 1];\n            const currentSelection = current.selection;\n            const nextSelection = next.selection;\n            if (!this.context.cursorConfig.multiCursorMergeOverlapping) {\n                continue;\n            }\n            let shouldMergeCursors;\n            if (nextSelection.isEmpty() || currentSelection.isEmpty()) {\n                // Merge touching cursors if one of them is collapsed\n                shouldMergeCursors = nextSelection.getStartPosition().isBeforeOrEqual(currentSelection.getEndPosition());\n            }\n            else {\n                // Merge only overlapping cursors (i.e. allow touching ranges)\n                shouldMergeCursors = nextSelection.getStartPosition().isBefore(currentSelection.getEndPosition());\n            }\n            if (shouldMergeCursors) {\n                const winnerSortedCursorIndex = current.index < next.index ? sortedCursorIndex : sortedCursorIndex + 1;\n                const looserSortedCursorIndex = current.index < next.index ? sortedCursorIndex + 1 : sortedCursorIndex;\n                const looserIndex = sortedCursors[looserSortedCursorIndex].index;\n                const winnerIndex = sortedCursors[winnerSortedCursorIndex].index;\n                const looserSelection = sortedCursors[looserSortedCursorIndex].selection;\n                const winnerSelection = sortedCursors[winnerSortedCursorIndex].selection;\n                if (!looserSelection.equalsSelection(winnerSelection)) {\n                    const resultingRange = looserSelection.plusRange(winnerSelection);\n                    const looserSelectionIsLTR = (looserSelection.selectionStartLineNumber === looserSelection.startLineNumber && looserSelection.selectionStartColumn === looserSelection.startColumn);\n                    const winnerSelectionIsLTR = (winnerSelection.selectionStartLineNumber === winnerSelection.startLineNumber && winnerSelection.selectionStartColumn === winnerSelection.startColumn);\n                    // Give more importance to the last added cursor (think Ctrl-dragging + hitting another cursor)\n                    let resultingSelectionIsLTR;\n                    if (looserIndex === this.lastAddedCursorIndex) {\n                        resultingSelectionIsLTR = looserSelectionIsLTR;\n                        this.lastAddedCursorIndex = winnerIndex;\n                    }\n                    else {\n                        // Winner takes it all\n                        resultingSelectionIsLTR = winnerSelectionIsLTR;\n                    }\n                    let resultingSelection;\n                    if (resultingSelectionIsLTR) {\n                        resultingSelection = new Selection(resultingRange.startLineNumber, resultingRange.startColumn, resultingRange.endLineNumber, resultingRange.endColumn);\n                    }\n                    else {\n                        resultingSelection = new Selection(resultingRange.endLineNumber, resultingRange.endColumn, resultingRange.startLineNumber, resultingRange.startColumn);\n                    }\n                    sortedCursors[winnerSortedCursorIndex].selection = resultingSelection;\n                    const resultingState = CursorState.fromModelSelection(resultingSelection);\n                    cursors[winnerIndex].setState(this.context, resultingState.modelState, resultingState.viewState);\n                }\n                for (const sortedCursor of sortedCursors) {\n                    if (sortedCursor.index > looserIndex) {\n                        sortedCursor.index--;\n                    }\n                }\n                cursors.splice(looserIndex, 1);\n                sortedCursors.splice(looserSortedCursorIndex, 1);\n                this._removeSecondaryCursor(looserIndex - 1);\n                sortedCursorIndex--;\n            }\n        }\n    }\n}\n",
+      "start": 1711096856445,
+      "end": 1711096856530,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856530,
+      "end": 1711096856530,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856531,
+      "end": 1711096856531,
+      "order": "normal"
+    }
+  ]
+}

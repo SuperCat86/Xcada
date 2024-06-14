@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/overlayWidgets/overlayWidgets.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './overlayWidgets.css';\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { PartFingerprints, ViewPart } from '../../view/viewPart.js';\nexport class ViewOverlayWidgets extends ViewPart {\n    constructor(context) {\n        super(context);\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._widgets = {};\n        this._verticalScrollbarWidth = layoutInfo.verticalScrollbarWidth;\n        this._minimapWidth = layoutInfo.minimap.minimapWidth;\n        this._horizontalScrollbarHeight = layoutInfo.horizontalScrollbarHeight;\n        this._editorHeight = layoutInfo.height;\n        this._editorWidth = layoutInfo.width;\n        this._domNode = createFastDomNode(document.createElement('div'));\n        PartFingerprints.write(this._domNode, 4 /* OverlayWidgets */);\n        this._domNode.setClassName('overlayWidgets');\n    }\n    dispose() {\n        super.dispose();\n        this._widgets = {};\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    // ---- begin view event handlers\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._verticalScrollbarWidth = layoutInfo.verticalScrollbarWidth;\n        this._minimapWidth = layoutInfo.minimap.minimapWidth;\n        this._horizontalScrollbarHeight = layoutInfo.horizontalScrollbarHeight;\n        this._editorHeight = layoutInfo.height;\n        this._editorWidth = layoutInfo.width;\n        return true;\n    }\n    // ---- end view event handlers\n    addWidget(widget) {\n        const domNode = createFastDomNode(widget.getDomNode());\n        this._widgets[widget.getId()] = {\n            widget: widget,\n            preference: null,\n            domNode: domNode\n        };\n        // This is sync because a widget wants to be in the dom\n        domNode.setPosition('absolute');\n        domNode.setAttribute('widgetId', widget.getId());\n        this._domNode.appendChild(domNode);\n        this.setShouldRender();\n    }\n    setWidgetPosition(widget, preference) {\n        const widgetData = this._widgets[widget.getId()];\n        if (widgetData.preference === preference) {\n            return false;\n        }\n        widgetData.preference = preference;\n        this.setShouldRender();\n        return true;\n    }\n    removeWidget(widget) {\n        const widgetId = widget.getId();\n        if (this._widgets.hasOwnProperty(widgetId)) {\n            const widgetData = this._widgets[widgetId];\n            const domNode = widgetData.domNode.domNode;\n            delete this._widgets[widgetId];\n            domNode.parentNode.removeChild(domNode);\n            this.setShouldRender();\n        }\n    }\n    _renderWidget(widgetData) {\n        const domNode = widgetData.domNode;\n        if (widgetData.preference === null) {\n            domNode.unsetTop();\n            return;\n        }\n        if (widgetData.preference === 0 /* TOP_RIGHT_CORNER */) {\n            domNode.setTop(0);\n            domNode.setRight((2 * this._verticalScrollbarWidth) + this._minimapWidth);\n        }\n        else if (widgetData.preference === 1 /* BOTTOM_RIGHT_CORNER */) {\n            const widgetHeight = domNode.domNode.clientHeight;\n            domNode.setTop((this._editorHeight - widgetHeight - 2 * this._horizontalScrollbarHeight));\n            domNode.setRight((2 * this._verticalScrollbarWidth) + this._minimapWidth);\n        }\n        else if (widgetData.preference === 2 /* TOP_CENTER */) {\n            domNode.setTop(0);\n            domNode.domNode.style.right = '50%';\n        }\n    }\n    prepareRender(ctx) {\n        // Nothing to read\n    }\n    render(ctx) {\n        this._domNode.setWidth(this._editorWidth);\n        const keys = Object.keys(this._widgets);\n        for (let i = 0, len = keys.length; i < len; i++) {\n            const widgetId = keys[i];\n            this._renderWidget(this._widgets[widgetId]);\n        }\n    }\n}\n",
+      "start": 1711096856382,
+      "end": 1711096856454,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856454,
+      "end": 1711096856454,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856454,
+      "end": 1711096856455,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856455,
+      "end": 1711096856455,
+      "order": "normal"
+    }
+  ]
+}

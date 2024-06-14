@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/errors.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n// Avoid circular dependency on EventEmitter by implementing a subset of the interface.\nexport class ErrorHandler {\n    constructor() {\n        this.listeners = [];\n        this.unexpectedErrorHandler = function (e) {\n            setTimeout(() => {\n                if (e.stack) {\n                    throw new Error(e.message + '\\n\\n' + e.stack);\n                }\n                throw e;\n            }, 0);\n        };\n    }\n    emit(e) {\n        this.listeners.forEach((listener) => {\n            listener(e);\n        });\n    }\n    onUnexpectedError(e) {\n        this.unexpectedErrorHandler(e);\n        this.emit(e);\n    }\n    // For external errors, we don't want the listeners to be called\n    onUnexpectedExternalError(e) {\n        this.unexpectedErrorHandler(e);\n    }\n}\nexport const errorHandler = new ErrorHandler();\nexport function onUnexpectedError(e) {\n    // ignore errors from cancelled promises\n    if (!isCancellationError(e)) {\n        errorHandler.onUnexpectedError(e);\n    }\n    return undefined;\n}\nexport function onUnexpectedExternalError(e) {\n    // ignore errors from cancelled promises\n    if (!isCancellationError(e)) {\n        errorHandler.onUnexpectedExternalError(e);\n    }\n    return undefined;\n}\nexport function transformErrorForSerialization(error) {\n    if (error instanceof Error) {\n        let { name, message } = error;\n        const stack = error.stacktrace || error.stack;\n        return {\n            $isError: true,\n            name,\n            message,\n            stack\n        };\n    }\n    // return as is\n    return error;\n}\nconst canceledName = 'Canceled';\n/**\n * Checks if the given error is a promise in canceled state\n */\nexport function isCancellationError(error) {\n    if (error instanceof CancellationError) {\n        return true;\n    }\n    return error instanceof Error && error.name === canceledName && error.message === canceledName;\n}\n// !!!IMPORTANT!!!\n// Do NOT change this class because it is also used as an API-type.\nexport class CancellationError extends Error {\n    constructor() {\n        super(canceledName);\n        this.name = this.message;\n    }\n}\n/**\n * @deprecated use {@link CancellationError `new CancellationError()`} instead\n */\nexport function canceled() {\n    const error = new Error(canceledName);\n    error.name = error.message;\n    return error;\n}\nexport function illegalArgument(name) {\n    if (name) {\n        return new Error(`Illegal argument: ${name}`);\n    }\n    else {\n        return new Error('Illegal argument');\n    }\n}\nexport function illegalState(name) {\n    if (name) {\n        return new Error(`Illegal state: ${name}`);\n    }\n    else {\n        return new Error('Illegal state');\n    }\n}\nexport class NotSupportedError extends Error {\n    constructor(message) {\n        super('NotSupported');\n        if (message) {\n            this.message = message;\n        }\n    }\n}\n",
+      "start": 1711096855094,
+      "end": 1711096855235,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855236,
+      "end": 1711096855236,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855236,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    }
+  ]
+}

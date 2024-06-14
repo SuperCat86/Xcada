@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/wordContextKey.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nlet WordContextKey = class WordContextKey {\n    constructor(_editor, contextKeyService) {\n        this._editor = _editor;\n        this._enabled = false;\n        this._ckAtEnd = WordContextKey.AtEnd.bindTo(contextKeyService);\n        this._configListener = this._editor.onDidChangeConfiguration(e => e.hasChanged(111 /* tabCompletion */) && this._update());\n        this._update();\n    }\n    dispose() {\n        var _a;\n        this._configListener.dispose();\n        (_a = this._selectionListener) === null || _a === void 0 ? void 0 : _a.dispose();\n        this._ckAtEnd.reset();\n    }\n    _update() {\n        // only update this when tab completions are enabled\n        const enabled = this._editor.getOption(111 /* tabCompletion */) === 'on';\n        if (this._enabled === enabled) {\n            return;\n        }\n        this._enabled = enabled;\n        if (this._enabled) {\n            const checkForWordEnd = () => {\n                if (!this._editor.hasModel()) {\n                    this._ckAtEnd.set(false);\n                    return;\n                }\n                const model = this._editor.getModel();\n                const selection = this._editor.getSelection();\n                const word = model.getWordAtPosition(selection.getStartPosition());\n                if (!word) {\n                    this._ckAtEnd.set(false);\n                    return;\n                }\n                this._ckAtEnd.set(word.endColumn === selection.getStartPosition().column);\n            };\n            this._selectionListener = this._editor.onDidChangeCursorSelection(checkForWordEnd);\n            checkForWordEnd();\n        }\n        else if (this._selectionListener) {\n            this._ckAtEnd.reset();\n            this._selectionListener.dispose();\n            this._selectionListener = undefined;\n        }\n    }\n};\nWordContextKey.AtEnd = new RawContextKey('atEndOfWord', false);\nWordContextKey = __decorate([\n    __param(1, IContextKeyService)\n], WordContextKey);\nexport { WordContextKey };\n",
+      "start": 1711096855923,
+      "end": 1711096856029,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856029,
+      "end": 1711096856029,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856029,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856030,
+      "end": 1711096856030,
+      "order": "normal"
+    }
+  ]
+}

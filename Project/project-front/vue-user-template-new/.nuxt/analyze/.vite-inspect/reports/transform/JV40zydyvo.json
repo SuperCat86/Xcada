@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/services/languageService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { LanguagesRegistry } from './languagesRegistry.js';\nimport { firstOrDefault } from '../../../base/common/arrays.js';\nimport { TokenizationRegistry } from '../languages.js';\nimport { PLAINTEXT_LANGUAGE_ID } from '../languages/modesRegistry.js';\nexport class LanguageService extends Disposable {\n    constructor(warnOnOverwrite = false) {\n        super();\n        this._onDidEncounterLanguage = this._register(new Emitter());\n        this.onDidEncounterLanguage = this._onDidEncounterLanguage.event;\n        this._onDidChange = this._register(new Emitter({ leakWarningThreshold: 200 /* https://github.com/microsoft/vscode/issues/119968 */ }));\n        this.onDidChange = this._onDidChange.event;\n        LanguageService.instanceCount++;\n        this._encounteredLanguages = new Set();\n        this._registry = this._register(new LanguagesRegistry(true, warnOnOverwrite));\n        this.languageIdCodec = this._registry.languageIdCodec;\n        this._register(this._registry.onDidChange(() => this._onDidChange.fire()));\n    }\n    dispose() {\n        LanguageService.instanceCount--;\n        super.dispose();\n    }\n    isRegisteredLanguageId(languageId) {\n        return this._registry.isRegisteredLanguageId(languageId);\n    }\n    getLanguageIdByLanguageName(languageName) {\n        return this._registry.getLanguageIdByLanguageName(languageName);\n    }\n    getLanguageIdByMimeType(mimeType) {\n        return this._registry.getLanguageIdByMimeType(mimeType);\n    }\n    guessLanguageIdByFilepathOrFirstLine(resource, firstLine) {\n        const languageIds = this._registry.guessLanguageIdByFilepathOrFirstLine(resource, firstLine);\n        return firstOrDefault(languageIds, null);\n    }\n    createById(languageId) {\n        return new LanguageSelection(this.onDidChange, () => {\n            return this._createAndGetLanguageIdentifier(languageId);\n        });\n    }\n    createByFilepathOrFirstLine(resource, firstLine) {\n        return new LanguageSelection(this.onDidChange, () => {\n            const languageId = this.guessLanguageIdByFilepathOrFirstLine(resource, firstLine);\n            return this._createAndGetLanguageIdentifier(languageId);\n        });\n    }\n    _createAndGetLanguageIdentifier(languageId) {\n        if (!languageId || !this.isRegisteredLanguageId(languageId)) {\n            // Fall back to plain text if language is unknown\n            languageId = PLAINTEXT_LANGUAGE_ID;\n        }\n        if (!this._encounteredLanguages.has(languageId)) {\n            this._encounteredLanguages.add(languageId);\n            // Ensure tokenizers are created\n            TokenizationRegistry.getOrCreate(languageId);\n            // Fire event\n            this._onDidEncounterLanguage.fire(languageId);\n        }\n        return languageId;\n    }\n}\nLanguageService.instanceCount = 0;\nclass LanguageSelection {\n    constructor(_onDidChangeLanguages, _selector) {\n        this._onDidChangeLanguages = _onDidChangeLanguages;\n        this._selector = _selector;\n        this._listener = null;\n        this._emitter = null;\n        this.languageId = this._selector();\n    }\n    _dispose() {\n        if (this._listener) {\n            this._listener.dispose();\n            this._listener = null;\n        }\n        if (this._emitter) {\n            this._emitter.dispose();\n            this._emitter = null;\n        }\n    }\n    get onDidChange() {\n        if (!this._listener) {\n            this._listener = this._onDidChangeLanguages(() => this._evaluate());\n        }\n        if (!this._emitter) {\n            this._emitter = new Emitter({\n                onLastListenerRemove: () => {\n                    this._dispose();\n                }\n            });\n        }\n        return this._emitter.event;\n    }\n    _evaluate() {\n        const languageId = this._selector();\n        if (languageId === this.languageId) {\n            // no change\n            return;\n        }\n        this.languageId = languageId;\n        if (this._emitter) {\n            this._emitter.fire(this.languageId);\n        }\n    }\n}\n",
+      "start": 1711096856271,
+      "end": 1711096856344,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    }
+  ]
+}

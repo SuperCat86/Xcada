@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/documentSymbols/browser/outlineModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { equals } from '../../../../base/common/arrays.js';\nimport { CancellationTokenSource } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { Iterable } from '../../../../base/common/iterator.js';\nimport { LRUCache } from '../../../../base/common/map.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { IModelService } from '../../../common/services/model.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nexport class TreeElement {\n    remove() {\n        if (this.parent) {\n            this.parent.children.delete(this.id);\n        }\n    }\n    static findId(candidate, container) {\n        // complex id-computation which contains the origin/extension,\n        // the parent path, and some dedupe logic when names collide\n        let candidateId;\n        if (typeof candidate === 'string') {\n            candidateId = `${container.id}/${candidate}`;\n        }\n        else {\n            candidateId = `${container.id}/${candidate.name}`;\n            if (container.children.get(candidateId) !== undefined) {\n                candidateId = `${container.id}/${candidate.name}_${candidate.range.startLineNumber}_${candidate.range.startColumn}`;\n            }\n        }\n        let id = candidateId;\n        for (let i = 0; container.children.get(id) !== undefined; i++) {\n            id = `${candidateId}_${i}`;\n        }\n        return id;\n    }\n    static empty(element) {\n        return element.children.size === 0;\n    }\n}\nexport class OutlineElement extends TreeElement {\n    constructor(id, parent, symbol) {\n        super();\n        this.id = id;\n        this.parent = parent;\n        this.symbol = symbol;\n        this.children = new Map();\n    }\n}\nexport class OutlineGroup extends TreeElement {\n    constructor(id, parent, label, order) {\n        super();\n        this.id = id;\n        this.parent = parent;\n        this.label = label;\n        this.order = order;\n        this.children = new Map();\n    }\n}\nexport class OutlineModel extends TreeElement {\n    constructor(uri) {\n        super();\n        this.uri = uri;\n        this.id = 'root';\n        this.parent = undefined;\n        this._groups = new Map();\n        this.children = new Map();\n        this.id = 'root';\n        this.parent = undefined;\n    }\n    static create(registry, textModel, token) {\n        const cts = new CancellationTokenSource(token);\n        const result = new OutlineModel(textModel.uri);\n        const provider = registry.ordered(textModel);\n        const promises = provider.map((provider, index) => {\n            var _a;\n            let id = TreeElement.findId(`provider_${index}`, result);\n            let group = new OutlineGroup(id, result, (_a = provider.displayName) !== null && _a !== void 0 ? _a : 'Unknown Outline Provider', index);\n            return Promise.resolve(provider.provideDocumentSymbols(textModel, cts.token)).then(result => {\n                for (const info of result || []) {\n                    OutlineModel._makeOutlineElement(info, group);\n                }\n                return group;\n            }, err => {\n                onUnexpectedExternalError(err);\n                return group;\n            }).then(group => {\n                if (!TreeElement.empty(group)) {\n                    result._groups.set(id, group);\n                }\n                else {\n                    group.remove();\n                }\n            });\n        });\n        const listener = registry.onDidChange(() => {\n            const newProvider = registry.ordered(textModel);\n            if (!equals(newProvider, provider)) {\n                cts.cancel();\n            }\n        });\n        return Promise.all(promises).then(() => {\n            if (cts.token.isCancellationRequested && !token.isCancellationRequested) {\n                return OutlineModel.create(registry, textModel, token);\n            }\n            else {\n                return result._compact();\n            }\n        }).finally(() => {\n            listener.dispose();\n        });\n    }\n    static _makeOutlineElement(info, container) {\n        let id = TreeElement.findId(info, container);\n        let res = new OutlineElement(id, container, info);\n        if (info.children) {\n            for (const childInfo of info.children) {\n                OutlineModel._makeOutlineElement(childInfo, res);\n            }\n        }\n        container.children.set(res.id, res);\n    }\n    _compact() {\n        let count = 0;\n        for (const [key, group] of this._groups) {\n            if (group.children.size === 0) { // empty\n                this._groups.delete(key);\n            }\n            else {\n                count += 1;\n            }\n        }\n        if (count !== 1) {\n            //\n            this.children = this._groups;\n        }\n        else {\n            // adopt all elements of the first group\n            let group = Iterable.first(this._groups.values());\n            for (let [, child] of group.children) {\n                child.parent = this;\n                this.children.set(child.id, child);\n            }\n        }\n        return this;\n    }\n    getTopLevelSymbols() {\n        const roots = [];\n        for (const child of this.children.values()) {\n            if (child instanceof OutlineElement) {\n                roots.push(child.symbol);\n            }\n            else {\n                roots.push(...Iterable.map(child.children.values(), child => child.symbol));\n            }\n        }\n        return roots.sort((a, b) => Range.compareRangesUsingStarts(a.range, b.range));\n    }\n    asListOfDocumentSymbols() {\n        const roots = this.getTopLevelSymbols();\n        const bucket = [];\n        OutlineModel._flattenDocumentSymbols(bucket, roots, '');\n        return bucket.sort((a, b) => Position.compare(Range.getStartPosition(a.range), Range.getStartPosition(b.range)) || Position.compare(Range.getEndPosition(b.range), Range.getEndPosition(a.range)));\n    }\n    static _flattenDocumentSymbols(bucket, entries, overrideContainerLabel) {\n        for (const entry of entries) {\n            bucket.push({\n                kind: entry.kind,\n                tags: entry.tags,\n                name: entry.name,\n                detail: entry.detail,\n                containerName: entry.containerName || overrideContainerLabel,\n                range: entry.range,\n                selectionRange: entry.selectionRange,\n                children: undefined, // we flatten it...\n            });\n            // Recurse over children\n            if (entry.children) {\n                OutlineModel._flattenDocumentSymbols(bucket, entry.children, entry.name);\n            }\n        }\n    }\n}\nexport const IOutlineModelService = createDecorator('IOutlineModelService');\nlet OutlineModelService = class OutlineModelService {\n    constructor(_languageFeaturesService, debounces, modelService) {\n        this._languageFeaturesService = _languageFeaturesService;\n        this._disposables = new DisposableStore();\n        this._cache = new LRUCache(10, 0.7);\n        this._debounceInformation = debounces.for(_languageFeaturesService.documentSymbolProvider, 'DocumentSymbols', { min: 350 });\n        // don't cache outline models longer than their text model\n        this._disposables.add(modelService.onModelRemoved(textModel => {\n            this._cache.delete(textModel.id);\n        }));\n    }\n    dispose() {\n        this._disposables.dispose();\n    }\n    getOrCreate(textModel, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const registry = this._languageFeaturesService.documentSymbolProvider;\n            const provider = registry.ordered(textModel);\n            let data = this._cache.get(textModel.id);\n            if (!data || data.versionId !== textModel.getVersionId() || !equals(data.provider, provider)) {\n                let source = new CancellationTokenSource();\n                data = {\n                    versionId: textModel.getVersionId(),\n                    provider,\n                    promiseCnt: 0,\n                    source,\n                    promise: OutlineModel.create(registry, textModel, source.token),\n                    model: undefined,\n                };\n                this._cache.set(textModel.id, data);\n                const now = Date.now();\n                data.promise.then(outlineModel => {\n                    data.model = outlineModel;\n                    this._debounceInformation.update(textModel, Date.now() - now);\n                }).catch(_err => {\n                    this._cache.delete(textModel.id);\n                });\n            }\n            if (data.model) {\n                // resolved -> return data\n                return data.model;\n            }\n            // increase usage counter\n            data.promiseCnt += 1;\n            const listener = token.onCancellationRequested(() => {\n                // last -> cancel provider request, remove cached promise\n                if (--data.promiseCnt === 0) {\n                    data.source.cancel();\n                    this._cache.delete(textModel.id);\n                }\n            });\n            try {\n                return yield data.promise;\n            }\n            finally {\n                listener.dispose();\n            }\n        });\n    }\n};\nOutlineModelService = __decorate([\n    __param(0, ILanguageFeaturesService),\n    __param(1, ILanguageFeatureDebounceService),\n    __param(2, IModelService)\n], OutlineModelService);\nexport { OutlineModelService };\nregisterSingleton(IOutlineModelService, OutlineModelService, true);\n",
+      "start": 1711096854958,
+      "end": 1711096855081,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855081,
+      "end": 1711096855081,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855081,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855082,
+      "end": 1711096855082,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855082,
+      "end": 1711096855083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855083,
+      "end": 1711096855083,
+      "order": "normal"
+    }
+  ]
+}

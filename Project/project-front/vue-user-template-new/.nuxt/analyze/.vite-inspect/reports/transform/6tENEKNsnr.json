@@ -1,0 +1,212 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/language/css/monaco.contribution.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "import '../../editor/editor.api.js';\n/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __reExport = (target, module, copyDefault, desc) => {\n  if (module && typeof module === \"object\" || typeof module === \"function\") {\n    for (let key of __getOwnPropNames(module))\n      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\"))\n        __defProp(target, key, { get: () => module[key], enumerable: !(desc = __getOwnPropDesc(module, key)) || desc.enumerable });\n  }\n  return target;\n};\n\n// src/fillers/monaco-editor-core.ts\nvar monaco_editor_core_exports = {};\n__reExport(monaco_editor_core_exports, monaco_editor_core_star);\nimport * as monaco_editor_core_star from \"../../editor/editor.api.js\";\n\n// src/language/css/monaco.contribution.ts\nvar LanguageServiceDefaultsImpl = class {\n  _onDidChange = new monaco_editor_core_exports.Emitter();\n  _options;\n  _modeConfiguration;\n  _languageId;\n  constructor(languageId, options, modeConfiguration) {\n    this._languageId = languageId;\n    this.setOptions(options);\n    this.setModeConfiguration(modeConfiguration);\n  }\n  get onDidChange() {\n    return this._onDidChange.event;\n  }\n  get languageId() {\n    return this._languageId;\n  }\n  get modeConfiguration() {\n    return this._modeConfiguration;\n  }\n  get diagnosticsOptions() {\n    return this.options;\n  }\n  get options() {\n    return this._options;\n  }\n  setOptions(options) {\n    this._options = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(this);\n  }\n  setDiagnosticsOptions(options) {\n    this.setOptions(options);\n  }\n  setModeConfiguration(modeConfiguration) {\n    this._modeConfiguration = modeConfiguration || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(this);\n  }\n};\nvar optionsDefault = {\n  validate: true,\n  lint: {\n    compatibleVendorPrefixes: \"ignore\",\n    vendorPrefix: \"warning\",\n    duplicateProperties: \"warning\",\n    emptyRules: \"warning\",\n    importStatement: \"ignore\",\n    boxModel: \"ignore\",\n    universalSelector: \"ignore\",\n    zeroUnits: \"ignore\",\n    fontFaceProperties: \"warning\",\n    hexColorLength: \"error\",\n    argumentsInColorFunction: \"error\",\n    unknownProperties: \"warning\",\n    ieHack: \"ignore\",\n    unknownVendorSpecificProperties: \"ignore\",\n    propertyIgnoredDueToDisplay: \"warning\",\n    important: \"ignore\",\n    float: \"ignore\",\n    idSelector: \"ignore\"\n  },\n  data: { useDefaultDataProvider: true }\n};\nvar modeConfigurationDefault = {\n  completionItems: true,\n  hovers: true,\n  documentSymbols: true,\n  definitions: true,\n  references: true,\n  documentHighlights: true,\n  rename: true,\n  colors: true,\n  foldingRanges: true,\n  diagnostics: true,\n  selectionRanges: true\n};\nvar cssDefaults = new LanguageServiceDefaultsImpl(\"css\", optionsDefault, modeConfigurationDefault);\nvar scssDefaults = new LanguageServiceDefaultsImpl(\"scss\", optionsDefault, modeConfigurationDefault);\nvar lessDefaults = new LanguageServiceDefaultsImpl(\"less\", optionsDefault, modeConfigurationDefault);\nmonaco_editor_core_exports.languages.css = { cssDefaults, lessDefaults, scssDefaults };\nfunction getMode() {\n  if (false) {\n    return new Promise((resolve, reject) => {\n      __require([\"vs/language/css/cssMode\"], resolve, reject);\n    });\n  } else {\n    return import(\"./cssMode.js\");\n  }\n}\nmonaco_editor_core_exports.languages.onLanguage(\"less\", () => {\n  getMode().then((mode) => mode.setupMode(lessDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"scss\", () => {\n  getMode().then((mode) => mode.setupMode(scssDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"css\", () => {\n  getMode().then((mode) => mode.setupMode(cssDefaults));\n});\nexport {\n  cssDefaults,\n  lessDefaults,\n  scssDefaults\n};\n",
+      "start": 1711096853397,
+      "end": 1711096853679,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853679,
+      "end": 1711096853679,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853679,
+      "end": 1711096853680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";import '../../editor/editor.api.js';\n/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __reExport = (target, module, copyDefault, desc) => {\n  if (module && typeof module === \"object\" || typeof module === \"function\") {\n    for (let key of __getOwnPropNames(module))\n      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\"))\n        __defProp(target, key, { get: () => module[key], enumerable: !(desc = __getOwnPropDesc(module, key)) || desc.enumerable });\n  }\n  return target;\n};\n\n// src/fillers/monaco-editor-core.ts\nvar monaco_editor_core_exports = {};\n__reExport(monaco_editor_core_exports, monaco_editor_core_star);\nimport * as monaco_editor_core_star from \"../../editor/editor.api.js\";\n\n// src/language/css/monaco.contribution.ts\nvar LanguageServiceDefaultsImpl = class {\n  _onDidChange = new monaco_editor_core_exports.Emitter();\n  _options;\n  _modeConfiguration;\n  _languageId;\n  constructor(languageId, options, modeConfiguration) {\n    this._languageId = languageId;\n    this.setOptions(options);\n    this.setModeConfiguration(modeConfiguration);\n  }\n  get onDidChange() {\n    return this._onDidChange.event;\n  }\n  get languageId() {\n    return this._languageId;\n  }\n  get modeConfiguration() {\n    return this._modeConfiguration;\n  }\n  get diagnosticsOptions() {\n    return this.options;\n  }\n  get options() {\n    return this._options;\n  }\n  setOptions(options) {\n    this._options = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(this);\n  }\n  setDiagnosticsOptions(options) {\n    this.setOptions(options);\n  }\n  setModeConfiguration(modeConfiguration) {\n    this._modeConfiguration = modeConfiguration || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(this);\n  }\n};\nvar optionsDefault = {\n  validate: true,\n  lint: {\n    compatibleVendorPrefixes: \"ignore\",\n    vendorPrefix: \"warning\",\n    duplicateProperties: \"warning\",\n    emptyRules: \"warning\",\n    importStatement: \"ignore\",\n    boxModel: \"ignore\",\n    universalSelector: \"ignore\",\n    zeroUnits: \"ignore\",\n    fontFaceProperties: \"warning\",\n    hexColorLength: \"error\",\n    argumentsInColorFunction: \"error\",\n    unknownProperties: \"warning\",\n    ieHack: \"ignore\",\n    unknownVendorSpecificProperties: \"ignore\",\n    propertyIgnoredDueToDisplay: \"warning\",\n    important: \"ignore\",\n    float: \"ignore\",\n    idSelector: \"ignore\"\n  },\n  data: { useDefaultDataProvider: true }\n};\nvar modeConfigurationDefault = {\n  completionItems: true,\n  hovers: true,\n  documentSymbols: true,\n  definitions: true,\n  references: true,\n  documentHighlights: true,\n  rename: true,\n  colors: true,\n  foldingRanges: true,\n  diagnostics: true,\n  selectionRanges: true\n};\nvar cssDefaults = new LanguageServiceDefaultsImpl(\"css\", optionsDefault, modeConfigurationDefault);\nvar scssDefaults = new LanguageServiceDefaultsImpl(\"scss\", optionsDefault, modeConfigurationDefault);\nvar lessDefaults = new LanguageServiceDefaultsImpl(\"less\", optionsDefault, modeConfigurationDefault);\nmonaco_editor_core_exports.languages.css = { cssDefaults, lessDefaults, scssDefaults };\nfunction getMode() {\n  if (false) {\n    return new Promise((resolve, reject) => {\n      __require([\"vs/language/css/cssMode\"], resolve, reject);\n    });\n  } else {\n    return __vitePreload(() => import(\"./cssMode.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url);\n  }\n}\nmonaco_editor_core_exports.languages.onLanguage(\"less\", () => {\n  getMode().then((mode) => mode.setupMode(lessDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"scss\", () => {\n  getMode().then((mode) => mode.setupMode(scssDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"css\", () => {\n  getMode().then((mode) => mode.setupMode(cssDefaults));\n});\nexport {\n  cssDefaults,\n  lessDefaults,\n  scssDefaults\n};\n",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853680,
+      "end": 1711096853680,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/bracketPairsTree/length.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { splitLines } from '../../../../../base/common/strings.js';\nimport { Range } from '../../../core/range.js';\n/**\n * Represents a non-negative length in terms of line and column count.\n * Prefer using {@link Length} for performance reasons.\n*/\nexport class LengthObj {\n    constructor(lineCount, columnCount) {\n        this.lineCount = lineCount;\n        this.columnCount = columnCount;\n    }\n    toString() {\n        return `${this.lineCount},${this.columnCount}`;\n    }\n}\nLengthObj.zero = new LengthObj(0, 0);\n/**\n * The end must be greater than or equal to the start.\n*/\nexport function lengthDiff(startLineCount, startColumnCount, endLineCount, endColumnCount) {\n    return (startLineCount !== endLineCount)\n        ? toLength(endLineCount - startLineCount, endColumnCount)\n        : toLength(0, endColumnCount - startColumnCount);\n}\nexport const lengthZero = 0;\nexport function lengthIsZero(length) {\n    return length === 0;\n}\n/*\n * We have 52 bits available in a JS number.\n * We use the upper 26 bits to store the line and the lower 26 bits to store the column.\n *\n * Set boolean to `true` when debugging, so that debugging is easier.\n */\nconst factor = /* is debug: */ false ? 100000 : Math.pow(2, 26);\nexport function toLength(lineCount, columnCount) {\n    // llllllllllllllllllllllllllcccccccccccccccccccccccccc (52 bits)\n    //       line count (26 bits)    column count (26 bits)\n    // If there is no overflow (all values/sums below 2^26 = 67108864),\n    // we have `toLength(lns1, cols1) + toLength(lns2, cols2) = toLength(lns1 + lns2, cols1 + cols2)`.\n    return (lineCount * factor + columnCount);\n}\nexport function lengthToObj(length) {\n    const l = length;\n    const lineCount = Math.floor(l / factor);\n    const columnCount = l - lineCount * factor;\n    return new LengthObj(lineCount, columnCount);\n}\nexport function lengthGetLineCount(length) {\n    return Math.floor(length / factor);\n}\n/**\n * Returns the amount of columns of the given length, assuming that it does not span any line.\n*/\nexport function lengthGetColumnCountIfZeroLineCount(length) {\n    return length;\n}\nexport function lengthAdd(l1, l2) {\n    return ((l2 < factor)\n        ? (l1 + l2) // l2 is the amount of columns (zero line count). Keep the column count from l1.\n        : (l1 - (l1 % factor) + l2)); // l1 - (l1 % factor) equals toLength(l1.lineCount, 0)\n}\n/**\n * Returns a non negative length `result` such that `lengthAdd(length1, result) = length2`, or zero if such length does not exist.\n */\nexport function lengthDiffNonNegative(length1, length2) {\n    const l1 = length1;\n    const l2 = length2;\n    const diff = l2 - l1;\n    if (diff <= 0) {\n        // line-count of length1 is higher than line-count of length2\n        // or they are equal and column-count of length1 is higher than column-count of length2\n        return lengthZero;\n    }\n    const lineCount1 = Math.floor(l1 / factor);\n    const lineCount2 = Math.floor(l2 / factor);\n    const colCount2 = l2 - lineCount2 * factor;\n    if (lineCount1 === lineCount2) {\n        const colCount1 = l1 - lineCount1 * factor;\n        return toLength(0, colCount2 - colCount1);\n    }\n    else {\n        return toLength(lineCount2 - lineCount1, colCount2);\n    }\n}\nexport function lengthLessThan(length1, length2) {\n    // First, compare line counts, then column counts.\n    return length1 < length2;\n}\nexport function lengthLessThanEqual(length1, length2) {\n    return length1 <= length2;\n}\nexport function lengthGreaterThanEqual(length1, length2) {\n    return length1 >= length2;\n}\nexport function positionToLength(position) {\n    return toLength(position.lineNumber - 1, position.column - 1);\n}\nexport function lengthsToRange(lengthStart, lengthEnd) {\n    const l = lengthStart;\n    const lineCount = Math.floor(l / factor);\n    const colCount = l - lineCount * factor;\n    const l2 = lengthEnd;\n    const lineCount2 = Math.floor(l2 / factor);\n    const colCount2 = l2 - lineCount2 * factor;\n    return new Range(lineCount + 1, colCount + 1, lineCount2 + 1, colCount2 + 1);\n}\nexport function lengthOfString(str) {\n    const lines = splitLines(str);\n    return toLength(lines.length - 1, lines[lines.length - 1].length);\n}\n",
+      "start": 1711096857592,
+      "end": 1711096857681,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857681,
+      "end": 1711096857681,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857681,
+      "end": 1711096857681,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857681,
+      "end": 1711096857681,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857682,
+      "end": 1711096857682,
+      "order": "normal"
+    }
+  ]
+}

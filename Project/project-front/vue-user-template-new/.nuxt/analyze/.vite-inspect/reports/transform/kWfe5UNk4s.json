@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestAlternatives.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nlet SuggestAlternatives = class SuggestAlternatives {\n    constructor(_editor, contextKeyService) {\n        this._editor = _editor;\n        this._index = 0;\n        this._ckOtherSuggestions = SuggestAlternatives.OtherSuggestions.bindTo(contextKeyService);\n    }\n    dispose() {\n        this.reset();\n    }\n    reset() {\n        var _a;\n        this._ckOtherSuggestions.reset();\n        (_a = this._listener) === null || _a === void 0 ? void 0 : _a.dispose();\n        this._model = undefined;\n        this._acceptNext = undefined;\n        this._ignore = false;\n    }\n    set({ model, index }, acceptNext) {\n        // no suggestions -> nothing to do\n        if (model.items.length === 0) {\n            this.reset();\n            return;\n        }\n        // no alternative suggestions -> nothing to do\n        let nextIndex = SuggestAlternatives._moveIndex(true, model, index);\n        if (nextIndex === index) {\n            this.reset();\n            return;\n        }\n        this._acceptNext = acceptNext;\n        this._model = model;\n        this._index = index;\n        this._listener = this._editor.onDidChangeCursorPosition(() => {\n            if (!this._ignore) {\n                this.reset();\n            }\n        });\n        this._ckOtherSuggestions.set(true);\n    }\n    static _moveIndex(fwd, model, index) {\n        let newIndex = index;\n        while (true) {\n            newIndex = (newIndex + model.items.length + (fwd ? +1 : -1)) % model.items.length;\n            if (newIndex === index) {\n                break;\n            }\n            if (!model.items[newIndex].completion.additionalTextEdits) {\n                break;\n            }\n        }\n        return newIndex;\n    }\n    next() {\n        this._move(true);\n    }\n    prev() {\n        this._move(false);\n    }\n    _move(fwd) {\n        if (!this._model) {\n            // nothing to reason about\n            return;\n        }\n        try {\n            this._ignore = true;\n            this._index = SuggestAlternatives._moveIndex(fwd, this._model, this._index);\n            this._acceptNext({ index: this._index, item: this._model.items[this._index], model: this._model });\n        }\n        finally {\n            this._ignore = false;\n        }\n    }\n};\nSuggestAlternatives.OtherSuggestions = new RawContextKey('hasOtherSuggestions', false);\nSuggestAlternatives = __decorate([\n    __param(1, IContextKeyService)\n], SuggestAlternatives);\nexport { SuggestAlternatives };\n",
+      "start": 1711096855969,
+      "end": 1711096856066,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856066,
+      "end": 1711096856066,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856067,
+      "end": 1711096856067,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/suggestWidgetPreviewModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { createCancelablePromise, RunOnceScheduler } from '../../../../base/common/async.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { InlineCompletionTriggerKind } from '../../../common/languages.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { BaseGhostTextWidgetModel, GhostText } from './ghostText.js';\nimport { minimizeInlineCompletion, provideInlineCompletions, UpdateOperation } from './inlineCompletionsModel.js';\nimport { inlineCompletionToGhostText } from './inlineCompletionToGhostText.js';\nimport { SuggestWidgetInlineCompletionProvider } from './suggestWidgetInlineCompletionProvider.js';\nlet SuggestWidgetPreviewModel = class SuggestWidgetPreviewModel extends BaseGhostTextWidgetModel {\n    constructor(editor, cache, languageFeaturesService) {\n        super(editor);\n        this.cache = cache;\n        this.languageFeaturesService = languageFeaturesService;\n        this.suggestionInlineCompletionSource = this._register(new SuggestWidgetInlineCompletionProvider(this.editor, \n        // Use the first cache item (if any) as preselection.\n        () => { var _a, _b; return (_b = (_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.completions[0]) === null || _b === void 0 ? void 0 : _b.toLiveInlineCompletion(); }));\n        this.updateOperation = this._register(new MutableDisposable());\n        this.updateCacheSoon = this._register(new RunOnceScheduler(() => this.updateCache(), 50));\n        this.minReservedLineCount = 0;\n        this._register(this.suggestionInlineCompletionSource.onDidChange(() => {\n            this.updateCacheSoon.schedule();\n            const suggestWidgetState = this.suggestionInlineCompletionSource.state;\n            if (!suggestWidgetState) {\n                this.minReservedLineCount = 0;\n            }\n            const newGhostText = this.ghostText;\n            if (newGhostText) {\n                this.minReservedLineCount = Math.max(this.minReservedLineCount, sum(newGhostText.parts.map(p => p.lines.length - 1)));\n            }\n            if (this.minReservedLineCount >= 1) {\n                this.suggestionInlineCompletionSource.forceRenderingAbove();\n            }\n            else {\n                this.suggestionInlineCompletionSource.stopForceRenderingAbove();\n            }\n            this.onDidChangeEmitter.fire();\n        }));\n        this._register(this.cache.onDidChange(() => {\n            this.onDidChangeEmitter.fire();\n        }));\n        this._register(this.editor.onDidChangeCursorPosition((e) => {\n            this.minReservedLineCount = 0;\n            this.updateCacheSoon.schedule();\n            this.onDidChangeEmitter.fire();\n        }));\n        this._register(toDisposable(() => this.suggestionInlineCompletionSource.stopForceRenderingAbove()));\n    }\n    get isActive() {\n        return this.suggestionInlineCompletionSource.state !== undefined;\n    }\n    isSuggestionPreviewEnabled() {\n        const suggestOptions = this.editor.getOption(106 /* suggest */);\n        return suggestOptions.preview;\n    }\n    updateCache() {\n        return __awaiter(this, void 0, void 0, function* () {\n            const state = this.suggestionInlineCompletionSource.state;\n            if (!state || !state.selectedItem) {\n                return;\n            }\n            const info = {\n                text: state.selectedItem.normalizedInlineCompletion.text,\n                range: state.selectedItem.normalizedInlineCompletion.range,\n                isSnippetText: state.selectedItem.isSnippetText,\n                completionKind: state.selectedItem.completionItemKind,\n            };\n            const position = this.editor.getPosition();\n            const promise = createCancelablePromise((token) => __awaiter(this, void 0, void 0, function* () {\n                let result;\n                try {\n                    result = yield provideInlineCompletions(this.languageFeaturesService.inlineCompletionsProvider, position, this.editor.getModel(), { triggerKind: InlineCompletionTriggerKind.Automatic, selectedSuggestionInfo: info }, token);\n                }\n                catch (e) {\n                    onUnexpectedError(e);\n                    return;\n                }\n                if (token.isCancellationRequested) {\n                    return;\n                }\n                this.cache.setValue(this.editor, result, InlineCompletionTriggerKind.Automatic);\n                this.onDidChangeEmitter.fire();\n            }));\n            const operation = new UpdateOperation(promise, InlineCompletionTriggerKind.Automatic);\n            this.updateOperation.value = operation;\n            yield promise;\n            if (this.updateOperation.value === operation) {\n                this.updateOperation.clear();\n            }\n        });\n    }\n    get ghostText() {\n        var _a, _b, _c;\n        const isSuggestionPreviewEnabled = this.isSuggestionPreviewEnabled();\n        const augmentedCompletion = minimizeInlineCompletion(this.editor.getModel(), (_b = (_a = this.cache.value) === null || _a === void 0 ? void 0 : _a.completions[0]) === null || _b === void 0 ? void 0 : _b.toLiveInlineCompletion());\n        const suggestWidgetState = this.suggestionInlineCompletionSource.state;\n        const suggestInlineCompletion = minimizeInlineCompletion(this.editor.getModel(), (_c = suggestWidgetState === null || suggestWidgetState === void 0 ? void 0 : suggestWidgetState.selectedItem) === null || _c === void 0 ? void 0 : _c.normalizedInlineCompletion);\n        const isAugmentedCompletionValid = augmentedCompletion\n            && suggestInlineCompletion\n            && augmentedCompletion.text.startsWith(suggestInlineCompletion.text)\n            && augmentedCompletion.range.equalsRange(suggestInlineCompletion.range);\n        if (!isSuggestionPreviewEnabled && !isAugmentedCompletionValid) {\n            return undefined;\n        }\n        // If the augmented completion is not valid and there is no suggest inline completion, we still show the augmented completion.\n        const finalCompletion = isAugmentedCompletionValid ? augmentedCompletion : (suggestInlineCompletion || augmentedCompletion);\n        const inlineCompletionPreviewLength = isAugmentedCompletionValid ? finalCompletion.text.length - suggestInlineCompletion.text.length : 0;\n        const newGhostText = this.toGhostText(finalCompletion, inlineCompletionPreviewLength);\n        return newGhostText;\n    }\n    toGhostText(completion, inlineCompletionPreviewLength) {\n        const mode = this.editor.getOptions().get(106 /* suggest */).previewMode;\n        return completion\n            ? (inlineCompletionToGhostText(completion, this.editor.getModel(), mode, this.editor.getPosition(), inlineCompletionPreviewLength) ||\n                // Show an invisible ghost text to reserve space\n                new GhostText(completion.range.endLineNumber, [], this.minReservedLineCount))\n            : undefined;\n    }\n};\nSuggestWidgetPreviewModel = __decorate([\n    __param(2, ILanguageFeaturesService)\n], SuggestWidgetPreviewModel);\nexport { SuggestWidgetPreviewModel };\nfunction sum(arr) {\n    return arr.reduce((a, b) => a + b, 0);\n}\n",
+      "start": 1711096857333,
+      "end": 1711096857435,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857435,
+      "end": 1711096857435,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857435,
+      "end": 1711096857436,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857436,
+      "end": 1711096857436,
+      "order": "normal"
+    }
+  ]
+}

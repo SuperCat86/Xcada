@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/glyphMargin/glyphMargin.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './glyphMargin.css';\nimport { DynamicViewOverlay } from '../../view/dynamicViewOverlay.js';\nexport class DecorationToRender {\n    constructor(startLineNumber, endLineNumber, className) {\n        this._decorationToRenderBrand = undefined;\n        this.startLineNumber = +startLineNumber;\n        this.endLineNumber = +endLineNumber;\n        this.className = String(className);\n    }\n}\nexport class DedupOverlay extends DynamicViewOverlay {\n    _render(visibleStartLineNumber, visibleEndLineNumber, decorations) {\n        const output = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - visibleStartLineNumber;\n            output[lineIndex] = [];\n        }\n        if (decorations.length === 0) {\n            return output;\n        }\n        decorations.sort((a, b) => {\n            if (a.className === b.className) {\n                if (a.startLineNumber === b.startLineNumber) {\n                    return a.endLineNumber - b.endLineNumber;\n                }\n                return a.startLineNumber - b.startLineNumber;\n            }\n            return (a.className < b.className ? -1 : 1);\n        });\n        let prevClassName = null;\n        let prevEndLineIndex = 0;\n        for (let i = 0, len = decorations.length; i < len; i++) {\n            const d = decorations[i];\n            const className = d.className;\n            let startLineIndex = Math.max(d.startLineNumber, visibleStartLineNumber) - visibleStartLineNumber;\n            const endLineIndex = Math.min(d.endLineNumber, visibleEndLineNumber) - visibleStartLineNumber;\n            if (prevClassName === className) {\n                startLineIndex = Math.max(prevEndLineIndex + 1, startLineIndex);\n                prevEndLineIndex = Math.max(prevEndLineIndex, endLineIndex);\n            }\n            else {\n                prevClassName = className;\n                prevEndLineIndex = endLineIndex;\n            }\n            for (let i = startLineIndex; i <= prevEndLineIndex; i++) {\n                output[i].push(prevClassName);\n            }\n        }\n        return output;\n    }\n}\nexport class GlyphMarginOverlay extends DedupOverlay {\n    constructor(context) {\n        super();\n        this._context = context;\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._glyphMargin = options.get(50 /* glyphMargin */);\n        this._glyphMarginLeft = layoutInfo.glyphMarginLeft;\n        this._glyphMarginWidth = layoutInfo.glyphMarginWidth;\n        this._renderResult = null;\n        this._context.addEventHandler(this);\n    }\n    dispose() {\n        this._context.removeEventHandler(this);\n        this._renderResult = null;\n        super.dispose();\n    }\n    // --- begin event handlers\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        this._lineHeight = options.get(59 /* lineHeight */);\n        this._glyphMargin = options.get(50 /* glyphMargin */);\n        this._glyphMarginLeft = layoutInfo.glyphMarginLeft;\n        this._glyphMarginWidth = layoutInfo.glyphMarginWidth;\n        return true;\n    }\n    onDecorationsChanged(e) {\n        return true;\n    }\n    onFlushed(e) {\n        return true;\n    }\n    onLinesChanged(e) {\n        return true;\n    }\n    onLinesDeleted(e) {\n        return true;\n    }\n    onLinesInserted(e) {\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollTopChanged;\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    // --- end event handlers\n    _getDecorations(ctx) {\n        const decorations = ctx.getDecorationsInViewport();\n        const r = [];\n        let rLen = 0;\n        for (let i = 0, len = decorations.length; i < len; i++) {\n            const d = decorations[i];\n            const glyphMarginClassName = d.options.glyphMarginClassName;\n            if (glyphMarginClassName) {\n                r[rLen++] = new DecorationToRender(d.range.startLineNumber, d.range.endLineNumber, glyphMarginClassName);\n            }\n        }\n        return r;\n    }\n    prepareRender(ctx) {\n        if (!this._glyphMargin) {\n            this._renderResult = null;\n            return;\n        }\n        const visibleStartLineNumber = ctx.visibleRange.startLineNumber;\n        const visibleEndLineNumber = ctx.visibleRange.endLineNumber;\n        const toRender = this._render(visibleStartLineNumber, visibleEndLineNumber, this._getDecorations(ctx));\n        const lineHeight = this._lineHeight.toString();\n        const left = this._glyphMarginLeft.toString();\n        const width = this._glyphMarginWidth.toString();\n        const common = '\" style=\"left:' + left + 'px;width:' + width + 'px' + ';height:' + lineHeight + 'px;\"></div>';\n        const output = [];\n        for (let lineNumber = visibleStartLineNumber; lineNumber <= visibleEndLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - visibleStartLineNumber;\n            const classNames = toRender[lineIndex];\n            if (classNames.length === 0) {\n                output[lineIndex] = '';\n            }\n            else {\n                output[lineIndex] = ('<div class=\"cgmr codicon '\n                    + classNames.join(' ')\n                    + common);\n            }\n        }\n        this._renderResult = output;\n    }\n    render(startLineNumber, lineNumber) {\n        if (!this._renderResult) {\n            return '';\n        }\n        const lineIndex = lineNumber - startLineNumber;\n        if (lineIndex < 0 || lineIndex >= this._renderResult.length) {\n            return '';\n        }\n        return this._renderResult[lineIndex];\n    }\n}\n",
+      "start": 1711096856371,
+      "end": 1711096856443,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856443,
+      "end": 1711096856443,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856443,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856444,
+      "end": 1711096856444,
+      "order": "normal"
+    }
+  ]
+}

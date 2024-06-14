@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {\n    if (kind === \"a\" && !f) throw new TypeError(\"Private accessor was defined without a getter\");\n    if (typeof state === \"function\" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError(\"Cannot read private member from an object whose class did not declare it\");\n    return kind === \"m\" ? f : kind === \"a\" ? f.call(receiver) : f ? f.value : state.get(receiver);\n};\nvar __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {\n    if (kind === \"m\") throw new TypeError(\"Private method is not writable\");\n    if (kind === \"a\" && !f) throw new TypeError(\"Private accessor was defined without a setter\");\n    if (typeof state === \"function\" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError(\"Cannot write private member to an object whose class did not declare it\");\n    return (kind === \"a\" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;\n};\nvar _CodeActionModel_isDisposed;\nimport { createCancelablePromise, TimeoutTimer } from '../../../../base/common/async.js';\nimport { isCancellationError } from '../../../../base/common/errors.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable, MutableDisposable } from '../../../../base/common/lifecycle.js';\nimport { isEqual } from '../../../../base/common/resources.js';\nimport { Range } from '../../../common/core/range.js';\nimport { RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { Progress } from '../../../../platform/progress/common/progress.js';\nimport { getCodeActions } from './codeAction.js';\nexport const SUPPORTED_CODE_ACTIONS = new RawContextKey('supportedCodeAction', '');\nclass CodeActionOracle extends Disposable {\n    constructor(_editor, _markerService, _signalChange, _delay = 250) {\n        super();\n        this._editor = _editor;\n        this._markerService = _markerService;\n        this._signalChange = _signalChange;\n        this._delay = _delay;\n        this._autoTriggerTimer = this._register(new TimeoutTimer());\n        this._register(this._markerService.onMarkerChanged(e => this._onMarkerChanges(e)));\n        this._register(this._editor.onDidChangeCursorPosition(() => this._onCursorChange()));\n    }\n    trigger(trigger) {\n        const selection = this._getRangeOfSelectionUnlessWhitespaceEnclosed(trigger);\n        return this._createEventAndSignalChange(trigger, selection);\n    }\n    _onMarkerChanges(resources) {\n        const model = this._editor.getModel();\n        if (!model) {\n            return;\n        }\n        if (resources.some(resource => isEqual(resource, model.uri))) {\n            this._autoTriggerTimer.cancelAndSet(() => {\n                this.trigger({ type: 2 /* Auto */ });\n            }, this._delay);\n        }\n    }\n    _onCursorChange() {\n        this._autoTriggerTimer.cancelAndSet(() => {\n            this.trigger({ type: 2 /* Auto */ });\n        }, this._delay);\n    }\n    _getRangeOfMarker(selection) {\n        const model = this._editor.getModel();\n        if (!model) {\n            return undefined;\n        }\n        for (const marker of this._markerService.read({ resource: model.uri })) {\n            const markerRange = model.validateRange(marker);\n            if (Range.intersectRanges(markerRange, selection)) {\n                return Range.lift(markerRange);\n            }\n        }\n        return undefined;\n    }\n    _getRangeOfSelectionUnlessWhitespaceEnclosed(trigger) {\n        if (!this._editor.hasModel()) {\n            return undefined;\n        }\n        const model = this._editor.getModel();\n        const selection = this._editor.getSelection();\n        if (selection.isEmpty() && trigger.type === 2 /* Auto */) {\n            const { lineNumber, column } = selection.getPosition();\n            const line = model.getLineContent(lineNumber);\n            if (line.length === 0) {\n                // empty line\n                return undefined;\n            }\n            else if (column === 1) {\n                // look only right\n                if (/\\s/.test(line[0])) {\n                    return undefined;\n                }\n            }\n            else if (column === model.getLineMaxColumn(lineNumber)) {\n                // look only left\n                if (/\\s/.test(line[line.length - 1])) {\n                    return undefined;\n                }\n            }\n            else {\n                // look left and right\n                if (/\\s/.test(line[column - 2]) && /\\s/.test(line[column - 1])) {\n                    return undefined;\n                }\n            }\n        }\n        return selection;\n    }\n    _createEventAndSignalChange(trigger, selection) {\n        const model = this._editor.getModel();\n        if (!selection || !model) {\n            // cancel\n            this._signalChange(undefined);\n            return undefined;\n        }\n        const markerRange = this._getRangeOfMarker(selection);\n        const position = markerRange ? markerRange.getStartPosition() : selection.getStartPosition();\n        const e = {\n            trigger,\n            selection,\n            position\n        };\n        this._signalChange(e);\n        return e;\n    }\n}\nexport var CodeActionsState;\n(function (CodeActionsState) {\n    CodeActionsState.Empty = { type: 0 /* Empty */ };\n    class Triggered {\n        constructor(trigger, rangeOrSelection, position, _cancellablePromise) {\n            this.trigger = trigger;\n            this.rangeOrSelection = rangeOrSelection;\n            this.position = position;\n            this._cancellablePromise = _cancellablePromise;\n            this.type = 1 /* Triggered */;\n            this.actions = _cancellablePromise.catch((e) => {\n                if (isCancellationError(e)) {\n                    return emptyCodeActionSet;\n                }\n                throw e;\n            });\n        }\n        cancel() {\n            this._cancellablePromise.cancel();\n        }\n    }\n    CodeActionsState.Triggered = Triggered;\n})(CodeActionsState || (CodeActionsState = {}));\nconst emptyCodeActionSet = {\n    allActions: [],\n    validActions: [],\n    dispose: () => { },\n    documentation: [],\n    hasAutoFix: false\n};\nexport class CodeActionModel extends Disposable {\n    constructor(_editor, _registry, _markerService, contextKeyService, _progressService) {\n        super();\n        this._editor = _editor;\n        this._registry = _registry;\n        this._markerService = _markerService;\n        this._progressService = _progressService;\n        this._codeActionOracle = this._register(new MutableDisposable());\n        this._state = CodeActionsState.Empty;\n        this._onDidChangeState = this._register(new Emitter());\n        this.onDidChangeState = this._onDidChangeState.event;\n        _CodeActionModel_isDisposed.set(this, false);\n        this._supportedCodeActions = SUPPORTED_CODE_ACTIONS.bindTo(contextKeyService);\n        this._register(this._editor.onDidChangeModel(() => this._update()));\n        this._register(this._editor.onDidChangeModelLanguage(() => this._update()));\n        this._register(this._registry.onDidChange(() => this._update()));\n        this._update();\n    }\n    dispose() {\n        if (__classPrivateFieldGet(this, _CodeActionModel_isDisposed, \"f\")) {\n            return;\n        }\n        __classPrivateFieldSet(this, _CodeActionModel_isDisposed, true, \"f\");\n        super.dispose();\n        this.setState(CodeActionsState.Empty, true);\n    }\n    _update() {\n        if (__classPrivateFieldGet(this, _CodeActionModel_isDisposed, \"f\")) {\n            return;\n        }\n        this._codeActionOracle.value = undefined;\n        this.setState(CodeActionsState.Empty);\n        const model = this._editor.getModel();\n        if (model\n            && this._registry.has(model)\n            && !this._editor.getOption(81 /* readOnly */)) {\n            const supportedActions = [];\n            for (const provider of this._registry.all(model)) {\n                if (Array.isArray(provider.providedCodeActionKinds)) {\n                    supportedActions.push(...provider.providedCodeActionKinds);\n                }\n            }\n            this._supportedCodeActions.set(supportedActions.join(' '));\n            this._codeActionOracle.value = new CodeActionOracle(this._editor, this._markerService, trigger => {\n                var _a;\n                if (!trigger) {\n                    this.setState(CodeActionsState.Empty);\n                    return;\n                }\n                const actions = createCancelablePromise(token => getCodeActions(this._registry, model, trigger.selection, trigger.trigger, Progress.None, token));\n                if (trigger.trigger.type === 1 /* Invoke */) {\n                    (_a = this._progressService) === null || _a === void 0 ? void 0 : _a.showWhile(actions, 250);\n                }\n                this.setState(new CodeActionsState.Triggered(trigger.trigger, trigger.selection, trigger.position, actions));\n            }, undefined);\n            this._codeActionOracle.value.trigger({ type: 2 /* Auto */ });\n        }\n        else {\n            this._supportedCodeActions.reset();\n        }\n    }\n    trigger(trigger) {\n        if (this._codeActionOracle.value) {\n            this._codeActionOracle.value.trigger(trigger);\n        }\n    }\n    setState(newState, skipNotify) {\n        if (newState === this._state) {\n            return;\n        }\n        // Cancel old request\n        if (this._state.type === 1 /* Triggered */) {\n            this._state.cancel();\n        }\n        this._state = newState;\n        if (!skipNotify && !__classPrivateFieldGet(this, _CodeActionModel_isDisposed, \"f\")) {\n            this._onDidChangeState.fire(newState);\n        }\n    }\n}\n_CodeActionModel_isDisposed = new WeakMap();\n",
+      "start": 1711096856610,
+      "end": 1711096856692,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856692,
+      "end": 1711096856692,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856692,
+      "end": 1711096856693,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856693,
+      "end": 1711096856693,
+      "order": "normal"
+    }
+  ]
+}

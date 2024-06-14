@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languageSelector.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { match as matchGlobPattern } from '../../base/common/glob.js';\nimport { normalize } from '../../base/common/path.js';\nexport function score(selector, candidateUri, candidateLanguage, candidateIsSynchronized, candidateNotebookType) {\n    if (Array.isArray(selector)) {\n        // array -> take max individual value\n        let ret = 0;\n        for (const filter of selector) {\n            const value = score(filter, candidateUri, candidateLanguage, candidateIsSynchronized, candidateNotebookType);\n            if (value === 10) {\n                return value; // already at the highest\n            }\n            if (value > ret) {\n                ret = value;\n            }\n        }\n        return ret;\n    }\n    else if (typeof selector === 'string') {\n        if (!candidateIsSynchronized) {\n            return 0;\n        }\n        // short-hand notion, desugars to\n        // 'fooLang' -> { language: 'fooLang'}\n        // '*' -> { language: '*' }\n        if (selector === '*') {\n            return 5;\n        }\n        else if (selector === candidateLanguage) {\n            return 10;\n        }\n        else {\n            return 0;\n        }\n    }\n    else if (selector) {\n        // filter -> select accordingly, use defaults for scheme\n        const { language, pattern, scheme, hasAccessToAllModels, notebookType } = selector; // TODO: microsoft/TypeScript#42768\n        if (!candidateIsSynchronized && !hasAccessToAllModels) {\n            return 0;\n        }\n        let ret = 0;\n        if (scheme) {\n            if (scheme === candidateUri.scheme) {\n                ret = 10;\n            }\n            else if (scheme === '*') {\n                ret = 5;\n            }\n            else {\n                return 0;\n            }\n        }\n        if (language) {\n            if (language === candidateLanguage) {\n                ret = 10;\n            }\n            else if (language === '*') {\n                ret = Math.max(ret, 5);\n            }\n            else {\n                return 0;\n            }\n        }\n        if (notebookType) {\n            if (notebookType === candidateNotebookType) {\n                ret = 10;\n            }\n            else if (notebookType === '*') {\n                ret = Math.max(ret, 5);\n            }\n            else {\n                return 0;\n            }\n        }\n        if (pattern) {\n            let normalizedPattern;\n            if (typeof pattern === 'string') {\n                normalizedPattern = pattern;\n            }\n            else {\n                // Since this pattern has a `base` property, we need\n                // to normalize this path first before passing it on\n                // because we will compare it against `Uri.fsPath`\n                // which uses platform specific separators.\n                // Refs: https://github.com/microsoft/vscode/issues/99938\n                normalizedPattern = Object.assign(Object.assign({}, pattern), { base: normalize(pattern.base) });\n            }\n            if (normalizedPattern === candidateUri.fsPath || matchGlobPattern(normalizedPattern, candidateUri.fsPath)) {\n                ret = 10;\n            }\n            else {\n                return 0;\n            }\n        }\n        return ret;\n    }\n    else {\n        return 0;\n    }\n}\n",
+      "start": 1711096857548,
+      "end": 1711096857657,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857657,
+      "end": 1711096857657,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857658,
+      "end": 1711096857658,
+      "order": "normal"
+    }
+  ]
+}

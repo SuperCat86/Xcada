@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/hash.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from './strings.js';\n/**\n * Return a hash value for an object.\n */\nexport function hash(obj) {\n    return doHash(obj, 0);\n}\nexport function doHash(obj, hashVal) {\n    switch (typeof obj) {\n        case 'object':\n            if (obj === null) {\n                return numberHash(349, hashVal);\n            }\n            else if (Array.isArray(obj)) {\n                return arrayHash(obj, hashVal);\n            }\n            return objectHash(obj, hashVal);\n        case 'string':\n            return stringHash(obj, hashVal);\n        case 'boolean':\n            return booleanHash(obj, hashVal);\n        case 'number':\n            return numberHash(obj, hashVal);\n        case 'undefined':\n            return numberHash(937, hashVal);\n        default:\n            return numberHash(617, hashVal);\n    }\n}\nexport function numberHash(val, initialHashVal) {\n    return (((initialHashVal << 5) - initialHashVal) + val) | 0; // hashVal * 31 + ch, keep as int32\n}\nfunction booleanHash(b, initialHashVal) {\n    return numberHash(b ? 433 : 863, initialHashVal);\n}\nexport function stringHash(s, hashVal) {\n    hashVal = numberHash(149417, hashVal);\n    for (let i = 0, length = s.length; i < length; i++) {\n        hashVal = numberHash(s.charCodeAt(i), hashVal);\n    }\n    return hashVal;\n}\nfunction arrayHash(arr, initialHashVal) {\n    initialHashVal = numberHash(104579, initialHashVal);\n    return arr.reduce((hashVal, item) => doHash(item, hashVal), initialHashVal);\n}\nfunction objectHash(obj, initialHashVal) {\n    initialHashVal = numberHash(181387, initialHashVal);\n    return Object.keys(obj).sort().reduce((hashVal, key) => {\n        hashVal = stringHash(key, hashVal);\n        return doHash(obj[key], hashVal);\n    }, initialHashVal);\n}\nfunction leftRotate(value, bits, totalBits = 32) {\n    // delta + bits = totalBits\n    const delta = totalBits - bits;\n    // All ones, expect `delta` zeros aligned to the right\n    const mask = ~((1 << delta) - 1);\n    // Join (value left-shifted `bits` bits) with (masked value right-shifted `delta` bits)\n    return ((value << bits) | ((mask & value) >>> delta)) >>> 0;\n}\nfunction fill(dest, index = 0, count = dest.byteLength, value = 0) {\n    for (let i = 0; i < count; i++) {\n        dest[index + i] = value;\n    }\n}\nfunction leftPad(value, length, char = '0') {\n    while (value.length < length) {\n        value = char + value;\n    }\n    return value;\n}\nexport function toHexString(bufferOrValue, bitsize = 32) {\n    if (bufferOrValue instanceof ArrayBuffer) {\n        return Array.from(new Uint8Array(bufferOrValue)).map(b => b.toString(16).padStart(2, '0')).join('');\n    }\n    return leftPad((bufferOrValue >>> 0).toString(16), bitsize / 4);\n}\n/**\n * A SHA1 implementation that works with strings and does not allocate.\n */\nexport class StringSHA1 {\n    constructor() {\n        this._h0 = 0x67452301;\n        this._h1 = 0xEFCDAB89;\n        this._h2 = 0x98BADCFE;\n        this._h3 = 0x10325476;\n        this._h4 = 0xC3D2E1F0;\n        this._buff = new Uint8Array(64 /* BLOCK_SIZE */ + 3 /* to fit any utf-8 */);\n        this._buffDV = new DataView(this._buff.buffer);\n        this._buffLen = 0;\n        this._totalLen = 0;\n        this._leftoverHighSurrogate = 0;\n        this._finished = false;\n    }\n    update(str) {\n        const strLen = str.length;\n        if (strLen === 0) {\n            return;\n        }\n        const buff = this._buff;\n        let buffLen = this._buffLen;\n        let leftoverHighSurrogate = this._leftoverHighSurrogate;\n        let charCode;\n        let offset;\n        if (leftoverHighSurrogate !== 0) {\n            charCode = leftoverHighSurrogate;\n            offset = -1;\n            leftoverHighSurrogate = 0;\n        }\n        else {\n            charCode = str.charCodeAt(0);\n            offset = 0;\n        }\n        while (true) {\n            let codePoint = charCode;\n            if (strings.isHighSurrogate(charCode)) {\n                if (offset + 1 < strLen) {\n                    const nextCharCode = str.charCodeAt(offset + 1);\n                    if (strings.isLowSurrogate(nextCharCode)) {\n                        offset++;\n                        codePoint = strings.computeCodePoint(charCode, nextCharCode);\n                    }\n                    else {\n                        // illegal => unicode replacement character\n                        codePoint = 65533 /* UNICODE_REPLACEMENT */;\n                    }\n                }\n                else {\n                    // last character is a surrogate pair\n                    leftoverHighSurrogate = charCode;\n                    break;\n                }\n            }\n            else if (strings.isLowSurrogate(charCode)) {\n                // illegal => unicode replacement character\n                codePoint = 65533 /* UNICODE_REPLACEMENT */;\n            }\n            buffLen = this._push(buff, buffLen, codePoint);\n            offset++;\n            if (offset < strLen) {\n                charCode = str.charCodeAt(offset);\n            }\n            else {\n                break;\n            }\n        }\n        this._buffLen = buffLen;\n        this._leftoverHighSurrogate = leftoverHighSurrogate;\n    }\n    _push(buff, buffLen, codePoint) {\n        if (codePoint < 0x0080) {\n            buff[buffLen++] = codePoint;\n        }\n        else if (codePoint < 0x0800) {\n            buff[buffLen++] = 0b11000000 | ((codePoint & 0b00000000000000000000011111000000) >>> 6);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000000000000000111111) >>> 0);\n        }\n        else if (codePoint < 0x10000) {\n            buff[buffLen++] = 0b11100000 | ((codePoint & 0b00000000000000001111000000000000) >>> 12);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000000000111111000000) >>> 6);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000000000000000111111) >>> 0);\n        }\n        else {\n            buff[buffLen++] = 0b11110000 | ((codePoint & 0b00000000000111000000000000000000) >>> 18);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000111111000000000000) >>> 12);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000000000111111000000) >>> 6);\n            buff[buffLen++] = 0b10000000 | ((codePoint & 0b00000000000000000000000000111111) >>> 0);\n        }\n        if (buffLen >= 64 /* BLOCK_SIZE */) {\n            this._step();\n            buffLen -= 64 /* BLOCK_SIZE */;\n            this._totalLen += 64 /* BLOCK_SIZE */;\n            // take last 3 in case of UTF8 overflow\n            buff[0] = buff[64 /* BLOCK_SIZE */ + 0];\n            buff[1] = buff[64 /* BLOCK_SIZE */ + 1];\n            buff[2] = buff[64 /* BLOCK_SIZE */ + 2];\n        }\n        return buffLen;\n    }\n    digest() {\n        if (!this._finished) {\n            this._finished = true;\n            if (this._leftoverHighSurrogate) {\n                // illegal => unicode replacement character\n                this._leftoverHighSurrogate = 0;\n                this._buffLen = this._push(this._buff, this._buffLen, 65533 /* UNICODE_REPLACEMENT */);\n            }\n            this._totalLen += this._buffLen;\n            this._wrapUp();\n        }\n        return toHexString(this._h0) + toHexString(this._h1) + toHexString(this._h2) + toHexString(this._h3) + toHexString(this._h4);\n    }\n    _wrapUp() {\n        this._buff[this._buffLen++] = 0x80;\n        fill(this._buff, this._buffLen);\n        if (this._buffLen > 56) {\n            this._step();\n            fill(this._buff);\n        }\n        // this will fit because the mantissa can cover up to 52 bits\n        const ml = 8 * this._totalLen;\n        this._buffDV.setUint32(56, Math.floor(ml / 4294967296), false);\n        this._buffDV.setUint32(60, ml % 4294967296, false);\n        this._step();\n    }\n    _step() {\n        const bigBlock32 = StringSHA1._bigBlock32;\n        const data = this._buffDV;\n        for (let j = 0; j < 64 /* 16*4 */; j += 4) {\n            bigBlock32.setUint32(j, data.getUint32(j, false), false);\n        }\n        for (let j = 64; j < 320 /* 80*4 */; j += 4) {\n            bigBlock32.setUint32(j, leftRotate((bigBlock32.getUint32(j - 12, false) ^ bigBlock32.getUint32(j - 32, false) ^ bigBlock32.getUint32(j - 56, false) ^ bigBlock32.getUint32(j - 64, false)), 1), false);\n        }\n        let a = this._h0;\n        let b = this._h1;\n        let c = this._h2;\n        let d = this._h3;\n        let e = this._h4;\n        let f, k;\n        let temp;\n        for (let j = 0; j < 80; j++) {\n            if (j < 20) {\n                f = (b & c) | ((~b) & d);\n                k = 0x5A827999;\n            }\n            else if (j < 40) {\n                f = b ^ c ^ d;\n                k = 0x6ED9EBA1;\n            }\n            else if (j < 60) {\n                f = (b & c) | (b & d) | (c & d);\n                k = 0x8F1BBCDC;\n            }\n            else {\n                f = b ^ c ^ d;\n                k = 0xCA62C1D6;\n            }\n            temp = (leftRotate(a, 5) + f + e + k + bigBlock32.getUint32(j * 4, false)) & 0xffffffff;\n            e = d;\n            d = c;\n            c = leftRotate(b, 30);\n            b = a;\n            a = temp;\n        }\n        this._h0 = (this._h0 + a) & 0xffffffff;\n        this._h1 = (this._h1 + b) & 0xffffffff;\n        this._h2 = (this._h2 + c) & 0xffffffff;\n        this._h3 = (this._h3 + d) & 0xffffffff;\n        this._h4 = (this._h4 + e) & 0xffffffff;\n    }\n}\nStringSHA1._bigBlock32 = new DataView(new ArrayBuffer(320)); // 80 * 4 = 320\n",
+      "start": 1711096855558,
+      "end": 1711096855662,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855662,
+      "end": 1711096855663,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855663,
+      "end": 1711096855663,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855664,
+      "end": 1711096855664,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855664,
+      "end": 1711096855664,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855664,
+      "end": 1711096855664,
+      "order": "normal"
+    }
+  ]
+}

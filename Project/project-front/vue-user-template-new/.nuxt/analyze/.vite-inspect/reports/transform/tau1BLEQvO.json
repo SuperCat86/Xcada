@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/config/charWidthReader.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { applyFontInfo } from './domFontInfo.js';\nexport class CharWidthRequest {\n    constructor(chr, type) {\n        this.chr = chr;\n        this.type = type;\n        this.width = 0;\n    }\n    fulfill(width) {\n        this.width = width;\n    }\n}\nclass DomCharWidthReader {\n    constructor(bareFontInfo, requests) {\n        this._bareFontInfo = bareFontInfo;\n        this._requests = requests;\n        this._container = null;\n        this._testElements = null;\n    }\n    read() {\n        // Create a test container with all these test elements\n        this._createDomElements();\n        // Add the container to the DOM\n        document.body.appendChild(this._container);\n        // Read character widths\n        this._readFromDomElements();\n        // Remove the container from the DOM\n        document.body.removeChild(this._container);\n        this._container = null;\n        this._testElements = null;\n    }\n    _createDomElements() {\n        const container = document.createElement('div');\n        container.style.position = 'absolute';\n        container.style.top = '-50000px';\n        container.style.width = '50000px';\n        const regularDomNode = document.createElement('div');\n        applyFontInfo(regularDomNode, this._bareFontInfo);\n        container.appendChild(regularDomNode);\n        const boldDomNode = document.createElement('div');\n        applyFontInfo(boldDomNode, this._bareFontInfo);\n        boldDomNode.style.fontWeight = 'bold';\n        container.appendChild(boldDomNode);\n        const italicDomNode = document.createElement('div');\n        applyFontInfo(italicDomNode, this._bareFontInfo);\n        italicDomNode.style.fontStyle = 'italic';\n        container.appendChild(italicDomNode);\n        const testElements = [];\n        for (const request of this._requests) {\n            let parent;\n            if (request.type === 0 /* Regular */) {\n                parent = regularDomNode;\n            }\n            if (request.type === 2 /* Bold */) {\n                parent = boldDomNode;\n            }\n            if (request.type === 1 /* Italic */) {\n                parent = italicDomNode;\n            }\n            parent.appendChild(document.createElement('br'));\n            const testElement = document.createElement('span');\n            DomCharWidthReader._render(testElement, request);\n            parent.appendChild(testElement);\n            testElements.push(testElement);\n        }\n        this._container = container;\n        this._testElements = testElements;\n    }\n    static _render(testElement, request) {\n        if (request.chr === ' ') {\n            let htmlString = '\\u00a0';\n            // Repeat character 256 (2^8) times\n            for (let i = 0; i < 8; i++) {\n                htmlString += htmlString;\n            }\n            testElement.innerText = htmlString;\n        }\n        else {\n            let testString = request.chr;\n            // Repeat character 256 (2^8) times\n            for (let i = 0; i < 8; i++) {\n                testString += testString;\n            }\n            testElement.textContent = testString;\n        }\n    }\n    _readFromDomElements() {\n        for (let i = 0, len = this._requests.length; i < len; i++) {\n            const request = this._requests[i];\n            const testElement = this._testElements[i];\n            request.fulfill(testElement.offsetWidth / 256);\n        }\n    }\n}\nexport function readCharWidths(bareFontInfo, requests) {\n    const reader = new DomCharWidthReader(bareFontInfo, requests);\n    reader.read();\n}\n",
+      "start": 1711096856134,
+      "end": 1711096856218,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856218,
+      "end": 1711096856218,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856218,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856219,
+      "end": 1711096856219,
+      "order": "normal"
+    }
+  ]
+}

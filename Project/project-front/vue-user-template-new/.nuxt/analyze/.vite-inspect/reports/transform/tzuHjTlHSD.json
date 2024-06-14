@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/languageConfigurationRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable, toDisposable } from '../../../base/common/lifecycle.js';\nimport * as strings from '../../../base/common/strings.js';\nimport { DEFAULT_WORD_REGEXP, ensureValidWordDefinition } from '../core/wordHelper.js';\nimport { IndentAction, AutoClosingPairs } from './languageConfiguration.js';\nimport { createScopedLineTokens } from './supports.js';\nimport { CharacterPairSupport } from './supports/characterPair.js';\nimport { BracketElectricCharacterSupport } from './supports/electricCharacter.js';\nimport { IndentRulesSupport } from './supports/indentRules.js';\nimport { OnEnterSupport } from './supports/onEnter.js';\nimport { RichEditBrackets } from './supports/richEditBrackets.js';\nimport { createDecorator } from '../../../platform/instantiation/common/instantiation.js';\nimport { IConfigurationService } from '../../../platform/configuration/common/configuration.js';\nimport { ILanguageService } from './language.js';\nimport { registerSingleton } from '../../../platform/instantiation/common/extensions.js';\nexport class LanguageConfigurationServiceChangeEvent {\n    constructor(languageId) {\n        this.languageId = languageId;\n    }\n    affects(languageId) {\n        return !this.languageId ? true : this.languageId === languageId;\n    }\n}\nexport const ILanguageConfigurationService = createDecorator('languageConfigurationService');\nlet LanguageConfigurationService = class LanguageConfigurationService extends Disposable {\n    constructor(configurationService, languageService) {\n        super();\n        this.configurationService = configurationService;\n        this.languageService = languageService;\n        this.onDidChangeEmitter = this._register(new Emitter());\n        this.onDidChange = this.onDidChangeEmitter.event;\n        this.configurations = new Map();\n        const languageConfigKeys = new Set(Object.values(customizedLanguageConfigKeys));\n        this._register(this.configurationService.onDidChangeConfiguration((e) => {\n            const globalConfigChanged = e.change.keys.some((k) => languageConfigKeys.has(k));\n            const localConfigChanged = e.change.overrides\n                .filter(([overrideLangName, keys]) => keys.some((k) => languageConfigKeys.has(k)))\n                .map(([overrideLangName]) => overrideLangName);\n            if (globalConfigChanged) {\n                this.configurations.clear();\n                this.onDidChangeEmitter.fire(new LanguageConfigurationServiceChangeEvent(undefined));\n            }\n            else {\n                for (const languageId of localConfigChanged) {\n                    if (this.languageService.isRegisteredLanguageId(languageId)) {\n                        this.configurations.delete(languageId);\n                        this.onDidChangeEmitter.fire(new LanguageConfigurationServiceChangeEvent(languageId));\n                    }\n                }\n            }\n        }));\n        this._register(LanguageConfigurationRegistry.onDidChange((e) => {\n            this.configurations.delete(e.languageId);\n            this.onDidChangeEmitter.fire(new LanguageConfigurationServiceChangeEvent(e.languageId));\n        }));\n    }\n    getLanguageConfiguration(languageId) {\n        let result = this.configurations.get(languageId);\n        if (!result) {\n            result = computeConfig(languageId, this.configurationService, this.languageService);\n            this.configurations.set(languageId, result);\n        }\n        return result;\n    }\n};\nLanguageConfigurationService = __decorate([\n    __param(0, IConfigurationService),\n    __param(1, ILanguageService)\n], LanguageConfigurationService);\nexport { LanguageConfigurationService };\nfunction computeConfig(languageId, configurationService, languageService) {\n    let languageConfig = LanguageConfigurationRegistry.getLanguageConfiguration(languageId);\n    if (!languageConfig) {\n        if (!languageService.isRegisteredLanguageId(languageId)) {\n            throw new Error(`Language id \"${languageId}\" is not configured nor known`);\n        }\n        languageConfig = new ResolvedLanguageConfiguration(languageId, {});\n    }\n    const customizedConfig = getCustomizedLanguageConfig(languageConfig.languageId, configurationService);\n    const data = combineLanguageConfigurations([languageConfig.underlyingConfig, customizedConfig]);\n    const config = new ResolvedLanguageConfiguration(languageConfig.languageId, data);\n    return config;\n}\nconst customizedLanguageConfigKeys = {\n    brackets: 'editor.language.brackets',\n    colorizedBracketPairs: 'editor.language.colorizedBracketPairs'\n};\nfunction getCustomizedLanguageConfig(languageId, configurationService) {\n    const brackets = configurationService.getValue(customizedLanguageConfigKeys.brackets, {\n        overrideIdentifier: languageId,\n    });\n    const colorizedBracketPairs = configurationService.getValue(customizedLanguageConfigKeys.colorizedBracketPairs, {\n        overrideIdentifier: languageId,\n    });\n    return {\n        brackets: validateBracketPairs(brackets),\n        colorizedBracketPairs: validateBracketPairs(colorizedBracketPairs),\n    };\n}\nfunction validateBracketPairs(data) {\n    if (!Array.isArray(data)) {\n        return undefined;\n    }\n    return data.map(pair => {\n        if (!Array.isArray(pair) || pair.length !== 2) {\n            return undefined;\n        }\n        return [pair[0], pair[1]];\n    }).filter((p) => !!p);\n}\nexport class LanguageConfigurationChangeEvent {\n    constructor(languageId) {\n        this.languageId = languageId;\n    }\n}\nexport class LanguageConfigurationRegistryImpl {\n    constructor() {\n        this._entries = new Map();\n        this._onDidChange = new Emitter();\n        this.onDidChange = this._onDidChange.event;\n    }\n    /**\n     * @param priority Use a higher number for higher priority\n     */\n    register(languageId, configuration, priority = 0) {\n        let entries = this._entries.get(languageId);\n        if (!entries) {\n            entries = new ComposedLanguageConfiguration(languageId);\n            this._entries.set(languageId, entries);\n        }\n        const disposable = entries.register(configuration, priority);\n        this._onDidChange.fire(new LanguageConfigurationChangeEvent(languageId));\n        return toDisposable(() => {\n            disposable.dispose();\n            this._onDidChange.fire(new LanguageConfigurationChangeEvent(languageId));\n        });\n    }\n    getLanguageConfiguration(languageId) {\n        const entries = this._entries.get(languageId);\n        return (entries === null || entries === void 0 ? void 0 : entries.getResolvedConfiguration()) || null;\n    }\n    getComments(languageId) {\n        const value = this.getLanguageConfiguration(languageId);\n        if (!value) {\n            return null;\n        }\n        return value.comments || null;\n    }\n    // begin Indent Rules\n    getIndentRulesSupport(languageId) {\n        const value = this.getLanguageConfiguration(languageId);\n        if (!value) {\n            return null;\n        }\n        return value.indentRulesSupport || null;\n    }\n    /**\n     * Get nearest preceding line which doesn't match unIndentPattern or contains all whitespace.\n     * Result:\n     * -1: run into the boundary of embedded languages\n     * 0: every line above are invalid\n     * else: nearest preceding line of the same language\n     */\n    getPrecedingValidLine(model, lineNumber, indentRulesSupport) {\n        const languageId = model.getLanguageIdAtPosition(lineNumber, 0);\n        if (lineNumber > 1) {\n            let lastLineNumber;\n            let resultLineNumber = -1;\n            for (lastLineNumber = lineNumber - 1; lastLineNumber >= 1; lastLineNumber--) {\n                if (model.getLanguageIdAtPosition(lastLineNumber, 0) !== languageId) {\n                    return resultLineNumber;\n                }\n                const text = model.getLineContent(lastLineNumber);\n                if (indentRulesSupport.shouldIgnore(text) || /^\\s+$/.test(text) || text === '') {\n                    resultLineNumber = lastLineNumber;\n                    continue;\n                }\n                return lastLineNumber;\n            }\n        }\n        return -1;\n    }\n    /**\n     * Get inherited indentation from above lines.\n     * 1. Find the nearest preceding line which doesn't match unIndentedLinePattern.\n     * 2. If this line matches indentNextLinePattern or increaseIndentPattern, it means that the indent level of `lineNumber` should be 1 greater than this line.\n     * 3. If this line doesn't match any indent rules\n     *   a. check whether the line above it matches indentNextLinePattern\n     *   b. If not, the indent level of this line is the result\n     *   c. If so, it means the indent of this line is *temporary*, go upward utill we find a line whose indent is not temporary (the same workflow a -> b -> c).\n     * 4. Otherwise, we fail to get an inherited indent from aboves. Return null and we should not touch the indent of `lineNumber`\n     *\n     * This function only return the inherited indent based on above lines, it doesn't check whether current line should decrease or not.\n     */\n    getInheritIndentForLine(autoIndent, model, lineNumber, honorIntentialIndent = true) {\n        if (autoIndent < 4 /* Full */) {\n            return null;\n        }\n        const indentRulesSupport = this.getIndentRulesSupport(model.getLanguageId());\n        if (!indentRulesSupport) {\n            return null;\n        }\n        if (lineNumber <= 1) {\n            return {\n                indentation: '',\n                action: null\n            };\n        }\n        const precedingUnIgnoredLine = this.getPrecedingValidLine(model, lineNumber, indentRulesSupport);\n        if (precedingUnIgnoredLine < 0) {\n            return null;\n        }\n        else if (precedingUnIgnoredLine < 1) {\n            return {\n                indentation: '',\n                action: null\n            };\n        }\n        const precedingUnIgnoredLineContent = model.getLineContent(precedingUnIgnoredLine);\n        if (indentRulesSupport.shouldIncrease(precedingUnIgnoredLineContent) || indentRulesSupport.shouldIndentNextLine(precedingUnIgnoredLineContent)) {\n            return {\n                indentation: strings.getLeadingWhitespace(precedingUnIgnoredLineContent),\n                action: IndentAction.Indent,\n                line: precedingUnIgnoredLine\n            };\n        }\n        else if (indentRulesSupport.shouldDecrease(precedingUnIgnoredLineContent)) {\n            return {\n                indentation: strings.getLeadingWhitespace(precedingUnIgnoredLineContent),\n                action: null,\n                line: precedingUnIgnoredLine\n            };\n        }\n        else {\n            // precedingUnIgnoredLine can not be ignored.\n            // it doesn't increase indent of following lines\n            // it doesn't increase just next line\n            // so current line is not affect by precedingUnIgnoredLine\n            // and then we should get a correct inheritted indentation from above lines\n            if (precedingUnIgnoredLine === 1) {\n                return {\n                    indentation: strings.getLeadingWhitespace(model.getLineContent(precedingUnIgnoredLine)),\n                    action: null,\n                    line: precedingUnIgnoredLine\n                };\n            }\n            const previousLine = precedingUnIgnoredLine - 1;\n            const previousLineIndentMetadata = indentRulesSupport.getIndentMetadata(model.getLineContent(previousLine));\n            if (!(previousLineIndentMetadata & (1 /* INCREASE_MASK */ | 2 /* DECREASE_MASK */)) &&\n                (previousLineIndentMetadata & 4 /* INDENT_NEXTLINE_MASK */)) {\n                let stopLine = 0;\n                for (let i = previousLine - 1; i > 0; i--) {\n                    if (indentRulesSupport.shouldIndentNextLine(model.getLineContent(i))) {\n                        continue;\n                    }\n                    stopLine = i;\n                    break;\n                }\n                return {\n                    indentation: strings.getLeadingWhitespace(model.getLineContent(stopLine + 1)),\n                    action: null,\n                    line: stopLine + 1\n                };\n            }\n            if (honorIntentialIndent) {\n                return {\n                    indentation: strings.getLeadingWhitespace(model.getLineContent(precedingUnIgnoredLine)),\n                    action: null,\n                    line: precedingUnIgnoredLine\n                };\n            }\n            else {\n                // search from precedingUnIgnoredLine until we find one whose indent is not temporary\n                for (let i = precedingUnIgnoredLine; i > 0; i--) {\n                    const lineContent = model.getLineContent(i);\n                    if (indentRulesSupport.shouldIncrease(lineContent)) {\n                        return {\n                            indentation: strings.getLeadingWhitespace(lineContent),\n                            action: IndentAction.Indent,\n                            line: i\n                        };\n                    }\n                    else if (indentRulesSupport.shouldIndentNextLine(lineContent)) {\n                        let stopLine = 0;\n                        for (let j = i - 1; j > 0; j--) {\n                            if (indentRulesSupport.shouldIndentNextLine(model.getLineContent(i))) {\n                                continue;\n                            }\n                            stopLine = j;\n                            break;\n                        }\n                        return {\n                            indentation: strings.getLeadingWhitespace(model.getLineContent(stopLine + 1)),\n                            action: null,\n                            line: stopLine + 1\n                        };\n                    }\n                    else if (indentRulesSupport.shouldDecrease(lineContent)) {\n                        return {\n                            indentation: strings.getLeadingWhitespace(lineContent),\n                            action: null,\n                            line: i\n                        };\n                    }\n                }\n                return {\n                    indentation: strings.getLeadingWhitespace(model.getLineContent(1)),\n                    action: null,\n                    line: 1\n                };\n            }\n        }\n    }\n    getGoodIndentForLine(autoIndent, virtualModel, languageId, lineNumber, indentConverter) {\n        if (autoIndent < 4 /* Full */) {\n            return null;\n        }\n        const richEditSupport = this.getLanguageConfiguration(languageId);\n        if (!richEditSupport) {\n            return null;\n        }\n        const indentRulesSupport = this.getIndentRulesSupport(languageId);\n        if (!indentRulesSupport) {\n            return null;\n        }\n        const indent = this.getInheritIndentForLine(autoIndent, virtualModel, lineNumber);\n        const lineContent = virtualModel.getLineContent(lineNumber);\n        if (indent) {\n            const inheritLine = indent.line;\n            if (inheritLine !== undefined) {\n                const enterResult = richEditSupport.onEnter(autoIndent, '', virtualModel.getLineContent(inheritLine), '');\n                if (enterResult) {\n                    let indentation = strings.getLeadingWhitespace(virtualModel.getLineContent(inheritLine));\n                    if (enterResult.removeText) {\n                        indentation = indentation.substring(0, indentation.length - enterResult.removeText);\n                    }\n                    if ((enterResult.indentAction === IndentAction.Indent) ||\n                        (enterResult.indentAction === IndentAction.IndentOutdent)) {\n                        indentation = indentConverter.shiftIndent(indentation);\n                    }\n                    else if (enterResult.indentAction === IndentAction.Outdent) {\n                        indentation = indentConverter.unshiftIndent(indentation);\n                    }\n                    if (indentRulesSupport.shouldDecrease(lineContent)) {\n                        indentation = indentConverter.unshiftIndent(indentation);\n                    }\n                    if (enterResult.appendText) {\n                        indentation += enterResult.appendText;\n                    }\n                    return strings.getLeadingWhitespace(indentation);\n                }\n            }\n            if (indentRulesSupport.shouldDecrease(lineContent)) {\n                if (indent.action === IndentAction.Indent) {\n                    return indent.indentation;\n                }\n                else {\n                    return indentConverter.unshiftIndent(indent.indentation);\n                }\n            }\n            else {\n                if (indent.action === IndentAction.Indent) {\n                    return indentConverter.shiftIndent(indent.indentation);\n                }\n                else {\n                    return indent.indentation;\n                }\n            }\n        }\n        return null;\n    }\n    getIndentForEnter(autoIndent, model, range, indentConverter) {\n        if (autoIndent < 4 /* Full */) {\n            return null;\n        }\n        model.forceTokenization(range.startLineNumber);\n        const lineTokens = model.getLineTokens(range.startLineNumber);\n        const scopedLineTokens = createScopedLineTokens(lineTokens, range.startColumn - 1);\n        const scopedLineText = scopedLineTokens.getLineContent();\n        let embeddedLanguage = false;\n        let beforeEnterText;\n        if (scopedLineTokens.firstCharOffset > 0 && lineTokens.getLanguageId(0) !== scopedLineTokens.languageId) {\n            // we are in the embeded language content\n            embeddedLanguage = true; // if embeddedLanguage is true, then we don't touch the indentation of current line\n            beforeEnterText = scopedLineText.substr(0, range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        else {\n            beforeEnterText = lineTokens.getLineContent().substring(0, range.startColumn - 1);\n        }\n        let afterEnterText;\n        if (range.isEmpty()) {\n            afterEnterText = scopedLineText.substr(range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        else {\n            const endScopedLineTokens = this.getScopedLineTokens(model, range.endLineNumber, range.endColumn);\n            afterEnterText = endScopedLineTokens.getLineContent().substr(range.endColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        const indentRulesSupport = this.getIndentRulesSupport(scopedLineTokens.languageId);\n        if (!indentRulesSupport) {\n            return null;\n        }\n        const beforeEnterResult = beforeEnterText;\n        const beforeEnterIndent = strings.getLeadingWhitespace(beforeEnterText);\n        const virtualModel = {\n            getLineTokens: (lineNumber) => {\n                return model.getLineTokens(lineNumber);\n            },\n            getLanguageId: () => {\n                return model.getLanguageId();\n            },\n            getLanguageIdAtPosition: (lineNumber, column) => {\n                return model.getLanguageIdAtPosition(lineNumber, column);\n            },\n            getLineContent: (lineNumber) => {\n                if (lineNumber === range.startLineNumber) {\n                    return beforeEnterResult;\n                }\n                else {\n                    return model.getLineContent(lineNumber);\n                }\n            }\n        };\n        const currentLineIndent = strings.getLeadingWhitespace(lineTokens.getLineContent());\n        const afterEnterAction = this.getInheritIndentForLine(autoIndent, virtualModel, range.startLineNumber + 1);\n        if (!afterEnterAction) {\n            const beforeEnter = embeddedLanguage ? currentLineIndent : beforeEnterIndent;\n            return {\n                beforeEnter: beforeEnter,\n                afterEnter: beforeEnter\n            };\n        }\n        let afterEnterIndent = embeddedLanguage ? currentLineIndent : afterEnterAction.indentation;\n        if (afterEnterAction.action === IndentAction.Indent) {\n            afterEnterIndent = indentConverter.shiftIndent(afterEnterIndent);\n        }\n        if (indentRulesSupport.shouldDecrease(afterEnterText)) {\n            afterEnterIndent = indentConverter.unshiftIndent(afterEnterIndent);\n        }\n        return {\n            beforeEnter: embeddedLanguage ? currentLineIndent : beforeEnterIndent,\n            afterEnter: afterEnterIndent\n        };\n    }\n    /**\n     * We should always allow intentional indentation. It means, if users change the indentation of `lineNumber` and the content of\n     * this line doesn't match decreaseIndentPattern, we should not adjust the indentation.\n     */\n    getIndentActionForType(autoIndent, model, range, ch, indentConverter) {\n        if (autoIndent < 4 /* Full */) {\n            return null;\n        }\n        const scopedLineTokens = this.getScopedLineTokens(model, range.startLineNumber, range.startColumn);\n        if (scopedLineTokens.firstCharOffset) {\n            // this line has mixed languages and indentation rules will not work\n            return null;\n        }\n        const indentRulesSupport = this.getIndentRulesSupport(scopedLineTokens.languageId);\n        if (!indentRulesSupport) {\n            return null;\n        }\n        const scopedLineText = scopedLineTokens.getLineContent();\n        const beforeTypeText = scopedLineText.substr(0, range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        // selection support\n        let afterTypeText;\n        if (range.isEmpty()) {\n            afterTypeText = scopedLineText.substr(range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        else {\n            const endScopedLineTokens = this.getScopedLineTokens(model, range.endLineNumber, range.endColumn);\n            afterTypeText = endScopedLineTokens.getLineContent().substr(range.endColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        // If previous content already matches decreaseIndentPattern, it means indentation of this line should already be adjusted\n        // Users might change the indentation by purpose and we should honor that instead of readjusting.\n        if (!indentRulesSupport.shouldDecrease(beforeTypeText + afterTypeText) && indentRulesSupport.shouldDecrease(beforeTypeText + ch + afterTypeText)) {\n            // after typing `ch`, the content matches decreaseIndentPattern, we should adjust the indent to a good manner.\n            // 1. Get inherited indent action\n            const r = this.getInheritIndentForLine(autoIndent, model, range.startLineNumber, false);\n            if (!r) {\n                return null;\n            }\n            let indentation = r.indentation;\n            if (r.action !== IndentAction.Indent) {\n                indentation = indentConverter.unshiftIndent(indentation);\n            }\n            return indentation;\n        }\n        return null;\n    }\n    getIndentMetadata(model, lineNumber) {\n        const indentRulesSupport = this.getIndentRulesSupport(model.getLanguageId());\n        if (!indentRulesSupport) {\n            return null;\n        }\n        if (lineNumber < 1 || lineNumber > model.getLineCount()) {\n            return null;\n        }\n        return indentRulesSupport.getIndentMetadata(model.getLineContent(lineNumber));\n    }\n    // end Indent Rules\n    // begin onEnter\n    getEnterAction(autoIndent, model, range) {\n        const scopedLineTokens = this.getScopedLineTokens(model, range.startLineNumber, range.startColumn);\n        const richEditSupport = this.getLanguageConfiguration(scopedLineTokens.languageId);\n        if (!richEditSupport) {\n            return null;\n        }\n        const scopedLineText = scopedLineTokens.getLineContent();\n        const beforeEnterText = scopedLineText.substr(0, range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        // selection support\n        let afterEnterText;\n        if (range.isEmpty()) {\n            afterEnterText = scopedLineText.substr(range.startColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        else {\n            const endScopedLineTokens = this.getScopedLineTokens(model, range.endLineNumber, range.endColumn);\n            afterEnterText = endScopedLineTokens.getLineContent().substr(range.endColumn - 1 - scopedLineTokens.firstCharOffset);\n        }\n        let previousLineText = '';\n        if (range.startLineNumber > 1 && scopedLineTokens.firstCharOffset === 0) {\n            // This is not the first line and the entire line belongs to this mode\n            const oneLineAboveScopedLineTokens = this.getScopedLineTokens(model, range.startLineNumber - 1);\n            if (oneLineAboveScopedLineTokens.languageId === scopedLineTokens.languageId) {\n                // The line above ends with text belonging to the same mode\n                previousLineText = oneLineAboveScopedLineTokens.getLineContent();\n            }\n        }\n        const enterResult = richEditSupport.onEnter(autoIndent, previousLineText, beforeEnterText, afterEnterText);\n        if (!enterResult) {\n            return null;\n        }\n        const indentAction = enterResult.indentAction;\n        let appendText = enterResult.appendText;\n        const removeText = enterResult.removeText || 0;\n        // Here we add `\\t` to appendText first because enterAction is leveraging appendText and removeText to change indentation.\n        if (!appendText) {\n            if ((indentAction === IndentAction.Indent) ||\n                (indentAction === IndentAction.IndentOutdent)) {\n                appendText = '\\t';\n            }\n            else {\n                appendText = '';\n            }\n        }\n        else if (indentAction === IndentAction.Indent) {\n            appendText = '\\t' + appendText;\n        }\n        let indentation = this.getIndentationAtPosition(model, range.startLineNumber, range.startColumn);\n        if (removeText) {\n            indentation = indentation.substring(0, indentation.length - removeText);\n        }\n        return {\n            indentAction: indentAction,\n            appendText: appendText,\n            removeText: removeText,\n            indentation: indentation\n        };\n    }\n    getIndentationAtPosition(model, lineNumber, column) {\n        const lineText = model.getLineContent(lineNumber);\n        let indentation = strings.getLeadingWhitespace(lineText);\n        if (indentation.length > column - 1) {\n            indentation = indentation.substring(0, column - 1);\n        }\n        return indentation;\n    }\n    getScopedLineTokens(model, lineNumber, columnNumber) {\n        model.forceTokenization(lineNumber);\n        const lineTokens = model.getLineTokens(lineNumber);\n        const column = (typeof columnNumber === 'undefined' ? model.getLineMaxColumn(lineNumber) - 1 : columnNumber - 1);\n        return createScopedLineTokens(lineTokens, column);\n    }\n}\n/**\n * @deprecated Use ILanguageConfigurationService instead.\n*/\nexport const LanguageConfigurationRegistry = new LanguageConfigurationRegistryImpl();\nclass ComposedLanguageConfiguration {\n    constructor(languageId) {\n        this.languageId = languageId;\n        this._resolved = null;\n        this._entries = [];\n        this._order = 0;\n        this._resolved = null;\n    }\n    register(configuration, priority) {\n        const entry = new LanguageConfigurationContribution(configuration, priority, ++this._order);\n        this._entries.push(entry);\n        this._resolved = null;\n        return toDisposable(() => {\n            for (let i = 0; i < this._entries.length; i++) {\n                if (this._entries[i] === entry) {\n                    this._entries.splice(i, 1);\n                    this._resolved = null;\n                    break;\n                }\n            }\n        });\n    }\n    getResolvedConfiguration() {\n        if (!this._resolved) {\n            const config = this._resolve();\n            if (config) {\n                this._resolved = new ResolvedLanguageConfiguration(this.languageId, config);\n            }\n        }\n        return this._resolved;\n    }\n    _resolve() {\n        if (this._entries.length === 0) {\n            return null;\n        }\n        this._entries.sort(LanguageConfigurationContribution.cmp);\n        return combineLanguageConfigurations(this._entries.map(e => e.configuration));\n    }\n}\nfunction combineLanguageConfigurations(configs) {\n    let result = {\n        comments: undefined,\n        brackets: undefined,\n        wordPattern: undefined,\n        indentationRules: undefined,\n        onEnterRules: undefined,\n        autoClosingPairs: undefined,\n        surroundingPairs: undefined,\n        autoCloseBefore: undefined,\n        folding: undefined,\n        colorizedBracketPairs: undefined,\n        __electricCharacterSupport: undefined,\n    };\n    for (const entry of configs) {\n        result = {\n            comments: entry.comments || result.comments,\n            brackets: entry.brackets || result.brackets,\n            wordPattern: entry.wordPattern || result.wordPattern,\n            indentationRules: entry.indentationRules || result.indentationRules,\n            onEnterRules: entry.onEnterRules || result.onEnterRules,\n            autoClosingPairs: entry.autoClosingPairs || result.autoClosingPairs,\n            surroundingPairs: entry.surroundingPairs || result.surroundingPairs,\n            autoCloseBefore: entry.autoCloseBefore || result.autoCloseBefore,\n            folding: entry.folding || result.folding,\n            colorizedBracketPairs: entry.colorizedBracketPairs || result.colorizedBracketPairs,\n            __electricCharacterSupport: entry.__electricCharacterSupport || result.__electricCharacterSupport,\n        };\n    }\n    return result;\n}\nclass LanguageConfigurationContribution {\n    constructor(configuration, priority, order) {\n        this.configuration = configuration;\n        this.priority = priority;\n        this.order = order;\n    }\n    static cmp(a, b) {\n        if (a.priority === b.priority) {\n            // higher order last\n            return a.order - b.order;\n        }\n        // higher priority last\n        return a.priority - b.priority;\n    }\n}\n/**\n * Immutable.\n*/\nexport class ResolvedLanguageConfiguration {\n    constructor(languageId, underlyingConfig) {\n        this.languageId = languageId;\n        this.underlyingConfig = underlyingConfig;\n        this._brackets = null;\n        this._electricCharacter = null;\n        this._onEnterSupport =\n            this.underlyingConfig.brackets ||\n                this.underlyingConfig.indentationRules ||\n                this.underlyingConfig.onEnterRules\n                ? new OnEnterSupport(this.underlyingConfig)\n                : null;\n        this.comments = ResolvedLanguageConfiguration._handleComments(this.underlyingConfig);\n        this.characterPair = new CharacterPairSupport(this.underlyingConfig);\n        this.wordDefinition = this.underlyingConfig.wordPattern || DEFAULT_WORD_REGEXP;\n        this.indentationRules = this.underlyingConfig.indentationRules;\n        if (this.underlyingConfig.indentationRules) {\n            this.indentRulesSupport = new IndentRulesSupport(this.underlyingConfig.indentationRules);\n        }\n        else {\n            this.indentRulesSupport = null;\n        }\n        this.foldingRules = this.underlyingConfig.folding || {};\n    }\n    getWordDefinition() {\n        return ensureValidWordDefinition(this.wordDefinition);\n    }\n    get brackets() {\n        if (!this._brackets && this.underlyingConfig.brackets) {\n            this._brackets = new RichEditBrackets(this.languageId, this.underlyingConfig.brackets);\n        }\n        return this._brackets;\n    }\n    get electricCharacter() {\n        if (!this._electricCharacter) {\n            this._electricCharacter = new BracketElectricCharacterSupport(this.brackets);\n        }\n        return this._electricCharacter;\n    }\n    onEnter(autoIndent, previousLineText, beforeEnterText, afterEnterText) {\n        if (!this._onEnterSupport) {\n            return null;\n        }\n        return this._onEnterSupport.onEnter(autoIndent, previousLineText, beforeEnterText, afterEnterText);\n    }\n    getAutoClosingPairs() {\n        return new AutoClosingPairs(this.characterPair.getAutoClosingPairs());\n    }\n    getAutoCloseBeforeSet() {\n        return this.characterPair.getAutoCloseBeforeSet();\n    }\n    getSurroundingPairs() {\n        return this.characterPair.getSurroundingPairs();\n    }\n    static _handleComments(conf) {\n        const commentRule = conf.comments;\n        if (!commentRule) {\n            return null;\n        }\n        // comment configuration\n        const comments = {};\n        if (commentRule.lineComment) {\n            comments.lineCommentToken = commentRule.lineComment;\n        }\n        if (commentRule.blockComment) {\n            const [blockStart, blockEnd] = commentRule.blockComment;\n            comments.blockCommentStartToken = blockStart;\n            comments.blockCommentEndToken = blockEnd;\n        }\n        return comments;\n    }\n}\nregisterSingleton(ILanguageConfigurationService, LanguageConfigurationService);\n",
+      "start": 1711096855064,
+      "end": 1711096855140,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855140,
+      "end": 1711096855140,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855140,
+      "end": 1711096855142,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855142,
+      "end": 1711096855142,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855142,
+      "end": 1711096855143,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855143,
+      "end": 1711096855143,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855143,
+      "end": 1711096855143,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855143,
+      "end": 1711096855143,
+      "order": "normal"
+    }
+  ]
+}

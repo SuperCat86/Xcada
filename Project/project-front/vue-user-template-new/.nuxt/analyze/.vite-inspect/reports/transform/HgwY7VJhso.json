@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/view/viewController.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { CoreNavigationCommands } from '../coreCommands.js';\nimport { Position } from '../../common/core/position.js';\nimport * as platform from '../../../base/common/platform.js';\nexport class ViewController {\n    constructor(configuration, viewModel, userInputEvents, commandDelegate) {\n        this.configuration = configuration;\n        this.viewModel = viewModel;\n        this.userInputEvents = userInputEvents;\n        this.commandDelegate = commandDelegate;\n    }\n    paste(text, pasteOnNewLine, multicursorText, mode) {\n        this.commandDelegate.paste(text, pasteOnNewLine, multicursorText, mode);\n    }\n    type(text) {\n        this.commandDelegate.type(text);\n    }\n    compositionType(text, replacePrevCharCnt, replaceNextCharCnt, positionDelta) {\n        this.commandDelegate.compositionType(text, replacePrevCharCnt, replaceNextCharCnt, positionDelta);\n    }\n    compositionStart() {\n        this.commandDelegate.startComposition();\n    }\n    compositionEnd() {\n        this.commandDelegate.endComposition();\n    }\n    cut() {\n        this.commandDelegate.cut();\n    }\n    setSelection(modelSelection) {\n        CoreNavigationCommands.SetSelection.runCoreEditorCommand(this.viewModel, {\n            source: 'keyboard',\n            selection: modelSelection\n        });\n    }\n    _validateViewColumn(viewPosition) {\n        const minColumn = this.viewModel.getLineMinColumn(viewPosition.lineNumber);\n        if (viewPosition.column < minColumn) {\n            return new Position(viewPosition.lineNumber, minColumn);\n        }\n        return viewPosition;\n    }\n    _hasMulticursorModifier(data) {\n        switch (this.configuration.options.get(70 /* multiCursorModifier */)) {\n            case 'altKey':\n                return data.altKey;\n            case 'ctrlKey':\n                return data.ctrlKey;\n            case 'metaKey':\n                return data.metaKey;\n            default:\n                return false;\n        }\n    }\n    _hasNonMulticursorModifier(data) {\n        switch (this.configuration.options.get(70 /* multiCursorModifier */)) {\n            case 'altKey':\n                return data.ctrlKey || data.metaKey;\n            case 'ctrlKey':\n                return data.altKey || data.metaKey;\n            case 'metaKey':\n                return data.ctrlKey || data.altKey;\n            default:\n                return false;\n        }\n    }\n    dispatchMouse(data) {\n        const options = this.configuration.options;\n        const selectionClipboardIsOn = (platform.isLinux && options.get(96 /* selectionClipboard */));\n        const columnSelection = options.get(18 /* columnSelection */);\n        if (data.middleButton && !selectionClipboardIsOn) {\n            this._columnSelect(data.position, data.mouseColumn, data.inSelectionMode);\n        }\n        else if (data.startedOnLineNumbers) {\n            // If the dragging started on the gutter, then have operations work on the entire line\n            if (this._hasMulticursorModifier(data)) {\n                if (data.inSelectionMode) {\n                    this._lastCursorLineSelect(data.position);\n                }\n                else {\n                    this._createCursor(data.position, true);\n                }\n            }\n            else {\n                if (data.inSelectionMode) {\n                    this._lineSelectDrag(data.position);\n                }\n                else {\n                    this._lineSelect(data.position);\n                }\n            }\n        }\n        else if (data.mouseDownCount >= 4) {\n            this._selectAll();\n        }\n        else if (data.mouseDownCount === 3) {\n            if (this._hasMulticursorModifier(data)) {\n                if (data.inSelectionMode) {\n                    this._lastCursorLineSelectDrag(data.position);\n                }\n                else {\n                    this._lastCursorLineSelect(data.position);\n                }\n            }\n            else {\n                if (data.inSelectionMode) {\n                    this._lineSelectDrag(data.position);\n                }\n                else {\n                    this._lineSelect(data.position);\n                }\n            }\n        }\n        else if (data.mouseDownCount === 2) {\n            if (!data.onInjectedText) {\n                if (this._hasMulticursorModifier(data)) {\n                    this._lastCursorWordSelect(data.position);\n                }\n                else {\n                    if (data.inSelectionMode) {\n                        this._wordSelectDrag(data.position);\n                    }\n                    else {\n                        this._wordSelect(data.position);\n                    }\n                }\n            }\n        }\n        else {\n            if (this._hasMulticursorModifier(data)) {\n                if (!this._hasNonMulticursorModifier(data)) {\n                    if (data.shiftKey) {\n                        this._columnSelect(data.position, data.mouseColumn, true);\n                    }\n                    else {\n                        // Do multi-cursor operations only when purely alt is pressed\n                        if (data.inSelectionMode) {\n                            this._lastCursorMoveToSelect(data.position);\n                        }\n                        else {\n                            this._createCursor(data.position, false);\n                        }\n                    }\n                }\n            }\n            else {\n                if (data.inSelectionMode) {\n                    if (data.altKey) {\n                        this._columnSelect(data.position, data.mouseColumn, true);\n                    }\n                    else {\n                        if (columnSelection) {\n                            this._columnSelect(data.position, data.mouseColumn, true);\n                        }\n                        else {\n                            this._moveToSelect(data.position);\n                        }\n                    }\n                }\n                else {\n                    this.moveTo(data.position);\n                }\n            }\n        }\n    }\n    _usualArgs(viewPosition) {\n        viewPosition = this._validateViewColumn(viewPosition);\n        return {\n            source: 'mouse',\n            position: this._convertViewToModelPosition(viewPosition),\n            viewPosition: viewPosition\n        };\n    }\n    moveTo(viewPosition) {\n        CoreNavigationCommands.MoveTo.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _moveToSelect(viewPosition) {\n        CoreNavigationCommands.MoveToSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _columnSelect(viewPosition, mouseColumn, doColumnSelect) {\n        viewPosition = this._validateViewColumn(viewPosition);\n        CoreNavigationCommands.ColumnSelect.runCoreEditorCommand(this.viewModel, {\n            source: 'mouse',\n            position: this._convertViewToModelPosition(viewPosition),\n            viewPosition: viewPosition,\n            mouseColumn: mouseColumn,\n            doColumnSelect: doColumnSelect\n        });\n    }\n    _createCursor(viewPosition, wholeLine) {\n        viewPosition = this._validateViewColumn(viewPosition);\n        CoreNavigationCommands.CreateCursor.runCoreEditorCommand(this.viewModel, {\n            source: 'mouse',\n            position: this._convertViewToModelPosition(viewPosition),\n            viewPosition: viewPosition,\n            wholeLine: wholeLine\n        });\n    }\n    _lastCursorMoveToSelect(viewPosition) {\n        CoreNavigationCommands.LastCursorMoveToSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _wordSelect(viewPosition) {\n        CoreNavigationCommands.WordSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _wordSelectDrag(viewPosition) {\n        CoreNavigationCommands.WordSelectDrag.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _lastCursorWordSelect(viewPosition) {\n        CoreNavigationCommands.LastCursorWordSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _lineSelect(viewPosition) {\n        CoreNavigationCommands.LineSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _lineSelectDrag(viewPosition) {\n        CoreNavigationCommands.LineSelectDrag.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _lastCursorLineSelect(viewPosition) {\n        CoreNavigationCommands.LastCursorLineSelect.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _lastCursorLineSelectDrag(viewPosition) {\n        CoreNavigationCommands.LastCursorLineSelectDrag.runCoreEditorCommand(this.viewModel, this._usualArgs(viewPosition));\n    }\n    _selectAll() {\n        CoreNavigationCommands.SelectAll.runCoreEditorCommand(this.viewModel, { source: 'mouse' });\n    }\n    // ----------------------\n    _convertViewToModelPosition(viewPosition) {\n        return this.viewModel.coordinatesConverter.convertViewPositionToModelPosition(viewPosition);\n    }\n    emitKeyDown(e) {\n        this.userInputEvents.emitKeyDown(e);\n    }\n    emitKeyUp(e) {\n        this.userInputEvents.emitKeyUp(e);\n    }\n    emitContextMenu(e) {\n        this.userInputEvents.emitContextMenu(e);\n    }\n    emitMouseMove(e) {\n        this.userInputEvents.emitMouseMove(e);\n    }\n    emitMouseLeave(e) {\n        this.userInputEvents.emitMouseLeave(e);\n    }\n    emitMouseUp(e) {\n        this.userInputEvents.emitMouseUp(e);\n    }\n    emitMouseDown(e) {\n        this.userInputEvents.emitMouseDown(e);\n    }\n    emitMouseDrag(e) {\n        this.userInputEvents.emitMouseDrag(e);\n    }\n    emitMouseDrop(e) {\n        this.userInputEvents.emitMouseDrop(e);\n    }\n    emitMouseDropCanceled() {\n        this.userInputEvents.emitMouseDropCanceled();\n    }\n    emitMouseWheel(e) {\n        this.userInputEvents.emitMouseWheel(e);\n    }\n}\n",
+      "start": 1711096856345,
+      "end": 1711096856419,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856419,
+      "end": 1711096856419,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856420,
+      "end": 1711096856420,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856420,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856421,
+      "end": 1711096856421,
+      "order": "normal"
+    }
+  ]
+}

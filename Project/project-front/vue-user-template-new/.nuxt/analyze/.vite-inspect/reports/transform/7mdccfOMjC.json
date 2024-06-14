@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/markers/common/markerService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { isFalsyOrEmpty } from '../../../base/common/arrays.js';\nimport { DebounceEmitter } from '../../../base/common/event.js';\nimport { Iterable } from '../../../base/common/iterator.js';\nimport { ResourceMap } from '../../../base/common/map.js';\nimport { Schemas } from '../../../base/common/network.js';\nimport { URI } from '../../../base/common/uri.js';\nimport { MarkerSeverity } from './markers.js';\nclass DoubleResourceMap {\n    constructor() {\n        this._byResource = new ResourceMap();\n        this._byOwner = new Map();\n    }\n    set(resource, owner, value) {\n        let ownerMap = this._byResource.get(resource);\n        if (!ownerMap) {\n            ownerMap = new Map();\n            this._byResource.set(resource, ownerMap);\n        }\n        ownerMap.set(owner, value);\n        let resourceMap = this._byOwner.get(owner);\n        if (!resourceMap) {\n            resourceMap = new ResourceMap();\n            this._byOwner.set(owner, resourceMap);\n        }\n        resourceMap.set(resource, value);\n    }\n    get(resource, owner) {\n        let ownerMap = this._byResource.get(resource);\n        return ownerMap === null || ownerMap === void 0 ? void 0 : ownerMap.get(owner);\n    }\n    delete(resource, owner) {\n        let removedA = false;\n        let removedB = false;\n        let ownerMap = this._byResource.get(resource);\n        if (ownerMap) {\n            removedA = ownerMap.delete(owner);\n        }\n        let resourceMap = this._byOwner.get(owner);\n        if (resourceMap) {\n            removedB = resourceMap.delete(resource);\n        }\n        if (removedA !== removedB) {\n            throw new Error('illegal state');\n        }\n        return removedA && removedB;\n    }\n    values(key) {\n        var _a, _b, _c, _d;\n        if (typeof key === 'string') {\n            return (_b = (_a = this._byOwner.get(key)) === null || _a === void 0 ? void 0 : _a.values()) !== null && _b !== void 0 ? _b : Iterable.empty();\n        }\n        if (URI.isUri(key)) {\n            return (_d = (_c = this._byResource.get(key)) === null || _c === void 0 ? void 0 : _c.values()) !== null && _d !== void 0 ? _d : Iterable.empty();\n        }\n        return Iterable.map(Iterable.concat(...this._byOwner.values()), map => map[1]);\n    }\n}\nclass MarkerStats {\n    constructor(service) {\n        this.errors = 0;\n        this.infos = 0;\n        this.warnings = 0;\n        this.unknowns = 0;\n        this._data = new ResourceMap();\n        this._service = service;\n        this._subscription = service.onMarkerChanged(this._update, this);\n    }\n    dispose() {\n        this._subscription.dispose();\n    }\n    _update(resources) {\n        for (const resource of resources) {\n            const oldStats = this._data.get(resource);\n            if (oldStats) {\n                this._substract(oldStats);\n            }\n            const newStats = this._resourceStats(resource);\n            this._add(newStats);\n            this._data.set(resource, newStats);\n        }\n    }\n    _resourceStats(resource) {\n        const result = { errors: 0, warnings: 0, infos: 0, unknowns: 0 };\n        // TODO this is a hack\n        if (resource.scheme === Schemas.inMemory || resource.scheme === Schemas.walkThrough || resource.scheme === Schemas.walkThroughSnippet) {\n            return result;\n        }\n        for (const { severity } of this._service.read({ resource })) {\n            if (severity === MarkerSeverity.Error) {\n                result.errors += 1;\n            }\n            else if (severity === MarkerSeverity.Warning) {\n                result.warnings += 1;\n            }\n            else if (severity === MarkerSeverity.Info) {\n                result.infos += 1;\n            }\n            else {\n                result.unknowns += 1;\n            }\n        }\n        return result;\n    }\n    _substract(op) {\n        this.errors -= op.errors;\n        this.warnings -= op.warnings;\n        this.infos -= op.infos;\n        this.unknowns -= op.unknowns;\n    }\n    _add(op) {\n        this.errors += op.errors;\n        this.warnings += op.warnings;\n        this.infos += op.infos;\n        this.unknowns += op.unknowns;\n    }\n}\nexport class MarkerService {\n    constructor() {\n        this._onMarkerChanged = new DebounceEmitter({\n            delay: 0,\n            merge: MarkerService._merge\n        });\n        this.onMarkerChanged = this._onMarkerChanged.event;\n        this._data = new DoubleResourceMap();\n        this._stats = new MarkerStats(this);\n    }\n    dispose() {\n        this._stats.dispose();\n        this._onMarkerChanged.dispose();\n    }\n    remove(owner, resources) {\n        for (const resource of resources || []) {\n            this.changeOne(owner, resource, []);\n        }\n    }\n    changeOne(owner, resource, markerData) {\n        if (isFalsyOrEmpty(markerData)) {\n            // remove marker for this (owner,resource)-tuple\n            const removed = this._data.delete(resource, owner);\n            if (removed) {\n                this._onMarkerChanged.fire([resource]);\n            }\n        }\n        else {\n            // insert marker for this (owner,resource)-tuple\n            const markers = [];\n            for (const data of markerData) {\n                const marker = MarkerService._toMarker(owner, resource, data);\n                if (marker) {\n                    markers.push(marker);\n                }\n            }\n            this._data.set(resource, owner, markers);\n            this._onMarkerChanged.fire([resource]);\n        }\n    }\n    static _toMarker(owner, resource, data) {\n        let { code, severity, message, source, startLineNumber, startColumn, endLineNumber, endColumn, relatedInformation, tags, } = data;\n        if (!message) {\n            return undefined;\n        }\n        // santize data\n        startLineNumber = startLineNumber > 0 ? startLineNumber : 1;\n        startColumn = startColumn > 0 ? startColumn : 1;\n        endLineNumber = endLineNumber >= startLineNumber ? endLineNumber : startLineNumber;\n        endColumn = endColumn > 0 ? endColumn : startColumn;\n        return {\n            resource,\n            owner,\n            code,\n            severity,\n            message,\n            source,\n            startLineNumber,\n            startColumn,\n            endLineNumber,\n            endColumn,\n            relatedInformation,\n            tags,\n        };\n    }\n    read(filter = Object.create(null)) {\n        let { owner, resource, severities, take } = filter;\n        if (!take || take < 0) {\n            take = -1;\n        }\n        if (owner && resource) {\n            // exactly one owner AND resource\n            const data = this._data.get(resource, owner);\n            if (!data) {\n                return [];\n            }\n            else {\n                const result = [];\n                for (const marker of data) {\n                    if (MarkerService._accept(marker, severities)) {\n                        const newLen = result.push(marker);\n                        if (take > 0 && newLen === take) {\n                            break;\n                        }\n                    }\n                }\n                return result;\n            }\n        }\n        else if (!owner && !resource) {\n            // all\n            const result = [];\n            for (let markers of this._data.values()) {\n                for (let data of markers) {\n                    if (MarkerService._accept(data, severities)) {\n                        const newLen = result.push(data);\n                        if (take > 0 && newLen === take) {\n                            return result;\n                        }\n                    }\n                }\n            }\n            return result;\n        }\n        else {\n            // of one resource OR owner\n            const iterable = this._data.values(resource !== null && resource !== void 0 ? resource : owner);\n            const result = [];\n            for (const markers of iterable) {\n                for (const data of markers) {\n                    if (MarkerService._accept(data, severities)) {\n                        const newLen = result.push(data);\n                        if (take > 0 && newLen === take) {\n                            return result;\n                        }\n                    }\n                }\n            }\n            return result;\n        }\n    }\n    static _accept(marker, severities) {\n        return severities === undefined || (severities & marker.severity) === marker.severity;\n    }\n    // --- event debounce logic\n    static _merge(all) {\n        const set = new ResourceMap();\n        for (let array of all) {\n            for (let item of array) {\n                set.set(item, true);\n            }\n        }\n        return Array.from(set.keys());\n    }\n}\n",
+      "start": 1711096856300,
+      "end": 1711096856375,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856375,
+      "end": 1711096856375,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856375,
+      "end": 1711096856375,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856375,
+      "end": 1711096856375,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856376,
+      "end": 1711096856376,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856376,
+      "end": 1711096856379,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856379,
+      "end": 1711096856379,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856379,
+      "end": 1711096856379,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856379,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856380,
+      "end": 1711096856380,
+      "order": "normal"
+    }
+  ]
+}

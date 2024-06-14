@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/markdownHoverParticipant.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { asArray } from '../../../../base/common/arrays.js';\nimport { AsyncIterableObject } from '../../../../base/common/async.js';\nimport { isEmptyMarkdownString, MarkdownString } from '../../../../base/common/htmlContent.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { MarkdownRenderer } from '../../markdownRenderer/browser/markdownRenderer.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { getHover } from './getHover.js';\nimport * as nls from '../../../../nls.js';\nimport { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nconst $ = dom.$;\nexport class MarkdownHover {\n    constructor(owner, range, contents, ordinal) {\n        this.owner = owner;\n        this.range = range;\n        this.contents = contents;\n        this.ordinal = ordinal;\n    }\n    isValidForHoverAnchor(anchor) {\n        return (anchor.type === 1 /* Range */\n            && this.range.startColumn <= anchor.range.startColumn\n            && this.range.endColumn >= anchor.range.endColumn);\n    }\n}\nlet MarkdownHoverParticipant = class MarkdownHoverParticipant {\n    constructor(_editor, _languageService, _openerService, _configurationService, _languageFeaturesService) {\n        this._editor = _editor;\n        this._languageService = _languageService;\n        this._openerService = _openerService;\n        this._configurationService = _configurationService;\n        this._languageFeaturesService = _languageFeaturesService;\n        this.hoverOrdinal = 2;\n    }\n    createLoadingMessage(anchor) {\n        return new MarkdownHover(this, anchor.range, [new MarkdownString().appendText(nls.localize('modesContentHover.loading', \"Loading...\"))], 2000);\n    }\n    computeSync(anchor, lineDecorations) {\n        if (!this._editor.hasModel() || anchor.type !== 1 /* Range */) {\n            return [];\n        }\n        const model = this._editor.getModel();\n        const lineNumber = anchor.range.startLineNumber;\n        const maxColumn = model.getLineMaxColumn(lineNumber);\n        const result = [];\n        let index = 1000;\n        const lineLength = model.getLineLength(lineNumber);\n        const languageId = model.getLanguageIdAtPosition(anchor.range.startLineNumber, anchor.range.startColumn);\n        const maxTokenizationLineLength = this._configurationService.getValue('editor.maxTokenizationLineLength', {\n            overrideIdentifier: languageId\n        });\n        if (typeof maxTokenizationLineLength === 'number' && lineLength >= maxTokenizationLineLength) {\n            result.push(new MarkdownHover(this, anchor.range, [{\n                    value: nls.localize('too many characters', \"Tokenization is skipped for long lines for performance reasons. This can be configured via `editor.maxTokenizationLineLength`.\")\n                }], index++));\n        }\n        for (const d of lineDecorations) {\n            const startColumn = (d.range.startLineNumber === lineNumber) ? d.range.startColumn : 1;\n            const endColumn = (d.range.endLineNumber === lineNumber) ? d.range.endColumn : maxColumn;\n            const hoverMessage = d.options.hoverMessage;\n            if (!hoverMessage || isEmptyMarkdownString(hoverMessage)) {\n                continue;\n            }\n            const range = new Range(anchor.range.startLineNumber, startColumn, anchor.range.startLineNumber, endColumn);\n            result.push(new MarkdownHover(this, range, asArray(hoverMessage), index++));\n        }\n        return result;\n    }\n    computeAsync(anchor, lineDecorations, token) {\n        if (!this._editor.hasModel() || anchor.type !== 1 /* Range */) {\n            return AsyncIterableObject.EMPTY;\n        }\n        const model = this._editor.getModel();\n        if (!this._languageFeaturesService.hoverProvider.has(model)) {\n            return AsyncIterableObject.EMPTY;\n        }\n        const position = new Position(anchor.range.startLineNumber, anchor.range.startColumn);\n        return getHover(this._languageFeaturesService.hoverProvider, model, position, token)\n            .filter(item => !isEmptyMarkdownString(item.hover.contents))\n            .map(item => {\n            const rng = item.hover.range ? Range.lift(item.hover.range) : anchor.range;\n            return new MarkdownHover(this, rng, item.hover.contents, item.ordinal);\n        });\n    }\n    renderHoverParts(context, hoverParts) {\n        return renderMarkdownHovers(context, hoverParts, this._editor, this._languageService, this._openerService);\n    }\n};\nMarkdownHoverParticipant = __decorate([\n    __param(1, ILanguageService),\n    __param(2, IOpenerService),\n    __param(3, IConfigurationService),\n    __param(4, ILanguageFeaturesService)\n], MarkdownHoverParticipant);\nexport { MarkdownHoverParticipant };\nexport function renderMarkdownHovers(context, hoverParts, editor, languageService, openerService) {\n    // Sort hover parts to keep them stable since they might come in async, out-of-order\n    hoverParts.sort((a, b) => a.ordinal - b.ordinal);\n    const disposables = new DisposableStore();\n    for (const hoverPart of hoverParts) {\n        for (const contents of hoverPart.contents) {\n            if (isEmptyMarkdownString(contents)) {\n                continue;\n            }\n            const markdownHoverElement = $('div.hover-row.markdown-hover');\n            const hoverContentsElement = dom.append(markdownHoverElement, $('div.hover-contents'));\n            const renderer = disposables.add(new MarkdownRenderer({ editor }, languageService, openerService));\n            disposables.add(renderer.onDidRenderAsync(() => {\n                hoverContentsElement.className = 'hover-contents code-hover-contents';\n                context.onContentsChanged();\n            }));\n            const renderedContents = disposables.add(renderer.render(contents));\n            hoverContentsElement.appendChild(renderedContents.element);\n            context.fragment.appendChild(markdownHoverElement);\n        }\n    }\n    return disposables;\n}\n",
+      "start": 1711096855770,
+      "end": 1711096855889,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855889,
+      "end": 1711096855889,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855889,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855890,
+      "end": 1711096855890,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855890,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    }
+  ]
+}

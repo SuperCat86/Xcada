@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/referencesModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { defaultGenerator } from '../../../../base/common/idGenerator.js';\nimport { dispose } from '../../../../base/common/lifecycle.js';\nimport { ResourceMap } from '../../../../base/common/map.js';\nimport { basename, extUri } from '../../../../base/common/resources.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { Range } from '../../../common/core/range.js';\nimport { localize } from '../../../../nls.js';\nexport class OneReference {\n    constructor(isProviderFirst, parent, link, _rangeCallback) {\n        this.isProviderFirst = isProviderFirst;\n        this.parent = parent;\n        this.link = link;\n        this._rangeCallback = _rangeCallback;\n        this.id = defaultGenerator.nextId();\n    }\n    get uri() {\n        return this.link.uri;\n    }\n    get range() {\n        var _a, _b;\n        return (_b = (_a = this._range) !== null && _a !== void 0 ? _a : this.link.targetSelectionRange) !== null && _b !== void 0 ? _b : this.link.range;\n    }\n    set range(value) {\n        this._range = value;\n        this._rangeCallback(this);\n    }\n    get ariaMessage() {\n        var _a;\n        const preview = (_a = this.parent.getPreview(this)) === null || _a === void 0 ? void 0 : _a.preview(this.range);\n        if (!preview) {\n            return localize('aria.oneReference', \"symbol in {0} on line {1} at column {2}\", basename(this.uri), this.range.startLineNumber, this.range.startColumn);\n        }\n        else {\n            return localize({ key: 'aria.oneReference.preview', comment: ['Placeholders are: 0: filename, 1:line number, 2: column number, 3: preview snippet of source code'] }, \"symbol in {0} on line {1} at column {2}, {3}\", basename(this.uri), this.range.startLineNumber, this.range.startColumn, preview.value);\n        }\n    }\n}\nexport class FilePreview {\n    constructor(_modelReference) {\n        this._modelReference = _modelReference;\n    }\n    dispose() {\n        this._modelReference.dispose();\n    }\n    preview(range, n = 8) {\n        const model = this._modelReference.object.textEditorModel;\n        if (!model) {\n            return undefined;\n        }\n        const { startLineNumber, startColumn, endLineNumber, endColumn } = range;\n        const word = model.getWordUntilPosition({ lineNumber: startLineNumber, column: startColumn - n });\n        const beforeRange = new Range(startLineNumber, word.startColumn, startLineNumber, startColumn);\n        const afterRange = new Range(endLineNumber, endColumn, endLineNumber, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);\n        const before = model.getValueInRange(beforeRange).replace(/^\\s+/, '');\n        const inside = model.getValueInRange(range);\n        const after = model.getValueInRange(afterRange).replace(/\\s+$/, '');\n        return {\n            value: before + inside + after,\n            highlight: { start: before.length, end: before.length + inside.length }\n        };\n    }\n}\nexport class FileReferences {\n    constructor(parent, uri) {\n        this.parent = parent;\n        this.uri = uri;\n        this.children = [];\n        this._previews = new ResourceMap();\n    }\n    dispose() {\n        dispose(this._previews.values());\n        this._previews.clear();\n    }\n    getPreview(child) {\n        return this._previews.get(child.uri);\n    }\n    get ariaMessage() {\n        const len = this.children.length;\n        if (len === 1) {\n            return localize('aria.fileReferences.1', \"1 symbol in {0}, full path {1}\", basename(this.uri), this.uri.fsPath);\n        }\n        else {\n            return localize('aria.fileReferences.N', \"{0} symbols in {1}, full path {2}\", len, basename(this.uri), this.uri.fsPath);\n        }\n    }\n    resolve(textModelResolverService) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (this._previews.size !== 0) {\n                return this;\n            }\n            for (let child of this.children) {\n                if (this._previews.has(child.uri)) {\n                    continue;\n                }\n                try {\n                    const ref = yield textModelResolverService.createModelReference(child.uri);\n                    this._previews.set(child.uri, new FilePreview(ref));\n                }\n                catch (err) {\n                    onUnexpectedError(err);\n                }\n            }\n            return this;\n        });\n    }\n}\nexport class ReferencesModel {\n    constructor(links, title) {\n        this.groups = [];\n        this.references = [];\n        this._onDidChangeReferenceRange = new Emitter();\n        this.onDidChangeReferenceRange = this._onDidChangeReferenceRange.event;\n        this._links = links;\n        this._title = title;\n        // grouping and sorting\n        const [providersFirst] = links;\n        links.sort(ReferencesModel._compareReferences);\n        let current;\n        for (let link of links) {\n            if (!current || !extUri.isEqual(current.uri, link.uri, true)) {\n                // new group\n                current = new FileReferences(this, link.uri);\n                this.groups.push(current);\n            }\n            // append, check for equality first!\n            if (current.children.length === 0 || ReferencesModel._compareReferences(link, current.children[current.children.length - 1]) !== 0) {\n                const oneRef = new OneReference(providersFirst === link, current, link, ref => this._onDidChangeReferenceRange.fire(ref));\n                this.references.push(oneRef);\n                current.children.push(oneRef);\n            }\n        }\n    }\n    dispose() {\n        dispose(this.groups);\n        this._onDidChangeReferenceRange.dispose();\n        this.groups.length = 0;\n    }\n    clone() {\n        return new ReferencesModel(this._links, this._title);\n    }\n    get title() {\n        return this._title;\n    }\n    get isEmpty() {\n        return this.groups.length === 0;\n    }\n    get ariaMessage() {\n        if (this.isEmpty) {\n            return localize('aria.result.0', \"No results found\");\n        }\n        else if (this.references.length === 1) {\n            return localize('aria.result.1', \"Found 1 symbol in {0}\", this.references[0].uri.fsPath);\n        }\n        else if (this.groups.length === 1) {\n            return localize('aria.result.n1', \"Found {0} symbols in {1}\", this.references.length, this.groups[0].uri.fsPath);\n        }\n        else {\n            return localize('aria.result.nm', \"Found {0} symbols in {1} files\", this.references.length, this.groups.length);\n        }\n    }\n    nextOrPreviousReference(reference, next) {\n        let { parent } = reference;\n        let idx = parent.children.indexOf(reference);\n        let childCount = parent.children.length;\n        let groupCount = parent.parent.groups.length;\n        if (groupCount === 1 || next && idx + 1 < childCount || !next && idx > 0) {\n            // cycling within one file\n            if (next) {\n                idx = (idx + 1) % childCount;\n            }\n            else {\n                idx = (idx + childCount - 1) % childCount;\n            }\n            return parent.children[idx];\n        }\n        idx = parent.parent.groups.indexOf(parent);\n        if (next) {\n            idx = (idx + 1) % groupCount;\n            return parent.parent.groups[idx].children[0];\n        }\n        else {\n            idx = (idx + groupCount - 1) % groupCount;\n            return parent.parent.groups[idx].children[parent.parent.groups[idx].children.length - 1];\n        }\n    }\n    nearestReference(resource, position) {\n        const nearest = this.references.map((ref, idx) => {\n            return {\n                idx,\n                prefixLen: strings.commonPrefixLength(ref.uri.toString(), resource.toString()),\n                offsetDist: Math.abs(ref.range.startLineNumber - position.lineNumber) * 100 + Math.abs(ref.range.startColumn - position.column)\n            };\n        }).sort((a, b) => {\n            if (a.prefixLen > b.prefixLen) {\n                return -1;\n            }\n            else if (a.prefixLen < b.prefixLen) {\n                return 1;\n            }\n            else if (a.offsetDist < b.offsetDist) {\n                return -1;\n            }\n            else if (a.offsetDist > b.offsetDist) {\n                return 1;\n            }\n            else {\n                return 0;\n            }\n        })[0];\n        if (nearest) {\n            return this.references[nearest.idx];\n        }\n        return undefined;\n    }\n    referenceAt(resource, position) {\n        for (const ref of this.references) {\n            if (ref.uri.toString() === resource.toString()) {\n                if (Range.containsPosition(ref.range, position)) {\n                    return ref;\n                }\n            }\n        }\n        return undefined;\n    }\n    firstReference() {\n        for (const ref of this.references) {\n            if (ref.isProviderFirst) {\n                return ref;\n            }\n        }\n        return this.references[0];\n    }\n    static _compareReferences(a, b) {\n        return extUri.compare(a.uri, b.uri) || Range.compareRangesUsingStarts(a.range, b.range);\n    }\n}\n",
+      "start": 1711096855677,
+      "end": 1711096855797,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855798,
+      "end": 1711096855798,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855798,
+      "end": 1711096855799,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855799,
+      "end": 1711096855799,
+      "order": "normal"
+    }
+  ]
+}

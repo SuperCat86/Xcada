@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/link/clickLinkGesture.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../../../../base/common/event.js';\nimport { Disposable } from '../../../../../base/common/lifecycle.js';\nimport * as platform from '../../../../../base/common/platform.js';\nfunction hasModifier(e, modifier) {\n    return !!e[modifier];\n}\n/**\n * An event that encapsulates the various trigger modifiers logic needed for go to definition.\n */\nexport class ClickLinkMouseEvent {\n    constructor(source, opts) {\n        this.target = source.target;\n        this.hasTriggerModifier = hasModifier(source.event, opts.triggerModifier);\n        this.hasSideBySideModifier = hasModifier(source.event, opts.triggerSideBySideModifier);\n        this.isNoneOrSingleMouseDown = (source.event.detail <= 1);\n    }\n}\n/**\n * An event that encapsulates the various trigger modifiers logic needed for go to definition.\n */\nexport class ClickLinkKeyboardEvent {\n    constructor(source, opts) {\n        this.keyCodeIsTriggerKey = (source.keyCode === opts.triggerKey);\n        this.keyCodeIsSideBySideKey = (source.keyCode === opts.triggerSideBySideKey);\n        this.hasTriggerModifier = hasModifier(source, opts.triggerModifier);\n    }\n}\nexport class ClickLinkOptions {\n    constructor(triggerKey, triggerModifier, triggerSideBySideKey, triggerSideBySideModifier) {\n        this.triggerKey = triggerKey;\n        this.triggerModifier = triggerModifier;\n        this.triggerSideBySideKey = triggerSideBySideKey;\n        this.triggerSideBySideModifier = triggerSideBySideModifier;\n    }\n    equals(other) {\n        return (this.triggerKey === other.triggerKey\n            && this.triggerModifier === other.triggerModifier\n            && this.triggerSideBySideKey === other.triggerSideBySideKey\n            && this.triggerSideBySideModifier === other.triggerSideBySideModifier);\n    }\n}\nfunction createOptions(multiCursorModifier) {\n    if (multiCursorModifier === 'altKey') {\n        if (platform.isMacintosh) {\n            return new ClickLinkOptions(57 /* Meta */, 'metaKey', 6 /* Alt */, 'altKey');\n        }\n        return new ClickLinkOptions(5 /* Ctrl */, 'ctrlKey', 6 /* Alt */, 'altKey');\n    }\n    if (platform.isMacintosh) {\n        return new ClickLinkOptions(6 /* Alt */, 'altKey', 57 /* Meta */, 'metaKey');\n    }\n    return new ClickLinkOptions(6 /* Alt */, 'altKey', 5 /* Ctrl */, 'ctrlKey');\n}\nexport class ClickLinkGesture extends Disposable {\n    constructor(editor) {\n        super();\n        this._onMouseMoveOrRelevantKeyDown = this._register(new Emitter());\n        this.onMouseMoveOrRelevantKeyDown = this._onMouseMoveOrRelevantKeyDown.event;\n        this._onExecute = this._register(new Emitter());\n        this.onExecute = this._onExecute.event;\n        this._onCancel = this._register(new Emitter());\n        this.onCancel = this._onCancel.event;\n        this._editor = editor;\n        this._opts = createOptions(this._editor.getOption(70 /* multiCursorModifier */));\n        this._lastMouseMoveEvent = null;\n        this._hasTriggerKeyOnMouseDown = false;\n        this._lineNumberOnMouseDown = 0;\n        this._register(this._editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(70 /* multiCursorModifier */)) {\n                const newOpts = createOptions(this._editor.getOption(70 /* multiCursorModifier */));\n                if (this._opts.equals(newOpts)) {\n                    return;\n                }\n                this._opts = newOpts;\n                this._lastMouseMoveEvent = null;\n                this._hasTriggerKeyOnMouseDown = false;\n                this._lineNumberOnMouseDown = 0;\n                this._onCancel.fire();\n            }\n        }));\n        this._register(this._editor.onMouseMove((e) => this._onEditorMouseMove(new ClickLinkMouseEvent(e, this._opts))));\n        this._register(this._editor.onMouseDown((e) => this._onEditorMouseDown(new ClickLinkMouseEvent(e, this._opts))));\n        this._register(this._editor.onMouseUp((e) => this._onEditorMouseUp(new ClickLinkMouseEvent(e, this._opts))));\n        this._register(this._editor.onKeyDown((e) => this._onEditorKeyDown(new ClickLinkKeyboardEvent(e, this._opts))));\n        this._register(this._editor.onKeyUp((e) => this._onEditorKeyUp(new ClickLinkKeyboardEvent(e, this._opts))));\n        this._register(this._editor.onMouseDrag(() => this._resetHandler()));\n        this._register(this._editor.onDidChangeCursorSelection((e) => this._onDidChangeCursorSelection(e)));\n        this._register(this._editor.onDidChangeModel((e) => this._resetHandler()));\n        this._register(this._editor.onDidChangeModelContent(() => this._resetHandler()));\n        this._register(this._editor.onDidScrollChange((e) => {\n            if (e.scrollTopChanged || e.scrollLeftChanged) {\n                this._resetHandler();\n            }\n        }));\n    }\n    _onDidChangeCursorSelection(e) {\n        if (e.selection && e.selection.startColumn !== e.selection.endColumn) {\n            this._resetHandler(); // immediately stop this feature if the user starts to select (https://github.com/microsoft/vscode/issues/7827)\n        }\n    }\n    _onEditorMouseMove(mouseEvent) {\n        this._lastMouseMoveEvent = mouseEvent;\n        this._onMouseMoveOrRelevantKeyDown.fire([mouseEvent, null]);\n    }\n    _onEditorMouseDown(mouseEvent) {\n        // We need to record if we had the trigger key on mouse down because someone might select something in the editor\n        // holding the mouse down and then while mouse is down start to press Ctrl/Cmd to start a copy operation and then\n        // release the mouse button without wanting to do the navigation.\n        // With this flag we prevent goto definition if the mouse was down before the trigger key was pressed.\n        this._hasTriggerKeyOnMouseDown = mouseEvent.hasTriggerModifier;\n        this._lineNumberOnMouseDown = mouseEvent.target.position ? mouseEvent.target.position.lineNumber : 0;\n    }\n    _onEditorMouseUp(mouseEvent) {\n        const currentLineNumber = mouseEvent.target.position ? mouseEvent.target.position.lineNumber : 0;\n        if (this._hasTriggerKeyOnMouseDown && this._lineNumberOnMouseDown && this._lineNumberOnMouseDown === currentLineNumber) {\n            this._onExecute.fire(mouseEvent);\n        }\n    }\n    _onEditorKeyDown(e) {\n        if (this._lastMouseMoveEvent\n            && (e.keyCodeIsTriggerKey // User just pressed Ctrl/Cmd (normal goto definition)\n                || (e.keyCodeIsSideBySideKey && e.hasTriggerModifier) // User pressed Ctrl/Cmd+Alt (goto definition to the side)\n            )) {\n            this._onMouseMoveOrRelevantKeyDown.fire([this._lastMouseMoveEvent, e]);\n        }\n        else if (e.hasTriggerModifier) {\n            this._onCancel.fire(); // remove decorations if user holds another key with ctrl/cmd to prevent accident goto declaration\n        }\n    }\n    _onEditorKeyUp(e) {\n        if (e.keyCodeIsTriggerKey) {\n            this._onCancel.fire();\n        }\n    }\n    _resetHandler() {\n        this._lastMouseMoveEvent = null;\n        this._hasTriggerKeyOnMouseDown = false;\n        this._onCancel.fire();\n    }\n}\n",
+      "start": 1711096855773,
+      "end": 1711096855900,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855900,
+      "end": 1711096855900,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855901,
+      "end": 1711096855901,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855901,
+      "end": 1711096855902,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855902,
+      "end": 1711096855902,
+      "order": "normal"
+    }
+  ]
+}

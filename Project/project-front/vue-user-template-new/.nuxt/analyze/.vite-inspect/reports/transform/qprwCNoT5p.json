@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standalone-tokens.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n\n/* Default standalone editor fonts */\n.monaco-editor {\n\tfont-family: -apple-system, BlinkMacSystemFont, \"Segoe WPC\", \"Segoe UI\", \"HelveticaNeue-Light\", system-ui, \"Ubuntu\", \"Droid Sans\", sans-serif;\n\t--monaco-monospace-font: \"SF Mono\", Monaco, Menlo, Consolas, \"Ubuntu Mono\", \"Liberation Mono\", \"DejaVu Sans Mono\", \"Courier New\", monospace;\n}\n\n.monaco-menu .monaco-action-bar.vertical .action-item .action-menu-item:focus .action-label {\n\tstroke-width: 1.2px;\n}\n\n.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label,\n.monaco-editor.hc-black .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label {\n\tstroke-width: 1.2px;\n}\n\n.monaco-hover p {\n\tmargin: 0;\n}\n\n/* See https://github.com/microsoft/monaco-editor/issues/2168#issuecomment-780078600 */\n.monaco-aria-container {\n\tposition: absolute !important;\n\ttop: 0; /* avoid being placed underneath a sibling element */\n\theight: 1px;\n\twidth: 1px;\n\tmargin: -1px;\n\toverflow: hidden;\n\tpadding: 0;\n\tclip: rect(1px, 1px, 1px, 1px);\n\tclip-path: inset(50%);\n}\n\n/* The hc-black theme is already high contrast optimized */\n.monaco-editor.hc-black {\n\t-ms-high-contrast-adjust: none;\n}\n/* In case the browser goes into high contrast mode and the editor is not configured with the hc-black theme */\n@media screen and (-ms-high-contrast:active) {\n\n\t/* current line highlight */\n\t.monaco-editor.vs .view-overlays .current-line,\n\t.monaco-editor.vs-dark .view-overlays .current-line {\n\t\tborder-color: windowtext !important;\n\t\tborder-left: 0;\n\t\tborder-right: 0;\n\t}\n\n\t/* view cursors */\n\t.monaco-editor.vs .cursor,\n\t.monaco-editor.vs-dark .cursor {\n\t\tbackground-color: windowtext !important;\n\t}\n\t/* dnd target */\n\t.monaco-editor.vs .dnd-target,\n\t.monaco-editor.vs-dark .dnd-target {\n\t\tborder-color: windowtext !important;\n\t}\n\n\t/* selected text background */\n\t.monaco-editor.vs .selected-text,\n\t.monaco-editor.vs-dark .selected-text {\n\t\tbackground-color: highlight !important;\n\t}\n\n\t/* allow the text to have a transparent background. */\n\t.monaco-editor.vs .view-line,\n\t.monaco-editor.vs-dark .view-line {\n\t\t-ms-high-contrast-adjust: none;\n\t}\n\n\t/* text color */\n\t.monaco-editor.vs .view-line span,\n\t.monaco-editor.vs-dark .view-line span {\n\t\tcolor: windowtext !important;\n\t}\n\t/* selected text color */\n\t.monaco-editor.vs .view-line span.inline-selected-text,\n\t.monaco-editor.vs-dark .view-line span.inline-selected-text {\n\t\tcolor: highlighttext !important;\n\t}\n\n\t/* allow decorations */\n\t.monaco-editor.vs .view-overlays,\n\t.monaco-editor.vs-dark .view-overlays {\n\t\t-ms-high-contrast-adjust: none;\n\t}\n\n\t/* various decorations */\n\t.monaco-editor.vs .selectionHighlight,\n\t.monaco-editor.vs-dark .selectionHighlight,\n\t.monaco-editor.vs .wordHighlight,\n\t.monaco-editor.vs-dark .wordHighlight,\n\t.monaco-editor.vs .wordHighlightStrong,\n\t.monaco-editor.vs-dark .wordHighlightStrong,\n\t.monaco-editor.vs .reference-decoration,\n\t.monaco-editor.vs-dark .reference-decoration {\n\t\tborder: 2px dotted highlight !important;\n\t\tbackground: transparent !important;\n\t\tbox-sizing: border-box;\n\t}\n\t.monaco-editor.vs .rangeHighlight,\n\t.monaco-editor.vs-dark .rangeHighlight {\n\t\tbackground: transparent !important;\n\t\tborder: 1px dotted activeborder !important;\n\t\tbox-sizing: border-box;\n\t}\n\t.monaco-editor.vs .bracket-match,\n\t.monaco-editor.vs-dark .bracket-match {\n\t\tborder-color: windowtext !important;\n\t\tbackground: transparent !important;\n\t}\n\n\t/* find widget */\n\t.monaco-editor.vs .findMatch,\n\t.monaco-editor.vs-dark .findMatch,\n\t.monaco-editor.vs .currentFindMatch,\n\t.monaco-editor.vs-dark .currentFindMatch {\n\t\tborder: 2px dotted activeborder !important;\n\t\tbackground: transparent !important;\n\t\tbox-sizing: border-box;\n\t}\n\t.monaco-editor.vs .find-widget,\n\t.monaco-editor.vs-dark .find-widget {\n\t\tborder: 1px solid windowtext;\n\t}\n\n\t/* list - used by suggest widget */\n\t.monaco-editor.vs .monaco-list .monaco-list-row,\n\t.monaco-editor.vs-dark .monaco-list .monaco-list-row {\n\t\t-ms-high-contrast-adjust: none;\n\t\tcolor: windowtext !important;\n\t}\n\t.monaco-editor.vs .monaco-list .monaco-list-row.focused,\n\t.monaco-editor.vs-dark .monaco-list .monaco-list-row.focused {\n\t\tcolor: highlighttext !important;\n\t\tbackground-color: highlight !important;\n\t}\n\t.monaco-editor.vs .monaco-list .monaco-list-row:hover,\n\t.monaco-editor.vs-dark .monaco-list .monaco-list-row:hover {\n\t\tbackground: transparent !important;\n\t\tborder: 1px solid highlight;\n\t\tbox-sizing: border-box;\n\t}\n\n\t/* scrollbars */\n\t.monaco-editor.vs .monaco-scrollable-element > .scrollbar,\n\t.monaco-editor.vs-dark .monaco-scrollable-element > .scrollbar {\n\t\t-ms-high-contrast-adjust: none;\n\t\tbackground: background !important;\n\t\tborder: 1px solid windowtext;\n\t\tbox-sizing: border-box;\n\t}\n\t.monaco-editor.vs .monaco-scrollable-element > .scrollbar > .slider,\n\t.monaco-editor.vs-dark .monaco-scrollable-element > .scrollbar > .slider {\n\t\tbackground: windowtext !important;\n\t}\n\t.monaco-editor.vs .monaco-scrollable-element > .scrollbar > .slider:hover,\n\t.monaco-editor.vs-dark .monaco-scrollable-element > .scrollbar > .slider:hover {\n\t\tbackground: highlight !important;\n\t}\n\t.monaco-editor.vs .monaco-scrollable-element > .scrollbar > .slider.active,\n\t.monaco-editor.vs-dark .monaco-scrollable-element > .scrollbar > .slider.active {\n\t\tbackground: highlight !important;\n\t}\n\n\t/* overview ruler */\n\t.monaco-editor.vs .decorationsOverviewRuler,\n\t.monaco-editor.vs-dark .decorationsOverviewRuler {\n\t\topacity: 0;\n\t}\n\n\t/* minimap */\n\t.monaco-editor.vs .minimap,\n\t.monaco-editor.vs-dark .minimap {\n\t\tdisplay: none;\n\t}\n\n\t/* squiggles */\n\t.monaco-editor.vs .squiggly-d-error,\n\t.monaco-editor.vs-dark .squiggly-d-error {\n\t\tbackground: transparent !important;\n\t\tborder-bottom: 4px double #E47777;\n\t}\n\t.monaco-editor.vs .squiggly-c-warning,\n\t.monaco-editor.vs-dark .squiggly-c-warning {\n\t\tborder-bottom: 4px double #71B771;\n\t}\n\t.monaco-editor.vs .squiggly-b-info,\n\t.monaco-editor.vs-dark .squiggly-b-info {\n\t\tborder-bottom: 4px double #71B771;\n\t}\n\t.monaco-editor.vs .squiggly-a-hint,\n\t.monaco-editor.vs-dark .squiggly-a-hint {\n\t\tborder-bottom: 4px double #6c6c6c;\n\t}\n\n\t/* contextmenu */\n\t.monaco-editor.vs .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label,\n\t.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label {\n\t\t-ms-high-contrast-adjust: none;\n\t\tcolor: highlighttext !important;\n\t\tbackground-color: highlight !important;\n\t}\n\t.monaco-editor.vs .monaco-menu .monaco-action-bar.vertical .action-menu-item:hover .action-label,\n\t.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:hover .action-label {\n\t\t-ms-high-contrast-adjust: none;\n\t\tbackground: transparent !important;\n\t\tborder: 1px solid highlight;\n\t\tbox-sizing: border-box;\n\t}\n\n\t/* diff editor */\n\t.monaco-diff-editor.vs .diffOverviewRuler,\n\t.monaco-diff-editor.vs-dark .diffOverviewRuler {\n\t\tdisplay: none;\n\t}\n\t.monaco-editor.vs .line-insert,\n\t.monaco-editor.vs-dark .line-insert,\n\t.monaco-editor.vs .line-delete,\n\t.monaco-editor.vs-dark .line-delete {\n\t\tbackground: transparent !important;\n\t\tborder: 1px solid highlight !important;\n\t\tbox-sizing: border-box;\n\t}\n\t.monaco-editor.vs .char-insert,\n\t.monaco-editor.vs-dark .char-insert,\n\t.monaco-editor.vs .char-delete,\n\t.monaco-editor.vs-dark .char-delete {\n\t\tbackground: transparent !important;\n\t}\n}\n\n/*.monaco-editor.vs [tabindex=\"0\"]:focus {\n\toutline: 1px solid rgba(0, 122, 204, 0.4);\n\toutline-offset: -1px;\n\topacity: 1 !important;\n}\n\n.monaco-editor.vs-dark [tabindex=\"0\"]:focus {\n\toutline: 1px solid rgba(14, 99, 156, 0.6);\n\toutline-offset: -1px;\n\topacity: 1 !important;\n}*/\n",
+      "start": 1711096855084,
+      "end": 1711096855177,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855177,
+      "end": 1711096855177,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor{font-family:-apple-system,BlinkMacSystemFont,Segoe WPC,Segoe UI,HelveticaNeue-Light,system-ui,Ubuntu,Droid Sans,sans-serif;--monaco-monospace-font:\"SF Mono\",Monaco,Menlo,Consolas,\"Ubuntu Mono\",\"Liberation Mono\",\"DejaVu Sans Mono\",\"Courier New\",monospace}.monaco-editor.hc-black .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label,.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label,.monaco-menu .monaco-action-bar.vertical .action-item .action-menu-item:focus .action-label{stroke-width:1.2px}.monaco-hover p{margin:0}.monaco-aria-container{height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute!important;top:0;width:1px;clip:rect(1px,1px,1px,1px);-webkit-clip-path:inset(50%);clip-path:inset(50%)}.monaco-editor.hc-black{-ms-high-contrast-adjust:none}@media screen and (-ms-high-contrast:active){.monaco-editor.vs .view-overlays .current-line,.monaco-editor.vs-dark .view-overlays .current-line{border-color:windowtext!important;border-left:0;border-right:0}.monaco-editor.vs .cursor,.monaco-editor.vs-dark .cursor{background-color:windowtext!important}.monaco-editor.vs .dnd-target,.monaco-editor.vs-dark .dnd-target{border-color:windowtext!important}.monaco-editor.vs .selected-text,.monaco-editor.vs-dark .selected-text{background-color:highlight!important}.monaco-editor.vs .view-line,.monaco-editor.vs-dark .view-line{-ms-high-contrast-adjust:none}.monaco-editor.vs .view-line span,.monaco-editor.vs-dark .view-line span{color:windowtext!important}.monaco-editor.vs .view-line span.inline-selected-text,.monaco-editor.vs-dark .view-line span.inline-selected-text{color:highlighttext!important}.monaco-editor.vs .view-overlays,.monaco-editor.vs-dark .view-overlays{-ms-high-contrast-adjust:none}.monaco-editor.vs .reference-decoration,.monaco-editor.vs .selectionHighlight,.monaco-editor.vs .wordHighlight,.monaco-editor.vs .wordHighlightStrong,.monaco-editor.vs-dark .reference-decoration,.monaco-editor.vs-dark .selectionHighlight,.monaco-editor.vs-dark .wordHighlight,.monaco-editor.vs-dark .wordHighlightStrong{background:transparent!important;border:2px dotted highlight!important;box-sizing:border-box}.monaco-editor.vs .rangeHighlight,.monaco-editor.vs-dark .rangeHighlight{background:transparent!important;border:1px dotted activeborder!important;box-sizing:border-box}.monaco-editor.vs .bracket-match,.monaco-editor.vs-dark .bracket-match{background:transparent!important;border-color:windowtext!important}.monaco-editor.vs .currentFindMatch,.monaco-editor.vs .findMatch,.monaco-editor.vs-dark .currentFindMatch,.monaco-editor.vs-dark .findMatch{background:transparent!important;border:2px dotted activeborder!important;box-sizing:border-box}.monaco-editor.vs .find-widget,.monaco-editor.vs-dark .find-widget{border:1px solid windowtext}.monaco-editor.vs .monaco-list .monaco-list-row,.monaco-editor.vs-dark .monaco-list .monaco-list-row{-ms-high-contrast-adjust:none;color:windowtext!important}.monaco-editor.vs .monaco-list .monaco-list-row.focused,.monaco-editor.vs-dark .monaco-list .monaco-list-row.focused{background-color:highlight!important;color:highlighttext!important}.monaco-editor.vs .monaco-list .monaco-list-row:hover,.monaco-editor.vs-dark .monaco-list .monaco-list-row:hover{background:transparent!important;border:1px solid highlight;box-sizing:border-box}.monaco-editor.vs .monaco-scrollable-element>.scrollbar,.monaco-editor.vs-dark .monaco-scrollable-element>.scrollbar{-ms-high-contrast-adjust:none;background:background!important;border:1px solid windowtext;box-sizing:border-box}.monaco-editor.vs .monaco-scrollable-element>.scrollbar>.slider,.monaco-editor.vs-dark .monaco-scrollable-element>.scrollbar>.slider{background:windowtext!important}.monaco-editor.vs .monaco-scrollable-element>.scrollbar>.slider.active,.monaco-editor.vs .monaco-scrollable-element>.scrollbar>.slider:hover,.monaco-editor.vs-dark .monaco-scrollable-element>.scrollbar>.slider.active,.monaco-editor.vs-dark .monaco-scrollable-element>.scrollbar>.slider:hover{background:highlight!important}.monaco-editor.vs .decorationsOverviewRuler,.monaco-editor.vs-dark .decorationsOverviewRuler{opacity:0}.monaco-editor.vs .minimap,.monaco-editor.vs-dark .minimap{display:none}.monaco-editor.vs .squiggly-d-error,.monaco-editor.vs-dark .squiggly-d-error{background:transparent!important;border-bottom:4px double #e47777}.monaco-editor.vs .squiggly-b-info,.monaco-editor.vs .squiggly-c-warning,.monaco-editor.vs-dark .squiggly-b-info,.monaco-editor.vs-dark .squiggly-c-warning{border-bottom:4px double #71b771}.monaco-editor.vs .squiggly-a-hint,.monaco-editor.vs-dark .squiggly-a-hint{border-bottom:4px double #6c6c6c}.monaco-editor.vs .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label,.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:focus .action-label{-ms-high-contrast-adjust:none;background-color:highlight!important;color:highlighttext!important}.monaco-editor.vs .monaco-menu .monaco-action-bar.vertical .action-menu-item:hover .action-label,.monaco-editor.vs-dark .monaco-menu .monaco-action-bar.vertical .action-menu-item:hover .action-label{-ms-high-contrast-adjust:none;background:transparent!important;border:1px solid highlight;box-sizing:border-box}.monaco-diff-editor.vs .diffOverviewRuler,.monaco-diff-editor.vs-dark .diffOverviewRuler{display:none}.monaco-editor.vs .line-delete,.monaco-editor.vs .line-insert,.monaco-editor.vs-dark .line-delete,.monaco-editor.vs-dark .line-insert{background:transparent!important;border:1px solid highlight!important;box-sizing:border-box}.monaco-editor.vs .char-delete,.monaco-editor.vs .char-insert,.monaco-editor.vs-dark .char-delete,.monaco-editor.vs-dark .char-insert{background:transparent!important}}",
+      "start": 1711096855177,
+      "end": 1711096855225,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855225,
+      "end": 1711096855225,
+      "order": "normal"
+    }
+  ]
+}

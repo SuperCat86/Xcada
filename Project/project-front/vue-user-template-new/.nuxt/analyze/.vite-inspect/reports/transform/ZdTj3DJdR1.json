@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/bracketPairsTree/nodeReader.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { lengthAdd, lengthZero, lengthLessThan } from './length.js';\n/**\n * Allows to efficiently find a longest child at a given offset in a fixed node.\n * The requested offsets must increase monotonously.\n*/\nexport class NodeReader {\n    constructor(node) {\n        this.lastOffset = lengthZero;\n        this.nextNodes = [node];\n        this.offsets = [lengthZero];\n        this.idxs = [];\n    }\n    /**\n     * Returns the longest node at `offset` that satisfies the predicate.\n     * @param offset must be greater than or equal to the last offset this method has been called with!\n    */\n    readLongestNodeAt(offset, predicate) {\n        if (lengthLessThan(offset, this.lastOffset)) {\n            throw new Error('Invalid offset');\n        }\n        this.lastOffset = offset;\n        // Find the longest node of all those that are closest to the current offset.\n        while (true) {\n            const curNode = lastOrUndefined(this.nextNodes);\n            if (!curNode) {\n                return undefined;\n            }\n            const curNodeOffset = lastOrUndefined(this.offsets);\n            if (lengthLessThan(offset, curNodeOffset)) {\n                // The next best node is not here yet.\n                // The reader must advance before a cached node is hit.\n                return undefined;\n            }\n            if (lengthLessThan(curNodeOffset, offset)) {\n                // The reader is ahead of the current node.\n                if (lengthAdd(curNodeOffset, curNode.length) <= offset) {\n                    // The reader is after the end of the current node.\n                    this.nextNodeAfterCurrent();\n                }\n                else {\n                    // The reader is somewhere in the current node.\n                    const nextChildIdx = getNextChildIdx(curNode);\n                    if (nextChildIdx !== -1) {\n                        // Go to the first child and repeat.\n                        this.nextNodes.push(curNode.getChild(nextChildIdx));\n                        this.offsets.push(curNodeOffset);\n                        this.idxs.push(nextChildIdx);\n                    }\n                    else {\n                        // We don't have children\n                        this.nextNodeAfterCurrent();\n                    }\n                }\n            }\n            else {\n                // readerOffsetBeforeChange === curNodeOffset\n                if (predicate(curNode)) {\n                    this.nextNodeAfterCurrent();\n                    return curNode;\n                }\n                else {\n                    const nextChildIdx = getNextChildIdx(curNode);\n                    // look for shorter node\n                    if (nextChildIdx === -1) {\n                        // There is no shorter node.\n                        this.nextNodeAfterCurrent();\n                        return undefined;\n                    }\n                    else {\n                        // Descend into first child & repeat.\n                        this.nextNodes.push(curNode.getChild(nextChildIdx));\n                        this.offsets.push(curNodeOffset);\n                        this.idxs.push(nextChildIdx);\n                    }\n                }\n            }\n        }\n    }\n    // Navigates to the longest node that continues after the current node.\n    nextNodeAfterCurrent() {\n        while (true) {\n            const currentOffset = lastOrUndefined(this.offsets);\n            const currentNode = lastOrUndefined(this.nextNodes);\n            this.nextNodes.pop();\n            this.offsets.pop();\n            if (this.idxs.length === 0) {\n                // We just popped the root node, there is no next node.\n                break;\n            }\n            // Parent is not undefined, because idxs is not empty\n            const parent = lastOrUndefined(this.nextNodes);\n            const nextChildIdx = getNextChildIdx(parent, this.idxs[this.idxs.length - 1]);\n            if (nextChildIdx !== -1) {\n                this.nextNodes.push(parent.getChild(nextChildIdx));\n                this.offsets.push(lengthAdd(currentOffset, currentNode.length));\n                this.idxs[this.idxs.length - 1] = nextChildIdx;\n                break;\n            }\n            else {\n                this.idxs.pop();\n            }\n            // We fully consumed the parent.\n            // Current node is now parent, so call nextNodeAfterCurrent again\n        }\n    }\n}\nfunction getNextChildIdx(node, curIdx = -1) {\n    while (true) {\n        curIdx++;\n        if (curIdx >= node.childrenLength) {\n            return -1;\n        }\n        if (node.getChild(curIdx)) {\n            return curIdx;\n        }\n    }\n}\nfunction lastOrUndefined(arr) {\n    return arr.length > 0 ? arr[arr.length - 1] : undefined;\n}\n",
+      "start": 1711096857752,
+      "end": 1711096857874,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857874,
+      "end": 1711096857874,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857874,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857875,
+      "end": 1711096857875,
+      "order": "normal"
+    }
+  ]
+}

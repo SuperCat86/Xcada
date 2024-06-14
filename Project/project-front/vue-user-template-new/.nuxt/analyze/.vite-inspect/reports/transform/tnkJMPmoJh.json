@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { runWhenIdle } from '../../../../base/common/async.js';\nimport { once } from '../../../../base/common/functional.js';\nimport { LRUCache } from '../../../../base/common/map.js';\nimport { Range } from '../../../common/core/range.js';\nimport { CodeLensModel } from './codelens.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IStorageService, WillSaveStateReason } from '../../../../platform/storage/common/storage.js';\nexport const ICodeLensCache = createDecorator('ICodeLensCache');\nclass CacheItem {\n    constructor(lineCount, data) {\n        this.lineCount = lineCount;\n        this.data = data;\n    }\n}\nlet CodeLensCache = class CodeLensCache {\n    constructor(storageService) {\n        this._fakeProvider = new class {\n            provideCodeLenses() {\n                throw new Error('not supported');\n            }\n        };\n        this._cache = new LRUCache(20, 0.75);\n        // remove old data\n        const oldkey = 'codelens/cache';\n        runWhenIdle(() => storageService.remove(oldkey, 1 /* WORKSPACE */));\n        // restore lens data on start\n        const key = 'codelens/cache2';\n        const raw = storageService.get(key, 1 /* WORKSPACE */, '{}');\n        this._deserialize(raw);\n        // store lens data on shutdown\n        once(storageService.onWillSaveState)(e => {\n            if (e.reason === WillSaveStateReason.SHUTDOWN) {\n                storageService.store(key, this._serialize(), 1 /* WORKSPACE */, 1 /* MACHINE */);\n            }\n        });\n    }\n    put(model, data) {\n        // create a copy of the model that is without command-ids\n        // but with comand-labels\n        const copyItems = data.lenses.map(item => {\n            var _a;\n            return {\n                range: item.symbol.range,\n                command: item.symbol.command && { id: '', title: (_a = item.symbol.command) === null || _a === void 0 ? void 0 : _a.title },\n            };\n        });\n        const copyModel = new CodeLensModel();\n        copyModel.add({ lenses: copyItems, dispose: () => { } }, this._fakeProvider);\n        const item = new CacheItem(model.getLineCount(), copyModel);\n        this._cache.set(model.uri.toString(), item);\n    }\n    get(model) {\n        const item = this._cache.get(model.uri.toString());\n        return item && item.lineCount === model.getLineCount() ? item.data : undefined;\n    }\n    delete(model) {\n        this._cache.delete(model.uri.toString());\n    }\n    // --- persistence\n    _serialize() {\n        const data = Object.create(null);\n        for (const [key, value] of this._cache) {\n            const lines = new Set();\n            for (const d of value.data.lenses) {\n                lines.add(d.symbol.range.startLineNumber);\n            }\n            data[key] = {\n                lineCount: value.lineCount,\n                lines: [...lines.values()]\n            };\n        }\n        return JSON.stringify(data);\n    }\n    _deserialize(raw) {\n        try {\n            const data = JSON.parse(raw);\n            for (const key in data) {\n                const element = data[key];\n                const lenses = [];\n                for (const line of element.lines) {\n                    lenses.push({ range: new Range(line, 1, line, 11) });\n                }\n                const model = new CodeLensModel();\n                model.add({ lenses, dispose() { } }, this._fakeProvider);\n                this._cache.set(key, new CacheItem(element.lineCount, model));\n            }\n        }\n        catch (_a) {\n            // ignore...\n        }\n    }\n};\nCodeLensCache = __decorate([\n    __param(0, IStorageService)\n], CodeLensCache);\nexport { CodeLensCache };\nregisterSingleton(ICodeLensCache, CodeLensCache);\n",
+      "start": 1711096855560,
+      "end": 1711096855665,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855665,
+      "end": 1711096855665,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855665,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    }
+  ]
+}

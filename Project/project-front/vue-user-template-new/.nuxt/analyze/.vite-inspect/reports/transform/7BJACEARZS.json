@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/arrays.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/**\n * Returns the last element of an array.\n * @param array The array.\n * @param n Which element from the end (default is zero).\n */\nexport function tail(array, n = 0) {\n    return array[array.length - (1 + n)];\n}\nexport function tail2(arr) {\n    if (arr.length === 0) {\n        throw new Error('Invalid tail call');\n    }\n    return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];\n}\nexport function equals(one, other, itemEquals = (a, b) => a === b) {\n    if (one === other) {\n        return true;\n    }\n    if (!one || !other) {\n        return false;\n    }\n    if (one.length !== other.length) {\n        return false;\n    }\n    for (let i = 0, len = one.length; i < len; i++) {\n        if (!itemEquals(one[i], other[i])) {\n            return false;\n        }\n    }\n    return true;\n}\nexport function binarySearch(array, key, comparator) {\n    let low = 0, high = array.length - 1;\n    while (low <= high) {\n        const mid = ((low + high) / 2) | 0;\n        const comp = comparator(array[mid], key);\n        if (comp < 0) {\n            low = mid + 1;\n        }\n        else if (comp > 0) {\n            high = mid - 1;\n        }\n        else {\n            return mid;\n        }\n    }\n    return -(low + 1);\n}\n/**\n * Takes a sorted array and a function p. The array is sorted in such a way that all elements where p(x) is false\n * are located before all elements where p(x) is true.\n * @returns the least x for which p(x) is true or array.length if no element fullfills the given function.\n */\nexport function findFirstInSorted(array, p) {\n    let low = 0, high = array.length;\n    if (high === 0) {\n        return 0; // no children\n    }\n    while (low < high) {\n        const mid = Math.floor((low + high) / 2);\n        if (p(array[mid])) {\n            high = mid;\n        }\n        else {\n            low = mid + 1;\n        }\n    }\n    return low;\n}\nexport function quickSelect(nth, data, compare) {\n    nth = nth | 0;\n    if (nth >= data.length) {\n        throw new TypeError('invalid index');\n    }\n    let pivotValue = data[Math.floor(data.length * Math.random())];\n    let lower = [];\n    let higher = [];\n    let pivots = [];\n    for (let value of data) {\n        const val = compare(value, pivotValue);\n        if (val < 0) {\n            lower.push(value);\n        }\n        else if (val > 0) {\n            higher.push(value);\n        }\n        else {\n            pivots.push(value);\n        }\n    }\n    if (nth < lower.length) {\n        return quickSelect(nth, lower, compare);\n    }\n    else if (nth < lower.length + pivots.length) {\n        return pivots[0];\n    }\n    else {\n        return quickSelect(nth - (lower.length + pivots.length), higher, compare);\n    }\n}\nexport function groupBy(data, compare) {\n    const result = [];\n    let currentGroup = undefined;\n    for (const element of data.slice(0).sort(compare)) {\n        if (!currentGroup || compare(currentGroup[0], element) !== 0) {\n            currentGroup = [element];\n            result.push(currentGroup);\n        }\n        else {\n            currentGroup.push(element);\n        }\n    }\n    return result;\n}\n/**\n * @returns New array with all falsy values removed. The original array IS NOT modified.\n */\nexport function coalesce(array) {\n    return array.filter(e => !!e);\n}\n/**\n * @returns false if the provided object is an array and not empty.\n */\nexport function isFalsyOrEmpty(obj) {\n    return !Array.isArray(obj) || obj.length === 0;\n}\nexport function isNonEmptyArray(obj) {\n    return Array.isArray(obj) && obj.length > 0;\n}\n/**\n * Removes duplicates from the given array. The optional keyFn allows to specify\n * how elements are checked for equality by returning an alternate value for each.\n */\nexport function distinct(array, keyFn = value => value) {\n    const seen = new Set();\n    return array.filter(element => {\n        const key = keyFn(element);\n        if (seen.has(key)) {\n            return false;\n        }\n        seen.add(key);\n        return true;\n    });\n}\nexport function findLast(arr, predicate) {\n    const idx = lastIndex(arr, predicate);\n    if (idx === -1) {\n        return undefined;\n    }\n    return arr[idx];\n}\nexport function lastIndex(array, fn) {\n    for (let i = array.length - 1; i >= 0; i--) {\n        const element = array[i];\n        if (fn(element)) {\n            return i;\n        }\n    }\n    return -1;\n}\nexport function firstOrDefault(array, notFoundValue) {\n    return array.length > 0 ? array[0] : notFoundValue;\n}\nexport function flatten(arr) {\n    return [].concat(...arr);\n}\nexport function range(arg, to) {\n    let from = typeof to === 'number' ? arg : 0;\n    if (typeof to === 'number') {\n        from = arg;\n    }\n    else {\n        from = 0;\n        to = arg;\n    }\n    const result = [];\n    if (from <= to) {\n        for (let i = from; i < to; i++) {\n            result.push(i);\n        }\n    }\n    else {\n        for (let i = from; i > to; i--) {\n            result.push(i);\n        }\n    }\n    return result;\n}\n/**\n * Insert `insertArr` inside `target` at `insertIndex`.\n * Please don't touch unless you understand https://jsperf.com/inserting-an-array-within-an-array\n */\nexport function arrayInsert(target, insertIndex, insertArr) {\n    const before = target.slice(0, insertIndex);\n    const after = target.slice(insertIndex);\n    return before.concat(insertArr, after);\n}\n/**\n * Pushes an element to the start of the array, if found.\n */\nexport function pushToStart(arr, value) {\n    const index = arr.indexOf(value);\n    if (index > -1) {\n        arr.splice(index, 1);\n        arr.unshift(value);\n    }\n}\n/**\n * Pushes an element to the end of the array, if found.\n */\nexport function pushToEnd(arr, value) {\n    const index = arr.indexOf(value);\n    if (index > -1) {\n        arr.splice(index, 1);\n        arr.push(value);\n    }\n}\nexport function asArray(x) {\n    return Array.isArray(x) ? x : [x];\n}\n/**\n * Insert the new items in the array.\n * @param array The original array.\n * @param start The zero-based location in the array from which to start inserting elements.\n * @param newItems The items to be inserted\n */\nexport function insertInto(array, start, newItems) {\n    const startIdx = getActualStartIndex(array, start);\n    const originalLength = array.length;\n    const newItemsLength = newItems.length;\n    array.length = originalLength + newItemsLength;\n    // Move the items after the start index, start from the end so that we don't overwrite any value.\n    for (let i = originalLength - 1; i >= startIdx; i--) {\n        array[i + newItemsLength] = array[i];\n    }\n    for (let i = 0; i < newItemsLength; i++) {\n        array[i + startIdx] = newItems[i];\n    }\n}\n/**\n * Removes elements from an array and inserts new elements in their place, returning the deleted elements. Alternative to the native Array.splice method, it\n * can only support limited number of items due to the maximum call stack size limit.\n * @param array The original array.\n * @param start The zero-based location in the array from which to start removing elements.\n * @param deleteCount The number of elements to remove.\n * @returns An array containing the elements that were deleted.\n */\nexport function splice(array, start, deleteCount, newItems) {\n    const index = getActualStartIndex(array, start);\n    const result = array.splice(index, deleteCount);\n    insertInto(array, index, newItems);\n    return result;\n}\n/**\n * Determine the actual start index (same logic as the native splice() or slice())\n * If greater than the length of the array, start will be set to the length of the array. In this case, no element will be deleted but the method will behave as an adding function, adding as many element as item[n*] provided.\n * If negative, it will begin that many elements from the end of the array. (In this case, the origin -1, meaning -n is the index of the nth last element, and is therefore equivalent to the index of array.length - n.) If array.length + start is less than 0, it will begin from index 0.\n * @param array The target array.\n * @param start The operation index.\n */\nfunction getActualStartIndex(array, start) {\n    return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);\n}\nexport function compareBy(selector, comparator) {\n    return (a, b) => comparator(selector(a), selector(b));\n}\n/**\n * The natural order on numbers.\n*/\nexport const numberComparator = (a, b) => a - b;\n/**\n * Returns the first item that is equal to or greater than every other item.\n*/\nexport function findMaxBy(items, comparator) {\n    if (items.length === 0) {\n        return undefined;\n    }\n    let max = items[0];\n    for (let i = 1; i < items.length; i++) {\n        const item = items[i];\n        if (comparator(item, max) > 0) {\n            max = item;\n        }\n    }\n    return max;\n}\n/**\n * Returns the last item that is equal to or greater than every other item.\n*/\nexport function findLastMaxBy(items, comparator) {\n    if (items.length === 0) {\n        return undefined;\n    }\n    let max = items[0];\n    for (let i = 1; i < items.length; i++) {\n        const item = items[i];\n        if (comparator(item, max) >= 0) {\n            max = item;\n        }\n    }\n    return max;\n}\n/**\n * Returns the first item that is equal to or less than every other item.\n*/\nexport function findMinBy(items, comparator) {\n    return findMaxBy(items, (a, b) => -comparator(a, b));\n}\nexport class ArrayQueue {\n    /**\n     * Constructs a queue that is backed by the given array. Runtime is O(1).\n    */\n    constructor(items) {\n        this.items = items;\n        this.firstIdx = 0;\n        this.lastIdx = this.items.length - 1;\n    }\n    /**\n     * Consumes elements from the beginning of the queue as long as the predicate returns true.\n     * If no elements were consumed, `null` is returned. Has a runtime of O(result.length).\n    */\n    takeWhile(predicate) {\n        // P(k) := k <= this.lastIdx && predicate(this.items[k])\n        // Find s := min { k | k >= this.firstIdx && !P(k) } and return this.data[this.firstIdx...s)\n        let startIdx = this.firstIdx;\n        while (startIdx < this.items.length && predicate(this.items[startIdx])) {\n            startIdx++;\n        }\n        const result = startIdx === this.firstIdx ? null : this.items.slice(this.firstIdx, startIdx);\n        this.firstIdx = startIdx;\n        return result;\n    }\n    /**\n     * Consumes elements from the end of the queue as long as the predicate returns true.\n     * If no elements were consumed, `null` is returned.\n     * The result has the same order as the underlying array!\n    */\n    takeFromEndWhile(predicate) {\n        // P(k) := this.firstIdx >= k && predicate(this.items[k])\n        // Find s := max { k | k <= this.lastIdx && !P(k) } and return this.data(s...this.lastIdx]\n        let endIdx = this.lastIdx;\n        while (endIdx >= 0 && predicate(this.items[endIdx])) {\n            endIdx--;\n        }\n        const result = endIdx === this.lastIdx ? null : this.items.slice(endIdx + 1, this.lastIdx + 1);\n        this.lastIdx = endIdx;\n        return result;\n    }\n    peek() {\n        return this.items[this.firstIdx];\n    }\n    dequeue() {\n        const result = this.items[this.firstIdx];\n        this.firstIdx++;\n        return result;\n    }\n    takeCount(count) {\n        const result = this.items.slice(this.firstIdx, this.firstIdx + count);\n        this.firstIdx += count;\n        return result;\n    }\n}\n",
+      "start": 1711096855093,
+      "end": 1711096855234,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855234,
+      "end": 1711096855234,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855234,
+      "end": 1711096855235,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855235,
+      "end": 1711096855235,
+      "order": "normal"
+    }
+  ]
+}

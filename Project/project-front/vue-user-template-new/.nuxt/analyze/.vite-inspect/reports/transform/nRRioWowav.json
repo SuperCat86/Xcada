@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/languageConfiguration.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n/**\n * Describes what to do with the indentation when pressing Enter.\n */\nexport var IndentAction;\n(function (IndentAction) {\n    /**\n     * Insert new line and copy the previous line's indentation.\n     */\n    IndentAction[IndentAction[\"None\"] = 0] = \"None\";\n    /**\n     * Insert new line and indent once (relative to the previous line's indentation).\n     */\n    IndentAction[IndentAction[\"Indent\"] = 1] = \"Indent\";\n    /**\n     * Insert two new lines:\n     *  - the first one indented which will hold the cursor\n     *  - the second one at the same indentation level\n     */\n    IndentAction[IndentAction[\"IndentOutdent\"] = 2] = \"IndentOutdent\";\n    /**\n     * Insert new line and outdent once (relative to the previous line's indentation).\n     */\n    IndentAction[IndentAction[\"Outdent\"] = 3] = \"Outdent\";\n})(IndentAction || (IndentAction = {}));\n/**\n * @internal\n */\nexport class StandardAutoClosingPairConditional {\n    constructor(source) {\n        this._neutralCharacter = null;\n        this._neutralCharacterSearched = false;\n        this.open = source.open;\n        this.close = source.close;\n        // initially allowed in all tokens\n        this._inString = true;\n        this._inComment = true;\n        this._inRegEx = true;\n        if (Array.isArray(source.notIn)) {\n            for (let i = 0, len = source.notIn.length; i < len; i++) {\n                const notIn = source.notIn[i];\n                switch (notIn) {\n                    case 'string':\n                        this._inString = false;\n                        break;\n                    case 'comment':\n                        this._inComment = false;\n                        break;\n                    case 'regex':\n                        this._inRegEx = false;\n                        break;\n                }\n            }\n        }\n    }\n    isOK(standardToken) {\n        switch (standardToken) {\n            case 0 /* Other */:\n                return true;\n            case 1 /* Comment */:\n                return this._inComment;\n            case 2 /* String */:\n                return this._inString;\n            case 3 /* RegEx */:\n                return this._inRegEx;\n        }\n    }\n    shouldAutoClose(context, column) {\n        // Always complete on empty line\n        if (context.getTokenCount() === 0) {\n            return true;\n        }\n        const tokenIndex = context.findTokenIndexAtOffset(column - 2);\n        const standardTokenType = context.getStandardTokenType(tokenIndex);\n        return this.isOK(standardTokenType);\n    }\n    _findNeutralCharacterInRange(fromCharCode, toCharCode) {\n        for (let charCode = fromCharCode; charCode <= toCharCode; charCode++) {\n            const character = String.fromCharCode(charCode);\n            if (!this.open.includes(character) && !this.close.includes(character)) {\n                return character;\n            }\n        }\n        return null;\n    }\n    /**\n     * Find a character in the range [0-9a-zA-Z] that does not appear in the open or close\n     */\n    findNeutralCharacter() {\n        if (!this._neutralCharacterSearched) {\n            this._neutralCharacterSearched = true;\n            if (!this._neutralCharacter) {\n                this._neutralCharacter = this._findNeutralCharacterInRange(48 /* Digit0 */, 57 /* Digit9 */);\n            }\n            if (!this._neutralCharacter) {\n                this._neutralCharacter = this._findNeutralCharacterInRange(97 /* a */, 122 /* z */);\n            }\n            if (!this._neutralCharacter) {\n                this._neutralCharacter = this._findNeutralCharacterInRange(65 /* A */, 90 /* Z */);\n            }\n        }\n        return this._neutralCharacter;\n    }\n}\n/**\n * @internal\n */\nexport class AutoClosingPairs {\n    constructor(autoClosingPairs) {\n        this.autoClosingPairsOpenByStart = new Map();\n        this.autoClosingPairsOpenByEnd = new Map();\n        this.autoClosingPairsCloseByStart = new Map();\n        this.autoClosingPairsCloseByEnd = new Map();\n        this.autoClosingPairsCloseSingleChar = new Map();\n        for (const pair of autoClosingPairs) {\n            appendEntry(this.autoClosingPairsOpenByStart, pair.open.charAt(0), pair);\n            appendEntry(this.autoClosingPairsOpenByEnd, pair.open.charAt(pair.open.length - 1), pair);\n            appendEntry(this.autoClosingPairsCloseByStart, pair.close.charAt(0), pair);\n            appendEntry(this.autoClosingPairsCloseByEnd, pair.close.charAt(pair.close.length - 1), pair);\n            if (pair.close.length === 1 && pair.open.length === 1) {\n                appendEntry(this.autoClosingPairsCloseSingleChar, pair.close, pair);\n            }\n        }\n    }\n}\nfunction appendEntry(target, key, value) {\n    if (target.has(key)) {\n        target.get(key).push(value);\n    }\n    else {\n        target.set(key, [value]);\n    }\n}\n",
+      "start": 1711096856148,
+      "end": 1711096856220,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856220,
+      "end": 1711096856220,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856220,
+      "end": 1711096856221,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856221,
+      "end": 1711096856221,
+      "order": "normal"
+    }
+  ]
+}

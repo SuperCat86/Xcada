@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/fuzzyScorer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "import { createMatches as createFuzzyMatches, fuzzyScore } from './filters.js';\nimport { sep } from './path.js';\nimport { isWindows } from './platform.js';\nimport { stripWildcards } from './strings.js';\nconst NO_SCORE2 = [undefined, []];\nexport function scoreFuzzy2(target, query, patternStart = 0, wordStart = 0) {\n    // Score: multiple inputs\n    const preparedQuery = query;\n    if (preparedQuery.values && preparedQuery.values.length > 1) {\n        return doScoreFuzzy2Multiple(target, preparedQuery.values, patternStart, wordStart);\n    }\n    // Score: single input\n    return doScoreFuzzy2Single(target, query, patternStart, wordStart);\n}\nfunction doScoreFuzzy2Multiple(target, query, patternStart, wordStart) {\n    let totalScore = 0;\n    const totalMatches = [];\n    for (const queryPiece of query) {\n        const [score, matches] = doScoreFuzzy2Single(target, queryPiece, patternStart, wordStart);\n        if (typeof score !== 'number') {\n            // if a single query value does not match, return with\n            // no score entirely, we require all queries to match\n            return NO_SCORE2;\n        }\n        totalScore += score;\n        totalMatches.push(...matches);\n    }\n    // if we have a score, ensure that the positions are\n    // sorted in ascending order and distinct\n    return [totalScore, normalizeMatches(totalMatches)];\n}\nfunction doScoreFuzzy2Single(target, query, patternStart, wordStart) {\n    const score = fuzzyScore(query.original, query.originalLowercase, patternStart, target, target.toLowerCase(), wordStart, true);\n    if (!score) {\n        return NO_SCORE2;\n    }\n    return [score[0], createFuzzyMatches(score)];\n}\nconst NO_ITEM_SCORE = Object.freeze({ score: 0 });\nfunction normalizeMatches(matches) {\n    // sort matches by start to be able to normalize\n    const sortedMatches = matches.sort((matchA, matchB) => {\n        return matchA.start - matchB.start;\n    });\n    // merge matches that overlap\n    const normalizedMatches = [];\n    let currentMatch = undefined;\n    for (const match of sortedMatches) {\n        // if we have no current match or the matches\n        // do not overlap, we take it as is and remember\n        // it for future merging\n        if (!currentMatch || !matchOverlaps(currentMatch, match)) {\n            currentMatch = match;\n            normalizedMatches.push(match);\n        }\n        // otherwise we merge the matches\n        else {\n            currentMatch.start = Math.min(currentMatch.start, match.start);\n            currentMatch.end = Math.max(currentMatch.end, match.end);\n        }\n    }\n    return normalizedMatches;\n}\nfunction matchOverlaps(matchA, matchB) {\n    if (matchA.end < matchB.start) {\n        return false; // A ends before B starts\n    }\n    if (matchB.end < matchA.start) {\n        return false; // B ends before A starts\n    }\n    return true;\n}\n/*\n * If a query is wrapped in quotes, the user does not want to\n * use fuzzy search for this query.\n */\nfunction queryExpectsExactMatch(query) {\n    return query.startsWith('\"') && query.endsWith('\"');\n}\n/**\n * Helper function to prepare a search value for scoring by removing unwanted characters\n * and allowing to score on multiple pieces separated by whitespace character.\n */\nconst MULTIPLE_QUERY_VALUES_SEPARATOR = ' ';\nexport function prepareQuery(original) {\n    if (typeof original !== 'string') {\n        original = '';\n    }\n    const originalLowercase = original.toLowerCase();\n    const { pathNormalized, normalized, normalizedLowercase } = normalizeQuery(original);\n    const containsPathSeparator = pathNormalized.indexOf(sep) >= 0;\n    const expectExactMatch = queryExpectsExactMatch(original);\n    let values = undefined;\n    const originalSplit = original.split(MULTIPLE_QUERY_VALUES_SEPARATOR);\n    if (originalSplit.length > 1) {\n        for (const originalPiece of originalSplit) {\n            const expectExactMatchPiece = queryExpectsExactMatch(originalPiece);\n            const { pathNormalized: pathNormalizedPiece, normalized: normalizedPiece, normalizedLowercase: normalizedLowercasePiece } = normalizeQuery(originalPiece);\n            if (normalizedPiece) {\n                if (!values) {\n                    values = [];\n                }\n                values.push({\n                    original: originalPiece,\n                    originalLowercase: originalPiece.toLowerCase(),\n                    pathNormalized: pathNormalizedPiece,\n                    normalized: normalizedPiece,\n                    normalizedLowercase: normalizedLowercasePiece,\n                    expectContiguousMatch: expectExactMatchPiece\n                });\n            }\n        }\n    }\n    return { original, originalLowercase, pathNormalized, normalized, normalizedLowercase, values, containsPathSeparator, expectContiguousMatch: expectExactMatch };\n}\nfunction normalizeQuery(original) {\n    let pathNormalized;\n    if (isWindows) {\n        pathNormalized = original.replace(/\\//g, sep); // Help Windows users to search for paths when using slash\n    }\n    else {\n        pathNormalized = original.replace(/\\\\/g, sep); // Help macOS/Linux users to search for paths when using backslash\n    }\n    // we remove quotes here because quotes are used for exact match search\n    const normalized = stripWildcards(pathNormalized).replace(/\\s|\"/g, '');\n    return {\n        pathNormalized,\n        normalized,\n        normalizedLowercase: normalized.toLowerCase()\n    };\n}\nexport function pieceToQuery(arg1) {\n    if (Array.isArray(arg1)) {\n        return prepareQuery(arg1.map(piece => piece.original).join(MULTIPLE_QUERY_VALUES_SEPARATOR));\n    }\n    return prepareQuery(arg1.original);\n}\n//#endregion\n",
+      "start": 1711096856110,
+      "end": 1711096856195,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856195,
+      "end": 1711096856195,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856196,
+      "end": 1711096856196,
+      "order": "normal"
+    }
+  ]
+}

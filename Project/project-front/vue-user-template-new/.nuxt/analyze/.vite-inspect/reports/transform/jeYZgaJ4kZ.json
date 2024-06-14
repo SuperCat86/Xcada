@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/lightBulbWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { GlobalMouseMoveMonitor, standardMouseMoveMerger } from '../../../../base/browser/globalMouseMoveMonitor.js';\nimport { Gesture } from '../../../../base/browser/touch.js';\nimport { Codicon } from '../../../../base/common/codicons.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport './lightBulbWidget.css';\nimport { computeIndentLevel } from '../../../common/model/utils.js';\nimport * as nls from '../../../../nls.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { editorBackground, editorLightBulbAutoFixForeground, editorLightBulbForeground } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nvar LightBulbState;\n(function (LightBulbState) {\n    LightBulbState.Hidden = { type: 0 /* Hidden */ };\n    class Showing {\n        constructor(actions, trigger, editorPosition, widgetPosition) {\n            this.actions = actions;\n            this.trigger = trigger;\n            this.editorPosition = editorPosition;\n            this.widgetPosition = widgetPosition;\n            this.type = 1 /* Showing */;\n        }\n    }\n    LightBulbState.Showing = Showing;\n})(LightBulbState || (LightBulbState = {}));\nlet LightBulbWidget = class LightBulbWidget extends Disposable {\n    constructor(_editor, _quickFixActionId, _preferredFixActionId, _keybindingService) {\n        super();\n        this._editor = _editor;\n        this._quickFixActionId = _quickFixActionId;\n        this._preferredFixActionId = _preferredFixActionId;\n        this._keybindingService = _keybindingService;\n        this._onClick = this._register(new Emitter());\n        this.onClick = this._onClick.event;\n        this._state = LightBulbState.Hidden;\n        this._domNode = document.createElement('div');\n        this._domNode.className = Codicon.lightBulb.classNames;\n        this._editor.addContentWidget(this);\n        this._register(this._editor.onDidChangeModelContent(_ => {\n            // cancel when the line in question has been removed\n            const editorModel = this._editor.getModel();\n            if (this.state.type !== 1 /* Showing */ || !editorModel || this.state.editorPosition.lineNumber >= editorModel.getLineCount()) {\n                this.hide();\n            }\n        }));\n        Gesture.ignoreTarget(this._domNode);\n        this._register(dom.addStandardDisposableGenericMouseDownListener(this._domNode, e => {\n            if (this.state.type !== 1 /* Showing */) {\n                return;\n            }\n            // Make sure that focus / cursor location is not lost when clicking widget icon\n            this._editor.focus();\n            e.preventDefault();\n            // a bit of extra work to make sure the menu\n            // doesn't cover the line-text\n            const { top, height } = dom.getDomNodePagePosition(this._domNode);\n            const lineHeight = this._editor.getOption(59 /* lineHeight */);\n            let pad = Math.floor(lineHeight / 3);\n            if (this.state.widgetPosition.position !== null && this.state.widgetPosition.position.lineNumber < this.state.editorPosition.lineNumber) {\n                pad += lineHeight;\n            }\n            this._onClick.fire({\n                x: e.posx,\n                y: top + height + pad,\n                actions: this.state.actions,\n                trigger: this.state.trigger,\n            });\n        }));\n        this._register(dom.addDisposableListener(this._domNode, 'mouseenter', (e) => {\n            if ((e.buttons & 1) !== 1) {\n                return;\n            }\n            // mouse enters lightbulb while the primary/left button\n            // is being pressed -> hide the lightbulb and block future\n            // showings until mouse is released\n            this.hide();\n            const monitor = new GlobalMouseMoveMonitor();\n            monitor.startMonitoring(e.target, e.buttons, standardMouseMoveMerger, () => { }, () => {\n                monitor.dispose();\n            });\n        }));\n        this._register(this._editor.onDidChangeConfiguration(e => {\n            // hide when told to do so\n            if (e.hasChanged(57 /* lightbulb */) && !this._editor.getOption(57 /* lightbulb */).enabled) {\n                this.hide();\n            }\n        }));\n        this._updateLightBulbTitleAndIcon();\n        this._register(this._keybindingService.onDidUpdateKeybindings(this._updateLightBulbTitleAndIcon, this));\n    }\n    dispose() {\n        super.dispose();\n        this._editor.removeContentWidget(this);\n    }\n    getId() {\n        return 'LightBulbWidget';\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    getPosition() {\n        return this._state.type === 1 /* Showing */ ? this._state.widgetPosition : null;\n    }\n    update(actions, trigger, atPosition) {\n        if (actions.validActions.length <= 0) {\n            return this.hide();\n        }\n        const options = this._editor.getOptions();\n        if (!options.get(57 /* lightbulb */).enabled) {\n            return this.hide();\n        }\n        const model = this._editor.getModel();\n        if (!model) {\n            return this.hide();\n        }\n        const { lineNumber, column } = model.validatePosition(atPosition);\n        const tabSize = model.getOptions().tabSize;\n        const fontInfo = options.get(44 /* fontInfo */);\n        const lineContent = model.getLineContent(lineNumber);\n        const indent = computeIndentLevel(lineContent, tabSize);\n        const lineHasSpace = fontInfo.spaceWidth * indent > 22;\n        const isFolded = (lineNumber) => {\n            return lineNumber > 2 && this._editor.getTopForLineNumber(lineNumber) === this._editor.getTopForLineNumber(lineNumber - 1);\n        };\n        let effectiveLineNumber = lineNumber;\n        if (!lineHasSpace) {\n            if (lineNumber > 1 && !isFolded(lineNumber - 1)) {\n                effectiveLineNumber -= 1;\n            }\n            else if (!isFolded(lineNumber + 1)) {\n                effectiveLineNumber += 1;\n            }\n            else if (column * fontInfo.spaceWidth < 22) {\n                // cannot show lightbulb above/below and showing\n                // it inline would overlay the cursor...\n                return this.hide();\n            }\n        }\n        this.state = new LightBulbState.Showing(actions, trigger, atPosition, {\n            position: { lineNumber: effectiveLineNumber, column: 1 },\n            preference: LightBulbWidget._posPref\n        });\n        this._editor.layoutContentWidget(this);\n    }\n    hide() {\n        this.state = LightBulbState.Hidden;\n        this._editor.layoutContentWidget(this);\n    }\n    get state() { return this._state; }\n    set state(value) {\n        this._state = value;\n        this._updateLightBulbTitleAndIcon();\n    }\n    _updateLightBulbTitleAndIcon() {\n        if (this.state.type === 1 /* Showing */ && this.state.actions.hasAutoFix) {\n            // update icon\n            this._domNode.classList.remove(...Codicon.lightBulb.classNamesArray);\n            this._domNode.classList.add(...Codicon.lightbulbAutofix.classNamesArray);\n            const preferredKb = this._keybindingService.lookupKeybinding(this._preferredFixActionId);\n            if (preferredKb) {\n                this.title = nls.localize('preferredcodeActionWithKb', \"Show Code Actions. Preferred Quick Fix Available ({0})\", preferredKb.getLabel());\n                return;\n            }\n        }\n        // update icon\n        this._domNode.classList.remove(...Codicon.lightbulbAutofix.classNamesArray);\n        this._domNode.classList.add(...Codicon.lightBulb.classNamesArray);\n        const kb = this._keybindingService.lookupKeybinding(this._quickFixActionId);\n        if (kb) {\n            this.title = nls.localize('codeActionWithKb', \"Show Code Actions ({0})\", kb.getLabel());\n        }\n        else {\n            this.title = nls.localize('codeAction', \"Show Code Actions\");\n        }\n    }\n    set title(value) {\n        this._domNode.title = value;\n    }\n};\nLightBulbWidget._posPref = [0 /* EXACT */];\nLightBulbWidget = __decorate([\n    __param(3, IKeybindingService)\n], LightBulbWidget);\nexport { LightBulbWidget };\nregisterThemingParticipant((theme, collector) => {\n    var _a;\n    const editorBackgroundColor = (_a = theme.getColor(editorBackground)) === null || _a === void 0 ? void 0 : _a.transparent(0.7);\n    // Lightbulb Icon\n    const editorLightBulbForegroundColor = theme.getColor(editorLightBulbForeground);\n    if (editorLightBulbForegroundColor) {\n        collector.addRule(`\n\t\t.monaco-editor .contentWidgets ${Codicon.lightBulb.cssSelector} {\n\t\t\tcolor: ${editorLightBulbForegroundColor};\n\t\t\tbackground-color: ${editorBackgroundColor};\n\t\t}`);\n    }\n    // Lightbulb Auto Fix Icon\n    const editorLightBulbAutoFixForegroundColor = theme.getColor(editorLightBulbAutoFixForeground);\n    if (editorLightBulbAutoFixForegroundColor) {\n        collector.addRule(`\n\t\t.monaco-editor .contentWidgets ${Codicon.lightbulbAutofix.cssSelector} {\n\t\t\tcolor: ${editorLightBulbAutoFixForegroundColor};\n\t\t\tbackground-color: ${editorBackgroundColor};\n\t\t}`);\n    }\n});\n",
+      "start": 1711096857305,
+      "end": 1711096857370,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857371,
+      "end": 1711096857371,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857371,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857372,
+      "end": 1711096857372,
+      "order": "normal"
+    }
+  ]
+}

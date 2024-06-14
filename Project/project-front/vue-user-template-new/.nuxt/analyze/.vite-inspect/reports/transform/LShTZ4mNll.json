@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/splitview/splitview.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { $, addDisposableListener, append, scheduleAtNextAnimationFrame } from '../../dom.js';\nimport { Sash } from '../sash/sash.js';\nimport { SmoothScrollableElement } from '../scrollbar/scrollableElement.js';\nimport { pushToEnd, pushToStart, range } from '../../../common/arrays.js';\nimport { Color } from '../../../common/color.js';\nimport { Emitter, Event } from '../../../common/event.js';\nimport { combinedDisposable, Disposable, dispose, toDisposable } from '../../../common/lifecycle.js';\nimport { clamp } from '../../../common/numbers.js';\nimport { Scrollable } from '../../../common/scrollable.js';\nimport * as types from '../../../common/types.js';\nimport './splitview.css';\nconst defaultStyles = {\n    separatorBorder: Color.transparent\n};\nclass ViewItem {\n    constructor(container, view, size, disposable) {\n        this.container = container;\n        this.view = view;\n        this.disposable = disposable;\n        this._cachedVisibleSize = undefined;\n        if (typeof size === 'number') {\n            this._size = size;\n            this._cachedVisibleSize = undefined;\n            container.classList.add('visible');\n        }\n        else {\n            this._size = 0;\n            this._cachedVisibleSize = size.cachedVisibleSize;\n        }\n    }\n    set size(size) {\n        this._size = size;\n    }\n    get size() {\n        return this._size;\n    }\n    get visible() {\n        return typeof this._cachedVisibleSize === 'undefined';\n    }\n    setVisible(visible, size) {\n        if (visible === this.visible) {\n            return;\n        }\n        if (visible) {\n            this.size = clamp(this._cachedVisibleSize, this.viewMinimumSize, this.viewMaximumSize);\n            this._cachedVisibleSize = undefined;\n        }\n        else {\n            this._cachedVisibleSize = typeof size === 'number' ? size : this.size;\n            this.size = 0;\n        }\n        this.container.classList.toggle('visible', visible);\n        if (this.view.setVisible) {\n            this.view.setVisible(visible);\n        }\n    }\n    get minimumSize() { return this.visible ? this.view.minimumSize : 0; }\n    get viewMinimumSize() { return this.view.minimumSize; }\n    get maximumSize() { return this.visible ? this.view.maximumSize : 0; }\n    get viewMaximumSize() { return this.view.maximumSize; }\n    get priority() { return this.view.priority; }\n    get snap() { return !!this.view.snap; }\n    set enabled(enabled) {\n        this.container.style.pointerEvents = enabled ? '' : 'none';\n    }\n    layout(offset, layoutContext) {\n        this.layoutContainer(offset);\n        this.view.layout(this.size, offset, layoutContext);\n    }\n    dispose() {\n        this.disposable.dispose();\n        return this.view;\n    }\n}\nclass VerticalViewItem extends ViewItem {\n    layoutContainer(offset) {\n        this.container.style.top = `${offset}px`;\n        this.container.style.height = `${this.size}px`;\n    }\n}\nclass HorizontalViewItem extends ViewItem {\n    layoutContainer(offset) {\n        this.container.style.left = `${offset}px`;\n        this.container.style.width = `${this.size}px`;\n    }\n}\nvar State;\n(function (State) {\n    State[State[\"Idle\"] = 0] = \"Idle\";\n    State[State[\"Busy\"] = 1] = \"Busy\";\n})(State || (State = {}));\nexport var Sizing;\n(function (Sizing) {\n    /**\n     * When adding or removing views, distribute the delta space among\n     * all other views.\n     */\n    Sizing.Distribute = { type: 'distribute' };\n    /**\n     * When adding or removing views, split the delta space with another\n     * specific view, indexed by the provided `index`.\n     */\n    function Split(index) { return { type: 'split', index }; }\n    Sizing.Split = Split;\n    /**\n     * When adding or removing views, assume the view is invisible.\n     */\n    function Invisible(cachedVisibleSize) { return { type: 'invisible', cachedVisibleSize }; }\n    Sizing.Invisible = Invisible;\n})(Sizing || (Sizing = {}));\n/**\n * The {@link SplitView} is the UI component which implements a one dimensional\n * flex-like layout algorithm for a collection of {@link IView} instances, which\n * are essentially HTMLElement instances with the following size constraints:\n *\n * - {@link IView.minimumSize}\n * - {@link IView.maximumSize}\n * - {@link IView.priority}\n * - {@link IView.snap}\n *\n * In case the SplitView doesn't have enough size to fit all views, it will overflow\n * its content with a scrollbar.\n *\n * In between each pair of views there will be a {@link Sash} allowing the user\n * to resize the views, making sure the constraints are respected.\n *\n * An optional {@link TLayoutContext layout context type} may be used in order to\n * pass along layout contextual data from the {@link SplitView.layout} method down\n * to each view's {@link IView.layout} calls.\n *\n * Features:\n * - Flex-like layout algorithm\n * - Snap support\n * - Orthogonal sash support, for corner sashes\n * - View hide/show support\n * - View swap/move support\n * - Alt key modifier behavior, macOS style\n */\nexport class SplitView extends Disposable {\n    /**\n     * Create a new {@link SplitView} instance.\n     */\n    constructor(container, options = {}) {\n        var _a, _b, _c, _d, _e;\n        super();\n        this.size = 0;\n        this.contentSize = 0;\n        this.proportions = undefined;\n        this.viewItems = [];\n        this.sashItems = [];\n        this.state = State.Idle;\n        this._onDidSashChange = this._register(new Emitter());\n        this._onDidSashReset = this._register(new Emitter());\n        this._startSnappingEnabled = true;\n        this._endSnappingEnabled = true;\n        /**\n         * Fires whenever the user resizes a {@link Sash sash}.\n         */\n        this.onDidSashChange = this._onDidSashChange.event;\n        /**\n         * Fires whenever the user double clicks a {@link Sash sash}.\n         */\n        this.onDidSashReset = this._onDidSashReset.event;\n        this.orientation = (_a = options.orientation) !== null && _a !== void 0 ? _a : 0 /* VERTICAL */;\n        this.inverseAltBehavior = (_b = options.inverseAltBehavior) !== null && _b !== void 0 ? _b : false;\n        this.proportionalLayout = (_c = options.proportionalLayout) !== null && _c !== void 0 ? _c : true;\n        this.getSashOrthogonalSize = options.getSashOrthogonalSize;\n        this.el = document.createElement('div');\n        this.el.classList.add('monaco-split-view2');\n        this.el.classList.add(this.orientation === 0 /* VERTICAL */ ? 'vertical' : 'horizontal');\n        container.appendChild(this.el);\n        this.sashContainer = append(this.el, $('.sash-container'));\n        this.viewContainer = $('.split-view-container');\n        this.scrollable = new Scrollable({\n            forceIntegerValues: true,\n            smoothScrollDuration: 125,\n            scheduleAtNextAnimationFrame\n        });\n        this.scrollableElement = this._register(new SmoothScrollableElement(this.viewContainer, {\n            vertical: this.orientation === 0 /* VERTICAL */ ? ((_d = options.scrollbarVisibility) !== null && _d !== void 0 ? _d : 1 /* Auto */) : 2 /* Hidden */,\n            horizontal: this.orientation === 1 /* HORIZONTAL */ ? ((_e = options.scrollbarVisibility) !== null && _e !== void 0 ? _e : 1 /* Auto */) : 2 /* Hidden */\n        }, this.scrollable));\n        this.onDidScroll = this.scrollableElement.onScroll;\n        this._register(this.onDidScroll(e => {\n            this.viewContainer.scrollTop = e.scrollTop;\n            this.viewContainer.scrollLeft = e.scrollLeft;\n        }));\n        append(this.el, this.scrollableElement.getDomNode());\n        this.style(options.styles || defaultStyles);\n        // We have an existing set of view, add them now\n        if (options.descriptor) {\n            this.size = options.descriptor.size;\n            options.descriptor.views.forEach((viewDescriptor, index) => {\n                const sizing = types.isUndefined(viewDescriptor.visible) || viewDescriptor.visible ? viewDescriptor.size : { type: 'invisible', cachedVisibleSize: viewDescriptor.size };\n                const view = viewDescriptor.view;\n                this.doAddView(view, sizing, index, true);\n            });\n            // Initialize content size and proportions for first layout\n            this.contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);\n            this.saveProportions();\n        }\n    }\n    get orthogonalStartSash() { return this._orthogonalStartSash; }\n    get orthogonalEndSash() { return this._orthogonalEndSash; }\n    get startSnappingEnabled() { return this._startSnappingEnabled; }\n    get endSnappingEnabled() { return this._endSnappingEnabled; }\n    /**\n     * A reference to a sash, perpendicular to all sashes in this {@link SplitView},\n     * located at the left- or top-most side of the SplitView.\n     * Corner sashes will be created automatically at the intersections.\n     */\n    set orthogonalStartSash(sash) {\n        for (const sashItem of this.sashItems) {\n            sashItem.sash.orthogonalStartSash = sash;\n        }\n        this._orthogonalStartSash = sash;\n    }\n    /**\n     * A reference to a sash, perpendicular to all sashes in this {@link SplitView},\n     * located at the right- or bottom-most side of the SplitView.\n     * Corner sashes will be created automatically at the intersections.\n     */\n    set orthogonalEndSash(sash) {\n        for (const sashItem of this.sashItems) {\n            sashItem.sash.orthogonalEndSash = sash;\n        }\n        this._orthogonalEndSash = sash;\n    }\n    /**\n     * Enable/disable snapping at the beginning of this {@link SplitView}.\n     */\n    set startSnappingEnabled(startSnappingEnabled) {\n        if (this._startSnappingEnabled === startSnappingEnabled) {\n            return;\n        }\n        this._startSnappingEnabled = startSnappingEnabled;\n        this.updateSashEnablement();\n    }\n    /**\n     * Enable/disable snapping at the end of this {@link SplitView}.\n     */\n    set endSnappingEnabled(endSnappingEnabled) {\n        if (this._endSnappingEnabled === endSnappingEnabled) {\n            return;\n        }\n        this._endSnappingEnabled = endSnappingEnabled;\n        this.updateSashEnablement();\n    }\n    style(styles) {\n        if (styles.separatorBorder.isTransparent()) {\n            this.el.classList.remove('separator-border');\n            this.el.style.removeProperty('--separator-border');\n        }\n        else {\n            this.el.classList.add('separator-border');\n            this.el.style.setProperty('--separator-border', styles.separatorBorder.toString());\n        }\n    }\n    /**\n     * Add a {@link IView view} to this {@link SplitView}.\n     *\n     * @param view The view to add.\n     * @param size Either a fixed size, or a dynamic {@link Sizing} strategy.\n     * @param index The index to insert the view on.\n     * @param skipLayout Whether layout should be skipped.\n     */\n    addView(view, size, index = this.viewItems.length, skipLayout) {\n        this.doAddView(view, size, index, skipLayout);\n    }\n    /**\n     * Layout the {@link SplitView}.\n     *\n     * @param size The entire size of the {@link SplitView}.\n     * @param layoutContext An optional layout context to pass along to {@link IView views}.\n     */\n    layout(size, layoutContext) {\n        const previousSize = Math.max(this.size, this.contentSize);\n        this.size = size;\n        this.layoutContext = layoutContext;\n        if (!this.proportions) {\n            const indexes = range(this.viewItems.length);\n            const lowPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 1 /* Low */);\n            const highPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 2 /* High */);\n            this.resize(this.viewItems.length - 1, size - previousSize, undefined, lowPriorityIndexes, highPriorityIndexes);\n        }\n        else {\n            for (let i = 0; i < this.viewItems.length; i++) {\n                const item = this.viewItems[i];\n                item.size = clamp(Math.round(this.proportions[i] * size), item.minimumSize, item.maximumSize);\n            }\n        }\n        this.distributeEmptySpace();\n        this.layoutViews();\n    }\n    saveProportions() {\n        if (this.proportionalLayout && this.contentSize > 0) {\n            this.proportions = this.viewItems.map(i => i.size / this.contentSize);\n        }\n    }\n    onSashStart({ sash, start, alt }) {\n        for (const item of this.viewItems) {\n            item.enabled = false;\n        }\n        const index = this.sashItems.findIndex(item => item.sash === sash);\n        // This way, we can press Alt while we resize a sash, macOS style!\n        const disposable = combinedDisposable(addDisposableListener(document.body, 'keydown', e => resetSashDragState(this.sashDragState.current, e.altKey)), addDisposableListener(document.body, 'keyup', () => resetSashDragState(this.sashDragState.current, false)));\n        const resetSashDragState = (start, alt) => {\n            const sizes = this.viewItems.map(i => i.size);\n            let minDelta = Number.NEGATIVE_INFINITY;\n            let maxDelta = Number.POSITIVE_INFINITY;\n            if (this.inverseAltBehavior) {\n                alt = !alt;\n            }\n            if (alt) {\n                // When we're using the last sash with Alt, we're resizing\n                // the view to the left/up, instead of right/down as usual\n                // Thus, we must do the inverse of the usual\n                const isLastSash = index === this.sashItems.length - 1;\n                if (isLastSash) {\n                    const viewItem = this.viewItems[index];\n                    minDelta = (viewItem.minimumSize - viewItem.size) / 2;\n                    maxDelta = (viewItem.maximumSize - viewItem.size) / 2;\n                }\n                else {\n                    const viewItem = this.viewItems[index + 1];\n                    minDelta = (viewItem.size - viewItem.maximumSize) / 2;\n                    maxDelta = (viewItem.size - viewItem.minimumSize) / 2;\n                }\n            }\n            let snapBefore;\n            let snapAfter;\n            if (!alt) {\n                const upIndexes = range(index, -1);\n                const downIndexes = range(index + 1, this.viewItems.length);\n                const minDeltaUp = upIndexes.reduce((r, i) => r + (this.viewItems[i].minimumSize - sizes[i]), 0);\n                const maxDeltaUp = upIndexes.reduce((r, i) => r + (this.viewItems[i].viewMaximumSize - sizes[i]), 0);\n                const maxDeltaDown = downIndexes.length === 0 ? Number.POSITIVE_INFINITY : downIndexes.reduce((r, i) => r + (sizes[i] - this.viewItems[i].minimumSize), 0);\n                const minDeltaDown = downIndexes.length === 0 ? Number.NEGATIVE_INFINITY : downIndexes.reduce((r, i) => r + (sizes[i] - this.viewItems[i].viewMaximumSize), 0);\n                const minDelta = Math.max(minDeltaUp, minDeltaDown);\n                const maxDelta = Math.min(maxDeltaDown, maxDeltaUp);\n                const snapBeforeIndex = this.findFirstSnapIndex(upIndexes);\n                const snapAfterIndex = this.findFirstSnapIndex(downIndexes);\n                if (typeof snapBeforeIndex === 'number') {\n                    const viewItem = this.viewItems[snapBeforeIndex];\n                    const halfSize = Math.floor(viewItem.viewMinimumSize / 2);\n                    snapBefore = {\n                        index: snapBeforeIndex,\n                        limitDelta: viewItem.visible ? minDelta - halfSize : minDelta + halfSize,\n                        size: viewItem.size\n                    };\n                }\n                if (typeof snapAfterIndex === 'number') {\n                    const viewItem = this.viewItems[snapAfterIndex];\n                    const halfSize = Math.floor(viewItem.viewMinimumSize / 2);\n                    snapAfter = {\n                        index: snapAfterIndex,\n                        limitDelta: viewItem.visible ? maxDelta + halfSize : maxDelta - halfSize,\n                        size: viewItem.size\n                    };\n                }\n            }\n            this.sashDragState = { start, current: start, index, sizes, minDelta, maxDelta, alt, snapBefore, snapAfter, disposable };\n        };\n        resetSashDragState(start, alt);\n    }\n    onSashChange({ current }) {\n        const { index, start, sizes, alt, minDelta, maxDelta, snapBefore, snapAfter } = this.sashDragState;\n        this.sashDragState.current = current;\n        const delta = current - start;\n        const newDelta = this.resize(index, delta, sizes, undefined, undefined, minDelta, maxDelta, snapBefore, snapAfter);\n        if (alt) {\n            const isLastSash = index === this.sashItems.length - 1;\n            const newSizes = this.viewItems.map(i => i.size);\n            const viewItemIndex = isLastSash ? index : index + 1;\n            const viewItem = this.viewItems[viewItemIndex];\n            const newMinDelta = viewItem.size - viewItem.maximumSize;\n            const newMaxDelta = viewItem.size - viewItem.minimumSize;\n            const resizeIndex = isLastSash ? index - 1 : index + 1;\n            this.resize(resizeIndex, -newDelta, newSizes, undefined, undefined, newMinDelta, newMaxDelta);\n        }\n        this.distributeEmptySpace();\n        this.layoutViews();\n    }\n    onSashEnd(index) {\n        this._onDidSashChange.fire(index);\n        this.sashDragState.disposable.dispose();\n        this.saveProportions();\n        for (const item of this.viewItems) {\n            item.enabled = true;\n        }\n    }\n    onViewChange(item, size) {\n        const index = this.viewItems.indexOf(item);\n        if (index < 0 || index >= this.viewItems.length) {\n            return;\n        }\n        size = typeof size === 'number' ? size : item.size;\n        size = clamp(size, item.minimumSize, item.maximumSize);\n        if (this.inverseAltBehavior && index > 0) {\n            // In this case, we want the view to grow or shrink both sides equally\n            // so we just resize the \"left\" side by half and let `resize` do the clamping magic\n            this.resize(index - 1, Math.floor((item.size - size) / 2));\n            this.distributeEmptySpace();\n            this.layoutViews();\n        }\n        else {\n            item.size = size;\n            this.relayout([index], undefined);\n        }\n    }\n    /**\n     * Resize a {@link IView view} within the {@link SplitView}.\n     *\n     * @param index The {@link IView view} index.\n     * @param size The {@link IView view} size.\n     */\n    resizeView(index, size) {\n        if (this.state !== State.Idle) {\n            throw new Error('Cant modify splitview');\n        }\n        this.state = State.Busy;\n        if (index < 0 || index >= this.viewItems.length) {\n            return;\n        }\n        const indexes = range(this.viewItems.length).filter(i => i !== index);\n        const lowPriorityIndexes = [...indexes.filter(i => this.viewItems[i].priority === 1 /* Low */), index];\n        const highPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 2 /* High */);\n        const item = this.viewItems[index];\n        size = Math.round(size);\n        size = clamp(size, item.minimumSize, Math.min(item.maximumSize, this.size));\n        item.size = size;\n        this.relayout(lowPriorityIndexes, highPriorityIndexes);\n        this.state = State.Idle;\n    }\n    /**\n     * Distribute the entire {@link SplitView} size among all {@link IView views}.\n     */\n    distributeViewSizes() {\n        const flexibleViewItems = [];\n        let flexibleSize = 0;\n        for (const item of this.viewItems) {\n            if (item.maximumSize - item.minimumSize > 0) {\n                flexibleViewItems.push(item);\n                flexibleSize += item.size;\n            }\n        }\n        const size = Math.floor(flexibleSize / flexibleViewItems.length);\n        for (const item of flexibleViewItems) {\n            item.size = clamp(size, item.minimumSize, item.maximumSize);\n        }\n        const indexes = range(this.viewItems.length);\n        const lowPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 1 /* Low */);\n        const highPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 2 /* High */);\n        this.relayout(lowPriorityIndexes, highPriorityIndexes);\n    }\n    /**\n     * Returns the size of a {@link IView view}.\n     */\n    getViewSize(index) {\n        if (index < 0 || index >= this.viewItems.length) {\n            return -1;\n        }\n        return this.viewItems[index].size;\n    }\n    doAddView(view, size, index = this.viewItems.length, skipLayout) {\n        if (this.state !== State.Idle) {\n            throw new Error('Cant modify splitview');\n        }\n        this.state = State.Busy;\n        // Add view\n        const container = $('.split-view-view');\n        if (index === this.viewItems.length) {\n            this.viewContainer.appendChild(container);\n        }\n        else {\n            this.viewContainer.insertBefore(container, this.viewContainer.children.item(index));\n        }\n        const onChangeDisposable = view.onDidChange(size => this.onViewChange(item, size));\n        const containerDisposable = toDisposable(() => this.viewContainer.removeChild(container));\n        const disposable = combinedDisposable(onChangeDisposable, containerDisposable);\n        let viewSize;\n        if (typeof size === 'number') {\n            viewSize = size;\n        }\n        else if (size.type === 'split') {\n            viewSize = this.getViewSize(size.index) / 2;\n        }\n        else if (size.type === 'invisible') {\n            viewSize = { cachedVisibleSize: size.cachedVisibleSize };\n        }\n        else {\n            viewSize = view.minimumSize;\n        }\n        const item = this.orientation === 0 /* VERTICAL */\n            ? new VerticalViewItem(container, view, viewSize, disposable)\n            : new HorizontalViewItem(container, view, viewSize, disposable);\n        this.viewItems.splice(index, 0, item);\n        // Add sash\n        if (this.viewItems.length > 1) {\n            let opts = { orthogonalStartSash: this.orthogonalStartSash, orthogonalEndSash: this.orthogonalEndSash };\n            const sash = this.orientation === 0 /* VERTICAL */\n                ? new Sash(this.sashContainer, { getHorizontalSashTop: s => this.getSashPosition(s), getHorizontalSashWidth: this.getSashOrthogonalSize }, Object.assign(Object.assign({}, opts), { orientation: 1 /* HORIZONTAL */ }))\n                : new Sash(this.sashContainer, { getVerticalSashLeft: s => this.getSashPosition(s), getVerticalSashHeight: this.getSashOrthogonalSize }, Object.assign(Object.assign({}, opts), { orientation: 0 /* VERTICAL */ }));\n            const sashEventMapper = this.orientation === 0 /* VERTICAL */\n                ? (e) => ({ sash, start: e.startY, current: e.currentY, alt: e.altKey })\n                : (e) => ({ sash, start: e.startX, current: e.currentX, alt: e.altKey });\n            const onStart = Event.map(sash.onDidStart, sashEventMapper);\n            const onStartDisposable = onStart(this.onSashStart, this);\n            const onChange = Event.map(sash.onDidChange, sashEventMapper);\n            const onChangeDisposable = onChange(this.onSashChange, this);\n            const onEnd = Event.map(sash.onDidEnd, () => this.sashItems.findIndex(item => item.sash === sash));\n            const onEndDisposable = onEnd(this.onSashEnd, this);\n            const onDidResetDisposable = sash.onDidReset(() => {\n                const index = this.sashItems.findIndex(item => item.sash === sash);\n                const upIndexes = range(index, -1);\n                const downIndexes = range(index + 1, this.viewItems.length);\n                const snapBeforeIndex = this.findFirstSnapIndex(upIndexes);\n                const snapAfterIndex = this.findFirstSnapIndex(downIndexes);\n                if (typeof snapBeforeIndex === 'number' && !this.viewItems[snapBeforeIndex].visible) {\n                    return;\n                }\n                if (typeof snapAfterIndex === 'number' && !this.viewItems[snapAfterIndex].visible) {\n                    return;\n                }\n                this._onDidSashReset.fire(index);\n            });\n            const disposable = combinedDisposable(onStartDisposable, onChangeDisposable, onEndDisposable, onDidResetDisposable, sash);\n            const sashItem = { sash, disposable };\n            this.sashItems.splice(index - 1, 0, sashItem);\n        }\n        container.appendChild(view.element);\n        let highPriorityIndexes;\n        if (typeof size !== 'number' && size.type === 'split') {\n            highPriorityIndexes = [size.index];\n        }\n        if (!skipLayout) {\n            this.relayout([index], highPriorityIndexes);\n        }\n        this.state = State.Idle;\n        if (!skipLayout && typeof size !== 'number' && size.type === 'distribute') {\n            this.distributeViewSizes();\n        }\n    }\n    relayout(lowPriorityIndexes, highPriorityIndexes) {\n        const contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);\n        this.resize(this.viewItems.length - 1, this.size - contentSize, undefined, lowPriorityIndexes, highPriorityIndexes);\n        this.distributeEmptySpace();\n        this.layoutViews();\n        this.saveProportions();\n    }\n    resize(index, delta, sizes = this.viewItems.map(i => i.size), lowPriorityIndexes, highPriorityIndexes, overloadMinDelta = Number.NEGATIVE_INFINITY, overloadMaxDelta = Number.POSITIVE_INFINITY, snapBefore, snapAfter) {\n        if (index < 0 || index >= this.viewItems.length) {\n            return 0;\n        }\n        const upIndexes = range(index, -1);\n        const downIndexes = range(index + 1, this.viewItems.length);\n        if (highPriorityIndexes) {\n            for (const index of highPriorityIndexes) {\n                pushToStart(upIndexes, index);\n                pushToStart(downIndexes, index);\n            }\n        }\n        if (lowPriorityIndexes) {\n            for (const index of lowPriorityIndexes) {\n                pushToEnd(upIndexes, index);\n                pushToEnd(downIndexes, index);\n            }\n        }\n        const upItems = upIndexes.map(i => this.viewItems[i]);\n        const upSizes = upIndexes.map(i => sizes[i]);\n        const downItems = downIndexes.map(i => this.viewItems[i]);\n        const downSizes = downIndexes.map(i => sizes[i]);\n        const minDeltaUp = upIndexes.reduce((r, i) => r + (this.viewItems[i].minimumSize - sizes[i]), 0);\n        const maxDeltaUp = upIndexes.reduce((r, i) => r + (this.viewItems[i].maximumSize - sizes[i]), 0);\n        const maxDeltaDown = downIndexes.length === 0 ? Number.POSITIVE_INFINITY : downIndexes.reduce((r, i) => r + (sizes[i] - this.viewItems[i].minimumSize), 0);\n        const minDeltaDown = downIndexes.length === 0 ? Number.NEGATIVE_INFINITY : downIndexes.reduce((r, i) => r + (sizes[i] - this.viewItems[i].maximumSize), 0);\n        const minDelta = Math.max(minDeltaUp, minDeltaDown, overloadMinDelta);\n        const maxDelta = Math.min(maxDeltaDown, maxDeltaUp, overloadMaxDelta);\n        let snapped = false;\n        if (snapBefore) {\n            const snapView = this.viewItems[snapBefore.index];\n            const visible = delta >= snapBefore.limitDelta;\n            snapped = visible !== snapView.visible;\n            snapView.setVisible(visible, snapBefore.size);\n        }\n        if (!snapped && snapAfter) {\n            const snapView = this.viewItems[snapAfter.index];\n            const visible = delta < snapAfter.limitDelta;\n            snapped = visible !== snapView.visible;\n            snapView.setVisible(visible, snapAfter.size);\n        }\n        if (snapped) {\n            return this.resize(index, delta, sizes, lowPriorityIndexes, highPriorityIndexes, overloadMinDelta, overloadMaxDelta);\n        }\n        delta = clamp(delta, minDelta, maxDelta);\n        for (let i = 0, deltaUp = delta; i < upItems.length; i++) {\n            const item = upItems[i];\n            const size = clamp(upSizes[i] + deltaUp, item.minimumSize, item.maximumSize);\n            const viewDelta = size - upSizes[i];\n            deltaUp -= viewDelta;\n            item.size = size;\n        }\n        for (let i = 0, deltaDown = delta; i < downItems.length; i++) {\n            const item = downItems[i];\n            const size = clamp(downSizes[i] - deltaDown, item.minimumSize, item.maximumSize);\n            const viewDelta = size - downSizes[i];\n            deltaDown += viewDelta;\n            item.size = size;\n        }\n        return delta;\n    }\n    distributeEmptySpace(lowPriorityIndex) {\n        const contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);\n        let emptyDelta = this.size - contentSize;\n        const indexes = range(this.viewItems.length - 1, -1);\n        const lowPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 1 /* Low */);\n        const highPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === 2 /* High */);\n        for (const index of highPriorityIndexes) {\n            pushToStart(indexes, index);\n        }\n        for (const index of lowPriorityIndexes) {\n            pushToEnd(indexes, index);\n        }\n        if (typeof lowPriorityIndex === 'number') {\n            pushToEnd(indexes, lowPriorityIndex);\n        }\n        for (let i = 0; emptyDelta !== 0 && i < indexes.length; i++) {\n            const item = this.viewItems[indexes[i]];\n            const size = clamp(item.size + emptyDelta, item.minimumSize, item.maximumSize);\n            const viewDelta = size - item.size;\n            emptyDelta -= viewDelta;\n            item.size = size;\n        }\n    }\n    layoutViews() {\n        // Save new content size\n        this.contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);\n        // Layout views\n        let offset = 0;\n        for (const viewItem of this.viewItems) {\n            viewItem.layout(offset, this.layoutContext);\n            offset += viewItem.size;\n        }\n        // Layout sashes\n        this.sashItems.forEach(item => item.sash.layout());\n        this.updateSashEnablement();\n        this.updateScrollableElement();\n    }\n    updateScrollableElement() {\n        if (this.orientation === 0 /* VERTICAL */) {\n            this.scrollableElement.setScrollDimensions({\n                height: this.size,\n                scrollHeight: this.contentSize\n            });\n        }\n        else {\n            this.scrollableElement.setScrollDimensions({\n                width: this.size,\n                scrollWidth: this.contentSize\n            });\n        }\n    }\n    updateSashEnablement() {\n        let previous = false;\n        const collapsesDown = this.viewItems.map(i => previous = (i.size - i.minimumSize > 0) || previous);\n        previous = false;\n        const expandsDown = this.viewItems.map(i => previous = (i.maximumSize - i.size > 0) || previous);\n        const reverseViews = [...this.viewItems].reverse();\n        previous = false;\n        const collapsesUp = reverseViews.map(i => previous = (i.size - i.minimumSize > 0) || previous).reverse();\n        previous = false;\n        const expandsUp = reverseViews.map(i => previous = (i.maximumSize - i.size > 0) || previous).reverse();\n        let position = 0;\n        for (let index = 0; index < this.sashItems.length; index++) {\n            const { sash } = this.sashItems[index];\n            const viewItem = this.viewItems[index];\n            position += viewItem.size;\n            const min = !(collapsesDown[index] && expandsUp[index + 1]);\n            const max = !(expandsDown[index] && collapsesUp[index + 1]);\n            if (min && max) {\n                const upIndexes = range(index, -1);\n                const downIndexes = range(index + 1, this.viewItems.length);\n                const snapBeforeIndex = this.findFirstSnapIndex(upIndexes);\n                const snapAfterIndex = this.findFirstSnapIndex(downIndexes);\n                const snappedBefore = typeof snapBeforeIndex === 'number' && !this.viewItems[snapBeforeIndex].visible;\n                const snappedAfter = typeof snapAfterIndex === 'number' && !this.viewItems[snapAfterIndex].visible;\n                if (snappedBefore && collapsesUp[index] && (position > 0 || this.startSnappingEnabled)) {\n                    sash.state = 1 /* AtMinimum */;\n                }\n                else if (snappedAfter && collapsesDown[index] && (position < this.contentSize || this.endSnappingEnabled)) {\n                    sash.state = 2 /* AtMaximum */;\n                }\n                else {\n                    sash.state = 0 /* Disabled */;\n                }\n            }\n            else if (min && !max) {\n                sash.state = 1 /* AtMinimum */;\n            }\n            else if (!min && max) {\n                sash.state = 2 /* AtMaximum */;\n            }\n            else {\n                sash.state = 3 /* Enabled */;\n            }\n        }\n    }\n    getSashPosition(sash) {\n        let position = 0;\n        for (let i = 0; i < this.sashItems.length; i++) {\n            position += this.viewItems[i].size;\n            if (this.sashItems[i].sash === sash) {\n                return position;\n            }\n        }\n        return 0;\n    }\n    findFirstSnapIndex(indexes) {\n        // visible views first\n        for (const index of indexes) {\n            const viewItem = this.viewItems[index];\n            if (!viewItem.visible) {\n                continue;\n            }\n            if (viewItem.snap) {\n                return index;\n            }\n        }\n        // then, hidden views\n        for (const index of indexes) {\n            const viewItem = this.viewItems[index];\n            if (viewItem.visible && viewItem.maximumSize - viewItem.minimumSize > 0) {\n                return undefined;\n            }\n            if (!viewItem.visible && viewItem.snap) {\n                return index;\n            }\n        }\n        return undefined;\n    }\n    dispose() {\n        super.dispose();\n        dispose(this.viewItems);\n        this.viewItems = [];\n        this.sashItems.forEach(i => i.disposable.dispose());\n        this.sashItems = [];\n    }\n}\n",
+      "start": 1711096856934,
+      "end": 1711096857083,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857083,
+      "end": 1711096857083,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857083,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    }
+  ]
+}

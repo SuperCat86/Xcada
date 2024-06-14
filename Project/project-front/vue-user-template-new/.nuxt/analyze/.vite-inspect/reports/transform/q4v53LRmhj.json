@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codeAction/browser/codeActionCommands.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { Lazy } from '../../../../base/common/lazy.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { escapeRegExpCharacters } from '../../../../base/common/strings.js';\nimport { EditorAction, EditorCommand } from '../../../browser/editorExtensions.js';\nimport { IBulkEditService, ResourceEdit } from '../../../browser/services/bulkEditService.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { codeActionCommandId, fixAllCommandId, organizeImportsCommandId, refactorCommandId, sourceActionCommandId } from './codeAction.js';\nimport { CodeActionUi } from './codeActionUi.js';\nimport { MessageController } from '../../message/browser/messageController.js';\nimport * as nls from '../../../../nls.js';\nimport { ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { ContextKeyExpr, IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IMarkerService } from '../../../../platform/markers/common/markers.js';\nimport { INotificationService } from '../../../../platform/notification/common/notification.js';\nimport { IEditorProgressService } from '../../../../platform/progress/common/progress.js';\nimport { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';\nimport { CodeActionModel, SUPPORTED_CODE_ACTIONS } from './codeActionModel.js';\nimport { CodeActionCommandArgs, CodeActionKind } from './types.js';\nfunction contextKeyForSupportedActions(kind) {\n    return ContextKeyExpr.regex(SUPPORTED_CODE_ACTIONS.keys()[0], new RegExp('(\\\\s|^)' + escapeRegExpCharacters(kind.value) + '\\\\b'));\n}\nconst argsSchema = {\n    type: 'object',\n    defaultSnippets: [{ body: { kind: '' } }],\n    properties: {\n        'kind': {\n            type: 'string',\n            description: nls.localize('args.schema.kind', \"Kind of the code action to run.\"),\n        },\n        'apply': {\n            type: 'string',\n            description: nls.localize('args.schema.apply', \"Controls when the returned actions are applied.\"),\n            default: \"ifSingle\" /* IfSingle */,\n            enum: [\"first\" /* First */, \"ifSingle\" /* IfSingle */, \"never\" /* Never */],\n            enumDescriptions: [\n                nls.localize('args.schema.apply.first', \"Always apply the first returned code action.\"),\n                nls.localize('args.schema.apply.ifSingle', \"Apply the first returned code action if it is the only one.\"),\n                nls.localize('args.schema.apply.never', \"Do not apply the returned code actions.\"),\n            ]\n        },\n        'preferred': {\n            type: 'boolean',\n            default: false,\n            description: nls.localize('args.schema.preferred', \"Controls if only preferred code actions should be returned.\"),\n        }\n    }\n};\nlet QuickFixController = class QuickFixController extends Disposable {\n    constructor(editor, markerService, contextKeyService, progressService, _instantiationService, languageFeaturesService) {\n        super();\n        this._instantiationService = _instantiationService;\n        this._editor = editor;\n        this._model = this._register(new CodeActionModel(this._editor, languageFeaturesService.codeActionProvider, markerService, contextKeyService, progressService));\n        this._register(this._model.onDidChangeState(newState => this.update(newState)));\n        this._ui = new Lazy(() => this._register(new CodeActionUi(editor, QuickFixAction.Id, AutoFixAction.Id, {\n            applyCodeAction: (action, retrigger) => __awaiter(this, void 0, void 0, function* () {\n                try {\n                    yield this._applyCodeAction(action);\n                }\n                finally {\n                    if (retrigger) {\n                        this._trigger({ type: 2 /* Auto */, filter: {} });\n                    }\n                }\n            })\n        }, this._instantiationService)));\n    }\n    static get(editor) {\n        return editor.getContribution(QuickFixController.ID);\n    }\n    update(newState) {\n        this._ui.getValue().update(newState);\n    }\n    showCodeActions(trigger, actions, at) {\n        return this._ui.getValue().showCodeActionList(trigger, actions, at, { includeDisabledActions: false });\n    }\n    manualTriggerAtCurrentPosition(notAvailableMessage, filter, autoApply) {\n        var _a;\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        (_a = MessageController.get(this._editor)) === null || _a === void 0 ? void 0 : _a.closeMessage();\n        const triggerPosition = this._editor.getPosition();\n        this._trigger({ type: 1 /* Invoke */, filter, autoApply, context: { notAvailableMessage, position: triggerPosition } });\n    }\n    _trigger(trigger) {\n        return this._model.trigger(trigger);\n    }\n    _applyCodeAction(action) {\n        return this._instantiationService.invokeFunction(applyCodeAction, action, this._editor);\n    }\n};\nQuickFixController.ID = 'editor.contrib.quickFixController';\nQuickFixController = __decorate([\n    __param(1, IMarkerService),\n    __param(2, IContextKeyService),\n    __param(3, IEditorProgressService),\n    __param(4, IInstantiationService),\n    __param(5, ILanguageFeaturesService)\n], QuickFixController);\nexport { QuickFixController };\nexport function applyCodeAction(accessor, item, editor) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const bulkEditService = accessor.get(IBulkEditService);\n        const commandService = accessor.get(ICommandService);\n        const telemetryService = accessor.get(ITelemetryService);\n        const notificationService = accessor.get(INotificationService);\n        telemetryService.publicLog2('codeAction.applyCodeAction', {\n            codeActionTitle: item.action.title,\n            codeActionKind: item.action.kind,\n            codeActionIsPreferred: !!item.action.isPreferred,\n        });\n        yield item.resolve(CancellationToken.None);\n        if (item.action.edit) {\n            yield bulkEditService.apply(ResourceEdit.convert(item.action.edit), { editor, label: item.action.title });\n        }\n        if (item.action.command) {\n            try {\n                yield commandService.executeCommand(item.action.command.id, ...(item.action.command.arguments || []));\n            }\n            catch (err) {\n                const message = asMessage(err);\n                notificationService.error(typeof message === 'string'\n                    ? message\n                    : nls.localize('applyCodeActionFailed', \"An unknown error occurred while applying the code action\"));\n            }\n        }\n    });\n}\nfunction asMessage(err) {\n    if (typeof err === 'string') {\n        return err;\n    }\n    else if (err instanceof Error && typeof err.message === 'string') {\n        return err.message;\n    }\n    else {\n        return undefined;\n    }\n}\nfunction triggerCodeActionsForEditorSelection(editor, notAvailableMessage, filter, autoApply) {\n    if (editor.hasModel()) {\n        const controller = QuickFixController.get(editor);\n        if (controller) {\n            controller.manualTriggerAtCurrentPosition(notAvailableMessage, filter, autoApply);\n        }\n    }\n}\nexport class QuickFixAction extends EditorAction {\n    constructor() {\n        super({\n            id: QuickFixAction.Id,\n            label: nls.localize('quickfix.trigger.label', \"Quick Fix...\"),\n            alias: 'Quick Fix...',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 84 /* Period */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(_accessor, editor) {\n        return triggerCodeActionsForEditorSelection(editor, nls.localize('editor.action.quickFix.noneMessage', \"No code actions available\"), undefined, undefined);\n    }\n}\nQuickFixAction.Id = 'editor.action.quickFix';\nexport class CodeActionCommand extends EditorCommand {\n    constructor() {\n        super({\n            id: codeActionCommandId,\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider),\n            description: {\n                description: 'Trigger a code action',\n                args: [{ name: 'args', schema: argsSchema, }]\n            }\n        });\n    }\n    runEditorCommand(_accessor, editor, userArgs) {\n        const args = CodeActionCommandArgs.fromUser(userArgs, {\n            kind: CodeActionKind.Empty,\n            apply: \"ifSingle\" /* IfSingle */,\n        });\n        return triggerCodeActionsForEditorSelection(editor, typeof (userArgs === null || userArgs === void 0 ? void 0 : userArgs.kind) === 'string'\n            ? args.preferred\n                ? nls.localize('editor.action.codeAction.noneMessage.preferred.kind', \"No preferred code actions for '{0}' available\", userArgs.kind)\n                : nls.localize('editor.action.codeAction.noneMessage.kind', \"No code actions for '{0}' available\", userArgs.kind)\n            : args.preferred\n                ? nls.localize('editor.action.codeAction.noneMessage.preferred', \"No preferred code actions available\")\n                : nls.localize('editor.action.codeAction.noneMessage', \"No code actions available\"), {\n            include: args.kind,\n            includeSourceActions: true,\n            onlyIncludePreferredActions: args.preferred,\n        }, args.apply);\n    }\n}\nexport class RefactorAction extends EditorAction {\n    constructor() {\n        super({\n            id: refactorCommandId,\n            label: nls.localize('refactor.label', \"Refactor...\"),\n            alias: 'Refactor...',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 48 /* KeyR */,\n                mac: {\n                    primary: 256 /* WinCtrl */ | 1024 /* Shift */ | 48 /* KeyR */\n                },\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                group: '1_modification',\n                order: 2,\n                when: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.Refactor)),\n            },\n            description: {\n                description: 'Refactor...',\n                args: [{ name: 'args', schema: argsSchema }]\n            }\n        });\n    }\n    run(_accessor, editor, userArgs) {\n        const args = CodeActionCommandArgs.fromUser(userArgs, {\n            kind: CodeActionKind.Refactor,\n            apply: \"never\" /* Never */\n        });\n        return triggerCodeActionsForEditorSelection(editor, typeof (userArgs === null || userArgs === void 0 ? void 0 : userArgs.kind) === 'string'\n            ? args.preferred\n                ? nls.localize('editor.action.refactor.noneMessage.preferred.kind', \"No preferred refactorings for '{0}' available\", userArgs.kind)\n                : nls.localize('editor.action.refactor.noneMessage.kind', \"No refactorings for '{0}' available\", userArgs.kind)\n            : args.preferred\n                ? nls.localize('editor.action.refactor.noneMessage.preferred', \"No preferred refactorings available\")\n                : nls.localize('editor.action.refactor.noneMessage', \"No refactorings available\"), {\n            include: CodeActionKind.Refactor.contains(args.kind) ? args.kind : CodeActionKind.None,\n            onlyIncludePreferredActions: args.preferred,\n        }, args.apply);\n    }\n}\nexport class SourceAction extends EditorAction {\n    constructor() {\n        super({\n            id: sourceActionCommandId,\n            label: nls.localize('source.label', \"Source Action...\"),\n            alias: 'Source Action...',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasCodeActionsProvider),\n            contextMenuOpts: {\n                group: '1_modification',\n                order: 2.1,\n                when: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.Source)),\n            },\n            description: {\n                description: 'Source Action...',\n                args: [{ name: 'args', schema: argsSchema }]\n            }\n        });\n    }\n    run(_accessor, editor, userArgs) {\n        const args = CodeActionCommandArgs.fromUser(userArgs, {\n            kind: CodeActionKind.Source,\n            apply: \"never\" /* Never */\n        });\n        return triggerCodeActionsForEditorSelection(editor, typeof (userArgs === null || userArgs === void 0 ? void 0 : userArgs.kind) === 'string'\n            ? args.preferred\n                ? nls.localize('editor.action.source.noneMessage.preferred.kind', \"No preferred source actions for '{0}' available\", userArgs.kind)\n                : nls.localize('editor.action.source.noneMessage.kind', \"No source actions for '{0}' available\", userArgs.kind)\n            : args.preferred\n                ? nls.localize('editor.action.source.noneMessage.preferred', \"No preferred source actions available\")\n                : nls.localize('editor.action.source.noneMessage', \"No source actions available\"), {\n            include: CodeActionKind.Source.contains(args.kind) ? args.kind : CodeActionKind.None,\n            includeSourceActions: true,\n            onlyIncludePreferredActions: args.preferred,\n        }, args.apply);\n    }\n}\nexport class OrganizeImportsAction extends EditorAction {\n    constructor() {\n        super({\n            id: organizeImportsCommandId,\n            label: nls.localize('organizeImports.label', \"Organize Imports\"),\n            alias: 'Organize Imports',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.SourceOrganizeImports)),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 45 /* KeyO */,\n                weight: 100 /* EditorContrib */\n            },\n        });\n    }\n    run(_accessor, editor) {\n        return triggerCodeActionsForEditorSelection(editor, nls.localize('editor.action.organize.noneMessage', \"No organize imports action available\"), { include: CodeActionKind.SourceOrganizeImports, includeSourceActions: true }, \"ifSingle\" /* IfSingle */);\n    }\n}\nexport class FixAllAction extends EditorAction {\n    constructor() {\n        super({\n            id: fixAllCommandId,\n            label: nls.localize('fixAll.label', \"Fix All\"),\n            alias: 'Fix All',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.SourceFixAll))\n        });\n    }\n    run(_accessor, editor) {\n        return triggerCodeActionsForEditorSelection(editor, nls.localize('fixAll.noneMessage', \"No fix all action available\"), { include: CodeActionKind.SourceFixAll, includeSourceActions: true }, \"ifSingle\" /* IfSingle */);\n    }\n}\nexport class AutoFixAction extends EditorAction {\n    constructor() {\n        super({\n            id: AutoFixAction.Id,\n            label: nls.localize('autoFix.label', \"Auto Fix...\"),\n            alias: 'Auto Fix...',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.QuickFix)),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 512 /* Alt */ | 1024 /* Shift */ | 84 /* Period */,\n                mac: {\n                    primary: 2048 /* CtrlCmd */ | 512 /* Alt */ | 84 /* Period */\n                },\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(_accessor, editor) {\n        return triggerCodeActionsForEditorSelection(editor, nls.localize('editor.action.autoFix.noneMessage', \"No auto fixes available\"), {\n            include: CodeActionKind.QuickFix,\n            onlyIncludePreferredActions: true\n        }, \"ifSingle\" /* IfSingle */);\n    }\n}\nAutoFixAction.Id = 'editor.action.autoFix';\n",
+      "start": 1711096855525,
+      "end": 1711096855629,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855629,
+      "end": 1711096855629,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855629,
+      "end": 1711096855631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855631,
+      "end": 1711096855631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    }
+  ]
+}

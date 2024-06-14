@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/tokens/contiguousTokensEditing.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { LineTokens } from './lineTokens.js';\nexport const EMPTY_LINE_TOKENS = (new Uint32Array(0)).buffer;\nexport class ContiguousTokensEditing {\n    static deleteBeginning(lineTokens, toChIndex) {\n        if (lineTokens === null || lineTokens === EMPTY_LINE_TOKENS) {\n            return lineTokens;\n        }\n        return ContiguousTokensEditing.delete(lineTokens, 0, toChIndex);\n    }\n    static deleteEnding(lineTokens, fromChIndex) {\n        if (lineTokens === null || lineTokens === EMPTY_LINE_TOKENS) {\n            return lineTokens;\n        }\n        const tokens = toUint32Array(lineTokens);\n        const lineTextLength = tokens[tokens.length - 2];\n        return ContiguousTokensEditing.delete(lineTokens, fromChIndex, lineTextLength);\n    }\n    static delete(lineTokens, fromChIndex, toChIndex) {\n        if (lineTokens === null || lineTokens === EMPTY_LINE_TOKENS || fromChIndex === toChIndex) {\n            return lineTokens;\n        }\n        const tokens = toUint32Array(lineTokens);\n        const tokensCount = (tokens.length >>> 1);\n        // special case: deleting everything\n        if (fromChIndex === 0 && tokens[tokens.length - 2] === toChIndex) {\n            return EMPTY_LINE_TOKENS;\n        }\n        const fromTokenIndex = LineTokens.findIndexInTokensArray(tokens, fromChIndex);\n        const fromTokenStartOffset = (fromTokenIndex > 0 ? tokens[(fromTokenIndex - 1) << 1] : 0);\n        const fromTokenEndOffset = tokens[fromTokenIndex << 1];\n        if (toChIndex < fromTokenEndOffset) {\n            // the delete range is inside a single token\n            const delta = (toChIndex - fromChIndex);\n            for (let i = fromTokenIndex; i < tokensCount; i++) {\n                tokens[i << 1] -= delta;\n            }\n            return lineTokens;\n        }\n        let dest;\n        let lastEnd;\n        if (fromTokenStartOffset !== fromChIndex) {\n            tokens[fromTokenIndex << 1] = fromChIndex;\n            dest = ((fromTokenIndex + 1) << 1);\n            lastEnd = fromChIndex;\n        }\n        else {\n            dest = (fromTokenIndex << 1);\n            lastEnd = fromTokenStartOffset;\n        }\n        const delta = (toChIndex - fromChIndex);\n        for (let tokenIndex = fromTokenIndex + 1; tokenIndex < tokensCount; tokenIndex++) {\n            const tokenEndOffset = tokens[tokenIndex << 1] - delta;\n            if (tokenEndOffset > lastEnd) {\n                tokens[dest++] = tokenEndOffset;\n                tokens[dest++] = tokens[(tokenIndex << 1) + 1];\n                lastEnd = tokenEndOffset;\n            }\n        }\n        if (dest === tokens.length) {\n            // nothing to trim\n            return lineTokens;\n        }\n        const tmp = new Uint32Array(dest);\n        tmp.set(tokens.subarray(0, dest), 0);\n        return tmp.buffer;\n    }\n    static append(lineTokens, _otherTokens) {\n        if (_otherTokens === EMPTY_LINE_TOKENS) {\n            return lineTokens;\n        }\n        if (lineTokens === EMPTY_LINE_TOKENS) {\n            return _otherTokens;\n        }\n        if (lineTokens === null) {\n            return lineTokens;\n        }\n        if (_otherTokens === null) {\n            // cannot determine combined line length...\n            return null;\n        }\n        const myTokens = toUint32Array(lineTokens);\n        const otherTokens = toUint32Array(_otherTokens);\n        const otherTokensCount = (otherTokens.length >>> 1);\n        const result = new Uint32Array(myTokens.length + otherTokens.length);\n        result.set(myTokens, 0);\n        let dest = myTokens.length;\n        const delta = myTokens[myTokens.length - 2];\n        for (let i = 0; i < otherTokensCount; i++) {\n            result[dest++] = otherTokens[(i << 1)] + delta;\n            result[dest++] = otherTokens[(i << 1) + 1];\n        }\n        return result.buffer;\n    }\n    static insert(lineTokens, chIndex, textLength) {\n        if (lineTokens === null || lineTokens === EMPTY_LINE_TOKENS) {\n            // nothing to do\n            return lineTokens;\n        }\n        const tokens = toUint32Array(lineTokens);\n        const tokensCount = (tokens.length >>> 1);\n        let fromTokenIndex = LineTokens.findIndexInTokensArray(tokens, chIndex);\n        if (fromTokenIndex > 0) {\n            const fromTokenStartOffset = tokens[(fromTokenIndex - 1) << 1];\n            if (fromTokenStartOffset === chIndex) {\n                fromTokenIndex--;\n            }\n        }\n        for (let tokenIndex = fromTokenIndex; tokenIndex < tokensCount; tokenIndex++) {\n            tokens[tokenIndex << 1] += textLength;\n        }\n        return lineTokens;\n    }\n}\nexport function toUint32Array(arr) {\n    if (arr instanceof Uint32Array) {\n        return arr;\n    }\n    else {\n        return new Uint32Array(arr);\n    }\n}\n",
+      "start": 1711096857294,
+      "end": 1711096857369,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857369,
+      "end": 1711096857369,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857369,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857370,
+      "end": 1711096857370,
+      "order": "normal"
+    }
+  ]
+}

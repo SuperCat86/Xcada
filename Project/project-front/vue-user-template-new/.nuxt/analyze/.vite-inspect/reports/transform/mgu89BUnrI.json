@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/editorState/browser/keybindingCancellation.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { EditorCommand, registerEditorCommand } from '../../../browser/editorExtensions.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { CancellationTokenSource } from '../../../../base/common/cancellation.js';\nimport { LinkedList } from '../../../../base/common/linkedList.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { localize } from '../../../../nls.js';\nconst IEditorCancellationTokens = createDecorator('IEditorCancelService');\nconst ctxCancellableOperation = new RawContextKey('cancellableOperation', false, localize('cancellableOperation', 'Whether the editor runs a cancellable operation, e.g. like \\'Peek References\\''));\nregisterSingleton(IEditorCancellationTokens, class {\n    constructor() {\n        this._tokens = new WeakMap();\n    }\n    add(editor, cts) {\n        let data = this._tokens.get(editor);\n        if (!data) {\n            data = editor.invokeWithinContext(accessor => {\n                const key = ctxCancellableOperation.bindTo(accessor.get(IContextKeyService));\n                const tokens = new LinkedList();\n                return { key, tokens };\n            });\n            this._tokens.set(editor, data);\n        }\n        let removeFn;\n        data.key.set(true);\n        removeFn = data.tokens.push(cts);\n        return () => {\n            // remove w/o cancellation\n            if (removeFn) {\n                removeFn();\n                data.key.set(!data.tokens.isEmpty());\n                removeFn = undefined;\n            }\n        };\n    }\n    cancel(editor) {\n        const data = this._tokens.get(editor);\n        if (!data) {\n            return;\n        }\n        // remove with cancellation\n        const cts = data.tokens.pop();\n        if (cts) {\n            cts.cancel();\n            data.key.set(!data.tokens.isEmpty());\n        }\n    }\n}, true);\nexport class EditorKeybindingCancellationTokenSource extends CancellationTokenSource {\n    constructor(editor, parent) {\n        super(parent);\n        this.editor = editor;\n        this._unregister = editor.invokeWithinContext(accessor => accessor.get(IEditorCancellationTokens).add(editor, this));\n    }\n    dispose() {\n        this._unregister();\n        super.dispose();\n    }\n}\nregisterEditorCommand(new class extends EditorCommand {\n    constructor() {\n        super({\n            id: 'editor.cancelOperation',\n            kbOpts: {\n                weight: 100 /* EditorContrib */,\n                primary: 9 /* Escape */\n            },\n            precondition: ctxCancellableOperation\n        });\n    }\n    runEditorCommand(accessor, editor) {\n        accessor.get(IEditorCancellationTokens).cancel(editor);\n    }\n});\n",
+      "start": 1711096856302,
+      "end": 1711096856381,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856381,
+      "end": 1711096856381,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856382,
+      "end": 1711096856382,
+      "order": "normal"
+    }
+  ]
+}

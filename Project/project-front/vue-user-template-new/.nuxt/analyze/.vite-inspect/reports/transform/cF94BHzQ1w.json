@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneLanguages.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { Color } from '../../../base/common/color.js';\nimport { Range } from '../../common/core/range.js';\nimport * as languages from '../../common/languages.js';\nimport { LanguageConfigurationRegistry } from '../../common/languages/languageConfigurationRegistry.js';\nimport { ModesRegistry } from '../../common/languages/modesRegistry.js';\nimport { ILanguageService } from '../../common/languages/language.js';\nimport * as standaloneEnums from '../../common/standalone/standaloneEnums.js';\nimport { StandaloneServices } from './standaloneServices.js';\nimport { compile } from '../common/monarch/monarchCompile.js';\nimport { MonarchTokenizer } from '../common/monarch/monarchLexer.js';\nimport { IStandaloneThemeService } from '../common/standaloneTheme.js';\nimport { IMarkerService } from '../../../platform/markers/common/markers.js';\nimport { ILanguageFeaturesService } from '../../common/services/languageFeatures.js';\n/**\n * Register information about a new language.\n */\nexport function register(language) {\n    ModesRegistry.registerLanguage(language);\n}\n/**\n * Get the information of all the registered languages.\n */\nexport function getLanguages() {\n    let result = [];\n    result = result.concat(ModesRegistry.getLanguages());\n    return result;\n}\nexport function getEncodedLanguageId(languageId) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    return languageService.languageIdCodec.encodeLanguageId(languageId);\n}\n/**\n * An event emitted when a language is needed for the first time (e.g. a model has it set).\n * @event\n */\nexport function onLanguage(languageId, callback) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    const disposable = languageService.onDidEncounterLanguage((encounteredLanguageId) => {\n        if (encounteredLanguageId === languageId) {\n            // stop listening\n            disposable.dispose();\n            // invoke actual listener\n            callback();\n        }\n    });\n    return disposable;\n}\n/**\n * Set the editing configuration for a language.\n */\nexport function setLanguageConfiguration(languageId, configuration) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    if (!languageService.isRegisteredLanguageId(languageId)) {\n        throw new Error(`Cannot set configuration for unknown language ${languageId}`);\n    }\n    return LanguageConfigurationRegistry.register(languageId, configuration, 100);\n}\n/**\n * @internal\n */\nexport class EncodedTokenizationSupportAdapter {\n    constructor(languageId, actual) {\n        this._languageId = languageId;\n        this._actual = actual;\n    }\n    getInitialState() {\n        return this._actual.getInitialState();\n    }\n    tokenize(line, hasEOL, state) {\n        if (typeof this._actual.tokenize === 'function') {\n            return TokenizationSupportAdapter.adaptTokenize(this._languageId, this._actual, line, state);\n        }\n        throw new Error('Not supported!');\n    }\n    tokenizeEncoded(line, hasEOL, state) {\n        const result = this._actual.tokenizeEncoded(line, state);\n        return new languages.EncodedTokenizationResult(result.tokens, result.endState);\n    }\n}\n/**\n * @internal\n */\nexport class TokenizationSupportAdapter {\n    constructor(_languageId, _actual, _languageService, _standaloneThemeService) {\n        this._languageId = _languageId;\n        this._actual = _actual;\n        this._languageService = _languageService;\n        this._standaloneThemeService = _standaloneThemeService;\n    }\n    getInitialState() {\n        return this._actual.getInitialState();\n    }\n    static _toClassicTokens(tokens, language) {\n        const result = [];\n        let previousStartIndex = 0;\n        for (let i = 0, len = tokens.length; i < len; i++) {\n            const t = tokens[i];\n            let startIndex = t.startIndex;\n            // Prevent issues stemming from a buggy external tokenizer.\n            if (i === 0) {\n                // Force first token to start at first index!\n                startIndex = 0;\n            }\n            else if (startIndex < previousStartIndex) {\n                // Force tokens to be after one another!\n                startIndex = previousStartIndex;\n            }\n            result[i] = new languages.Token(startIndex, t.scopes, language);\n            previousStartIndex = startIndex;\n        }\n        return result;\n    }\n    static adaptTokenize(language, actual, line, state) {\n        const actualResult = actual.tokenize(line, state);\n        const tokens = TokenizationSupportAdapter._toClassicTokens(actualResult.tokens, language);\n        let endState;\n        // try to save an object if possible\n        if (actualResult.endState.equals(state)) {\n            endState = state;\n        }\n        else {\n            endState = actualResult.endState;\n        }\n        return new languages.TokenizationResult(tokens, endState);\n    }\n    tokenize(line, hasEOL, state) {\n        return TokenizationSupportAdapter.adaptTokenize(this._languageId, this._actual, line, state);\n    }\n    _toBinaryTokens(languageIdCodec, tokens) {\n        const languageId = languageIdCodec.encodeLanguageId(this._languageId);\n        const tokenTheme = this._standaloneThemeService.getColorTheme().tokenTheme;\n        const result = [];\n        let resultLen = 0;\n        let previousStartIndex = 0;\n        for (let i = 0, len = tokens.length; i < len; i++) {\n            const t = tokens[i];\n            const metadata = tokenTheme.match(languageId, t.scopes);\n            if (resultLen > 0 && result[resultLen - 1] === metadata) {\n                // same metadata\n                continue;\n            }\n            let startIndex = t.startIndex;\n            // Prevent issues stemming from a buggy external tokenizer.\n            if (i === 0) {\n                // Force first token to start at first index!\n                startIndex = 0;\n            }\n            else if (startIndex < previousStartIndex) {\n                // Force tokens to be after one another!\n                startIndex = previousStartIndex;\n            }\n            result[resultLen++] = startIndex;\n            result[resultLen++] = metadata;\n            previousStartIndex = startIndex;\n        }\n        const actualResult = new Uint32Array(resultLen);\n        for (let i = 0; i < resultLen; i++) {\n            actualResult[i] = result[i];\n        }\n        return actualResult;\n    }\n    tokenizeEncoded(line, hasEOL, state) {\n        const actualResult = this._actual.tokenize(line, state);\n        const tokens = this._toBinaryTokens(this._languageService.languageIdCodec, actualResult.tokens);\n        let endState;\n        // try to save an object if possible\n        if (actualResult.endState.equals(state)) {\n            endState = state;\n        }\n        else {\n            endState = actualResult.endState;\n        }\n        return new languages.EncodedTokenizationResult(tokens, endState);\n    }\n}\nfunction isATokensProvider(provider) {\n    return (typeof provider.getInitialState === 'function');\n}\nfunction isEncodedTokensProvider(provider) {\n    return 'tokenizeEncoded' in provider;\n}\nfunction isThenable(obj) {\n    return obj && typeof obj.then === 'function';\n}\n/**\n * Change the color map that is used for token colors.\n * Supported formats (hex): #RRGGBB, $RRGGBBAA, #RGB, #RGBA\n */\nexport function setColorMap(colorMap) {\n    const standaloneThemeService = StandaloneServices.get(IStandaloneThemeService);\n    if (colorMap) {\n        const result = [null];\n        for (let i = 1, len = colorMap.length; i < len; i++) {\n            result[i] = Color.fromHex(colorMap[i]);\n        }\n        standaloneThemeService.setColorMapOverride(result);\n    }\n    else {\n        standaloneThemeService.setColorMapOverride(null);\n    }\n}\n/**\n * @internal\n */\nfunction createTokenizationSupportAdapter(languageId, provider) {\n    if (isEncodedTokensProvider(provider)) {\n        return new EncodedTokenizationSupportAdapter(languageId, provider);\n    }\n    else {\n        return new TokenizationSupportAdapter(languageId, provider, StandaloneServices.get(ILanguageService), StandaloneServices.get(IStandaloneThemeService));\n    }\n}\n/**\n * Register a tokens provider factory for a language. This tokenizer will be exclusive with a tokenizer\n * set using `setTokensProvider` or one created using `setMonarchTokensProvider`, but will work together\n * with a tokens provider set using `registerDocumentSemanticTokensProvider` or `registerDocumentRangeSemanticTokensProvider`.\n */\nexport function registerTokensProviderFactory(languageId, factory) {\n    const adaptedFactory = {\n        createTokenizationSupport: () => __awaiter(this, void 0, void 0, function* () {\n            const result = yield Promise.resolve(factory.create());\n            if (!result) {\n                return null;\n            }\n            if (isATokensProvider(result)) {\n                return createTokenizationSupportAdapter(languageId, result);\n            }\n            return new MonarchTokenizer(StandaloneServices.get(ILanguageService), StandaloneServices.get(IStandaloneThemeService), languageId, compile(languageId, result));\n        })\n    };\n    return languages.TokenizationRegistry.registerFactory(languageId, adaptedFactory);\n}\n/**\n * Set the tokens provider for a language (manual implementation). This tokenizer will be exclusive\n * with a tokenizer created using `setMonarchTokensProvider`, or with `registerTokensProviderFactory`,\n * but will work together with a tokens provider set using `registerDocumentSemanticTokensProvider`\n * or `registerDocumentRangeSemanticTokensProvider`.\n */\nexport function setTokensProvider(languageId, provider) {\n    const languageService = StandaloneServices.get(ILanguageService);\n    if (!languageService.isRegisteredLanguageId(languageId)) {\n        throw new Error(`Cannot set tokens provider for unknown language ${languageId}`);\n    }\n    if (isThenable(provider)) {\n        return registerTokensProviderFactory(languageId, { create: () => provider });\n    }\n    return languages.TokenizationRegistry.register(languageId, createTokenizationSupportAdapter(languageId, provider));\n}\n/**\n * Set the tokens provider for a language (monarch implementation). This tokenizer will be exclusive\n * with a tokenizer set using `setTokensProvider`, or with `registerTokensProviderFactory`, but will\n * work together with a tokens provider set using `registerDocumentSemanticTokensProvider` or\n * `registerDocumentRangeSemanticTokensProvider`.\n */\nexport function setMonarchTokensProvider(languageId, languageDef) {\n    const create = (languageDef) => {\n        return new MonarchTokenizer(StandaloneServices.get(ILanguageService), StandaloneServices.get(IStandaloneThemeService), languageId, compile(languageId, languageDef));\n    };\n    if (isThenable(languageDef)) {\n        return registerTokensProviderFactory(languageId, { create: () => languageDef });\n    }\n    return languages.TokenizationRegistry.register(languageId, create(languageDef));\n}\n/**\n * Register a reference provider (used by e.g. reference search).\n */\nexport function registerReferenceProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.referenceProvider.register(languageSelector, provider);\n}\n/**\n * Register a rename provider (used by e.g. rename symbol).\n */\nexport function registerRenameProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.renameProvider.register(languageSelector, provider);\n}\n/**\n * Register a signature help provider (used by e.g. parameter hints).\n */\nexport function registerSignatureHelpProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.signatureHelpProvider.register(languageSelector, provider);\n}\n/**\n * Register a hover provider (used by e.g. editor hover).\n */\nexport function registerHoverProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.hoverProvider.register(languageSelector, {\n        provideHover: (model, position, token) => {\n            const word = model.getWordAtPosition(position);\n            return Promise.resolve(provider.provideHover(model, position, token)).then((value) => {\n                if (!value) {\n                    return undefined;\n                }\n                if (!value.range && word) {\n                    value.range = new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);\n                }\n                if (!value.range) {\n                    value.range = new Range(position.lineNumber, position.column, position.lineNumber, position.column);\n                }\n                return value;\n            });\n        }\n    });\n}\n/**\n * Register a document symbol provider (used by e.g. outline).\n */\nexport function registerDocumentSymbolProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentSymbolProvider.register(languageSelector, provider);\n}\n/**\n * Register a document highlight provider (used by e.g. highlight occurrences).\n */\nexport function registerDocumentHighlightProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentHighlightProvider.register(languageSelector, provider);\n}\n/**\n * Register an linked editing range provider.\n */\nexport function registerLinkedEditingRangeProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.linkedEditingRangeProvider.register(languageSelector, provider);\n}\n/**\n * Register a definition provider (used by e.g. go to definition).\n */\nexport function registerDefinitionProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.definitionProvider.register(languageSelector, provider);\n}\n/**\n * Register a implementation provider (used by e.g. go to implementation).\n */\nexport function registerImplementationProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.implementationProvider.register(languageSelector, provider);\n}\n/**\n * Register a type definition provider (used by e.g. go to type definition).\n */\nexport function registerTypeDefinitionProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.typeDefinitionProvider.register(languageSelector, provider);\n}\n/**\n * Register a code lens provider (used by e.g. inline code lenses).\n */\nexport function registerCodeLensProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.codeLensProvider.register(languageSelector, provider);\n}\n/**\n * Register a code action provider (used by e.g. quick fix).\n */\nexport function registerCodeActionProvider(languageSelector, provider, metadata) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.codeActionProvider.register(languageSelector, {\n        providedCodeActionKinds: metadata === null || metadata === void 0 ? void 0 : metadata.providedCodeActionKinds,\n        provideCodeActions: (model, range, context, token) => {\n            const markerService = StandaloneServices.get(IMarkerService);\n            const markers = markerService.read({ resource: model.uri }).filter(m => {\n                return Range.areIntersectingOrTouching(m, range);\n            });\n            return provider.provideCodeActions(model, range, { markers, only: context.only }, token);\n        },\n        resolveCodeAction: provider.resolveCodeAction\n    });\n}\n/**\n * Register a formatter that can handle only entire models.\n */\nexport function registerDocumentFormattingEditProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentFormattingEditProvider.register(languageSelector, provider);\n}\n/**\n * Register a formatter that can handle a range inside a model.\n */\nexport function registerDocumentRangeFormattingEditProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentRangeFormattingEditProvider.register(languageSelector, provider);\n}\n/**\n * Register a formatter than can do formatting as the user types.\n */\nexport function registerOnTypeFormattingEditProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.onTypeFormattingEditProvider.register(languageSelector, provider);\n}\n/**\n * Register a link provider that can find links in text.\n */\nexport function registerLinkProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.linkProvider.register(languageSelector, provider);\n}\n/**\n * Register a completion item provider (use by e.g. suggestions).\n */\nexport function registerCompletionItemProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.completionProvider.register(languageSelector, provider);\n}\n/**\n * Register a document color provider (used by Color Picker, Color Decorator).\n */\nexport function registerColorProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.colorProvider.register(languageSelector, provider);\n}\n/**\n * Register a folding range provider\n */\nexport function registerFoldingRangeProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.foldingRangeProvider.register(languageSelector, provider);\n}\n/**\n * Register a declaration provider\n */\nexport function registerDeclarationProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.declarationProvider.register(languageSelector, provider);\n}\n/**\n * Register a selection range provider\n */\nexport function registerSelectionRangeProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.selectionRangeProvider.register(languageSelector, provider);\n}\n/**\n * Register a document semantic tokens provider. A semantic tokens provider will complement and enhance a\n * simple top-down tokenizer. Simple top-down tokenizers can be set either via `setMonarchTokensProvider`\n * or `setTokensProvider`.\n *\n * For the best user experience, register both a semantic tokens provider and a top-down tokenizer.\n */\nexport function registerDocumentSemanticTokensProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentSemanticTokensProvider.register(languageSelector, provider);\n}\n/**\n * Register a document range semantic tokens provider. A semantic tokens provider will complement and enhance a\n * simple top-down tokenizer. Simple top-down tokenizers can be set either via `setMonarchTokensProvider`\n * or `setTokensProvider`.\n *\n * For the best user experience, register both a semantic tokens provider and a top-down tokenizer.\n */\nexport function registerDocumentRangeSemanticTokensProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.documentRangeSemanticTokensProvider.register(languageSelector, provider);\n}\n/**\n * Register an inline completions provider.\n */\nexport function registerInlineCompletionsProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.inlineCompletionsProvider.register(languageSelector, provider);\n}\n/**\n * Register an inlay hints provider.\n */\nexport function registerInlayHintsProvider(languageSelector, provider) {\n    const languageFeaturesService = StandaloneServices.get(ILanguageFeaturesService);\n    return languageFeaturesService.inlayHintsProvider.register(languageSelector, provider);\n}\n/**\n * @internal\n */\nexport function createMonacoLanguagesAPI() {\n    return {\n        register: register,\n        getLanguages: getLanguages,\n        onLanguage: onLanguage,\n        getEncodedLanguageId: getEncodedLanguageId,\n        // provider methods\n        setLanguageConfiguration: setLanguageConfiguration,\n        setColorMap: setColorMap,\n        registerTokensProviderFactory: registerTokensProviderFactory,\n        setTokensProvider: setTokensProvider,\n        setMonarchTokensProvider: setMonarchTokensProvider,\n        registerReferenceProvider: registerReferenceProvider,\n        registerRenameProvider: registerRenameProvider,\n        registerCompletionItemProvider: registerCompletionItemProvider,\n        registerSignatureHelpProvider: registerSignatureHelpProvider,\n        registerHoverProvider: registerHoverProvider,\n        registerDocumentSymbolProvider: registerDocumentSymbolProvider,\n        registerDocumentHighlightProvider: registerDocumentHighlightProvider,\n        registerLinkedEditingRangeProvider: registerLinkedEditingRangeProvider,\n        registerDefinitionProvider: registerDefinitionProvider,\n        registerImplementationProvider: registerImplementationProvider,\n        registerTypeDefinitionProvider: registerTypeDefinitionProvider,\n        registerCodeLensProvider: registerCodeLensProvider,\n        registerCodeActionProvider: registerCodeActionProvider,\n        registerDocumentFormattingEditProvider: registerDocumentFormattingEditProvider,\n        registerDocumentRangeFormattingEditProvider: registerDocumentRangeFormattingEditProvider,\n        registerOnTypeFormattingEditProvider: registerOnTypeFormattingEditProvider,\n        registerLinkProvider: registerLinkProvider,\n        registerColorProvider: registerColorProvider,\n        registerFoldingRangeProvider: registerFoldingRangeProvider,\n        registerDeclarationProvider: registerDeclarationProvider,\n        registerSelectionRangeProvider: registerSelectionRangeProvider,\n        registerDocumentSemanticTokensProvider: registerDocumentSemanticTokensProvider,\n        registerDocumentRangeSemanticTokensProvider: registerDocumentRangeSemanticTokensProvider,\n        registerInlineCompletionsProvider: registerInlineCompletionsProvider,\n        registerInlayHintsProvider: registerInlayHintsProvider,\n        // enums\n        DocumentHighlightKind: standaloneEnums.DocumentHighlightKind,\n        CompletionItemKind: standaloneEnums.CompletionItemKind,\n        CompletionItemTag: standaloneEnums.CompletionItemTag,\n        CompletionItemInsertTextRule: standaloneEnums.CompletionItemInsertTextRule,\n        SymbolKind: standaloneEnums.SymbolKind,\n        SymbolTag: standaloneEnums.SymbolTag,\n        IndentAction: standaloneEnums.IndentAction,\n        CompletionTriggerKind: standaloneEnums.CompletionTriggerKind,\n        SignatureHelpTriggerKind: standaloneEnums.SignatureHelpTriggerKind,\n        InlayHintKind: standaloneEnums.InlayHintKind,\n        InlineCompletionTriggerKind: standaloneEnums.InlineCompletionTriggerKind,\n        // classes\n        FoldingRangeKind: languages.FoldingRangeKind,\n    };\n}\n",
+      "start": 1711096853977,
+      "end": 1711096854164,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854164,
+      "end": 1711096854164,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854169,
+      "end": 1711096854169,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854169,
+      "end": 1711096854171,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854171,
+      "end": 1711096854171,
+      "order": "normal"
+    }
+  ]
+}

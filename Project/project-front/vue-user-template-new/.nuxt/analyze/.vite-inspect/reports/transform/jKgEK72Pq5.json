@@ -1,0 +1,212 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/basic-languages/ecl/ecl.contribution.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\n// src/basic-languages/ecl/ecl.contribution.ts\nimport { registerLanguage } from \"../_.contribution.js\";\nregisterLanguage({\n  id: \"ecl\",\n  extensions: [\".ecl\"],\n  aliases: [\"ECL\", \"Ecl\", \"ecl\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/ecl/ecl\"], resolve, reject);\n      });\n    } else {\n      return import(\"./ecl.js\");\n    }\n  }\n});\n",
+      "start": 1711096853810,
+      "end": 1711096853849,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853849,
+      "end": 1711096853849,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853849,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\n// src/basic-languages/ecl/ecl.contribution.ts\nimport { registerLanguage } from \"../_.contribution.js\";\nregisterLanguage({\n  id: \"ecl\",\n  extensions: [\".ecl\"],\n  aliases: [\"ECL\", \"Ecl\", \"ecl\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/ecl/ecl\"], resolve, reject);\n      });\n    } else {\n      return __vitePreload(() => import(\"./ecl.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url);\n    }\n  }\n});\n",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    }
+  ]
+}

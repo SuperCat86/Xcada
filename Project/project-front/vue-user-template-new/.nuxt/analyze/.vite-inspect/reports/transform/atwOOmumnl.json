@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextMenuHandler.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { $, addDisposableListener, EventType, isHTMLElement } from '../../../base/browser/dom.js';\nimport { StandardMouseEvent } from '../../../base/browser/mouseEvent.js';\nimport { Menu } from '../../../base/browser/ui/menu/menu.js';\nimport { ActionRunner } from '../../../base/common/actions.js';\nimport { isCancellationError } from '../../../base/common/errors.js';\nimport { combinedDisposable, DisposableStore } from '../../../base/common/lifecycle.js';\nimport './contextMenuHandler.css';\nimport { attachMenuStyler } from '../../theme/common/styler.js';\nexport class ContextMenuHandler {\n    constructor(contextViewService, telemetryService, notificationService, keybindingService, themeService) {\n        this.contextViewService = contextViewService;\n        this.telemetryService = telemetryService;\n        this.notificationService = notificationService;\n        this.keybindingService = keybindingService;\n        this.themeService = themeService;\n        this.focusToReturn = null;\n        this.block = null;\n        this.options = { blockMouse: true };\n    }\n    configure(options) {\n        this.options = options;\n    }\n    showContextMenu(delegate) {\n        const actions = delegate.getActions();\n        if (!actions.length) {\n            return; // Don't render an empty context menu\n        }\n        this.focusToReturn = document.activeElement;\n        let menu;\n        let shadowRootElement = isHTMLElement(delegate.domForShadowRoot) ? delegate.domForShadowRoot : undefined;\n        this.contextViewService.showContextView({\n            getAnchor: () => delegate.getAnchor(),\n            canRelayout: false,\n            anchorAlignment: delegate.anchorAlignment,\n            anchorAxisAlignment: delegate.anchorAxisAlignment,\n            render: (container) => {\n                let className = delegate.getMenuClassName ? delegate.getMenuClassName() : '';\n                if (className) {\n                    container.className += ' ' + className;\n                }\n                // Render invisible div to block mouse interaction in the rest of the UI\n                if (this.options.blockMouse) {\n                    this.block = container.appendChild($('.context-view-block'));\n                    this.block.style.position = 'fixed';\n                    this.block.style.cursor = 'initial';\n                    this.block.style.left = '0';\n                    this.block.style.top = '0';\n                    this.block.style.width = '100%';\n                    this.block.style.height = '100%';\n                    this.block.style.zIndex = '-1';\n                    // TODO@Steven: this is never getting disposed\n                    addDisposableListener(this.block, EventType.MOUSE_DOWN, e => e.stopPropagation());\n                }\n                const menuDisposables = new DisposableStore();\n                const actionRunner = delegate.actionRunner || new ActionRunner();\n                actionRunner.onBeforeRun(this.onActionRun, this, menuDisposables);\n                actionRunner.onDidRun(this.onDidActionRun, this, menuDisposables);\n                menu = new Menu(container, actions, {\n                    actionViewItemProvider: delegate.getActionViewItem,\n                    context: delegate.getActionsContext ? delegate.getActionsContext() : null,\n                    actionRunner,\n                    getKeyBinding: delegate.getKeyBinding ? delegate.getKeyBinding : action => this.keybindingService.lookupKeybinding(action.id)\n                });\n                menuDisposables.add(attachMenuStyler(menu, this.themeService));\n                menu.onDidCancel(() => this.contextViewService.hideContextView(true), null, menuDisposables);\n                menu.onDidBlur(() => this.contextViewService.hideContextView(true), null, menuDisposables);\n                menuDisposables.add(addDisposableListener(window, EventType.BLUR, () => this.contextViewService.hideContextView(true)));\n                menuDisposables.add(addDisposableListener(window, EventType.MOUSE_DOWN, (e) => {\n                    if (e.defaultPrevented) {\n                        return;\n                    }\n                    let event = new StandardMouseEvent(e);\n                    let element = event.target;\n                    // Don't do anything as we are likely creating a context menu\n                    if (event.rightButton) {\n                        return;\n                    }\n                    while (element) {\n                        if (element === container) {\n                            return;\n                        }\n                        element = element.parentElement;\n                    }\n                    this.contextViewService.hideContextView(true);\n                }));\n                return combinedDisposable(menuDisposables, menu);\n            },\n            focus: () => {\n                if (menu) {\n                    menu.focus(!!delegate.autoSelectFirstItem);\n                }\n            },\n            onHide: (didCancel) => {\n                if (delegate.onHide) {\n                    delegate.onHide(!!didCancel);\n                }\n                if (this.block) {\n                    this.block.remove();\n                    this.block = null;\n                }\n                if (this.focusToReturn) {\n                    this.focusToReturn.focus();\n                }\n            }\n        }, shadowRootElement, !!shadowRootElement);\n    }\n    onActionRun(e) {\n        this.telemetryService.publicLog2('workbenchActionExecuted', { id: e.action.id, from: 'contextMenu' });\n        this.contextViewService.hideContextView(false);\n        // Restore focus here\n        if (this.focusToReturn) {\n            this.focusToReturn.focus();\n        }\n    }\n    onDidActionRun(e) {\n        if (e.error && !isCancellationError(e.error)) {\n            this.notificationService.error(e.error);\n        }\n    }\n}\n",
+      "start": 1711096857059,
+      "end": 1711096857156,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857156,
+      "end": 1711096857156,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857156,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    }
+  ]
+}

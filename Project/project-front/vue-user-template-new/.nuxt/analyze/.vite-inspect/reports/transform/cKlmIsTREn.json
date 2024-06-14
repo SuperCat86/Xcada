@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/parts/quickinput/browser/quickInputList.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as dom from '../../../browser/dom.js';\nimport { StandardKeyboardEvent } from '../../../browser/keyboardEvent.js';\nimport { ActionBar } from '../../../browser/ui/actionbar/actionbar.js';\nimport { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';\nimport { KeybindingLabel } from '../../../browser/ui/keybindingLabel/keybindingLabel.js';\nimport { Action } from '../../../common/actions.js';\nimport { range } from '../../../common/arrays.js';\nimport { getCodiconAriaLabel } from '../../../common/codicons.js';\nimport { compareAnything } from '../../../common/comparers.js';\nimport { memoize } from '../../../common/decorators.js';\nimport { Emitter, Event } from '../../../common/event.js';\nimport { matchesFuzzyIconAware, parseLabelWithIcons } from '../../../common/iconLabels.js';\nimport { dispose } from '../../../common/lifecycle.js';\nimport * as platform from '../../../common/platform.js';\nimport { withNullAsUndefined } from '../../../common/types.js';\nimport { getIconClass } from './quickInputUtils.js';\nimport './media/quickInput.css';\nimport { localize } from '../../../../nls.js';\nconst $ = dom.$;\nclass ListElement {\n    constructor(init) {\n        this.hidden = false;\n        this._onChecked = new Emitter();\n        this.onChecked = this._onChecked.event;\n        Object.assign(this, init);\n    }\n    get checked() {\n        return !!this._checked;\n    }\n    set checked(value) {\n        if (value !== this._checked) {\n            this._checked = value;\n            this._onChecked.fire(value);\n        }\n    }\n    dispose() {\n        this._onChecked.dispose();\n    }\n}\nclass ListElementRenderer {\n    get templateId() {\n        return ListElementRenderer.ID;\n    }\n    renderTemplate(container) {\n        const data = Object.create(null);\n        data.toDisposeElement = [];\n        data.toDisposeTemplate = [];\n        data.entry = dom.append(container, $('.quick-input-list-entry'));\n        // Checkbox\n        const label = dom.append(data.entry, $('label.quick-input-list-label'));\n        data.toDisposeTemplate.push(dom.addStandardDisposableListener(label, dom.EventType.CLICK, e => {\n            if (!data.checkbox.offsetParent) { // If checkbox not visible:\n                e.preventDefault(); // Prevent toggle of checkbox when it is immediately shown afterwards. #91740\n            }\n        }));\n        data.checkbox = dom.append(label, $('input.quick-input-list-checkbox'));\n        data.checkbox.type = 'checkbox';\n        data.toDisposeTemplate.push(dom.addStandardDisposableListener(data.checkbox, dom.EventType.CHANGE, e => {\n            data.element.checked = data.checkbox.checked;\n        }));\n        // Rows\n        const rows = dom.append(label, $('.quick-input-list-rows'));\n        const row1 = dom.append(rows, $('.quick-input-list-row'));\n        const row2 = dom.append(rows, $('.quick-input-list-row'));\n        // Label\n        data.label = new IconLabel(row1, { supportHighlights: true, supportDescriptionHighlights: true, supportIcons: true });\n        // Keybinding\n        const keybindingContainer = dom.append(row1, $('.quick-input-list-entry-keybinding'));\n        data.keybinding = new KeybindingLabel(keybindingContainer, platform.OS);\n        // Detail\n        const detailContainer = dom.append(row2, $('.quick-input-list-label-meta'));\n        data.detail = new IconLabel(detailContainer, { supportHighlights: true, supportIcons: true });\n        // Separator\n        data.separator = dom.append(data.entry, $('.quick-input-list-separator'));\n        // Actions\n        data.actionBar = new ActionBar(data.entry);\n        data.actionBar.domNode.classList.add('quick-input-list-entry-action-bar');\n        data.toDisposeTemplate.push(data.actionBar);\n        return data;\n    }\n    renderElement(element, index, data) {\n        data.toDisposeElement = dispose(data.toDisposeElement);\n        data.element = element;\n        data.checkbox.checked = element.checked;\n        data.toDisposeElement.push(element.onChecked(checked => data.checkbox.checked = checked));\n        const { labelHighlights, descriptionHighlights, detailHighlights } = element;\n        // Label\n        const options = Object.create(null);\n        options.matches = labelHighlights || [];\n        options.descriptionTitle = element.saneDescription;\n        options.descriptionMatches = descriptionHighlights || [];\n        options.extraClasses = element.item.iconClasses;\n        options.italic = element.item.italic;\n        options.strikethrough = element.item.strikethrough;\n        data.label.setLabel(element.saneLabel, element.saneDescription, options);\n        // Keybinding\n        data.keybinding.set(element.item.keybinding);\n        // Meta\n        if (element.saneDetail) {\n            data.detail.setLabel(element.saneDetail, undefined, {\n                matches: detailHighlights,\n                title: element.saneDetail\n            });\n        }\n        // Separator\n        if (element.separator && element.separator.label) {\n            data.separator.textContent = element.separator.label;\n            data.separator.style.display = '';\n        }\n        else {\n            data.separator.style.display = 'none';\n        }\n        data.entry.classList.toggle('quick-input-list-separator-border', !!element.separator);\n        // Actions\n        data.actionBar.clear();\n        const buttons = element.item.buttons;\n        if (buttons && buttons.length) {\n            data.actionBar.push(buttons.map((button, index) => {\n                let cssClasses = button.iconClass || (button.iconPath ? getIconClass(button.iconPath) : undefined);\n                if (button.alwaysVisible) {\n                    cssClasses = cssClasses ? `${cssClasses} always-visible` : 'always-visible';\n                }\n                const action = new Action(`id-${index}`, '', cssClasses, true, () => __awaiter(this, void 0, void 0, function* () {\n                    element.fireButtonTriggered({\n                        button,\n                        item: element.item\n                    });\n                }));\n                action.tooltip = button.tooltip || '';\n                return action;\n            }), { icon: true, label: false });\n            data.entry.classList.add('has-actions');\n        }\n        else {\n            data.entry.classList.remove('has-actions');\n        }\n    }\n    disposeElement(element, index, data) {\n        data.toDisposeElement = dispose(data.toDisposeElement);\n    }\n    disposeTemplate(data) {\n        data.toDisposeElement = dispose(data.toDisposeElement);\n        data.toDisposeTemplate = dispose(data.toDisposeTemplate);\n    }\n}\nListElementRenderer.ID = 'listelement';\nclass ListElementDelegate {\n    getHeight(element) {\n        return element.saneDetail ? 44 : 22;\n    }\n    getTemplateId(element) {\n        return ListElementRenderer.ID;\n    }\n}\nexport var QuickInputListFocus;\n(function (QuickInputListFocus) {\n    QuickInputListFocus[QuickInputListFocus[\"First\"] = 1] = \"First\";\n    QuickInputListFocus[QuickInputListFocus[\"Second\"] = 2] = \"Second\";\n    QuickInputListFocus[QuickInputListFocus[\"Last\"] = 3] = \"Last\";\n    QuickInputListFocus[QuickInputListFocus[\"Next\"] = 4] = \"Next\";\n    QuickInputListFocus[QuickInputListFocus[\"Previous\"] = 5] = \"Previous\";\n    QuickInputListFocus[QuickInputListFocus[\"NextPage\"] = 6] = \"NextPage\";\n    QuickInputListFocus[QuickInputListFocus[\"PreviousPage\"] = 7] = \"PreviousPage\";\n})(QuickInputListFocus || (QuickInputListFocus = {}));\nexport class QuickInputList {\n    constructor(parent, id, options) {\n        this.parent = parent;\n        this.inputElements = [];\n        this.elements = [];\n        this.elementsToIndexes = new Map();\n        this.matchOnDescription = false;\n        this.matchOnDetail = false;\n        this.matchOnLabel = true;\n        this.matchOnMeta = true;\n        this.sortByLabel = true;\n        this._onChangedAllVisibleChecked = new Emitter();\n        this.onChangedAllVisibleChecked = this._onChangedAllVisibleChecked.event;\n        this._onChangedCheckedCount = new Emitter();\n        this.onChangedCheckedCount = this._onChangedCheckedCount.event;\n        this._onChangedVisibleCount = new Emitter();\n        this.onChangedVisibleCount = this._onChangedVisibleCount.event;\n        this._onChangedCheckedElements = new Emitter();\n        this.onChangedCheckedElements = this._onChangedCheckedElements.event;\n        this._onButtonTriggered = new Emitter();\n        this.onButtonTriggered = this._onButtonTriggered.event;\n        this._onKeyDown = new Emitter();\n        this.onKeyDown = this._onKeyDown.event;\n        this._onLeave = new Emitter();\n        this.onLeave = this._onLeave.event;\n        this._fireCheckedEvents = true;\n        this.elementDisposables = [];\n        this.disposables = [];\n        this.id = id;\n        this.container = dom.append(this.parent, $('.quick-input-list'));\n        const delegate = new ListElementDelegate();\n        const accessibilityProvider = new QuickInputAccessibilityProvider();\n        this.list = options.createList('QuickInput', this.container, delegate, [new ListElementRenderer()], {\n            identityProvider: { getId: element => element.saneLabel },\n            setRowLineHeight: false,\n            multipleSelectionSupport: false,\n            horizontalScrolling: false,\n            accessibilityProvider\n        });\n        this.list.getHTMLElement().id = id;\n        this.disposables.push(this.list);\n        this.disposables.push(this.list.onKeyDown(e => {\n            const event = new StandardKeyboardEvent(e);\n            switch (event.keyCode) {\n                case 10 /* Space */:\n                    this.toggleCheckbox();\n                    break;\n                case 31 /* KeyA */:\n                    if (platform.isMacintosh ? e.metaKey : e.ctrlKey) {\n                        this.list.setFocus(range(this.list.length));\n                    }\n                    break;\n                case 16 /* UpArrow */: {\n                    const focus1 = this.list.getFocus();\n                    if (focus1.length === 1 && focus1[0] === 0) {\n                        this._onLeave.fire();\n                    }\n                    break;\n                }\n                case 18 /* DownArrow */: {\n                    const focus2 = this.list.getFocus();\n                    if (focus2.length === 1 && focus2[0] === this.list.length - 1) {\n                        this._onLeave.fire();\n                    }\n                    break;\n                }\n            }\n            this._onKeyDown.fire(event);\n        }));\n        this.disposables.push(this.list.onMouseDown(e => {\n            if (e.browserEvent.button !== 2) {\n                // Works around / fixes #64350.\n                e.browserEvent.preventDefault();\n            }\n        }));\n        this.disposables.push(dom.addDisposableListener(this.container, dom.EventType.CLICK, e => {\n            if (e.x || e.y) { // Avoid 'click' triggered by 'space' on checkbox.\n                this._onLeave.fire();\n            }\n        }));\n        this.disposables.push(this.list.onMouseMiddleClick(e => {\n            this._onLeave.fire();\n        }));\n        this.disposables.push(this.list.onContextMenu(e => {\n            if (typeof e.index === 'number') {\n                e.browserEvent.preventDefault();\n                // we want to treat a context menu event as\n                // a gesture to open the item at the index\n                // since we do not have any context menu\n                // this enables for example macOS to Ctrl-\n                // click on an item to open it.\n                this.list.setSelection([e.index]);\n            }\n        }));\n        this.disposables.push(this._onChangedAllVisibleChecked, this._onChangedCheckedCount, this._onChangedVisibleCount, this._onChangedCheckedElements, this._onButtonTriggered, this._onLeave, this._onKeyDown);\n    }\n    get onDidChangeFocus() {\n        return Event.map(this.list.onDidChangeFocus, e => e.elements.map(e => e.item));\n    }\n    get onDidChangeSelection() {\n        return Event.map(this.list.onDidChangeSelection, e => ({ items: e.elements.map(e => e.item), event: e.browserEvent }));\n    }\n    get scrollTop() {\n        return this.list.scrollTop;\n    }\n    set scrollTop(scrollTop) {\n        this.list.scrollTop = scrollTop;\n    }\n    getAllVisibleChecked() {\n        return this.allVisibleChecked(this.elements, false);\n    }\n    allVisibleChecked(elements, whenNoneVisible = true) {\n        for (let i = 0, n = elements.length; i < n; i++) {\n            const element = elements[i];\n            if (!element.hidden) {\n                if (!element.checked) {\n                    return false;\n                }\n                else {\n                    whenNoneVisible = true;\n                }\n            }\n        }\n        return whenNoneVisible;\n    }\n    getCheckedCount() {\n        let count = 0;\n        const elements = this.elements;\n        for (let i = 0, n = elements.length; i < n; i++) {\n            if (elements[i].checked) {\n                count++;\n            }\n        }\n        return count;\n    }\n    getVisibleCount() {\n        let count = 0;\n        const elements = this.elements;\n        for (let i = 0, n = elements.length; i < n; i++) {\n            if (!elements[i].hidden) {\n                count++;\n            }\n        }\n        return count;\n    }\n    setAllVisibleChecked(checked) {\n        try {\n            this._fireCheckedEvents = false;\n            this.elements.forEach(element => {\n                if (!element.hidden) {\n                    element.checked = checked;\n                }\n            });\n        }\n        finally {\n            this._fireCheckedEvents = true;\n            this.fireCheckedEvents();\n        }\n    }\n    setElements(inputElements) {\n        this.elementDisposables = dispose(this.elementDisposables);\n        const fireButtonTriggered = (event) => this.fireButtonTriggered(event);\n        this.inputElements = inputElements;\n        this.elements = inputElements.reduce((result, item, index) => {\n            var _a, _b, _c;\n            if (item.type !== 'separator') {\n                const previous = index && inputElements[index - 1];\n                const saneLabel = item.label && item.label.replace(/\\r?\\n/g, ' ');\n                const saneMeta = item.meta && item.meta.replace(/\\r?\\n/g, ' ');\n                const saneDescription = item.description && item.description.replace(/\\r?\\n/g, ' ');\n                const saneDetail = item.detail && item.detail.replace(/\\r?\\n/g, ' ');\n                const saneAriaLabel = item.ariaLabel || [saneLabel, saneDescription, saneDetail]\n                    .map(s => getCodiconAriaLabel(s))\n                    .filter(s => !!s)\n                    .join(', ');\n                const hasCheckbox = this.parent.classList.contains('show-checkboxes');\n                result.push(new ListElement({\n                    hasCheckbox,\n                    index,\n                    item,\n                    saneLabel,\n                    saneMeta,\n                    saneAriaLabel,\n                    saneDescription,\n                    saneDetail,\n                    labelHighlights: (_a = item.highlights) === null || _a === void 0 ? void 0 : _a.label,\n                    descriptionHighlights: (_b = item.highlights) === null || _b === void 0 ? void 0 : _b.description,\n                    detailHighlights: (_c = item.highlights) === null || _c === void 0 ? void 0 : _c.detail,\n                    checked: false,\n                    separator: previous && previous.type === 'separator' ? previous : undefined,\n                    fireButtonTriggered\n                }));\n            }\n            return result;\n        }, []);\n        this.elementDisposables.push(...this.elements);\n        this.elementDisposables.push(...this.elements.map(element => element.onChecked(() => this.fireCheckedEvents())));\n        this.elementsToIndexes = this.elements.reduce((map, element, index) => {\n            map.set(element.item, index);\n            return map;\n        }, new Map());\n        this.list.splice(0, this.list.length); // Clear focus and selection first, sending the events when the list is empty.\n        this.list.splice(0, this.list.length, this.elements);\n        this._onChangedVisibleCount.fire(this.elements.length);\n    }\n    getFocusedElements() {\n        return this.list.getFocusedElements()\n            .map(e => e.item);\n    }\n    setFocusedElements(items) {\n        this.list.setFocus(items\n            .filter(item => this.elementsToIndexes.has(item))\n            .map(item => this.elementsToIndexes.get(item)));\n        if (items.length > 0) {\n            const focused = this.list.getFocus()[0];\n            if (typeof focused === 'number') {\n                this.list.reveal(focused);\n            }\n        }\n    }\n    getActiveDescendant() {\n        return this.list.getHTMLElement().getAttribute('aria-activedescendant');\n    }\n    setSelectedElements(items) {\n        this.list.setSelection(items\n            .filter(item => this.elementsToIndexes.has(item))\n            .map(item => this.elementsToIndexes.get(item)));\n    }\n    getCheckedElements() {\n        return this.elements.filter(e => e.checked)\n            .map(e => e.item);\n    }\n    setCheckedElements(items) {\n        try {\n            this._fireCheckedEvents = false;\n            const checked = new Set();\n            for (const item of items) {\n                checked.add(item);\n            }\n            for (const element of this.elements) {\n                element.checked = checked.has(element.item);\n            }\n        }\n        finally {\n            this._fireCheckedEvents = true;\n            this.fireCheckedEvents();\n        }\n    }\n    set enabled(value) {\n        this.list.getHTMLElement().style.pointerEvents = value ? '' : 'none';\n    }\n    focus(what) {\n        if (!this.list.length) {\n            return;\n        }\n        if (what === QuickInputListFocus.Next && this.list.getFocus()[0] === this.list.length - 1) {\n            what = QuickInputListFocus.First;\n        }\n        if (what === QuickInputListFocus.Previous && this.list.getFocus()[0] === 0) {\n            what = QuickInputListFocus.Last;\n        }\n        if (what === QuickInputListFocus.Second && this.list.length < 2) {\n            what = QuickInputListFocus.First;\n        }\n        switch (what) {\n            case QuickInputListFocus.First:\n                this.list.focusFirst();\n                break;\n            case QuickInputListFocus.Second:\n                this.list.focusNth(1);\n                break;\n            case QuickInputListFocus.Last:\n                this.list.focusLast();\n                break;\n            case QuickInputListFocus.Next:\n                this.list.focusNext();\n                break;\n            case QuickInputListFocus.Previous:\n                this.list.focusPrevious();\n                break;\n            case QuickInputListFocus.NextPage:\n                this.list.focusNextPage();\n                break;\n            case QuickInputListFocus.PreviousPage:\n                this.list.focusPreviousPage();\n                break;\n        }\n        const focused = this.list.getFocus()[0];\n        if (typeof focused === 'number') {\n            this.list.reveal(focused);\n        }\n    }\n    clearFocus() {\n        this.list.setFocus([]);\n    }\n    domFocus() {\n        this.list.domFocus();\n    }\n    layout(maxHeight) {\n        this.list.getHTMLElement().style.maxHeight = maxHeight ? `calc(${Math.floor(maxHeight / 44) * 44}px)` : '';\n        this.list.layout();\n    }\n    filter(query) {\n        if (!(this.sortByLabel || this.matchOnLabel || this.matchOnDescription || this.matchOnDetail)) {\n            this.list.layout();\n            return false;\n        }\n        query = query.trim();\n        // Reset filtering\n        if (!query || !(this.matchOnLabel || this.matchOnDescription || this.matchOnDetail)) {\n            this.elements.forEach(element => {\n                element.labelHighlights = undefined;\n                element.descriptionHighlights = undefined;\n                element.detailHighlights = undefined;\n                element.hidden = false;\n                const previous = element.index && this.inputElements[element.index - 1];\n                element.separator = previous && previous.type === 'separator' ? previous : undefined;\n            });\n        }\n        // Filter by value (since we support icons in labels, use $(..) aware fuzzy matching)\n        else {\n            let currentSeparator;\n            this.elements.forEach(element => {\n                const labelHighlights = this.matchOnLabel ? withNullAsUndefined(matchesFuzzyIconAware(query, parseLabelWithIcons(element.saneLabel))) : undefined;\n                const descriptionHighlights = this.matchOnDescription ? withNullAsUndefined(matchesFuzzyIconAware(query, parseLabelWithIcons(element.saneDescription || ''))) : undefined;\n                const detailHighlights = this.matchOnDetail ? withNullAsUndefined(matchesFuzzyIconAware(query, parseLabelWithIcons(element.saneDetail || ''))) : undefined;\n                const metaHighlights = this.matchOnMeta ? withNullAsUndefined(matchesFuzzyIconAware(query, parseLabelWithIcons(element.saneMeta || ''))) : undefined;\n                if (labelHighlights || descriptionHighlights || detailHighlights || metaHighlights) {\n                    element.labelHighlights = labelHighlights;\n                    element.descriptionHighlights = descriptionHighlights;\n                    element.detailHighlights = detailHighlights;\n                    element.hidden = false;\n                }\n                else {\n                    element.labelHighlights = undefined;\n                    element.descriptionHighlights = undefined;\n                    element.detailHighlights = undefined;\n                    element.hidden = !element.item.alwaysShow;\n                }\n                element.separator = undefined;\n                // we can show the separator unless the list gets sorted by match\n                if (!this.sortByLabel) {\n                    const previous = element.index && this.inputElements[element.index - 1];\n                    currentSeparator = previous && previous.type === 'separator' ? previous : currentSeparator;\n                    if (currentSeparator && !element.hidden) {\n                        element.separator = currentSeparator;\n                        currentSeparator = undefined;\n                    }\n                }\n            });\n        }\n        const shownElements = this.elements.filter(element => !element.hidden);\n        // Sort by value\n        if (this.sortByLabel && query) {\n            const normalizedSearchValue = query.toLowerCase();\n            shownElements.sort((a, b) => {\n                return compareEntries(a, b, normalizedSearchValue);\n            });\n        }\n        this.elementsToIndexes = shownElements.reduce((map, element, index) => {\n            map.set(element.item, index);\n            return map;\n        }, new Map());\n        this.list.splice(0, this.list.length, shownElements);\n        this.list.setFocus([]);\n        this.list.layout();\n        this._onChangedAllVisibleChecked.fire(this.getAllVisibleChecked());\n        this._onChangedVisibleCount.fire(shownElements.length);\n        return true;\n    }\n    toggleCheckbox() {\n        try {\n            this._fireCheckedEvents = false;\n            const elements = this.list.getFocusedElements();\n            const allChecked = this.allVisibleChecked(elements);\n            for (const element of elements) {\n                element.checked = !allChecked;\n            }\n        }\n        finally {\n            this._fireCheckedEvents = true;\n            this.fireCheckedEvents();\n        }\n    }\n    display(display) {\n        this.container.style.display = display ? '' : 'none';\n    }\n    isDisplayed() {\n        return this.container.style.display !== 'none';\n    }\n    dispose() {\n        this.elementDisposables = dispose(this.elementDisposables);\n        this.disposables = dispose(this.disposables);\n    }\n    fireCheckedEvents() {\n        if (this._fireCheckedEvents) {\n            this._onChangedAllVisibleChecked.fire(this.getAllVisibleChecked());\n            this._onChangedCheckedCount.fire(this.getCheckedCount());\n            this._onChangedCheckedElements.fire(this.getCheckedElements());\n        }\n    }\n    fireButtonTriggered(event) {\n        this._onButtonTriggered.fire(event);\n    }\n    style(styles) {\n        this.list.style(styles);\n    }\n}\n__decorate([\n    memoize\n], QuickInputList.prototype, \"onDidChangeFocus\", null);\n__decorate([\n    memoize\n], QuickInputList.prototype, \"onDidChangeSelection\", null);\nfunction compareEntries(elementA, elementB, lookFor) {\n    const labelHighlightsA = elementA.labelHighlights || [];\n    const labelHighlightsB = elementB.labelHighlights || [];\n    if (labelHighlightsA.length && !labelHighlightsB.length) {\n        return -1;\n    }\n    if (!labelHighlightsA.length && labelHighlightsB.length) {\n        return 1;\n    }\n    if (labelHighlightsA.length === 0 && labelHighlightsB.length === 0) {\n        return 0;\n    }\n    return compareAnything(elementA.saneLabel, elementB.saneLabel, lookFor);\n}\nclass QuickInputAccessibilityProvider {\n    getWidgetAriaLabel() {\n        return localize('quickInput', \"Quick Input\");\n    }\n    getAriaLabel(element) {\n        return element.saneAriaLabel;\n    }\n    getWidgetRole() {\n        return 'listbox';\n    }\n    getRole(element) {\n        return element.hasCheckbox ? 'checkbox' : 'option';\n    }\n    isChecked(element) {\n        if (!element.hasCheckbox) {\n            return undefined;\n        }\n        return {\n            value: element.checked,\n            onDidChange: element.onChecked\n        };\n    }\n}\n",
+      "start": 1711096857727,
+      "end": 1711096857835,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857835,
+      "end": 1711096857835,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857835,
+      "end": 1711096857835,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857835,
+      "end": 1711096857835,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857835,
+      "end": 1711096857835,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857836,
+      "end": 1711096857836,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857836,
+      "end": 1711096857838,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857838,
+      "end": 1711096857838,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857838,
+      "end": 1711096857839,
+      "order": "normal"
+    }
+  ]
+}

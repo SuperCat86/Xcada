@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/theme/browser/iconsStyleSheet.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { asCSSPropertyValue, asCSSUrl } from '../../../base/browser/dom.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { getIconRegistry } from '../common/iconRegistry.js';\nimport { ThemeIcon } from '../common/themeService.js';\nexport function getIconsStyleSheet(themeService) {\n    const onDidChangeEmmiter = new Emitter();\n    const iconRegistry = getIconRegistry();\n    iconRegistry.onDidChange(() => onDidChangeEmmiter.fire());\n    themeService === null || themeService === void 0 ? void 0 : themeService.onDidProductIconThemeChange(() => onDidChangeEmmiter.fire());\n    return {\n        onDidChange: onDidChangeEmmiter.event,\n        getCSS() {\n            const productIconTheme = themeService ? themeService.getProductIconTheme() : new UnthemedProductIconTheme();\n            const usedFontIds = {};\n            const formatIconRule = (contribution) => {\n                const definition = productIconTheme.getIcon(contribution);\n                if (!definition) {\n                    return undefined;\n                }\n                const fontContribution = definition.font;\n                if (fontContribution) {\n                    usedFontIds[fontContribution.id] = fontContribution.definition;\n                    return `.codicon-${contribution.id}:before { content: '${definition.fontCharacter}'; font-family: ${asCSSPropertyValue(fontContribution.id)}; }`;\n                }\n                // default font (codicon)\n                return `.codicon-${contribution.id}:before { content: '${definition.fontCharacter}'; }`;\n            };\n            const rules = [];\n            for (let contribution of iconRegistry.getIcons()) {\n                const rule = formatIconRule(contribution);\n                if (rule) {\n                    rules.push(rule);\n                }\n            }\n            for (let id in usedFontIds) {\n                const definition = usedFontIds[id];\n                const fontWeight = definition.weight ? `font-weight: ${definition.weight};` : '';\n                const fontStyle = definition.style ? `font-style: ${definition.style};` : '';\n                const src = definition.src.map(l => `${asCSSUrl(l.location)} format('${l.format}')`).join(', ');\n                rules.push(`@font-face { src: ${src}; font-family: ${asCSSPropertyValue(id)};${fontWeight}${fontStyle} font-display: block; }`);\n            }\n            return rules.join('\\n');\n        }\n    };\n}\nexport class UnthemedProductIconTheme {\n    getIcon(contribution) {\n        const iconRegistry = getIconRegistry();\n        let definition = contribution.defaults;\n        while (ThemeIcon.isThemeIcon(definition)) {\n            const c = iconRegistry.getIcon(definition.id);\n            if (!c) {\n                return undefined;\n            }\n            definition = c.defaults;\n        }\n        return definition;\n    }\n}\n",
+      "start": 1711096857078,
+      "end": 1711096857177,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857177,
+      "end": 1711096857177,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857177,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    }
+  ]
+}

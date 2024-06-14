@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionbar.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as DOM from '../../dom.js';\nimport { StandardKeyboardEvent } from '../../keyboardEvent.js';\nimport { ActionViewItem, BaseActionViewItem } from './actionViewItems.js';\nimport { ActionRunner } from '../../../common/actions.js';\nimport { Emitter } from '../../../common/event.js';\nimport { Disposable, dispose } from '../../../common/lifecycle.js';\nimport * as types from '../../../common/types.js';\nimport './actionbar.css';\nexport class ActionBar extends Disposable {\n    constructor(container, options = {}) {\n        var _a, _b, _c, _d, _e, _f;\n        super();\n        // Trigger Key Tracking\n        this.triggerKeyDown = false;\n        this.focusable = true;\n        this._onDidBlur = this._register(new Emitter());\n        this.onDidBlur = this._onDidBlur.event;\n        this._onDidCancel = this._register(new Emitter({ onFirstListenerAdd: () => this.cancelHasListener = true }));\n        this.onDidCancel = this._onDidCancel.event;\n        this.cancelHasListener = false;\n        this._onDidRun = this._register(new Emitter());\n        this.onDidRun = this._onDidRun.event;\n        this._onBeforeRun = this._register(new Emitter());\n        this.onBeforeRun = this._onBeforeRun.event;\n        this.options = options;\n        this._context = (_a = options.context) !== null && _a !== void 0 ? _a : null;\n        this._orientation = (_b = this.options.orientation) !== null && _b !== void 0 ? _b : 0 /* HORIZONTAL */;\n        this._triggerKeys = {\n            keyDown: (_d = (_c = this.options.triggerKeys) === null || _c === void 0 ? void 0 : _c.keyDown) !== null && _d !== void 0 ? _d : false,\n            keys: (_f = (_e = this.options.triggerKeys) === null || _e === void 0 ? void 0 : _e.keys) !== null && _f !== void 0 ? _f : [3 /* Enter */, 10 /* Space */]\n        };\n        if (this.options.actionRunner) {\n            this._actionRunner = this.options.actionRunner;\n        }\n        else {\n            this._actionRunner = new ActionRunner();\n            this._register(this._actionRunner);\n        }\n        this._register(this._actionRunner.onDidRun(e => this._onDidRun.fire(e)));\n        this._register(this._actionRunner.onBeforeRun(e => this._onBeforeRun.fire(e)));\n        this._actionIds = [];\n        this.viewItems = [];\n        this.focusedItem = undefined;\n        this.domNode = document.createElement('div');\n        this.domNode.className = 'monaco-action-bar';\n        if (options.animated !== false) {\n            this.domNode.classList.add('animated');\n        }\n        let previousKeys;\n        let nextKeys;\n        switch (this._orientation) {\n            case 0 /* HORIZONTAL */:\n                previousKeys = [15 /* LeftArrow */];\n                nextKeys = [17 /* RightArrow */];\n                break;\n            case 1 /* VERTICAL */:\n                previousKeys = [16 /* UpArrow */];\n                nextKeys = [18 /* DownArrow */];\n                this.domNode.className += ' vertical';\n                break;\n        }\n        this._register(DOM.addDisposableListener(this.domNode, DOM.EventType.KEY_DOWN, e => {\n            const event = new StandardKeyboardEvent(e);\n            let eventHandled = true;\n            const focusedItem = typeof this.focusedItem === 'number' ? this.viewItems[this.focusedItem] : undefined;\n            if (previousKeys && (event.equals(previousKeys[0]) || event.equals(previousKeys[1]))) {\n                eventHandled = this.focusPrevious();\n            }\n            else if (nextKeys && (event.equals(nextKeys[0]) || event.equals(nextKeys[1]))) {\n                eventHandled = this.focusNext();\n            }\n            else if (event.equals(9 /* Escape */) && this.cancelHasListener) {\n                this._onDidCancel.fire();\n            }\n            else if (event.equals(14 /* Home */)) {\n                eventHandled = this.focusFirst();\n            }\n            else if (event.equals(13 /* End */)) {\n                eventHandled = this.focusLast();\n            }\n            else if (event.equals(2 /* Tab */) && focusedItem instanceof BaseActionViewItem && focusedItem.trapsArrowNavigation) {\n                eventHandled = this.focusNext();\n            }\n            else if (this.isTriggerKeyEvent(event)) {\n                // Staying out of the else branch even if not triggered\n                if (this._triggerKeys.keyDown) {\n                    this.doTrigger(event);\n                }\n                else {\n                    this.triggerKeyDown = true;\n                }\n            }\n            else {\n                eventHandled = false;\n            }\n            if (eventHandled) {\n                event.preventDefault();\n                event.stopPropagation();\n            }\n        }));\n        this._register(DOM.addDisposableListener(this.domNode, DOM.EventType.KEY_UP, e => {\n            const event = new StandardKeyboardEvent(e);\n            // Run action on Enter/Space\n            if (this.isTriggerKeyEvent(event)) {\n                if (!this._triggerKeys.keyDown && this.triggerKeyDown) {\n                    this.triggerKeyDown = false;\n                    this.doTrigger(event);\n                }\n                event.preventDefault();\n                event.stopPropagation();\n            }\n            // Recompute focused item\n            else if (event.equals(2 /* Tab */) || event.equals(1024 /* Shift */ | 2 /* Tab */)) {\n                this.updateFocusedItem();\n            }\n        }));\n        this.focusTracker = this._register(DOM.trackFocus(this.domNode));\n        this._register(this.focusTracker.onDidBlur(() => {\n            if (DOM.getActiveElement() === this.domNode || !DOM.isAncestor(DOM.getActiveElement(), this.domNode)) {\n                this._onDidBlur.fire();\n                this.focusedItem = undefined;\n                this.previouslyFocusedItem = undefined;\n                this.triggerKeyDown = false;\n            }\n        }));\n        this._register(this.focusTracker.onDidFocus(() => this.updateFocusedItem()));\n        this.actionsList = document.createElement('ul');\n        this.actionsList.className = 'actions-container';\n        this.actionsList.setAttribute('role', 'toolbar');\n        if (this.options.ariaLabel) {\n            this.actionsList.setAttribute('aria-label', this.options.ariaLabel);\n        }\n        this.domNode.appendChild(this.actionsList);\n        container.appendChild(this.domNode);\n    }\n    refreshRole() {\n        if (this.length() >= 2) {\n            this.actionsList.setAttribute('role', 'toolbar');\n        }\n        else {\n            this.actionsList.setAttribute('role', 'presentation');\n        }\n    }\n    // Some action bars should not be focusable at times\n    // When an action bar is not focusable make sure to make all the elements inside it not focusable\n    // When an action bar is focusable again, make sure the first item can be focused\n    setFocusable(focusable) {\n        this.focusable = focusable;\n        if (this.focusable) {\n            const firstEnabled = this.viewItems.find(vi => vi instanceof BaseActionViewItem && vi.isEnabled());\n            if (firstEnabled instanceof BaseActionViewItem) {\n                firstEnabled.setFocusable(true);\n            }\n        }\n        else {\n            this.viewItems.forEach(vi => {\n                if (vi instanceof BaseActionViewItem) {\n                    vi.setFocusable(false);\n                }\n            });\n        }\n    }\n    isTriggerKeyEvent(event) {\n        let ret = false;\n        this._triggerKeys.keys.forEach(keyCode => {\n            ret = ret || event.equals(keyCode);\n        });\n        return ret;\n    }\n    updateFocusedItem() {\n        for (let i = 0; i < this.actionsList.children.length; i++) {\n            const elem = this.actionsList.children[i];\n            if (DOM.isAncestor(DOM.getActiveElement(), elem)) {\n                this.focusedItem = i;\n                break;\n            }\n        }\n    }\n    get context() {\n        return this._context;\n    }\n    set context(context) {\n        this._context = context;\n        this.viewItems.forEach(i => i.setActionContext(context));\n    }\n    get actionRunner() {\n        return this._actionRunner;\n    }\n    set actionRunner(actionRunner) {\n        if (actionRunner) {\n            this._actionRunner = actionRunner;\n            this.viewItems.forEach(item => item.actionRunner = actionRunner);\n        }\n    }\n    getContainer() {\n        return this.domNode;\n    }\n    push(arg, options = {}) {\n        const actions = Array.isArray(arg) ? arg : [arg];\n        let index = types.isNumber(options.index) ? options.index : null;\n        actions.forEach((action) => {\n            const actionViewItemElement = document.createElement('li');\n            actionViewItemElement.className = 'action-item';\n            actionViewItemElement.setAttribute('role', 'presentation');\n            // Prevent native context menu on actions\n            if (!this.options.allowContextMenu) {\n                this._register(DOM.addDisposableListener(actionViewItemElement, DOM.EventType.CONTEXT_MENU, (e) => {\n                    DOM.EventHelper.stop(e, true);\n                }));\n            }\n            let item;\n            if (this.options.actionViewItemProvider) {\n                item = this.options.actionViewItemProvider(action);\n            }\n            if (!item) {\n                item = new ActionViewItem(this.context, action, options);\n            }\n            item.actionRunner = this._actionRunner;\n            item.setActionContext(this.context);\n            item.render(actionViewItemElement);\n            if (this.focusable && item instanceof BaseActionViewItem && this.viewItems.length === 0) {\n                // We need to allow for the first enabled item to be focused on using tab navigation #106441\n                item.setFocusable(true);\n            }\n            if (index === null || index < 0 || index >= this.actionsList.children.length) {\n                this.actionsList.appendChild(actionViewItemElement);\n                this.viewItems.push(item);\n                this._actionIds.push(action.id);\n            }\n            else {\n                this.actionsList.insertBefore(actionViewItemElement, this.actionsList.children[index]);\n                this.viewItems.splice(index, 0, item);\n                this._actionIds.splice(index, 0, action.id);\n                index++;\n            }\n        });\n        if (typeof this.focusedItem === 'number') {\n            // After a clear actions might be re-added to simply toggle some actions. We should preserve focus #97128\n            this.focus(this.focusedItem);\n        }\n        this.refreshRole();\n    }\n    clear() {\n        dispose(this.viewItems);\n        this.viewItems = [];\n        this._actionIds = [];\n        DOM.clearNode(this.actionsList);\n        this.refreshRole();\n    }\n    length() {\n        return this.viewItems.length;\n    }\n    focus(arg) {\n        let selectFirst = false;\n        let index = undefined;\n        if (arg === undefined) {\n            selectFirst = true;\n        }\n        else if (typeof arg === 'number') {\n            index = arg;\n        }\n        else if (typeof arg === 'boolean') {\n            selectFirst = arg;\n        }\n        if (selectFirst && typeof this.focusedItem === 'undefined') {\n            const firstEnabled = this.viewItems.findIndex(item => item.isEnabled());\n            // Focus the first enabled item\n            this.focusedItem = firstEnabled === -1 ? undefined : firstEnabled;\n            this.updateFocus(undefined, undefined, true);\n        }\n        else {\n            if (index !== undefined) {\n                this.focusedItem = index;\n            }\n            this.updateFocus(undefined, undefined, true);\n        }\n    }\n    focusFirst() {\n        this.focusedItem = this.length() - 1;\n        return this.focusNext(true);\n    }\n    focusLast() {\n        this.focusedItem = 0;\n        return this.focusPrevious(true);\n    }\n    focusNext(forceLoop) {\n        if (typeof this.focusedItem === 'undefined') {\n            this.focusedItem = this.viewItems.length - 1;\n        }\n        else if (this.viewItems.length <= 1) {\n            return false;\n        }\n        const startIndex = this.focusedItem;\n        let item;\n        do {\n            if (!forceLoop && this.options.preventLoopNavigation && this.focusedItem + 1 >= this.viewItems.length) {\n                this.focusedItem = startIndex;\n                return false;\n            }\n            this.focusedItem = (this.focusedItem + 1) % this.viewItems.length;\n            item = this.viewItems[this.focusedItem];\n        } while (this.focusedItem !== startIndex && this.options.focusOnlyEnabledItems && !item.isEnabled());\n        this.updateFocus();\n        return true;\n    }\n    focusPrevious(forceLoop) {\n        if (typeof this.focusedItem === 'undefined') {\n            this.focusedItem = 0;\n        }\n        else if (this.viewItems.length <= 1) {\n            return false;\n        }\n        const startIndex = this.focusedItem;\n        let item;\n        do {\n            this.focusedItem = this.focusedItem - 1;\n            if (this.focusedItem < 0) {\n                if (!forceLoop && this.options.preventLoopNavigation) {\n                    this.focusedItem = startIndex;\n                    return false;\n                }\n                this.focusedItem = this.viewItems.length - 1;\n            }\n            item = this.viewItems[this.focusedItem];\n        } while (this.focusedItem !== startIndex && this.options.focusOnlyEnabledItems && !item.isEnabled());\n        this.updateFocus(true);\n        return true;\n    }\n    updateFocus(fromRight, preventScroll, forceFocus = false) {\n        var _a;\n        if (typeof this.focusedItem === 'undefined') {\n            this.actionsList.focus({ preventScroll });\n        }\n        if (this.previouslyFocusedItem !== undefined && this.previouslyFocusedItem !== this.focusedItem) {\n            (_a = this.viewItems[this.previouslyFocusedItem]) === null || _a === void 0 ? void 0 : _a.blur();\n        }\n        const actionViewItem = this.focusedItem !== undefined && this.viewItems[this.focusedItem];\n        if (actionViewItem) {\n            let focusItem = true;\n            if (!types.isFunction(actionViewItem.focus)) {\n                focusItem = false;\n            }\n            if (this.options.focusOnlyEnabledItems && types.isFunction(actionViewItem.isEnabled) && !actionViewItem.isEnabled()) {\n                focusItem = false;\n            }\n            if (!focusItem) {\n                this.actionsList.focus({ preventScroll });\n                this.previouslyFocusedItem = undefined;\n            }\n            else if (forceFocus || this.previouslyFocusedItem !== this.focusedItem) {\n                actionViewItem.focus(fromRight);\n                this.previouslyFocusedItem = this.focusedItem;\n            }\n        }\n    }\n    doTrigger(event) {\n        if (typeof this.focusedItem === 'undefined') {\n            return; //nothing to focus\n        }\n        // trigger action\n        const actionViewItem = this.viewItems[this.focusedItem];\n        if (actionViewItem instanceof BaseActionViewItem) {\n            const context = (actionViewItem._context === null || actionViewItem._context === undefined) ? event : actionViewItem._context;\n            this.run(actionViewItem._action, context);\n        }\n    }\n    run(action, context) {\n        return __awaiter(this, void 0, void 0, function* () {\n            yield this._actionRunner.run(action, context);\n        });\n    }\n    dispose() {\n        dispose(this.viewItems);\n        this.viewItems = [];\n        this._actionIds = [];\n        this.getContainer().remove();\n        super.dispose();\n    }\n}\n",
+      "start": 1711096856507,
+      "end": 1711096856589,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856589,
+      "end": 1711096856589,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856589,
+      "end": 1711096856590,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856590,
+      "end": 1711096856590,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856590,
+      "end": 1711096856590,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856590,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856591,
+      "end": 1711096856591,
+      "order": "normal"
+    }
+  ]
+}

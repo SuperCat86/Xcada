@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/editorDom.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../base/browser/dom.js';\nimport { GlobalMouseMoveMonitor } from '../../base/browser/globalMouseMoveMonitor.js';\nimport { StandardMouseEvent } from '../../base/browser/mouseEvent.js';\nimport { RunOnceScheduler } from '../../base/common/async.js';\nimport { Disposable } from '../../base/common/lifecycle.js';\nimport { asCssVariableName } from '../../platform/theme/common/colorRegistry.js';\n/**\n * Coordinates relative to the whole document (e.g. mouse event's pageX and pageY)\n */\nexport class PageCoordinates {\n    constructor(x, y) {\n        this.x = x;\n        this.y = y;\n        this._pageCoordinatesBrand = undefined;\n    }\n    toClientCoordinates() {\n        return new ClientCoordinates(this.x - dom.StandardWindow.scrollX, this.y - dom.StandardWindow.scrollY);\n    }\n}\n/**\n * Coordinates within the application's client area (i.e. origin is document's scroll position).\n *\n * For example, clicking in the top-left corner of the client area will\n * always result in a mouse event with a client.x value of 0, regardless\n * of whether the page is scrolled horizontally.\n */\nexport class ClientCoordinates {\n    constructor(clientX, clientY) {\n        this.clientX = clientX;\n        this.clientY = clientY;\n        this._clientCoordinatesBrand = undefined;\n    }\n    toPageCoordinates() {\n        return new PageCoordinates(this.clientX + dom.StandardWindow.scrollX, this.clientY + dom.StandardWindow.scrollY);\n    }\n}\n/**\n * The position of the editor in the page.\n */\nexport class EditorPagePosition {\n    constructor(x, y, width, height) {\n        this.x = x;\n        this.y = y;\n        this.width = width;\n        this.height = height;\n        this._editorPagePositionBrand = undefined;\n    }\n}\n/**\n * Coordinates relative to the the (top;left) of the editor that can be used safely with other internal editor metrics.\n * **NOTE**: This position is obtained by taking page coordinates and transforming them relative to the\n * editor's (top;left) position in a way in which scale transformations are taken into account.\n * **NOTE**: These coordinates could be negative if the mouse position is outside the editor.\n */\nexport class CoordinatesRelativeToEditor {\n    constructor(x, y) {\n        this.x = x;\n        this.y = y;\n        this._positionRelativeToEditorBrand = undefined;\n    }\n}\nexport function createEditorPagePosition(editorViewDomNode) {\n    const editorPos = dom.getDomNodePagePosition(editorViewDomNode);\n    return new EditorPagePosition(editorPos.left, editorPos.top, editorPos.width, editorPos.height);\n}\nexport function createCoordinatesRelativeToEditor(editorViewDomNode, editorPagePosition, pos) {\n    // The editor's page position is read from the DOM using getBoundingClientRect().\n    //\n    // getBoundingClientRect() returns the actual dimensions, while offsetWidth and offsetHeight\n    // reflect the unscaled size. We can use this difference to detect a transform:scale()\n    // and we will apply the transformation in inverse to get mouse coordinates that make sense inside the editor.\n    //\n    // This could be expanded to cover rotation as well maybe by walking the DOM up from `editorViewDomNode`\n    // and computing the effective transformation matrix using getComputedStyle(element).transform.\n    //\n    const scaleX = editorPagePosition.width / editorViewDomNode.offsetWidth;\n    const scaleY = editorPagePosition.height / editorViewDomNode.offsetHeight;\n    // Adjust mouse offsets if editor appears to be scaled via transforms\n    const relativeX = (pos.x - editorPagePosition.x) / scaleX;\n    const relativeY = (pos.y - editorPagePosition.y) / scaleY;\n    return new CoordinatesRelativeToEditor(relativeX, relativeY);\n}\nexport class EditorMouseEvent extends StandardMouseEvent {\n    constructor(e, editorViewDomNode) {\n        super(e);\n        this._editorMouseEventBrand = undefined;\n        this.pos = new PageCoordinates(this.posx, this.posy);\n        this.editorPos = createEditorPagePosition(editorViewDomNode);\n        this.relativePos = createCoordinatesRelativeToEditor(editorViewDomNode, this.editorPos, this.pos);\n    }\n}\nexport class EditorMouseEventFactory {\n    constructor(editorViewDomNode) {\n        this._editorViewDomNode = editorViewDomNode;\n    }\n    _create(e) {\n        return new EditorMouseEvent(e, this._editorViewDomNode);\n    }\n    onContextMenu(target, callback) {\n        return dom.addDisposableListener(target, 'contextmenu', (e) => {\n            callback(this._create(e));\n        });\n    }\n    onMouseUp(target, callback) {\n        return dom.addDisposableListener(target, 'mouseup', (e) => {\n            callback(this._create(e));\n        });\n    }\n    onMouseDown(target, callback) {\n        return dom.addDisposableListener(target, 'mousedown', (e) => {\n            callback(this._create(e));\n        });\n    }\n    onMouseLeave(target, callback) {\n        return dom.addDisposableNonBubblingMouseOutListener(target, (e) => {\n            callback(this._create(e));\n        });\n    }\n    onMouseMoveThrottled(target, callback, merger, minimumTimeMs) {\n        const myMerger = (lastEvent, currentEvent) => {\n            return merger(lastEvent, this._create(currentEvent));\n        };\n        return dom.addDisposableThrottledListener(target, 'mousemove', callback, myMerger, minimumTimeMs);\n    }\n}\nexport class EditorPointerEventFactory {\n    constructor(editorViewDomNode) {\n        this._editorViewDomNode = editorViewDomNode;\n    }\n    _create(e) {\n        return new EditorMouseEvent(e, this._editorViewDomNode);\n    }\n    onPointerUp(target, callback) {\n        return dom.addDisposableListener(target, 'pointerup', (e) => {\n            callback(this._create(e));\n        });\n    }\n    onPointerDown(target, callback) {\n        return dom.addDisposableListener(target, 'pointerdown', (e) => {\n            callback(this._create(e));\n        });\n    }\n    onPointerLeave(target, callback) {\n        return dom.addDisposableNonBubblingPointerOutListener(target, (e) => {\n            callback(this._create(e));\n        });\n    }\n    onPointerMoveThrottled(target, callback, merger, minimumTimeMs) {\n        const myMerger = (lastEvent, currentEvent) => {\n            return merger(lastEvent, this._create(currentEvent));\n        };\n        return dom.addDisposableThrottledListener(target, 'pointermove', callback, myMerger, minimumTimeMs);\n    }\n}\nexport class GlobalEditorMouseMoveMonitor extends Disposable {\n    constructor(editorViewDomNode) {\n        super();\n        this._editorViewDomNode = editorViewDomNode;\n        this._globalMouseMoveMonitor = this._register(new GlobalMouseMoveMonitor());\n        this._keydownListener = null;\n    }\n    startMonitoring(initialElement, initialButtons, merger, mouseMoveCallback, onStopCallback) {\n        // Add a <<capture>> keydown event listener that will cancel the monitoring\n        // if something other than a modifier key is pressed\n        this._keydownListener = dom.addStandardDisposableListener(document, 'keydown', (e) => {\n            const kb = e.toKeybinding();\n            if (kb.isModifierKey()) {\n                // Allow modifier keys\n                return;\n            }\n            this._globalMouseMoveMonitor.stopMonitoring(true, e.browserEvent);\n        }, true);\n        const myMerger = (lastEvent, currentEvent) => {\n            return merger(lastEvent, new EditorMouseEvent(currentEvent, this._editorViewDomNode));\n        };\n        this._globalMouseMoveMonitor.startMonitoring(initialElement, initialButtons, myMerger, mouseMoveCallback, (e) => {\n            this._keydownListener.dispose();\n            onStopCallback(e);\n        });\n    }\n    stopMonitoring() {\n        this._globalMouseMoveMonitor.stopMonitoring(true);\n    }\n}\n/**\n * A helper to create dynamic css rules, bound to a class name.\n * Rules are reused.\n * Reference counting and delayed garbage collection ensure that no rules leak.\n*/\nexport class DynamicCssRules {\n    constructor(_editor) {\n        this._editor = _editor;\n        this._instanceId = ++DynamicCssRules._idPool;\n        this._counter = 0;\n        this._rules = new Map();\n        // We delay garbage collection so that hanging rules can be reused.\n        this._garbageCollectionScheduler = new RunOnceScheduler(() => this.garbageCollect(), 1000);\n    }\n    createClassNameRef(options) {\n        const rule = this.getOrCreateRule(options);\n        rule.increaseRefCount();\n        return {\n            className: rule.className,\n            dispose: () => {\n                rule.decreaseRefCount();\n                this._garbageCollectionScheduler.schedule();\n            }\n        };\n    }\n    getOrCreateRule(properties) {\n        const key = this.computeUniqueKey(properties);\n        let existingRule = this._rules.get(key);\n        if (!existingRule) {\n            const counter = this._counter++;\n            existingRule = new RefCountedCssRule(key, `dyn-rule-${this._instanceId}-${counter}`, dom.isInShadowDOM(this._editor.getContainerDomNode())\n                ? this._editor.getContainerDomNode()\n                : undefined, properties);\n            this._rules.set(key, existingRule);\n        }\n        return existingRule;\n    }\n    computeUniqueKey(properties) {\n        return JSON.stringify(properties);\n    }\n    garbageCollect() {\n        for (const rule of this._rules.values()) {\n            if (!rule.hasReferences()) {\n                this._rules.delete(rule.key);\n                rule.dispose();\n            }\n        }\n    }\n}\nDynamicCssRules._idPool = 0;\nclass RefCountedCssRule {\n    constructor(key, className, _containerElement, properties) {\n        this.key = key;\n        this.className = className;\n        this.properties = properties;\n        this._referenceCount = 0;\n        this._styleElement = dom.createStyleSheet(_containerElement);\n        this._styleElement.textContent = this.getCssText(this.className, this.properties);\n    }\n    getCssText(className, properties) {\n        let str = `.${className} {`;\n        for (const prop in properties) {\n            const value = properties[prop];\n            let cssValue;\n            if (typeof value === 'object') {\n                cssValue = `var(${asCssVariableName(value.id)})`;\n            }\n            else {\n                cssValue = value;\n            }\n            const cssPropName = camelToDashes(prop);\n            str += `\\n\\t${cssPropName}: ${cssValue};`;\n        }\n        str += `\\n}`;\n        return str;\n    }\n    dispose() {\n        this._styleElement.remove();\n    }\n    increaseRefCount() {\n        this._referenceCount++;\n    }\n    decreaseRefCount() {\n        this._referenceCount--;\n    }\n    hasReferences() {\n        return this._referenceCount > 0;\n    }\n}\nfunction camelToDashes(str) {\n    return str.replace(/(^[A-Z])/, ([first]) => first.toLowerCase())\n        .replace(/([A-Z])/g, ([letter]) => `-${letter.toLowerCase()}`);\n}\n",
+      "start": 1711096856616,
+      "end": 1711096856701,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856702,
+      "end": 1711096856702,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856702,
+      "end": 1711096856703,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856703,
+      "end": 1711096856703,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856704,
+      "end": 1711096856704,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856704,
+      "end": 1711096856704,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856704,
+      "end": 1711096856704,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856704,
+      "end": 1711096856704,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856704,
+      "end": 1711096856704,
+      "order": "normal"
+    }
+  ]
+}

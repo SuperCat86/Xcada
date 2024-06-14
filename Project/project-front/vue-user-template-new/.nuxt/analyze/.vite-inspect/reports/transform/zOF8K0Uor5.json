@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/findinput/replaceInput.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { Checkbox } from '../checkbox/checkbox.js';\nimport { HistoryInputBox } from '../inputbox/inputBox.js';\nimport { Widget } from '../widget.js';\nimport { Codicon } from '../../../common/codicons.js';\nimport { Emitter } from '../../../common/event.js';\nimport './findInput.css';\nimport * as nls from '../../../../nls.js';\nconst NLS_DEFAULT_LABEL = nls.localize('defaultLabel', \"input\");\nconst NLS_PRESERVE_CASE_LABEL = nls.localize('label.preserveCaseCheckbox', \"Preserve Case\");\nexport class PreserveCaseCheckbox extends Checkbox {\n    constructor(opts) {\n        super({\n            // TODO: does this need its own icon?\n            icon: Codicon.preserveCase,\n            title: NLS_PRESERVE_CASE_LABEL + opts.appendTitle,\n            isChecked: opts.isChecked,\n            inputActiveOptionBorder: opts.inputActiveOptionBorder,\n            inputActiveOptionForeground: opts.inputActiveOptionForeground,\n            inputActiveOptionBackground: opts.inputActiveOptionBackground\n        });\n    }\n}\nexport class ReplaceInput extends Widget {\n    constructor(parent, contextViewProvider, _showOptionButtons, options) {\n        super();\n        this._showOptionButtons = _showOptionButtons;\n        this.fixFocusOnOptionClickEnabled = true;\n        this.cachedOptionsWidth = 0;\n        this._onDidOptionChange = this._register(new Emitter());\n        this.onDidOptionChange = this._onDidOptionChange.event;\n        this._onKeyDown = this._register(new Emitter());\n        this.onKeyDown = this._onKeyDown.event;\n        this._onMouseDown = this._register(new Emitter());\n        this._onInput = this._register(new Emitter());\n        this._onKeyUp = this._register(new Emitter());\n        this._onPreserveCaseKeyDown = this._register(new Emitter());\n        this.onPreserveCaseKeyDown = this._onPreserveCaseKeyDown.event;\n        this.contextViewProvider = contextViewProvider;\n        this.placeholder = options.placeholder || '';\n        this.validation = options.validation;\n        this.label = options.label || NLS_DEFAULT_LABEL;\n        this.inputActiveOptionBorder = options.inputActiveOptionBorder;\n        this.inputActiveOptionForeground = options.inputActiveOptionForeground;\n        this.inputActiveOptionBackground = options.inputActiveOptionBackground;\n        this.inputBackground = options.inputBackground;\n        this.inputForeground = options.inputForeground;\n        this.inputBorder = options.inputBorder;\n        this.inputValidationInfoBorder = options.inputValidationInfoBorder;\n        this.inputValidationInfoBackground = options.inputValidationInfoBackground;\n        this.inputValidationInfoForeground = options.inputValidationInfoForeground;\n        this.inputValidationWarningBorder = options.inputValidationWarningBorder;\n        this.inputValidationWarningBackground = options.inputValidationWarningBackground;\n        this.inputValidationWarningForeground = options.inputValidationWarningForeground;\n        this.inputValidationErrorBorder = options.inputValidationErrorBorder;\n        this.inputValidationErrorBackground = options.inputValidationErrorBackground;\n        this.inputValidationErrorForeground = options.inputValidationErrorForeground;\n        const appendPreserveCaseLabel = options.appendPreserveCaseLabel || '';\n        const history = options.history || [];\n        const flexibleHeight = !!options.flexibleHeight;\n        const flexibleWidth = !!options.flexibleWidth;\n        const flexibleMaxHeight = options.flexibleMaxHeight;\n        this.domNode = document.createElement('div');\n        this.domNode.classList.add('monaco-findInput');\n        this.inputBox = this._register(new HistoryInputBox(this.domNode, this.contextViewProvider, {\n            ariaLabel: this.label || '',\n            placeholder: this.placeholder || '',\n            validationOptions: {\n                validation: this.validation\n            },\n            inputBackground: this.inputBackground,\n            inputForeground: this.inputForeground,\n            inputBorder: this.inputBorder,\n            inputValidationInfoBackground: this.inputValidationInfoBackground,\n            inputValidationInfoForeground: this.inputValidationInfoForeground,\n            inputValidationInfoBorder: this.inputValidationInfoBorder,\n            inputValidationWarningBackground: this.inputValidationWarningBackground,\n            inputValidationWarningForeground: this.inputValidationWarningForeground,\n            inputValidationWarningBorder: this.inputValidationWarningBorder,\n            inputValidationErrorBackground: this.inputValidationErrorBackground,\n            inputValidationErrorForeground: this.inputValidationErrorForeground,\n            inputValidationErrorBorder: this.inputValidationErrorBorder,\n            history,\n            showHistoryHint: options.showHistoryHint,\n            flexibleHeight,\n            flexibleWidth,\n            flexibleMaxHeight\n        }));\n        this.preserveCase = this._register(new PreserveCaseCheckbox({\n            appendTitle: appendPreserveCaseLabel,\n            isChecked: false,\n            inputActiveOptionBorder: this.inputActiveOptionBorder,\n            inputActiveOptionForeground: this.inputActiveOptionForeground,\n            inputActiveOptionBackground: this.inputActiveOptionBackground,\n        }));\n        this._register(this.preserveCase.onChange(viaKeyboard => {\n            this._onDidOptionChange.fire(viaKeyboard);\n            if (!viaKeyboard && this.fixFocusOnOptionClickEnabled) {\n                this.inputBox.focus();\n            }\n            this.validate();\n        }));\n        this._register(this.preserveCase.onKeyDown(e => {\n            this._onPreserveCaseKeyDown.fire(e);\n        }));\n        if (this._showOptionButtons) {\n            this.cachedOptionsWidth = this.preserveCase.width();\n        }\n        else {\n            this.cachedOptionsWidth = 0;\n        }\n        // Arrow-Key support to navigate between options\n        let indexes = [this.preserveCase.domNode];\n        this.onkeydown(this.domNode, (event) => {\n            if (event.equals(15 /* LeftArrow */) || event.equals(17 /* RightArrow */) || event.equals(9 /* Escape */)) {\n                let index = indexes.indexOf(document.activeElement);\n                if (index >= 0) {\n                    let newIndex = -1;\n                    if (event.equals(17 /* RightArrow */)) {\n                        newIndex = (index + 1) % indexes.length;\n                    }\n                    else if (event.equals(15 /* LeftArrow */)) {\n                        if (index === 0) {\n                            newIndex = indexes.length - 1;\n                        }\n                        else {\n                            newIndex = index - 1;\n                        }\n                    }\n                    if (event.equals(9 /* Escape */)) {\n                        indexes[index].blur();\n                        this.inputBox.focus();\n                    }\n                    else if (newIndex >= 0) {\n                        indexes[newIndex].focus();\n                    }\n                    dom.EventHelper.stop(event, true);\n                }\n            }\n        });\n        let controls = document.createElement('div');\n        controls.className = 'controls';\n        controls.style.display = this._showOptionButtons ? 'block' : 'none';\n        controls.appendChild(this.preserveCase.domNode);\n        this.domNode.appendChild(controls);\n        if (parent) {\n            parent.appendChild(this.domNode);\n        }\n        this.onkeydown(this.inputBox.inputElement, (e) => this._onKeyDown.fire(e));\n        this.onkeyup(this.inputBox.inputElement, (e) => this._onKeyUp.fire(e));\n        this.oninput(this.inputBox.inputElement, (e) => this._onInput.fire());\n        this.onmousedown(this.inputBox.inputElement, (e) => this._onMouseDown.fire(e));\n    }\n    enable() {\n        this.domNode.classList.remove('disabled');\n        this.inputBox.enable();\n        this.preserveCase.enable();\n    }\n    disable() {\n        this.domNode.classList.add('disabled');\n        this.inputBox.disable();\n        this.preserveCase.disable();\n    }\n    setEnabled(enabled) {\n        if (enabled) {\n            this.enable();\n        }\n        else {\n            this.disable();\n        }\n    }\n    style(styles) {\n        this.inputActiveOptionBorder = styles.inputActiveOptionBorder;\n        this.inputActiveOptionForeground = styles.inputActiveOptionForeground;\n        this.inputActiveOptionBackground = styles.inputActiveOptionBackground;\n        this.inputBackground = styles.inputBackground;\n        this.inputForeground = styles.inputForeground;\n        this.inputBorder = styles.inputBorder;\n        this.inputValidationInfoBackground = styles.inputValidationInfoBackground;\n        this.inputValidationInfoForeground = styles.inputValidationInfoForeground;\n        this.inputValidationInfoBorder = styles.inputValidationInfoBorder;\n        this.inputValidationWarningBackground = styles.inputValidationWarningBackground;\n        this.inputValidationWarningForeground = styles.inputValidationWarningForeground;\n        this.inputValidationWarningBorder = styles.inputValidationWarningBorder;\n        this.inputValidationErrorBackground = styles.inputValidationErrorBackground;\n        this.inputValidationErrorForeground = styles.inputValidationErrorForeground;\n        this.inputValidationErrorBorder = styles.inputValidationErrorBorder;\n        this.applyStyles();\n    }\n    applyStyles() {\n        if (this.domNode) {\n            const checkBoxStyles = {\n                inputActiveOptionBorder: this.inputActiveOptionBorder,\n                inputActiveOptionForeground: this.inputActiveOptionForeground,\n                inputActiveOptionBackground: this.inputActiveOptionBackground,\n            };\n            this.preserveCase.style(checkBoxStyles);\n            const inputBoxStyles = {\n                inputBackground: this.inputBackground,\n                inputForeground: this.inputForeground,\n                inputBorder: this.inputBorder,\n                inputValidationInfoBackground: this.inputValidationInfoBackground,\n                inputValidationInfoForeground: this.inputValidationInfoForeground,\n                inputValidationInfoBorder: this.inputValidationInfoBorder,\n                inputValidationWarningBackground: this.inputValidationWarningBackground,\n                inputValidationWarningForeground: this.inputValidationWarningForeground,\n                inputValidationWarningBorder: this.inputValidationWarningBorder,\n                inputValidationErrorBackground: this.inputValidationErrorBackground,\n                inputValidationErrorForeground: this.inputValidationErrorForeground,\n                inputValidationErrorBorder: this.inputValidationErrorBorder\n            };\n            this.inputBox.style(inputBoxStyles);\n        }\n    }\n    select() {\n        this.inputBox.select();\n    }\n    focus() {\n        this.inputBox.focus();\n    }\n    getPreserveCase() {\n        return this.preserveCase.checked;\n    }\n    setPreserveCase(value) {\n        this.preserveCase.checked = value;\n    }\n    focusOnPreserve() {\n        this.preserveCase.focus();\n    }\n    validate() {\n        if (this.inputBox) {\n            this.inputBox.validate();\n        }\n    }\n    set width(newWidth) {\n        this.inputBox.paddingRight = this.cachedOptionsWidth;\n        this.inputBox.width = newWidth;\n        this.domNode.style.width = newWidth + 'px';\n    }\n    dispose() {\n        super.dispose();\n    }\n}\n",
+      "start": 1711096857331,
+      "end": 1711096857431,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857431,
+      "end": 1711096857431,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857431,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857432,
+      "end": 1711096857432,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/browser/colorDetector.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { createCancelablePromise, TimeoutTimer } from '../../../../base/common/async.js';\nimport { RGBA } from '../../../../base/common/color.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { StopWatch } from '../../../../base/common/stopwatch.js';\nimport { noBreakWhitespace } from '../../../../base/common/strings.js';\nimport { DynamicCssRules } from '../../../browser/editorDom.js';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { getColors } from './color.js';\nimport { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';\nexport const ColorDecorationInjectedTextMarker = Object.create({});\nconst MAX_DECORATORS = 500;\nlet ColorDetector = class ColorDetector extends Disposable {\n    constructor(_editor, _configurationService, _languageFeaturesService, languageFeatureDebounceService) {\n        super();\n        this._editor = _editor;\n        this._configurationService = _configurationService;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._localToDispose = this._register(new DisposableStore());\n        this._decorationsIds = [];\n        this._colorDatas = new Map();\n        this._colorDecoratorIds = new Set();\n        this._ruleFactory = new DynamicCssRules(this._editor);\n        this._colorDecorationClassRefs = this._register(new DisposableStore());\n        this._debounceInformation = languageFeatureDebounceService.for(_languageFeaturesService.colorProvider, 'Document Colors', { min: ColorDetector.RECOMPUTE_TIME });\n        this._register(_editor.onDidChangeModel(() => {\n            this._isEnabled = this.isEnabled();\n            this.onModelChanged();\n        }));\n        this._register(_editor.onDidChangeModelLanguage(() => this.onModelChanged()));\n        this._register(_languageFeaturesService.colorProvider.onDidChange(() => this.onModelChanged()));\n        this._register(_editor.onDidChangeConfiguration(() => {\n            let prevIsEnabled = this._isEnabled;\n            this._isEnabled = this.isEnabled();\n            if (prevIsEnabled !== this._isEnabled) {\n                if (this._isEnabled) {\n                    this.onModelChanged();\n                }\n                else {\n                    this.removeAllDecorations();\n                }\n            }\n        }));\n        this._timeoutTimer = null;\n        this._computePromise = null;\n        this._isEnabled = this.isEnabled();\n        this.onModelChanged();\n    }\n    isEnabled() {\n        const model = this._editor.getModel();\n        if (!model) {\n            return false;\n        }\n        const languageId = model.getLanguageId();\n        // handle deprecated settings. [languageId].colorDecorators.enable\n        const deprecatedConfig = this._configurationService.getValue(languageId);\n        if (deprecatedConfig && typeof deprecatedConfig === 'object') {\n            const colorDecorators = deprecatedConfig['colorDecorators']; // deprecatedConfig.valueOf('.colorDecorators.enable');\n            if (colorDecorators && colorDecorators['enable'] !== undefined && !colorDecorators['enable']) {\n                return colorDecorators['enable'];\n            }\n        }\n        return this._editor.getOption(17 /* colorDecorators */);\n    }\n    static get(editor) {\n        return editor.getContribution(this.ID);\n    }\n    dispose() {\n        this.stop();\n        this.removeAllDecorations();\n        super.dispose();\n    }\n    onModelChanged() {\n        this.stop();\n        if (!this._isEnabled) {\n            return;\n        }\n        const model = this._editor.getModel();\n        if (!model || !this._languageFeaturesService.colorProvider.has(model)) {\n            return;\n        }\n        this._localToDispose.add(this._editor.onDidChangeModelContent(() => {\n            if (!this._timeoutTimer) {\n                this._timeoutTimer = new TimeoutTimer();\n                this._timeoutTimer.cancelAndSet(() => {\n                    this._timeoutTimer = null;\n                    this.beginCompute();\n                }, this._debounceInformation.get(model));\n            }\n        }));\n        this.beginCompute();\n    }\n    beginCompute() {\n        this._computePromise = createCancelablePromise((token) => __awaiter(this, void 0, void 0, function* () {\n            const model = this._editor.getModel();\n            if (!model) {\n                return Promise.resolve([]);\n            }\n            const sw = new StopWatch(false);\n            const colors = yield getColors(this._languageFeaturesService.colorProvider, model, token);\n            this._debounceInformation.update(model, sw.elapsed());\n            return colors;\n        }));\n        this._computePromise.then((colorInfos) => {\n            this.updateDecorations(colorInfos);\n            this.updateColorDecorators(colorInfos);\n            this._computePromise = null;\n        }, onUnexpectedError);\n    }\n    stop() {\n        if (this._timeoutTimer) {\n            this._timeoutTimer.cancel();\n            this._timeoutTimer = null;\n        }\n        if (this._computePromise) {\n            this._computePromise.cancel();\n            this._computePromise = null;\n        }\n        this._localToDispose.clear();\n    }\n    updateDecorations(colorDatas) {\n        const decorations = colorDatas.map(c => ({\n            range: {\n                startLineNumber: c.colorInfo.range.startLineNumber,\n                startColumn: c.colorInfo.range.startColumn,\n                endLineNumber: c.colorInfo.range.endLineNumber,\n                endColumn: c.colorInfo.range.endColumn\n            },\n            options: ModelDecorationOptions.EMPTY\n        }));\n        this._decorationsIds = this._editor.deltaDecorations(this._decorationsIds, decorations);\n        this._colorDatas = new Map();\n        this._decorationsIds.forEach((id, i) => this._colorDatas.set(id, colorDatas[i]));\n    }\n    updateColorDecorators(colorData) {\n        this._colorDecorationClassRefs.clear();\n        let decorations = [];\n        for (let i = 0; i < colorData.length && decorations.length < MAX_DECORATORS; i++) {\n            const { red, green, blue, alpha } = colorData[i].colorInfo.color;\n            const rgba = new RGBA(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), alpha);\n            let color = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;\n            const ref = this._colorDecorationClassRefs.add(this._ruleFactory.createClassNameRef({\n                backgroundColor: color\n            }));\n            decorations.push({\n                range: {\n                    startLineNumber: colorData[i].colorInfo.range.startLineNumber,\n                    startColumn: colorData[i].colorInfo.range.startColumn,\n                    endLineNumber: colorData[i].colorInfo.range.endLineNumber,\n                    endColumn: colorData[i].colorInfo.range.endColumn\n                },\n                options: {\n                    description: 'colorDetector',\n                    before: {\n                        content: noBreakWhitespace,\n                        inlineClassName: `${ref.className} colorpicker-color-decoration`,\n                        inlineClassNameAffectsLetterSpacing: true,\n                        attachedData: ColorDecorationInjectedTextMarker\n                    }\n                }\n            });\n        }\n        this._colorDecoratorIds = new Set(this._editor.deltaDecorations([...this._colorDecoratorIds], decorations));\n    }\n    removeAllDecorations() {\n        this._decorationsIds = this._editor.deltaDecorations(this._decorationsIds, []);\n        this._colorDecoratorIds = new Set(this._editor.deltaDecorations([...this._colorDecoratorIds], []));\n        this._colorDecorationClassRefs.clear();\n    }\n    getColorData(position) {\n        const model = this._editor.getModel();\n        if (!model) {\n            return null;\n        }\n        const decorations = model\n            .getDecorationsInRange(Range.fromPositions(position, position))\n            .filter(d => this._colorDatas.has(d.id));\n        if (decorations.length === 0) {\n            return null;\n        }\n        return this._colorDatas.get(decorations[0].id);\n    }\n    isColorDecorationId(decorationId) {\n        return this._colorDecoratorIds.has(decorationId);\n    }\n};\nColorDetector.ID = 'editor.contrib.colorDetector';\nColorDetector.RECOMPUTE_TIME = 1000; // ms\nColorDetector = __decorate([\n    __param(1, IConfigurationService),\n    __param(2, ILanguageFeaturesService),\n    __param(3, ILanguageFeatureDebounceService)\n], ColorDetector);\nexport { ColorDetector };\nregisterEditorContribution(ColorDetector.ID, ColorDetector);\n",
+      "start": 1711096855527,
+      "end": 1711096855632,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855632,
+      "end": 1711096855632,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855632,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855633,
+      "end": 1711096855633,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855633,
+      "end": 1711096855634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855634,
+      "end": 1711096855634,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855635,
+      "end": 1711096855635,
+      "order": "normal"
+    }
+  ]
+}

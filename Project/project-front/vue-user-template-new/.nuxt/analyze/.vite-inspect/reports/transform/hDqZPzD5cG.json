@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/browser/colorHoverParticipant.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { AsyncIterableObject } from '../../../../base/common/async.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { Color, RGBA } from '../../../../base/common/color.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { Range } from '../../../common/core/range.js';\nimport { getColorPresentations } from './color.js';\nimport { ColorDetector } from './colorDetector.js';\nimport { ColorPickerModel } from './colorPickerModel.js';\nimport { ColorPickerWidget } from './colorPickerWidget.js';\nimport { IThemeService } from '../../../../platform/theme/common/themeService.js';\nexport class ColorHover {\n    constructor(owner, range, model, provider) {\n        this.owner = owner;\n        this.range = range;\n        this.model = model;\n        this.provider = provider;\n        /**\n         * Force the hover to always be rendered at this specific range,\n         * even in the case of multiple hover parts.\n         */\n        this.forceShowAtRange = true;\n    }\n    isValidForHoverAnchor(anchor) {\n        return (anchor.type === 1 /* Range */\n            && this.range.startColumn <= anchor.range.startColumn\n            && this.range.endColumn >= anchor.range.endColumn);\n    }\n}\nlet ColorHoverParticipant = class ColorHoverParticipant {\n    constructor(_editor, _themeService) {\n        this._editor = _editor;\n        this._themeService = _themeService;\n        this.hoverOrdinal = 1;\n    }\n    computeSync(anchor, lineDecorations) {\n        return [];\n    }\n    computeAsync(anchor, lineDecorations, token) {\n        return AsyncIterableObject.fromPromise(this._computeAsync(anchor, lineDecorations, token));\n    }\n    _computeAsync(anchor, lineDecorations, token) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._editor.hasModel()) {\n                return [];\n            }\n            const colorDetector = ColorDetector.get(this._editor);\n            if (!colorDetector) {\n                return [];\n            }\n            for (const d of lineDecorations) {\n                if (!colorDetector.isColorDecorationId(d.id)) {\n                    continue;\n                }\n                const colorData = colorDetector.getColorData(d.range.getStartPosition());\n                if (colorData) {\n                    const colorHover = yield this._createColorHover(this._editor.getModel(), colorData.colorInfo, colorData.provider);\n                    return [colorHover];\n                }\n            }\n            return [];\n        });\n    }\n    _createColorHover(editorModel, colorInfo, provider) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const originalText = editorModel.getValueInRange(colorInfo.range);\n            const { red, green, blue, alpha } = colorInfo.color;\n            const rgba = new RGBA(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), alpha);\n            const color = new Color(rgba);\n            const colorPresentations = yield getColorPresentations(editorModel, colorInfo, provider, CancellationToken.None);\n            const model = new ColorPickerModel(color, [], 0);\n            model.colorPresentations = colorPresentations || [];\n            model.guessColorPresentation(color, originalText);\n            return new ColorHover(this, Range.lift(colorInfo.range), model, provider);\n        });\n    }\n    renderHoverParts(context, hoverParts) {\n        if (hoverParts.length === 0 || !this._editor.hasModel()) {\n            return Disposable.None;\n        }\n        const disposables = new DisposableStore();\n        const colorHover = hoverParts[0];\n        const editorModel = this._editor.getModel();\n        const model = colorHover.model;\n        const widget = disposables.add(new ColorPickerWidget(context.fragment, model, this._editor.getOption(129 /* pixelRatio */), this._themeService));\n        context.setColorPicker(widget);\n        let range = new Range(colorHover.range.startLineNumber, colorHover.range.startColumn, colorHover.range.endLineNumber, colorHover.range.endColumn);\n        const updateEditorModel = () => {\n            let textEdits;\n            let newRange;\n            if (model.presentation.textEdit) {\n                textEdits = [model.presentation.textEdit];\n                newRange = new Range(model.presentation.textEdit.range.startLineNumber, model.presentation.textEdit.range.startColumn, model.presentation.textEdit.range.endLineNumber, model.presentation.textEdit.range.endColumn);\n                const trackedRange = this._editor.getModel()._setTrackedRange(null, newRange, 3 /* GrowsOnlyWhenTypingAfter */);\n                this._editor.pushUndoStop();\n                this._editor.executeEdits('colorpicker', textEdits);\n                newRange = this._editor.getModel()._getTrackedRange(trackedRange) || newRange;\n            }\n            else {\n                textEdits = [{ range, text: model.presentation.label, forceMoveMarkers: false }];\n                newRange = range.setEndPosition(range.endLineNumber, range.startColumn + model.presentation.label.length);\n                this._editor.pushUndoStop();\n                this._editor.executeEdits('colorpicker', textEdits);\n            }\n            if (model.presentation.additionalTextEdits) {\n                textEdits = [...model.presentation.additionalTextEdits];\n                this._editor.executeEdits('colorpicker', textEdits);\n                context.hide();\n            }\n            this._editor.pushUndoStop();\n            range = newRange;\n        };\n        const updateColorPresentations = (color) => {\n            return getColorPresentations(editorModel, {\n                range: range,\n                color: {\n                    red: color.rgba.r / 255,\n                    green: color.rgba.g / 255,\n                    blue: color.rgba.b / 255,\n                    alpha: color.rgba.a\n                }\n            }, colorHover.provider, CancellationToken.None).then((colorPresentations) => {\n                model.colorPresentations = colorPresentations || [];\n            });\n        };\n        disposables.add(model.onColorFlushed((color) => {\n            updateColorPresentations(color).then(updateEditorModel);\n        }));\n        disposables.add(model.onDidChangeColor(updateColorPresentations));\n        return disposables;\n    }\n};\nColorHoverParticipant = __decorate([\n    __param(1, IThemeService)\n], ColorHoverParticipant);\nexport { ColorHoverParticipant };\n",
+      "start": 1711096855555,
+      "end": 1711096855659,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855659,
+      "end": 1711096855659,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855659,
+      "end": 1711096855660,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855660,
+      "end": 1711096855660,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    }
+  ]
+}

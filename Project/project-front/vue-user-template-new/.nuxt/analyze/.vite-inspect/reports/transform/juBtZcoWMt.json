@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconLabelHover.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as dom from '../../dom.js';\nimport { TimeoutTimer } from '../../../common/async.js';\nimport { CancellationTokenSource } from '../../../common/cancellation.js';\nimport { isMarkdownString } from '../../../common/htmlContent.js';\nimport { stripIcons } from '../../../common/iconLabels.js';\nimport { DisposableStore } from '../../../common/lifecycle.js';\nimport { isFunction, isString } from '../../../common/types.js';\nimport { localize } from '../../../../nls.js';\nexport function setupNativeHover(htmlElement, tooltip) {\n    if (isString(tooltip)) {\n        // Icons don't render in the native hover so we strip them out\n        htmlElement.title = stripIcons(tooltip);\n    }\n    else if (tooltip === null || tooltip === void 0 ? void 0 : tooltip.markdownNotSupportedFallback) {\n        htmlElement.title = tooltip.markdownNotSupportedFallback;\n    }\n    else {\n        htmlElement.removeAttribute('title');\n    }\n}\nclass UpdatableHoverWidget {\n    constructor(hoverDelegate, target, fadeInAnimation) {\n        this.hoverDelegate = hoverDelegate;\n        this.target = target;\n        this.fadeInAnimation = fadeInAnimation;\n    }\n    update(content, focus) {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            if (this._cancellationTokenSource) {\n                // there's an computation ongoing, cancel it\n                this._cancellationTokenSource.dispose(true);\n                this._cancellationTokenSource = undefined;\n            }\n            if (this.isDisposed) {\n                return;\n            }\n            let resolvedContent;\n            if (content === undefined || isString(content) || content instanceof HTMLElement) {\n                resolvedContent = content;\n            }\n            else if (!isFunction(content.markdown)) {\n                resolvedContent = (_a = content.markdown) !== null && _a !== void 0 ? _a : content.markdownNotSupportedFallback;\n            }\n            else {\n                // compute the content, potentially long-running\n                // show 'Loading' if no hover is up yet\n                if (!this._hoverWidget) {\n                    this.show(localize('iconLabel.loading', \"Loading...\"), focus);\n                }\n                // compute the content\n                this._cancellationTokenSource = new CancellationTokenSource();\n                const token = this._cancellationTokenSource.token;\n                resolvedContent = yield content.markdown(token);\n                if (resolvedContent === undefined) {\n                    resolvedContent = content.markdownNotSupportedFallback;\n                }\n                if (this.isDisposed || token.isCancellationRequested) {\n                    // either the widget has been closed in the meantime\n                    // or there has been a new call to `update`\n                    return;\n                }\n            }\n            this.show(resolvedContent, focus);\n        });\n    }\n    show(content, focus) {\n        const oldHoverWidget = this._hoverWidget;\n        if (this.hasContent(content)) {\n            const hoverOptions = {\n                content,\n                target: this.target,\n                showPointer: this.hoverDelegate.placement === 'element',\n                hoverPosition: 2 /* BELOW */,\n                skipFadeInAnimation: !this.fadeInAnimation || !!oldHoverWidget // do not fade in if the hover is already showing\n            };\n            this._hoverWidget = this.hoverDelegate.showHover(hoverOptions, focus);\n        }\n        oldHoverWidget === null || oldHoverWidget === void 0 ? void 0 : oldHoverWidget.dispose();\n    }\n    hasContent(content) {\n        if (!content) {\n            return false;\n        }\n        if (isMarkdownString(content)) {\n            return !!content.value;\n        }\n        return true;\n    }\n    get isDisposed() {\n        var _a;\n        return (_a = this._hoverWidget) === null || _a === void 0 ? void 0 : _a.isDisposed;\n    }\n    dispose() {\n        var _a, _b;\n        (_a = this._hoverWidget) === null || _a === void 0 ? void 0 : _a.dispose();\n        (_b = this._cancellationTokenSource) === null || _b === void 0 ? void 0 : _b.dispose(true);\n        this._cancellationTokenSource = undefined;\n    }\n}\nexport function setupCustomHover(hoverDelegate, htmlElement, content) {\n    let hoverPreparation;\n    let hoverWidget;\n    const hideHover = (disposeWidget, disposePreparation) => {\n        var _a;\n        if (disposeWidget) {\n            hoverWidget === null || hoverWidget === void 0 ? void 0 : hoverWidget.dispose();\n            hoverWidget = undefined;\n        }\n        if (disposePreparation) {\n            hoverPreparation === null || hoverPreparation === void 0 ? void 0 : hoverPreparation.dispose();\n            hoverPreparation = undefined;\n        }\n        (_a = hoverDelegate.onDidHideHover) === null || _a === void 0 ? void 0 : _a.call(hoverDelegate);\n    };\n    const triggerShowHover = (delay, focus, target) => {\n        return new TimeoutTimer(() => __awaiter(this, void 0, void 0, function* () {\n            if (!hoverWidget || hoverWidget.isDisposed) {\n                hoverWidget = new UpdatableHoverWidget(hoverDelegate, target || htmlElement, delay > 0);\n                yield hoverWidget.update(content, focus);\n            }\n        }), delay);\n    };\n    const onMouseOver = () => {\n        if (hoverPreparation) {\n            return;\n        }\n        const toDispose = new DisposableStore();\n        const onMouseLeave = (e) => hideHover(false, e.fromElement === htmlElement);\n        toDispose.add(dom.addDisposableListener(htmlElement, dom.EventType.MOUSE_LEAVE, onMouseLeave, true));\n        const onMouseDown = () => hideHover(true, true);\n        toDispose.add(dom.addDisposableListener(htmlElement, dom.EventType.MOUSE_DOWN, onMouseDown, true));\n        const target = {\n            targetElements: [htmlElement],\n            dispose: () => { }\n        };\n        if (hoverDelegate.placement === undefined || hoverDelegate.placement === 'mouse') {\n            // track the mouse position\n            const onMouseMove = (e) => target.x = e.x + 10;\n            toDispose.add(dom.addDisposableListener(htmlElement, dom.EventType.MOUSE_MOVE, onMouseMove, true));\n        }\n        toDispose.add(triggerShowHover(hoverDelegate.delay, false, target));\n        hoverPreparation = toDispose;\n    };\n    const mouseOverDomEmitter = dom.addDisposableListener(htmlElement, dom.EventType.MOUSE_OVER, onMouseOver, true);\n    const hover = {\n        show: focus => {\n            hideHover(false, true); // terminate a ongoing mouse over preparation\n            triggerShowHover(0, focus); // show hover immediately\n        },\n        hide: () => {\n            hideHover(true, true);\n        },\n        update: (newContent) => __awaiter(this, void 0, void 0, function* () {\n            content = newContent;\n            yield (hoverWidget === null || hoverWidget === void 0 ? void 0 : hoverWidget.update(content));\n        }),\n        dispose: () => {\n            mouseOverDomEmitter.dispose();\n            hideHover(true, true);\n        }\n    };\n    return hover;\n}\n",
+      "start": 1711096857681,
+      "end": 1711096857781,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857781,
+      "end": 1711096857781,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857781,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857782,
+      "end": 1711096857782,
+      "order": "normal"
+    }
+  ]
+}

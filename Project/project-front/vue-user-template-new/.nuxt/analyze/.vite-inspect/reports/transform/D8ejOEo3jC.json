@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneLayoutService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../base/browser/dom.js';\nimport { Event } from '../../../base/common/event.js';\nimport { ILayoutService } from '../../../platform/layout/browser/layoutService.js';\nimport { ICodeEditorService } from '../../browser/services/codeEditorService.js';\nimport { registerSingleton } from '../../../platform/instantiation/common/extensions.js';\nlet StandaloneLayoutService = class StandaloneLayoutService {\n    constructor(_codeEditorService) {\n        this._codeEditorService = _codeEditorService;\n        this.onDidLayout = Event.None;\n    }\n    get dimension() {\n        if (!this._dimension) {\n            this._dimension = dom.getClientArea(window.document.body);\n        }\n        return this._dimension;\n    }\n    get hasContainer() {\n        return false;\n    }\n    get container() {\n        // On a page, multiple editors can be created. Therefore, there are multiple containers, not\n        // just a single one. Please use `ICodeEditorService` to get the current focused code editor\n        // and use its container if necessary. You can also instantiate `EditorScopedLayoutService`\n        // which implements `ILayoutService` but is not a part of the service collection because\n        // it is code editor instance specific.\n        throw new Error(`ILayoutService.container is not available in the standalone editor!`);\n    }\n    focus() {\n        var _a;\n        (_a = this._codeEditorService.getFocusedCodeEditor()) === null || _a === void 0 ? void 0 : _a.focus();\n    }\n};\nStandaloneLayoutService = __decorate([\n    __param(0, ICodeEditorService)\n], StandaloneLayoutService);\nlet EditorScopedLayoutService = class EditorScopedLayoutService extends StandaloneLayoutService {\n    constructor(_container, codeEditorService) {\n        super(codeEditorService);\n        this._container = _container;\n    }\n    get hasContainer() {\n        return false;\n    }\n    get container() {\n        return this._container;\n    }\n};\nEditorScopedLayoutService = __decorate([\n    __param(1, ICodeEditorService)\n], EditorScopedLayoutService);\nexport { EditorScopedLayoutService };\nregisterSingleton(ILayoutService, StandaloneLayoutService);\n",
+      "start": 1711096856194,
+      "end": 1711096856285,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856285,
+      "end": 1711096856285,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856286,
+      "end": 1711096856286,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856286,
+      "end": 1711096856287,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856287,
+      "end": 1711096856287,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856287,
+      "end": 1711096856287,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856287,
+      "end": 1711096856287,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856287,
+      "end": 1711096856287,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856287,
+      "end": 1711096856287,
+      "order": "normal"
+    }
+  ]
+}

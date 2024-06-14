@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/quickinput/browser/quickInput.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { CancellationToken } from '../../../base/common/cancellation.js';\nimport { QuickInputController } from '../../../base/parts/quickinput/browser/quickInput.js';\nimport { IAccessibilityService } from '../../accessibility/common/accessibility.js';\nimport { IContextKeyService, RawContextKey } from '../../contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../instantiation/common/instantiation.js';\nimport { ILayoutService } from '../../layout/browser/layoutService.js';\nimport { WorkbenchList } from '../../list/browser/listService.js';\nimport { QuickAccessController } from './quickAccess.js';\nimport { activeContrastBorder, badgeBackground, badgeForeground, buttonBackground, buttonForeground, buttonHoverBackground, contrastBorder, inputBackground, inputBorder, inputForeground, inputValidationErrorBackground, inputValidationErrorBorder, inputValidationErrorForeground, inputValidationInfoBackground, inputValidationInfoBorder, inputValidationInfoForeground, inputValidationWarningBackground, inputValidationWarningBorder, inputValidationWarningForeground, keybindingLabelBackground, keybindingLabelBorder, keybindingLabelBottomBorder, keybindingLabelForeground, pickerGroupBorder, pickerGroupForeground, progressBarBackground, quickInputBackground, quickInputForeground, quickInputListFocusBackground, quickInputListFocusForeground, quickInputListFocusIconForeground, quickInputTitleBackground, widgetShadow } from '../../theme/common/colorRegistry.js';\nimport { computeStyles } from '../../theme/common/styler.js';\nimport { IThemeService, Themable } from '../../theme/common/themeService.js';\nlet QuickInputService = class QuickInputService extends Themable {\n    constructor(instantiationService, contextKeyService, themeService, accessibilityService, layoutService) {\n        super(themeService);\n        this.instantiationService = instantiationService;\n        this.contextKeyService = contextKeyService;\n        this.accessibilityService = accessibilityService;\n        this.layoutService = layoutService;\n        this.contexts = new Map();\n    }\n    get controller() {\n        if (!this._controller) {\n            this._controller = this._register(this.createController());\n        }\n        return this._controller;\n    }\n    get quickAccess() {\n        if (!this._quickAccess) {\n            this._quickAccess = this._register(this.instantiationService.createInstance(QuickAccessController));\n        }\n        return this._quickAccess;\n    }\n    createController(host = this.layoutService, options) {\n        var _a, _b;\n        const defaultOptions = {\n            idPrefix: 'quickInput_',\n            container: host.container,\n            ignoreFocusOut: () => false,\n            isScreenReaderOptimized: () => this.accessibilityService.isScreenReaderOptimized(),\n            backKeybindingLabel: () => undefined,\n            setContextKey: (id) => this.setContextKey(id),\n            returnFocus: () => host.focus(),\n            createList: (user, container, delegate, renderers, options) => this.instantiationService.createInstance(WorkbenchList, user, container, delegate, renderers, options),\n            styles: this.computeStyles()\n        };\n        const controller = this._register(new QuickInputController(Object.assign(Object.assign({}, defaultOptions), options)));\n        controller.layout(host.dimension, (_b = (_a = host.offset) === null || _a === void 0 ? void 0 : _a.top) !== null && _b !== void 0 ? _b : 0);\n        // Layout changes\n        this._register(host.onDidLayout(dimension => { var _a, _b; return controller.layout(dimension, (_b = (_a = host.offset) === null || _a === void 0 ? void 0 : _a.top) !== null && _b !== void 0 ? _b : 0); }));\n        // Context keys\n        this._register(controller.onShow(() => this.resetContextKeys()));\n        this._register(controller.onHide(() => this.resetContextKeys()));\n        return controller;\n    }\n    setContextKey(id) {\n        let key;\n        if (id) {\n            key = this.contexts.get(id);\n            if (!key) {\n                key = new RawContextKey(id, false)\n                    .bindTo(this.contextKeyService);\n                this.contexts.set(id, key);\n            }\n        }\n        if (key && key.get()) {\n            return; // already active context\n        }\n        this.resetContextKeys();\n        if (key) {\n            key.set(true);\n        }\n    }\n    resetContextKeys() {\n        this.contexts.forEach(context => {\n            if (context.get()) {\n                context.reset();\n            }\n        });\n    }\n    pick(picks, options = {}, token = CancellationToken.None) {\n        return this.controller.pick(picks, options, token);\n    }\n    createQuickPick() {\n        return this.controller.createQuickPick();\n    }\n    updateStyles() {\n        this.controller.applyStyles(this.computeStyles());\n    }\n    computeStyles() {\n        return {\n            widget: Object.assign({}, computeStyles(this.theme, {\n                quickInputBackground,\n                quickInputForeground,\n                quickInputTitleBackground,\n                contrastBorder,\n                widgetShadow\n            })),\n            inputBox: computeStyles(this.theme, {\n                inputForeground,\n                inputBackground,\n                inputBorder,\n                inputValidationInfoBackground,\n                inputValidationInfoForeground,\n                inputValidationInfoBorder,\n                inputValidationWarningBackground,\n                inputValidationWarningForeground,\n                inputValidationWarningBorder,\n                inputValidationErrorBackground,\n                inputValidationErrorForeground,\n                inputValidationErrorBorder\n            }),\n            countBadge: computeStyles(this.theme, {\n                badgeBackground,\n                badgeForeground,\n                badgeBorder: contrastBorder\n            }),\n            button: computeStyles(this.theme, {\n                buttonForeground,\n                buttonBackground,\n                buttonHoverBackground,\n                buttonBorder: contrastBorder\n            }),\n            progressBar: computeStyles(this.theme, {\n                progressBarBackground\n            }),\n            keybindingLabel: computeStyles(this.theme, {\n                keybindingLabelBackground,\n                keybindingLabelForeground,\n                keybindingLabelBorder,\n                keybindingLabelBottomBorder,\n                keybindingLabelShadow: widgetShadow\n            }),\n            list: computeStyles(this.theme, {\n                listBackground: quickInputBackground,\n                // Look like focused when inactive.\n                listInactiveFocusForeground: quickInputListFocusForeground,\n                listInactiveSelectionIconForeground: quickInputListFocusIconForeground,\n                listInactiveFocusBackground: quickInputListFocusBackground,\n                listFocusOutline: activeContrastBorder,\n                listInactiveFocusOutline: activeContrastBorder,\n                pickerGroupBorder,\n                pickerGroupForeground\n            })\n        };\n    }\n};\nQuickInputService = __decorate([\n    __param(0, IInstantiationService),\n    __param(1, IContextKeyService),\n    __param(2, IThemeService),\n    __param(3, IAccessibilityService),\n    __param(4, ILayoutService)\n], QuickInputService);\nexport { QuickInputService };\n",
+      "start": 1711096857081,
+      "end": 1711096857178,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857178,
+      "end": 1711096857178,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857179,
+      "end": 1711096857179,
+      "order": "normal"
+    }
+  ]
+}

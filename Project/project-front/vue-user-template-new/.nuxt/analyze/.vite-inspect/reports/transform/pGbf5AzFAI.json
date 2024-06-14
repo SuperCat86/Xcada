@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/config/fontInfo.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as platform from '../../../base/common/platform.js';\nimport { EditorZoom } from './editorZoom.js';\n/**\n * Determined from empirical observations.\n * @internal\n */\nconst GOLDEN_LINE_HEIGHT_RATIO = platform.isMacintosh ? 1.5 : 1.35;\n/**\n * @internal\n */\nconst MINIMUM_LINE_HEIGHT = 8;\nexport class BareFontInfo {\n    /**\n     * @internal\n     */\n    constructor(opts) {\n        this._bareFontInfoBrand = undefined;\n        this.pixelRatio = opts.pixelRatio;\n        this.fontFamily = String(opts.fontFamily);\n        this.fontWeight = String(opts.fontWeight);\n        this.fontSize = opts.fontSize;\n        this.fontFeatureSettings = opts.fontFeatureSettings;\n        this.lineHeight = opts.lineHeight | 0;\n        this.letterSpacing = opts.letterSpacing;\n    }\n    /**\n     * @internal\n     */\n    static createFromValidatedSettings(options, pixelRatio, ignoreEditorZoom) {\n        const fontFamily = options.get(43 /* fontFamily */);\n        const fontWeight = options.get(47 /* fontWeight */);\n        const fontSize = options.get(46 /* fontSize */);\n        const fontFeatureSettings = options.get(45 /* fontLigatures */);\n        const lineHeight = options.get(59 /* lineHeight */);\n        const letterSpacing = options.get(56 /* letterSpacing */);\n        return BareFontInfo._create(fontFamily, fontWeight, fontSize, fontFeatureSettings, lineHeight, letterSpacing, pixelRatio, ignoreEditorZoom);\n    }\n    /**\n     * @internal\n     */\n    static _create(fontFamily, fontWeight, fontSize, fontFeatureSettings, lineHeight, letterSpacing, pixelRatio, ignoreEditorZoom) {\n        if (lineHeight === 0) {\n            lineHeight = GOLDEN_LINE_HEIGHT_RATIO * fontSize;\n        }\n        else if (lineHeight < MINIMUM_LINE_HEIGHT) {\n            // Values too small to be line heights in pixels are in ems.\n            lineHeight = lineHeight * fontSize;\n        }\n        // Enforce integer, minimum constraints\n        lineHeight = Math.round(lineHeight);\n        if (lineHeight < MINIMUM_LINE_HEIGHT) {\n            lineHeight = MINIMUM_LINE_HEIGHT;\n        }\n        const editorZoomLevelMultiplier = 1 + (ignoreEditorZoom ? 0 : EditorZoom.getZoomLevel() * 0.1);\n        fontSize *= editorZoomLevelMultiplier;\n        lineHeight *= editorZoomLevelMultiplier;\n        return new BareFontInfo({\n            pixelRatio: pixelRatio,\n            fontFamily: fontFamily,\n            fontWeight: fontWeight,\n            fontSize: fontSize,\n            fontFeatureSettings: fontFeatureSettings,\n            lineHeight: lineHeight,\n            letterSpacing: letterSpacing\n        });\n    }\n    /**\n     * @internal\n     */\n    getId() {\n        return `${this.pixelRatio}-${this.fontFamily}-${this.fontWeight}-${this.fontSize}-${this.fontFeatureSettings}-${this.lineHeight}-${this.letterSpacing}`;\n    }\n    /**\n     * @internal\n     */\n    getMassagedFontFamily(fallbackFontFamily) {\n        const fontFamily = BareFontInfo._wrapInQuotes(this.fontFamily);\n        if (fallbackFontFamily && this.fontFamily !== fallbackFontFamily) {\n            return `${fontFamily}, ${fallbackFontFamily}`;\n        }\n        return fontFamily;\n    }\n    static _wrapInQuotes(fontFamily) {\n        if (/[,\"']/.test(fontFamily)) {\n            // Looks like the font family might be already escaped\n            return fontFamily;\n        }\n        if (/[+ ]/.test(fontFamily)) {\n            // Wrap a font family using + or <space> with quotes\n            return `\"${fontFamily}\"`;\n        }\n        return fontFamily;\n    }\n}\n// change this whenever `FontInfo` members are changed\nexport const SERIALIZED_FONT_INFO_VERSION = 1;\nexport class FontInfo extends BareFontInfo {\n    /**\n     * @internal\n     */\n    constructor(opts, isTrusted) {\n        super(opts);\n        this._editorStylingBrand = undefined;\n        this.version = SERIALIZED_FONT_INFO_VERSION;\n        this.isTrusted = isTrusted;\n        this.isMonospace = opts.isMonospace;\n        this.typicalHalfwidthCharacterWidth = opts.typicalHalfwidthCharacterWidth;\n        this.typicalFullwidthCharacterWidth = opts.typicalFullwidthCharacterWidth;\n        this.canUseHalfwidthRightwardsArrow = opts.canUseHalfwidthRightwardsArrow;\n        this.spaceWidth = opts.spaceWidth;\n        this.middotWidth = opts.middotWidth;\n        this.wsmiddotWidth = opts.wsmiddotWidth;\n        this.maxDigitWidth = opts.maxDigitWidth;\n    }\n    /**\n     * @internal\n     */\n    equals(other) {\n        return (this.fontFamily === other.fontFamily\n            && this.fontWeight === other.fontWeight\n            && this.fontSize === other.fontSize\n            && this.fontFeatureSettings === other.fontFeatureSettings\n            && this.lineHeight === other.lineHeight\n            && this.letterSpacing === other.letterSpacing\n            && this.typicalHalfwidthCharacterWidth === other.typicalHalfwidthCharacterWidth\n            && this.typicalFullwidthCharacterWidth === other.typicalFullwidthCharacterWidth\n            && this.canUseHalfwidthRightwardsArrow === other.canUseHalfwidthRightwardsArrow\n            && this.spaceWidth === other.spaceWidth\n            && this.middotWidth === other.middotWidth\n            && this.wsmiddotWidth === other.wsmiddotWidth\n            && this.maxDigitWidth === other.maxDigitWidth);\n    }\n}\n",
+      "start": 1711096855038,
+      "end": 1711096855096,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855096,
+      "end": 1711096855096,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855096,
+      "end": 1711096855097,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855097,
+      "end": 1711096855097,
+      "order": "normal"
+    }
+  ]
+}

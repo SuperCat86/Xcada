@@ -1,0 +1,212 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/basic-languages/freemarker2/freemarker2.contribution.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\n// src/basic-languages/freemarker2/freemarker2.contribution.ts\nimport { registerLanguage } from \"../_.contribution.js\";\nregisterLanguage({\n  id: \"freemarker2\",\n  extensions: [\".ftl\", \".ftlh\", \".ftlx\"],\n  aliases: [\"FreeMarker2\", \"Apache FreeMarker2\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationDollar);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagAutoInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-angle.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Angle/Dollar)\", \"Apache FreeMarker2 (Angle/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationDollar);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagAngleInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-bracket.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Bracket/Dollar)\", \"Apache FreeMarker2 (Bracket/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagBracketInterpolationDollar);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagBracketInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-angle.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Angle/Bracket)\", \"Apache FreeMarker2 (Angle/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationBracket);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagAngleInterpolationBracket);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-bracket.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Bracket/Bracket)\", \"Apache FreeMarker2 (Bracket/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagBracketInterpolationBracket);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagBracketInterpolationBracket);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-auto.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Auto/Dollar)\", \"Apache FreeMarker2 (Auto/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAutoInterpolationDollar);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagAutoInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-auto.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Auto/Bracket)\", \"Apache FreeMarker2 (Auto/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAutoInterpolationBracket);\n    } else {\n      return import(\"./freemarker2.js\").then((m) => m.TagAutoInterpolationBracket);\n    }\n  }\n});\n",
+      "start": 1711096853812,
+      "end": 1711096853850,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853850,
+      "end": 1711096853850,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853850,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853851,
+      "end": 1711096853851,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\n// src/basic-languages/freemarker2/freemarker2.contribution.ts\nimport { registerLanguage } from \"../_.contribution.js\";\nregisterLanguage({\n  id: \"freemarker2\",\n  extensions: [\".ftl\", \".ftlh\", \".ftlx\"],\n  aliases: [\"FreeMarker2\", \"Apache FreeMarker2\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationDollar);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagAutoInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-angle.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Angle/Dollar)\", \"Apache FreeMarker2 (Angle/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationDollar);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagAngleInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-bracket.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Bracket/Dollar)\", \"Apache FreeMarker2 (Bracket/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagBracketInterpolationDollar);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagBracketInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-angle.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Angle/Bracket)\", \"Apache FreeMarker2 (Angle/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAngleInterpolationBracket);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagAngleInterpolationBracket);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-bracket.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Bracket/Bracket)\", \"Apache FreeMarker2 (Bracket/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagBracketInterpolationBracket);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagBracketInterpolationBracket);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-auto.interpolation-dollar\",\n  aliases: [\"FreeMarker2 (Auto/Dollar)\", \"Apache FreeMarker2 (Auto/Dollar)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAutoInterpolationDollar);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagAutoInterpolationDollar);\n    }\n  }\n});\nregisterLanguage({\n  id: \"freemarker2.tag-auto.interpolation-bracket\",\n  aliases: [\"FreeMarker2 (Auto/Bracket)\", \"Apache FreeMarker2 (Auto/Bracket)\"],\n  loader: () => {\n    if (false) {\n      return new Promise((resolve, reject) => {\n        __require([\"vs/basic-languages/freemarker2/freemarker2\"], resolve, reject);\n      }).then((m) => m.TagAutoInterpolationBracket);\n    } else {\n      return __vitePreload(() => import(\"./freemarker2.js\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url).then((m) => m.TagAutoInterpolationBracket);\n    }\n  }\n});\n",
+      "start": 1711096853851,
+      "end": 1711096853852,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853852,
+      "end": 1711096853852,
+      "order": "normal"
+    }
+  ]
+}

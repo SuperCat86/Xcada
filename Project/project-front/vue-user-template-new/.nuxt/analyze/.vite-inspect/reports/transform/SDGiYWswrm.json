@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/inlineCompletionsHoverParticipant.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { MarkdownString } from '../../../../base/common/htmlContent.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { MarkdownRenderer } from '../../markdownRenderer/browser/markdownRenderer.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { HoverForeignElementAnchor } from '../../hover/browser/hoverTypes.js';\nimport { commitInlineSuggestionAction, GhostTextController, ShowNextInlineSuggestionAction, ShowPreviousInlineSuggestionAction } from './ghostTextController.js';\nimport * as nls from '../../../../nls.js';\nimport { IAccessibilityService } from '../../../../platform/accessibility/common/accessibility.js';\nimport { IMenuService, MenuId, MenuItemAction } from '../../../../platform/actions/common/actions.js';\nimport { ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nexport class InlineCompletionsHover {\n    constructor(owner, range, controller) {\n        this.owner = owner;\n        this.range = range;\n        this.controller = controller;\n    }\n    isValidForHoverAnchor(anchor) {\n        return (anchor.type === 1 /* Range */\n            && this.range.startColumn <= anchor.range.startColumn\n            && this.range.endColumn >= anchor.range.endColumn);\n    }\n    hasMultipleSuggestions() {\n        return this.controller.hasMultipleInlineCompletions();\n    }\n}\nlet InlineCompletionsHoverParticipant = class InlineCompletionsHoverParticipant {\n    constructor(_editor, _commandService, _menuService, _contextKeyService, _languageService, _openerService, accessibilityService) {\n        this._editor = _editor;\n        this._commandService = _commandService;\n        this._menuService = _menuService;\n        this._contextKeyService = _contextKeyService;\n        this._languageService = _languageService;\n        this._openerService = _openerService;\n        this.accessibilityService = accessibilityService;\n        this.hoverOrdinal = 3;\n    }\n    suggestHoverAnchor(mouseEvent) {\n        const controller = GhostTextController.get(this._editor);\n        if (!controller) {\n            return null;\n        }\n        const target = mouseEvent.target;\n        if (target.type === 8 /* CONTENT_VIEW_ZONE */) {\n            // handle the case where the mouse is over the view zone\n            const viewZoneData = target.detail;\n            if (controller.shouldShowHoverAtViewZone(viewZoneData.viewZoneId)) {\n                return new HoverForeignElementAnchor(1000, this, Range.fromPositions(viewZoneData.positionBefore || viewZoneData.position, viewZoneData.positionBefore || viewZoneData.position));\n            }\n        }\n        if (target.type === 7 /* CONTENT_EMPTY */) {\n            // handle the case where the mouse is over the empty portion of a line following ghost text\n            if (controller.shouldShowHoverAt(target.range)) {\n                return new HoverForeignElementAnchor(1000, this, target.range);\n            }\n        }\n        if (target.type === 6 /* CONTENT_TEXT */) {\n            // handle the case where the mouse is directly over ghost text\n            const mightBeForeignElement = target.detail.mightBeForeignElement;\n            if (mightBeForeignElement && controller.shouldShowHoverAt(target.range)) {\n                return new HoverForeignElementAnchor(1000, this, target.range);\n            }\n        }\n        return null;\n    }\n    computeSync(anchor, lineDecorations) {\n        const controller = GhostTextController.get(this._editor);\n        if (controller && controller.shouldShowHoverAt(anchor.range)) {\n            return [new InlineCompletionsHover(this, anchor.range, controller)];\n        }\n        return [];\n    }\n    renderHoverParts(context, hoverParts) {\n        const disposableStore = new DisposableStore();\n        const part = hoverParts[0];\n        if (this.accessibilityService.isScreenReaderOptimized()) {\n            this.renderScreenReaderText(context, part, disposableStore);\n        }\n        const menu = disposableStore.add(this._menuService.createMenu(MenuId.InlineCompletionsActions, this._contextKeyService));\n        const previousAction = context.statusBar.addAction({\n            label: nls.localize('showNextInlineSuggestion', \"Next\"),\n            commandId: ShowNextInlineSuggestionAction.ID,\n            run: () => this._commandService.executeCommand(ShowNextInlineSuggestionAction.ID)\n        });\n        const nextAction = context.statusBar.addAction({\n            label: nls.localize('showPreviousInlineSuggestion', \"Previous\"),\n            commandId: ShowPreviousInlineSuggestionAction.ID,\n            run: () => this._commandService.executeCommand(ShowPreviousInlineSuggestionAction.ID)\n        });\n        context.statusBar.addAction({\n            label: nls.localize('acceptInlineSuggestion', \"Accept\"),\n            commandId: commitInlineSuggestionAction.id,\n            run: () => this._commandService.executeCommand(commitInlineSuggestionAction.id)\n        });\n        const actions = [previousAction, nextAction];\n        for (const action of actions) {\n            action.setEnabled(false);\n        }\n        part.hasMultipleSuggestions().then(hasMore => {\n            for (const action of actions) {\n                action.setEnabled(hasMore);\n            }\n        });\n        for (const [_, group] of menu.getActions()) {\n            for (const action of group) {\n                if (action instanceof MenuItemAction) {\n                    context.statusBar.addAction({\n                        label: action.label,\n                        commandId: action.item.id,\n                        run: () => this._commandService.executeCommand(action.item.id)\n                    });\n                }\n            }\n        }\n        return disposableStore;\n    }\n    renderScreenReaderText(context, part, disposableStore) {\n        var _a, _b;\n        const $ = dom.$;\n        const markdownHoverElement = $('div.hover-row.markdown-hover');\n        const hoverContentsElement = dom.append(markdownHoverElement, $('div.hover-contents'));\n        const renderer = disposableStore.add(new MarkdownRenderer({ editor: this._editor }, this._languageService, this._openerService));\n        const render = (code) => {\n            disposableStore.add(renderer.onDidRenderAsync(() => {\n                hoverContentsElement.className = 'hover-contents code-hover-contents';\n                context.onContentsChanged();\n            }));\n            const inlineSuggestionAvailable = nls.localize('inlineSuggestionFollows', \"Suggestion:\");\n            const renderedContents = disposableStore.add(renderer.render(new MarkdownString().appendText(inlineSuggestionAvailable).appendCodeblock('text', code)));\n            hoverContentsElement.replaceChildren(renderedContents.element);\n        };\n        const ghostText = (_b = (_a = part.controller.activeModel) === null || _a === void 0 ? void 0 : _a.inlineCompletionsModel) === null || _b === void 0 ? void 0 : _b.ghostText;\n        if (ghostText) {\n            const lineText = this._editor.getModel().getLineContent(ghostText.lineNumber);\n            render(ghostText.renderForScreenReader(lineText));\n        }\n        context.fragment.appendChild(markdownHoverElement);\n    }\n};\nInlineCompletionsHoverParticipant = __decorate([\n    __param(1, ICommandService),\n    __param(2, IMenuService),\n    __param(3, IContextKeyService),\n    __param(4, ILanguageService),\n    __param(5, IOpenerService),\n    __param(6, IAccessibilityService)\n], InlineCompletionsHoverParticipant);\nexport { InlineCompletionsHoverParticipant };\n",
+      "start": 1711096855674,
+      "end": 1711096855792,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855792,
+      "end": 1711096855792,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855793,
+      "end": 1711096855793,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855793,
+      "end": 1711096855793,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855793,
+      "end": 1711096855793,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855793,
+      "end": 1711096855793,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855793,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855794,
+      "end": 1711096855794,
+      "order": "normal"
+    }
+  ]
+}

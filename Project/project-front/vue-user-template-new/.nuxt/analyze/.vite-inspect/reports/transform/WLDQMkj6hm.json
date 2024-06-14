@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/core/textChange.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as buffer from '../../../base/common/buffer.js';\nimport { decodeUTF16LE } from './stringBuilder.js';\nfunction escapeNewLine(str) {\n    return (str\n        .replace(/\\n/g, '\\\\n')\n        .replace(/\\r/g, '\\\\r'));\n}\nexport class TextChange {\n    constructor(oldPosition, oldText, newPosition, newText) {\n        this.oldPosition = oldPosition;\n        this.oldText = oldText;\n        this.newPosition = newPosition;\n        this.newText = newText;\n    }\n    get oldLength() {\n        return this.oldText.length;\n    }\n    get oldEnd() {\n        return this.oldPosition + this.oldText.length;\n    }\n    get newLength() {\n        return this.newText.length;\n    }\n    get newEnd() {\n        return this.newPosition + this.newText.length;\n    }\n    toString() {\n        if (this.oldText.length === 0) {\n            return `(insert@${this.oldPosition} \"${escapeNewLine(this.newText)}\")`;\n        }\n        if (this.newText.length === 0) {\n            return `(delete@${this.oldPosition} \"${escapeNewLine(this.oldText)}\")`;\n        }\n        return `(replace@${this.oldPosition} \"${escapeNewLine(this.oldText)}\" with \"${escapeNewLine(this.newText)}\")`;\n    }\n    static _writeStringSize(str) {\n        return (4 + 2 * str.length);\n    }\n    static _writeString(b, str, offset) {\n        const len = str.length;\n        buffer.writeUInt32BE(b, len, offset);\n        offset += 4;\n        for (let i = 0; i < len; i++) {\n            buffer.writeUInt16LE(b, str.charCodeAt(i), offset);\n            offset += 2;\n        }\n        return offset;\n    }\n    static _readString(b, offset) {\n        const len = buffer.readUInt32BE(b, offset);\n        offset += 4;\n        return decodeUTF16LE(b, offset, len);\n    }\n    writeSize() {\n        return (+4 // oldPosition\n            + 4 // newPosition\n            + TextChange._writeStringSize(this.oldText)\n            + TextChange._writeStringSize(this.newText));\n    }\n    write(b, offset) {\n        buffer.writeUInt32BE(b, this.oldPosition, offset);\n        offset += 4;\n        buffer.writeUInt32BE(b, this.newPosition, offset);\n        offset += 4;\n        offset = TextChange._writeString(b, this.oldText, offset);\n        offset = TextChange._writeString(b, this.newText, offset);\n        return offset;\n    }\n    static read(b, offset, dest) {\n        const oldPosition = buffer.readUInt32BE(b, offset);\n        offset += 4;\n        const newPosition = buffer.readUInt32BE(b, offset);\n        offset += 4;\n        const oldText = TextChange._readString(b, offset);\n        offset += TextChange._writeStringSize(oldText);\n        const newText = TextChange._readString(b, offset);\n        offset += TextChange._writeStringSize(newText);\n        dest.push(new TextChange(oldPosition, oldText, newPosition, newText));\n        return offset;\n    }\n}\nexport function compressConsecutiveTextChanges(prevEdits, currEdits) {\n    if (prevEdits === null || prevEdits.length === 0) {\n        return currEdits;\n    }\n    const compressor = new TextChangeCompressor(prevEdits, currEdits);\n    return compressor.compress();\n}\nclass TextChangeCompressor {\n    constructor(prevEdits, currEdits) {\n        this._prevEdits = prevEdits;\n        this._currEdits = currEdits;\n        this._result = [];\n        this._resultLen = 0;\n        this._prevLen = this._prevEdits.length;\n        this._prevDeltaOffset = 0;\n        this._currLen = this._currEdits.length;\n        this._currDeltaOffset = 0;\n    }\n    compress() {\n        let prevIndex = 0;\n        let currIndex = 0;\n        let prevEdit = this._getPrev(prevIndex);\n        let currEdit = this._getCurr(currIndex);\n        while (prevIndex < this._prevLen || currIndex < this._currLen) {\n            if (prevEdit === null) {\n                this._acceptCurr(currEdit);\n                currEdit = this._getCurr(++currIndex);\n                continue;\n            }\n            if (currEdit === null) {\n                this._acceptPrev(prevEdit);\n                prevEdit = this._getPrev(++prevIndex);\n                continue;\n            }\n            if (currEdit.oldEnd <= prevEdit.newPosition) {\n                this._acceptCurr(currEdit);\n                currEdit = this._getCurr(++currIndex);\n                continue;\n            }\n            if (prevEdit.newEnd <= currEdit.oldPosition) {\n                this._acceptPrev(prevEdit);\n                prevEdit = this._getPrev(++prevIndex);\n                continue;\n            }\n            if (currEdit.oldPosition < prevEdit.newPosition) {\n                const [e1, e2] = TextChangeCompressor._splitCurr(currEdit, prevEdit.newPosition - currEdit.oldPosition);\n                this._acceptCurr(e1);\n                currEdit = e2;\n                continue;\n            }\n            if (prevEdit.newPosition < currEdit.oldPosition) {\n                const [e1, e2] = TextChangeCompressor._splitPrev(prevEdit, currEdit.oldPosition - prevEdit.newPosition);\n                this._acceptPrev(e1);\n                prevEdit = e2;\n                continue;\n            }\n            // At this point, currEdit.oldPosition === prevEdit.newPosition\n            let mergePrev;\n            let mergeCurr;\n            if (currEdit.oldEnd === prevEdit.newEnd) {\n                mergePrev = prevEdit;\n                mergeCurr = currEdit;\n                prevEdit = this._getPrev(++prevIndex);\n                currEdit = this._getCurr(++currIndex);\n            }\n            else if (currEdit.oldEnd < prevEdit.newEnd) {\n                const [e1, e2] = TextChangeCompressor._splitPrev(prevEdit, currEdit.oldLength);\n                mergePrev = e1;\n                mergeCurr = currEdit;\n                prevEdit = e2;\n                currEdit = this._getCurr(++currIndex);\n            }\n            else {\n                const [e1, e2] = TextChangeCompressor._splitCurr(currEdit, prevEdit.newLength);\n                mergePrev = prevEdit;\n                mergeCurr = e1;\n                prevEdit = this._getPrev(++prevIndex);\n                currEdit = e2;\n            }\n            this._result[this._resultLen++] = new TextChange(mergePrev.oldPosition, mergePrev.oldText, mergeCurr.newPosition, mergeCurr.newText);\n            this._prevDeltaOffset += mergePrev.newLength - mergePrev.oldLength;\n            this._currDeltaOffset += mergeCurr.newLength - mergeCurr.oldLength;\n        }\n        const merged = TextChangeCompressor._merge(this._result);\n        const cleaned = TextChangeCompressor._removeNoOps(merged);\n        return cleaned;\n    }\n    _acceptCurr(currEdit) {\n        this._result[this._resultLen++] = TextChangeCompressor._rebaseCurr(this._prevDeltaOffset, currEdit);\n        this._currDeltaOffset += currEdit.newLength - currEdit.oldLength;\n    }\n    _getCurr(currIndex) {\n        return (currIndex < this._currLen ? this._currEdits[currIndex] : null);\n    }\n    _acceptPrev(prevEdit) {\n        this._result[this._resultLen++] = TextChangeCompressor._rebasePrev(this._currDeltaOffset, prevEdit);\n        this._prevDeltaOffset += prevEdit.newLength - prevEdit.oldLength;\n    }\n    _getPrev(prevIndex) {\n        return (prevIndex < this._prevLen ? this._prevEdits[prevIndex] : null);\n    }\n    static _rebaseCurr(prevDeltaOffset, currEdit) {\n        return new TextChange(currEdit.oldPosition - prevDeltaOffset, currEdit.oldText, currEdit.newPosition, currEdit.newText);\n    }\n    static _rebasePrev(currDeltaOffset, prevEdit) {\n        return new TextChange(prevEdit.oldPosition, prevEdit.oldText, prevEdit.newPosition + currDeltaOffset, prevEdit.newText);\n    }\n    static _splitPrev(edit, offset) {\n        const preText = edit.newText.substr(0, offset);\n        const postText = edit.newText.substr(offset);\n        return [\n            new TextChange(edit.oldPosition, edit.oldText, edit.newPosition, preText),\n            new TextChange(edit.oldEnd, '', edit.newPosition + offset, postText)\n        ];\n    }\n    static _splitCurr(edit, offset) {\n        const preText = edit.oldText.substr(0, offset);\n        const postText = edit.oldText.substr(offset);\n        return [\n            new TextChange(edit.oldPosition, preText, edit.newPosition, edit.newText),\n            new TextChange(edit.oldPosition + offset, postText, edit.newEnd, '')\n        ];\n    }\n    static _merge(edits) {\n        if (edits.length === 0) {\n            return edits;\n        }\n        const result = [];\n        let resultLen = 0;\n        let prev = edits[0];\n        for (let i = 1; i < edits.length; i++) {\n            const curr = edits[i];\n            if (prev.oldEnd === curr.oldPosition) {\n                // Merge into `prev`\n                prev = new TextChange(prev.oldPosition, prev.oldText + curr.oldText, prev.newPosition, prev.newText + curr.newText);\n            }\n            else {\n                result[resultLen++] = prev;\n                prev = curr;\n            }\n        }\n        result[resultLen++] = prev;\n        return result;\n    }\n    static _removeNoOps(edits) {\n        if (edits.length === 0) {\n            return edits;\n        }\n        const result = [];\n        let resultLen = 0;\n        for (let i = 0; i < edits.length; i++) {\n            const edit = edits[i];\n            if (edit.oldText === edit.newText) {\n                continue;\n            }\n            result[resultLen++] = edit;\n        }\n        return result;\n    }\n}\n",
+      "start": 1711096857283,
+      "end": 1711096857360,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857360,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857361,
+      "end": 1711096857361,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857361,
+      "end": 1711096857362,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857362,
+      "end": 1711096857362,
+      "order": "normal"
+    }
+  ]
+}

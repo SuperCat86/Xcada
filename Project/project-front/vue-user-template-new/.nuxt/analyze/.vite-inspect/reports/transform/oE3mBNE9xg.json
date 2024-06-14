@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollbarArrow.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { GlobalMouseMoveMonitor, standardMouseMoveMerger } from '../../globalMouseMoveMonitor.js';\nimport { Widget } from '../widget.js';\nimport { IntervalTimer, TimeoutTimer } from '../../../common/async.js';\n/**\n * The arrow image size.\n */\nexport const ARROW_IMG_SIZE = 11;\nexport class ScrollbarArrow extends Widget {\n    constructor(opts) {\n        super();\n        this._onActivate = opts.onActivate;\n        this.bgDomNode = document.createElement('div');\n        this.bgDomNode.className = 'arrow-background';\n        this.bgDomNode.style.position = 'absolute';\n        this.bgDomNode.style.width = opts.bgWidth + 'px';\n        this.bgDomNode.style.height = opts.bgHeight + 'px';\n        if (typeof opts.top !== 'undefined') {\n            this.bgDomNode.style.top = '0px';\n        }\n        if (typeof opts.left !== 'undefined') {\n            this.bgDomNode.style.left = '0px';\n        }\n        if (typeof opts.bottom !== 'undefined') {\n            this.bgDomNode.style.bottom = '0px';\n        }\n        if (typeof opts.right !== 'undefined') {\n            this.bgDomNode.style.right = '0px';\n        }\n        this.domNode = document.createElement('div');\n        this.domNode.className = opts.className;\n        this.domNode.classList.add(...opts.icon.classNamesArray);\n        this.domNode.style.position = 'absolute';\n        this.domNode.style.width = ARROW_IMG_SIZE + 'px';\n        this.domNode.style.height = ARROW_IMG_SIZE + 'px';\n        if (typeof opts.top !== 'undefined') {\n            this.domNode.style.top = opts.top + 'px';\n        }\n        if (typeof opts.left !== 'undefined') {\n            this.domNode.style.left = opts.left + 'px';\n        }\n        if (typeof opts.bottom !== 'undefined') {\n            this.domNode.style.bottom = opts.bottom + 'px';\n        }\n        if (typeof opts.right !== 'undefined') {\n            this.domNode.style.right = opts.right + 'px';\n        }\n        this._mouseMoveMonitor = this._register(new GlobalMouseMoveMonitor());\n        this.onmousedown(this.bgDomNode, (e) => this._arrowMouseDown(e));\n        this.onmousedown(this.domNode, (e) => this._arrowMouseDown(e));\n        this._mousedownRepeatTimer = this._register(new IntervalTimer());\n        this._mousedownScheduleRepeatTimer = this._register(new TimeoutTimer());\n    }\n    _arrowMouseDown(e) {\n        const scheduleRepeater = () => {\n            this._mousedownRepeatTimer.cancelAndSet(() => this._onActivate(), 1000 / 24);\n        };\n        this._onActivate();\n        this._mousedownRepeatTimer.cancel();\n        this._mousedownScheduleRepeatTimer.cancelAndSet(scheduleRepeater, 200);\n        this._mouseMoveMonitor.startMonitoring(e.target, e.buttons, standardMouseMoveMerger, (mouseMoveData) => {\n            /* Intentional empty */\n        }, () => {\n            this._mousedownRepeatTimer.cancel();\n            this._mousedownScheduleRepeatTimer.cancel();\n        });\n        e.preventDefault();\n    }\n}\n",
+      "start": 1711096857583,
+      "end": 1711096857673,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857673,
+      "end": 1711096857673,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857674,
+      "end": 1711096857674,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857674,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    }
+  ]
+}

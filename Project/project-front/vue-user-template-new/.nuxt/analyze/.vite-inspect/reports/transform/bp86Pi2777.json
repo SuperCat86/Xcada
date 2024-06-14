@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/message/browser/messageController.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-editor .monaco-editor-overlaymessage {\n\tpadding-bottom: 8px;\n\tz-index: 10000;\n}\n\n.monaco-editor .monaco-editor-overlaymessage.below {\n\tpadding-bottom: 0;\n\tpadding-top: 8px;\n\tz-index: 10000;\n}\n\n@keyframes fadeIn {\n\tfrom { opacity: 0; }\n\tto { opacity: 1; }\n}\n.monaco-editor .monaco-editor-overlaymessage.fadeIn {\n\tanimation: fadeIn 150ms ease-out;\n}\n\n@keyframes fadeOut {\n\tfrom { opacity: 1; }\n\tto { opacity: 0; }\n}\n.monaco-editor .monaco-editor-overlaymessage.fadeOut {\n\tanimation: fadeOut 100ms ease-out;\n}\n\n.monaco-editor .monaco-editor-overlaymessage .message {\n\tpadding: 1px 4px;\n\tcolor: var(--vscode-inputValidation-infoForeground);\n\tbackground-color: var(--vscode-inputValidation-infoBackground);\n\tborder: 1px solid var(--vscode-inputValidation-infoBorder);\n}\n\n.monaco-editor.hc-black .monaco-editor-overlaymessage .message {\n\tborder-width: 2px;\n}\n\n.monaco-editor .monaco-editor-overlaymessage .anchor {\n\twidth: 0 !important;\n\theight: 0 !important;\n\tborder-color: transparent;\n\tborder-style: solid;\n\tz-index: 1000;\n\tborder-width: 8px;\n\tposition: absolute;\n}\n\n.monaco-editor .monaco-editor-overlaymessage .anchor.top {\n\tborder-bottom-color: var(--vscode-inputValidation-infoBorder);\n}\n\n.monaco-editor .monaco-editor-overlaymessage .anchor.below {\n\tborder-top-color: var(--vscode-inputValidation-infoBorder);\n}\n\n.monaco-editor .monaco-editor-overlaymessage:not(.below) .anchor.top,\n.monaco-editor .monaco-editor-overlaymessage.below .anchor.below {\n\tdisplay: none;\n}\n\n.monaco-editor .monaco-editor-overlaymessage.below .anchor.top {\n\tdisplay: inherit;\n\ttop: -8px;\n}\n",
+      "start": 1711096856717,
+      "end": 1711096856815,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .monaco-editor-overlaymessage{padding-bottom:8px;z-index:10000}.monaco-editor .monaco-editor-overlaymessage.below{padding-bottom:0;padding-top:8px;z-index:10000}@keyframes fadeIn{0%{opacity:0}to{opacity:1}}.monaco-editor .monaco-editor-overlaymessage.fadeIn{animation:fadeIn .15s ease-out}@keyframes fadeOut{0%{opacity:1}to{opacity:0}}.monaco-editor .monaco-editor-overlaymessage.fadeOut{animation:fadeOut .1s ease-out}.monaco-editor .monaco-editor-overlaymessage .message{background-color:var(--vscode-inputValidation-infoBackground);border:1px solid var(--vscode-inputValidation-infoBorder);color:var(--vscode-inputValidation-infoForeground);padding:1px 4px}.monaco-editor.hc-black .monaco-editor-overlaymessage .message{border-width:2px}.monaco-editor .monaco-editor-overlaymessage .anchor{border:8px solid transparent;height:0!important;position:absolute;width:0!important;z-index:1000}.monaco-editor .monaco-editor-overlaymessage .anchor.top{border-bottom-color:var(--vscode-inputValidation-infoBorder)}.monaco-editor .monaco-editor-overlaymessage .anchor.below{border-top-color:var(--vscode-inputValidation-infoBorder)}.monaco-editor .monaco-editor-overlaymessage.below .anchor.below,.monaco-editor .monaco-editor-overlaymessage:not(.below) .anchor.top{display:none}.monaco-editor .monaco-editor-overlaymessage.below .anchor.top{display:inherit;top:-8px}",
+      "start": 1711096856815,
+      "end": 1711096856827,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856827,
+      "end": 1711096856827,
+      "order": "normal"
+    }
+  ]
+}

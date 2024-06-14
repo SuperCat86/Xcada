@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/linkedList.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nclass Node {\n    constructor(element) {\n        this.element = element;\n        this.next = Node.Undefined;\n        this.prev = Node.Undefined;\n    }\n}\nNode.Undefined = new Node(undefined);\nexport class LinkedList {\n    constructor() {\n        this._first = Node.Undefined;\n        this._last = Node.Undefined;\n        this._size = 0;\n    }\n    get size() {\n        return this._size;\n    }\n    isEmpty() {\n        return this._first === Node.Undefined;\n    }\n    clear() {\n        let node = this._first;\n        while (node !== Node.Undefined) {\n            const next = node.next;\n            node.prev = Node.Undefined;\n            node.next = Node.Undefined;\n            node = next;\n        }\n        this._first = Node.Undefined;\n        this._last = Node.Undefined;\n        this._size = 0;\n    }\n    unshift(element) {\n        return this._insert(element, false);\n    }\n    push(element) {\n        return this._insert(element, true);\n    }\n    _insert(element, atTheEnd) {\n        const newNode = new Node(element);\n        if (this._first === Node.Undefined) {\n            this._first = newNode;\n            this._last = newNode;\n        }\n        else if (atTheEnd) {\n            // push\n            const oldLast = this._last;\n            this._last = newNode;\n            newNode.prev = oldLast;\n            oldLast.next = newNode;\n        }\n        else {\n            // unshift\n            const oldFirst = this._first;\n            this._first = newNode;\n            newNode.next = oldFirst;\n            oldFirst.prev = newNode;\n        }\n        this._size += 1;\n        let didRemove = false;\n        return () => {\n            if (!didRemove) {\n                didRemove = true;\n                this._remove(newNode);\n            }\n        };\n    }\n    shift() {\n        if (this._first === Node.Undefined) {\n            return undefined;\n        }\n        else {\n            const res = this._first.element;\n            this._remove(this._first);\n            return res;\n        }\n    }\n    pop() {\n        if (this._last === Node.Undefined) {\n            return undefined;\n        }\n        else {\n            const res = this._last.element;\n            this._remove(this._last);\n            return res;\n        }\n    }\n    _remove(node) {\n        if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {\n            // middle\n            const anchor = node.prev;\n            anchor.next = node.next;\n            node.next.prev = anchor;\n        }\n        else if (node.prev === Node.Undefined && node.next === Node.Undefined) {\n            // only node\n            this._first = Node.Undefined;\n            this._last = Node.Undefined;\n        }\n        else if (node.next === Node.Undefined) {\n            // last\n            this._last = this._last.prev;\n            this._last.next = Node.Undefined;\n        }\n        else if (node.prev === Node.Undefined) {\n            // first\n            this._first = this._first.next;\n            this._first.prev = Node.Undefined;\n        }\n        // done\n        this._size -= 1;\n    }\n    *[Symbol.iterator]() {\n        let node = this._first;\n        while (node !== Node.Undefined) {\n            yield node.element;\n            node = node.next;\n        }\n    }\n}\n",
+      "start": 1711096855096,
+      "end": 1711096855237,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855237,
+      "end": 1711096855237,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855238,
+      "end": 1711096855238,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855238,
+      "end": 1711096855238,
+      "order": "normal"
+    }
+  ]
+}

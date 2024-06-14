@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/folding/browser/foldingDecorations.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Codicon } from '../../../../base/common/codicons.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { localize } from '../../../../nls.js';\nimport { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';\nimport { ThemeIcon } from '../../../../platform/theme/common/themeService.js';\nexport const foldingExpandedIcon = registerIcon('folding-expanded', Codicon.chevronDown, localize('foldingExpandedIcon', 'Icon for expanded ranges in the editor glyph margin.'));\nexport const foldingCollapsedIcon = registerIcon('folding-collapsed', Codicon.chevronRight, localize('foldingCollapsedIcon', 'Icon for collapsed ranges in the editor glyph margin.'));\nexport class FoldingDecorationProvider {\n    constructor(editor) {\n        this.editor = editor;\n        this.autoHideFoldingControls = true;\n        this.showFoldingHighlights = true;\n    }\n    getDecorationOption(isCollapsed, isHidden) {\n        if (isHidden) {\n            return FoldingDecorationProvider.HIDDEN_RANGE_DECORATION;\n        }\n        if (isCollapsed) {\n            return this.showFoldingHighlights ? FoldingDecorationProvider.COLLAPSED_HIGHLIGHTED_VISUAL_DECORATION : FoldingDecorationProvider.COLLAPSED_VISUAL_DECORATION;\n        }\n        else if (this.autoHideFoldingControls) {\n            return FoldingDecorationProvider.EXPANDED_AUTO_HIDE_VISUAL_DECORATION;\n        }\n        else {\n            return FoldingDecorationProvider.EXPANDED_VISUAL_DECORATION;\n        }\n    }\n    deltaDecorations(oldDecorations, newDecorations) {\n        return this.editor.deltaDecorations(oldDecorations, newDecorations);\n    }\n    changeDecorations(callback) {\n        return this.editor.changeDecorations(callback);\n    }\n}\nFoldingDecorationProvider.COLLAPSED_VISUAL_DECORATION = ModelDecorationOptions.register({\n    description: 'folding-collapsed-visual-decoration',\n    stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,\n    afterContentClassName: 'inline-folded',\n    isWholeLine: true,\n    firstLineDecorationClassName: ThemeIcon.asClassName(foldingCollapsedIcon)\n});\nFoldingDecorationProvider.COLLAPSED_HIGHLIGHTED_VISUAL_DECORATION = ModelDecorationOptions.register({\n    description: 'folding-collapsed-highlighted-visual-decoration',\n    stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,\n    afterContentClassName: 'inline-folded',\n    className: 'folded-background',\n    isWholeLine: true,\n    firstLineDecorationClassName: ThemeIcon.asClassName(foldingCollapsedIcon)\n});\nFoldingDecorationProvider.EXPANDED_AUTO_HIDE_VISUAL_DECORATION = ModelDecorationOptions.register({\n    description: 'folding-expanded-auto-hide-visual-decoration',\n    stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,\n    isWholeLine: true,\n    firstLineDecorationClassName: ThemeIcon.asClassName(foldingExpandedIcon)\n});\nFoldingDecorationProvider.EXPANDED_VISUAL_DECORATION = ModelDecorationOptions.register({\n    description: 'folding-expanded-visual-decoration',\n    stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,\n    isWholeLine: true,\n    firstLineDecorationClassName: 'alwaysShowFoldIcons ' + ThemeIcon.asClassName(foldingExpandedIcon)\n});\nFoldingDecorationProvider.HIDDEN_RANGE_DECORATION = ModelDecorationOptions.register({\n    description: 'folding-hidden-range-decoration',\n    stickiness: 1 /* NeverGrowsWhenTypingAtEdges */\n});\n",
+      "start": 1711096855662,
+      "end": 1711096855773,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855773,
+      "end": 1711096855773,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855773,
+      "end": 1711096855774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855774,
+      "end": 1711096855774,
+      "order": "normal"
+    }
+  ]
+}

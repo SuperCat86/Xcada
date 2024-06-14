@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/iconLabel/iconlabel.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n/* ---------- Icon label ---------- */\n\n.monaco-icon-label {\n\tdisplay: flex; /* required for icons support :before rule */\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n}\n\n.monaco-icon-label::before {\n\n\t/* svg icons rendered as background image */\n\tbackground-size: 16px;\n\tbackground-position: left center;\n\tbackground-repeat: no-repeat;\n\tpadding-right: 6px;\n\twidth: 16px;\n\theight: 22px;\n\tline-height: inherit !important;\n\tdisplay: inline-block;\n\n\t/* fonts icons */\n\t-webkit-font-smoothing: antialiased;\n\t-moz-osx-font-smoothing: grayscale;\n\tvertical-align: top;\n\n\tflex-shrink: 0; /* fix for https://github.com/microsoft/vscode/issues/13787 */\n}\n\n.monaco-icon-label > .monaco-icon-label-container {\n\tmin-width: 0;\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n\tflex: 1;\n}\n\n.monaco-icon-label > .monaco-icon-label-container > .monaco-icon-name-container > .label-name {\n\tcolor: inherit;\n\twhite-space: pre; /* enable to show labels that include multiple whitespaces */\n}\n\n.monaco-icon-label > .monaco-icon-label-container > .monaco-icon-name-container > .label-name > .label-separator {\n\tmargin: 0 2px;\n\topacity: 0.5;\n}\n\n.monaco-icon-label > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {\n\topacity: .7;\n\tmargin-left: 0.5em;\n\tfont-size: 0.9em;\n\twhite-space: pre; /* enable to show labels that include multiple whitespaces */\n}\n\n.monaco-icon-label.nowrap > .monaco-icon-label-container > .monaco-icon-description-container > .label-description{\n\twhite-space: nowrap\n}\n\n.vs .monaco-icon-label > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {\n\topacity: .95;\n}\n\n.monaco-icon-label.italic > .monaco-icon-label-container > .monaco-icon-name-container > .label-name,\n.monaco-icon-label.italic > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {\n\tfont-style: italic;\n}\n\n.monaco-icon-label.deprecated {\n\ttext-decoration: line-through;\n\topacity: 0.66;\n}\n\n/* make sure apply italic font style to decorations as well */\n.monaco-icon-label.italic::after {\n\tfont-style: italic;\n}\n\n.monaco-icon-label.strikethrough > .monaco-icon-label-container > .monaco-icon-name-container > .label-name,\n.monaco-icon-label.strikethrough > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {\n\ttext-decoration: line-through;\n}\n\n.monaco-icon-label::after {\n\topacity: 0.75;\n\tfont-size: 90%;\n\tfont-weight: 600;\n\tmargin: auto 16px 0 5px; /* https://github.com/microsoft/vscode/issues/113223 */\n\ttext-align: center;\n}\n\n/* make sure selection color wins when a label is being selected */\n.monaco-list:focus .selected .monaco-icon-label, /* list */\n.monaco-list:focus .selected .monaco-icon-label::after\n{\n\tcolor: inherit !important;\n}\n\n.monaco-list-row.focused.selected .label-description,\n.monaco-list-row.selected .label-description {\n\topacity: .8;\n}\n",
+      "start": 1711096857682,
+      "end": 1711096857783,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857783,
+      "end": 1711096857783,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-icon-label{display:flex;overflow:hidden;text-overflow:ellipsis}.monaco-icon-label:before{background-position:0;background-repeat:no-repeat;background-size:16px;display:inline-block;height:22px;line-height:inherit!important;padding-right:6px;width:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;flex-shrink:0;vertical-align:top}.monaco-icon-label>.monaco-icon-label-container{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}.monaco-icon-label>.monaco-icon-label-container>.monaco-icon-name-container>.label-name{color:inherit;white-space:pre}.monaco-icon-label>.monaco-icon-label-container>.monaco-icon-name-container>.label-name>.label-separator{margin:0 2px;opacity:.5}.monaco-icon-label>.monaco-icon-label-container>.monaco-icon-description-container>.label-description{font-size:.9em;margin-left:.5em;opacity:.7;white-space:pre}.monaco-icon-label.nowrap>.monaco-icon-label-container>.monaco-icon-description-container>.label-description{white-space:nowrap}.vs .monaco-icon-label>.monaco-icon-label-container>.monaco-icon-description-container>.label-description{opacity:.95}.monaco-icon-label.italic>.monaco-icon-label-container>.monaco-icon-description-container>.label-description,.monaco-icon-label.italic>.monaco-icon-label-container>.monaco-icon-name-container>.label-name{font-style:italic}.monaco-icon-label.deprecated{opacity:.66;text-decoration:line-through}.monaco-icon-label.italic:after{font-style:italic}.monaco-icon-label.strikethrough>.monaco-icon-label-container>.monaco-icon-description-container>.label-description,.monaco-icon-label.strikethrough>.monaco-icon-label-container>.monaco-icon-name-container>.label-name{text-decoration:line-through}.monaco-icon-label:after{font-size:90%;font-weight:600;margin:auto 16px 0 5px;opacity:.75;text-align:center}.monaco-list:focus .selected .monaco-icon-label,.monaco-list:focus .selected .monaco-icon-label:after{color:inherit!important}.monaco-list-row.focused.selected .label-description,.monaco-list-row.selected .label-description{opacity:.8}",
+      "start": 1711096857783,
+      "end": 1711096857791,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857791,
+      "end": 1711096857791,
+      "order": "normal"
+    }
+  ]
+}

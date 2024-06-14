@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/ghostTextWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar _a;\nimport * as dom from '../../../../base/browser/dom.js';\nimport { Disposable, DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport './ghostText.css';\nimport { applyFontInfo } from '../../../browser/config/domFontInfo.js';\nimport { EditorFontLigatures } from '../../../common/config/editorOptions.js';\nimport { LineTokens } from '../../../common/tokens/lineTokens.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { createStringBuilder } from '../../../common/core/stringBuilder.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { ghostTextBackground, ghostTextBorder, ghostTextForeground } from '../../../common/core/editorColorRegistry.js';\nimport { LineDecoration } from '../../../common/viewLayout/lineDecorations.js';\nimport { RenderLineInput, renderViewLine } from '../../../common/viewLayout/viewLineRenderer.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nconst ttPolicy = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('editorGhostText', { createHTML: value => value });\nlet GhostTextWidget = class GhostTextWidget extends Disposable {\n    constructor(editor, model, instantiationService, languageService) {\n        super();\n        this.editor = editor;\n        this.model = model;\n        this.instantiationService = instantiationService;\n        this.languageService = languageService;\n        this.disposed = false;\n        this.partsWidget = this._register(this.instantiationService.createInstance(DecorationsWidget, this.editor));\n        this.additionalLinesWidget = this._register(new AdditionalLinesWidget(this.editor, this.languageService.languageIdCodec));\n        this.viewMoreContentWidget = undefined;\n        this._register(this.editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(29 /* disableMonospaceOptimizations */)\n                || e.hasChanged(105 /* stopRenderingLineAfter */)\n                || e.hasChanged(88 /* renderWhitespace */)\n                || e.hasChanged(83 /* renderControlCharacters */)\n                || e.hasChanged(45 /* fontLigatures */)\n                || e.hasChanged(44 /* fontInfo */)\n                || e.hasChanged(59 /* lineHeight */)) {\n                this.update();\n            }\n        }));\n        this._register(toDisposable(() => {\n            var _a;\n            this.disposed = true;\n            this.update();\n            (_a = this.viewMoreContentWidget) === null || _a === void 0 ? void 0 : _a.dispose();\n            this.viewMoreContentWidget = undefined;\n        }));\n        this._register(model.onDidChange(() => {\n            this.update();\n        }));\n        this.update();\n    }\n    shouldShowHoverAtViewZone(viewZoneId) {\n        return (this.additionalLinesWidget.viewZoneId === viewZoneId);\n    }\n    update() {\n        var _a;\n        const ghostText = this.model.ghostText;\n        if (!this.editor.hasModel() || !ghostText || this.disposed) {\n            this.partsWidget.clear();\n            this.additionalLinesWidget.clear();\n            return;\n        }\n        const inlineTexts = new Array();\n        const additionalLines = new Array();\n        function addToAdditionalLines(lines, className) {\n            if (additionalLines.length > 0) {\n                const lastLine = additionalLines[additionalLines.length - 1];\n                if (className) {\n                    lastLine.decorations.push(new LineDecoration(lastLine.content.length + 1, lastLine.content.length + 1 + lines[0].length, className, 0 /* Regular */));\n                }\n                lastLine.content += lines[0];\n                lines = lines.slice(1);\n            }\n            for (const line of lines) {\n                additionalLines.push({\n                    content: line,\n                    decorations: className ? [new LineDecoration(1, line.length + 1, className, 0 /* Regular */)] : []\n                });\n            }\n        }\n        const textBufferLine = this.editor.getModel().getLineContent(ghostText.lineNumber);\n        this.editor.getModel().getLineTokens(ghostText.lineNumber);\n        let hiddenTextStartColumn = undefined;\n        let lastIdx = 0;\n        for (const part of ghostText.parts) {\n            let lines = part.lines;\n            if (hiddenTextStartColumn === undefined) {\n                inlineTexts.push({\n                    column: part.column,\n                    text: lines[0],\n                    preview: part.preview,\n                });\n                lines = lines.slice(1);\n            }\n            else {\n                addToAdditionalLines([textBufferLine.substring(lastIdx, part.column - 1)], undefined);\n            }\n            if (lines.length > 0) {\n                addToAdditionalLines(lines, 'ghost-text');\n                if (hiddenTextStartColumn === undefined && part.column <= textBufferLine.length) {\n                    hiddenTextStartColumn = part.column;\n                }\n            }\n            lastIdx = part.column - 1;\n        }\n        if (hiddenTextStartColumn !== undefined) {\n            addToAdditionalLines([textBufferLine.substring(lastIdx)], undefined);\n        }\n        this.partsWidget.setParts(ghostText.lineNumber, inlineTexts, hiddenTextStartColumn !== undefined ? { column: hiddenTextStartColumn, length: textBufferLine.length + 1 - hiddenTextStartColumn } : undefined);\n        this.additionalLinesWidget.updateLines(ghostText.lineNumber, additionalLines, ghostText.additionalReservedLineCount);\n        if (ghostText.parts.some(p => p.lines.length < 0)) {\n            // Not supported at the moment, condition is always false.\n            this.viewMoreContentWidget = this.renderViewMoreLines(new Position(ghostText.lineNumber, this.editor.getModel().getLineMaxColumn(ghostText.lineNumber)), '', 0);\n        }\n        else {\n            (_a = this.viewMoreContentWidget) === null || _a === void 0 ? void 0 : _a.dispose();\n            this.viewMoreContentWidget = undefined;\n        }\n    }\n    renderViewMoreLines(position, firstLineText, remainingLinesLength) {\n        const fontInfo = this.editor.getOption(44 /* fontInfo */);\n        const domNode = document.createElement('div');\n        domNode.className = 'suggest-preview-additional-widget';\n        applyFontInfo(domNode, fontInfo);\n        const spacer = document.createElement('span');\n        spacer.className = 'content-spacer';\n        spacer.append(firstLineText);\n        domNode.append(spacer);\n        const newline = document.createElement('span');\n        newline.className = 'content-newline suggest-preview-text';\n        newline.append('⏎  ');\n        domNode.append(newline);\n        const disposableStore = new DisposableStore();\n        const button = document.createElement('div');\n        button.className = 'button suggest-preview-text';\n        button.append(`+${remainingLinesLength} lines…`);\n        disposableStore.add(dom.addStandardDisposableListener(button, 'mousedown', (e) => {\n            var _a;\n            (_a = this.model) === null || _a === void 0 ? void 0 : _a.setExpanded(true);\n            e.preventDefault();\n            this.editor.focus();\n        }));\n        domNode.append(button);\n        return new ViewMoreLinesContentWidget(this.editor, position, domNode, disposableStore);\n    }\n};\nGhostTextWidget = __decorate([\n    __param(2, IInstantiationService),\n    __param(3, ILanguageService)\n], GhostTextWidget);\nexport { GhostTextWidget };\nclass DecorationsWidget {\n    constructor(editor) {\n        this.editor = editor;\n        this.decorationIds = [];\n        this.disposableStore = new DisposableStore();\n    }\n    dispose() {\n        this.clear();\n        this.disposableStore.dispose();\n    }\n    clear() {\n        this.editor.deltaDecorations(this.decorationIds, []);\n        this.disposableStore.clear();\n    }\n    setParts(lineNumber, parts, hiddenText) {\n        this.disposableStore.clear();\n        const textModel = this.editor.getModel();\n        if (!textModel) {\n            return;\n        }\n        const hiddenTextDecorations = new Array();\n        if (hiddenText) {\n            hiddenTextDecorations.push({\n                range: Range.fromPositions(new Position(lineNumber, hiddenText.column), new Position(lineNumber, hiddenText.column + hiddenText.length)),\n                options: {\n                    inlineClassName: 'ghost-text-hidden',\n                    description: 'ghost-text-hidden'\n                }\n            });\n        }\n        this.decorationIds = this.editor.deltaDecorations(this.decorationIds, parts.map(p => {\n            return ({\n                range: Range.fromPositions(new Position(lineNumber, p.column)),\n                options: {\n                    description: 'ghost-text',\n                    after: { content: p.text, inlineClassName: p.preview ? 'ghost-text-decoration-preview' : 'ghost-text-decoration' },\n                    showIfCollapsed: true,\n                }\n            });\n        }).concat(hiddenTextDecorations));\n    }\n}\nclass AdditionalLinesWidget {\n    constructor(editor, languageIdCodec) {\n        this.editor = editor;\n        this.languageIdCodec = languageIdCodec;\n        this._viewZoneId = undefined;\n    }\n    get viewZoneId() { return this._viewZoneId; }\n    dispose() {\n        this.clear();\n    }\n    clear() {\n        this.editor.changeViewZones((changeAccessor) => {\n            if (this._viewZoneId) {\n                changeAccessor.removeZone(this._viewZoneId);\n                this._viewZoneId = undefined;\n            }\n        });\n    }\n    updateLines(lineNumber, additionalLines, minReservedLineCount) {\n        const textModel = this.editor.getModel();\n        if (!textModel) {\n            return;\n        }\n        const { tabSize } = textModel.getOptions();\n        this.editor.changeViewZones((changeAccessor) => {\n            if (this._viewZoneId) {\n                changeAccessor.removeZone(this._viewZoneId);\n                this._viewZoneId = undefined;\n            }\n            const heightInLines = Math.max(additionalLines.length, minReservedLineCount);\n            if (heightInLines > 0) {\n                const domNode = document.createElement('div');\n                renderLines(domNode, tabSize, additionalLines, this.editor.getOptions(), this.languageIdCodec);\n                this._viewZoneId = changeAccessor.addZone({\n                    afterLineNumber: lineNumber,\n                    heightInLines: heightInLines,\n                    domNode,\n                    afterColumnAffinity: 1 /* Right */\n                });\n            }\n        });\n    }\n}\nfunction renderLines(domNode, tabSize, lines, opts, languageIdCodec) {\n    const disableMonospaceOptimizations = opts.get(29 /* disableMonospaceOptimizations */);\n    const stopRenderingLineAfter = opts.get(105 /* stopRenderingLineAfter */);\n    // To avoid visual confusion, we don't want to render visible whitespace\n    const renderWhitespace = 'none';\n    const renderControlCharacters = opts.get(83 /* renderControlCharacters */);\n    const fontLigatures = opts.get(45 /* fontLigatures */);\n    const fontInfo = opts.get(44 /* fontInfo */);\n    const lineHeight = opts.get(59 /* lineHeight */);\n    const sb = createStringBuilder(10000);\n    sb.appendASCIIString('<div class=\"suggest-preview-text\">');\n    for (let i = 0, len = lines.length; i < len; i++) {\n        const lineData = lines[i];\n        const line = lineData.content;\n        sb.appendASCIIString('<div class=\"view-line');\n        sb.appendASCIIString('\" style=\"top:');\n        sb.appendASCIIString(String(i * lineHeight));\n        sb.appendASCIIString('px;width:1000000px;\">');\n        const isBasicASCII = strings.isBasicASCII(line);\n        const containsRTL = strings.containsRTL(line);\n        const lineTokens = LineTokens.createEmpty(line, languageIdCodec);\n        renderViewLine(new RenderLineInput((fontInfo.isMonospace && !disableMonospaceOptimizations), fontInfo.canUseHalfwidthRightwardsArrow, line, false, isBasicASCII, containsRTL, 0, lineTokens, lineData.decorations, tabSize, 0, fontInfo.spaceWidth, fontInfo.middotWidth, fontInfo.wsmiddotWidth, stopRenderingLineAfter, renderWhitespace, renderControlCharacters, fontLigatures !== EditorFontLigatures.OFF, null), sb);\n        sb.appendASCIIString('</div>');\n    }\n    sb.appendASCIIString('</div>');\n    applyFontInfo(domNode, fontInfo);\n    const html = sb.build();\n    const trustedhtml = ttPolicy ? ttPolicy.createHTML(html) : html;\n    domNode.innerHTML = trustedhtml;\n}\nclass ViewMoreLinesContentWidget extends Disposable {\n    constructor(editor, position, domNode, disposableStore) {\n        super();\n        this.editor = editor;\n        this.position = position;\n        this.domNode = domNode;\n        this.allowEditorOverflow = false;\n        this.suppressMouseDown = false;\n        this._register(disposableStore);\n        this._register(toDisposable(() => {\n            this.editor.removeContentWidget(this);\n        }));\n        this.editor.addContentWidget(this);\n    }\n    getId() {\n        return 'editor.widget.viewMoreLinesWidget';\n    }\n    getDomNode() {\n        return this.domNode;\n    }\n    getPosition() {\n        return {\n            position: this.position,\n            preference: [0 /* EXACT */]\n        };\n    }\n}\nregisterThemingParticipant((theme, collector) => {\n    const foreground = theme.getColor(ghostTextForeground);\n    if (foreground) {\n        // `!important` ensures that other decorations don't cause a style conflict (#132017).\n        collector.addRule(`.monaco-editor .ghost-text-decoration { color: ${foreground.toString()} !important; }`);\n        collector.addRule(`.monaco-editor .ghost-text-decoration-preview { color: ${foreground.toString()} !important; }`);\n        collector.addRule(`.monaco-editor .suggest-preview-text .ghost-text { color: ${foreground.toString()} !important; }`);\n    }\n    const background = theme.getColor(ghostTextBackground);\n    if (background) {\n        collector.addRule(`.monaco-editor .ghost-text-decoration { background-color: ${background.toString()}; }`);\n        collector.addRule(`.monaco-editor .ghost-text-decoration-preview { background-color: ${background.toString()}; }`);\n        collector.addRule(`.monaco-editor .suggest-preview-text .ghost-text { background-color: ${background.toString()}; }`);\n    }\n    const border = theme.getColor(ghostTextBorder);\n    if (border) {\n        collector.addRule(`.monaco-editor .suggest-preview-text .ghost-text { border: 1px solid ${border}; }`);\n        collector.addRule(`.monaco-editor .ghost-text-decoration { border: 1px solid ${border}; }`);\n        collector.addRule(`.monaco-editor .ghost-text-decoration-preview { border: 1px solid ${border}; }`);\n    }\n});\n",
+      "start": 1711096856704,
+      "end": 1711096856812,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856812,
+      "end": 1711096856812,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856812,
+      "end": 1711096856813,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    }
+  ]
+}

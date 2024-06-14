@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/tree/objectTreeModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { IndexTreeModel } from './indexTreeModel.js';\nimport { TreeError } from './tree.js';\nimport { Iterable } from '../../../common/iterator.js';\nexport class ObjectTreeModel {\n    constructor(user, list, options = {}) {\n        this.user = user;\n        this.rootRef = null;\n        this.nodes = new Map();\n        this.nodesByIdentity = new Map();\n        this.model = new IndexTreeModel(user, list, null, options);\n        this.onDidSplice = this.model.onDidSplice;\n        this.onDidChangeCollapseState = this.model.onDidChangeCollapseState;\n        this.onDidChangeRenderNodeCount = this.model.onDidChangeRenderNodeCount;\n        if (options.sorter) {\n            this.sorter = {\n                compare(a, b) {\n                    return options.sorter.compare(a.element, b.element);\n                }\n            };\n        }\n        this.identityProvider = options.identityProvider;\n    }\n    setChildren(element, children = Iterable.empty(), options = {}) {\n        const location = this.getElementLocation(element);\n        this._setChildren(location, this.preserveCollapseState(children), options);\n    }\n    _setChildren(location, children = Iterable.empty(), options) {\n        const insertedElements = new Set();\n        const insertedElementIds = new Set();\n        const onDidCreateNode = (node) => {\n            var _a;\n            if (node.element === null) {\n                return;\n            }\n            const tnode = node;\n            insertedElements.add(tnode.element);\n            this.nodes.set(tnode.element, tnode);\n            if (this.identityProvider) {\n                const id = this.identityProvider.getId(tnode.element).toString();\n                insertedElementIds.add(id);\n                this.nodesByIdentity.set(id, tnode);\n            }\n            (_a = options.onDidCreateNode) === null || _a === void 0 ? void 0 : _a.call(options, tnode);\n        };\n        const onDidDeleteNode = (node) => {\n            var _a;\n            if (node.element === null) {\n                return;\n            }\n            const tnode = node;\n            if (!insertedElements.has(tnode.element)) {\n                this.nodes.delete(tnode.element);\n            }\n            if (this.identityProvider) {\n                const id = this.identityProvider.getId(tnode.element).toString();\n                if (!insertedElementIds.has(id)) {\n                    this.nodesByIdentity.delete(id);\n                }\n            }\n            (_a = options.onDidDeleteNode) === null || _a === void 0 ? void 0 : _a.call(options, tnode);\n        };\n        this.model.splice([...location, 0], Number.MAX_VALUE, children, Object.assign(Object.assign({}, options), { onDidCreateNode, onDidDeleteNode }));\n    }\n    preserveCollapseState(elements = Iterable.empty()) {\n        if (this.sorter) {\n            elements = [...elements].sort(this.sorter.compare.bind(this.sorter));\n        }\n        return Iterable.map(elements, treeElement => {\n            let node = this.nodes.get(treeElement.element);\n            if (!node && this.identityProvider) {\n                const id = this.identityProvider.getId(treeElement.element).toString();\n                node = this.nodesByIdentity.get(id);\n            }\n            if (!node) {\n                return Object.assign(Object.assign({}, treeElement), { children: this.preserveCollapseState(treeElement.children) });\n            }\n            const collapsible = typeof treeElement.collapsible === 'boolean' ? treeElement.collapsible : node.collapsible;\n            const collapsed = typeof treeElement.collapsed !== 'undefined' ? treeElement.collapsed : node.collapsed;\n            return Object.assign(Object.assign({}, treeElement), { collapsible,\n                collapsed, children: this.preserveCollapseState(treeElement.children) });\n        });\n    }\n    rerender(element) {\n        const location = this.getElementLocation(element);\n        this.model.rerender(location);\n    }\n    getFirstElementChild(ref = null) {\n        const location = this.getElementLocation(ref);\n        return this.model.getFirstElementChild(location);\n    }\n    has(element) {\n        return this.nodes.has(element);\n    }\n    getListIndex(element) {\n        const location = this.getElementLocation(element);\n        return this.model.getListIndex(location);\n    }\n    getListRenderCount(element) {\n        const location = this.getElementLocation(element);\n        return this.model.getListRenderCount(location);\n    }\n    isCollapsible(element) {\n        const location = this.getElementLocation(element);\n        return this.model.isCollapsible(location);\n    }\n    setCollapsible(element, collapsible) {\n        const location = this.getElementLocation(element);\n        return this.model.setCollapsible(location, collapsible);\n    }\n    isCollapsed(element) {\n        const location = this.getElementLocation(element);\n        return this.model.isCollapsed(location);\n    }\n    setCollapsed(element, collapsed, recursive) {\n        const location = this.getElementLocation(element);\n        return this.model.setCollapsed(location, collapsed, recursive);\n    }\n    expandTo(element) {\n        const location = this.getElementLocation(element);\n        this.model.expandTo(location);\n    }\n    refilter() {\n        this.model.refilter();\n    }\n    getNode(element = null) {\n        if (element === null) {\n            return this.model.getNode(this.model.rootRef);\n        }\n        const node = this.nodes.get(element);\n        if (!node) {\n            throw new TreeError(this.user, `Tree element not found: ${element}`);\n        }\n        return node;\n    }\n    getNodeLocation(node) {\n        return node.element;\n    }\n    getParentNodeLocation(element) {\n        if (element === null) {\n            throw new TreeError(this.user, `Invalid getParentNodeLocation call`);\n        }\n        const node = this.nodes.get(element);\n        if (!node) {\n            throw new TreeError(this.user, `Tree element not found: ${element}`);\n        }\n        const location = this.model.getNodeLocation(node);\n        const parentLocation = this.model.getParentNodeLocation(location);\n        const parent = this.model.getNode(parentLocation);\n        return parent.element;\n    }\n    getElementLocation(element) {\n        if (element === null) {\n            return [];\n        }\n        const node = this.nodes.get(element);\n        if (!node) {\n            throw new TreeError(this.user, `Tree element not found: ${element}`);\n        }\n        return this.model.getNodeLocation(node);\n    }\n}\n",
+      "start": 1711096857432,
+      "end": 1711096857548,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857548,
+      "end": 1711096857548,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857548,
+      "end": 1711096857549,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857549,
+      "end": 1711096857549,
+      "order": "normal"
+    }
+  ]
+}

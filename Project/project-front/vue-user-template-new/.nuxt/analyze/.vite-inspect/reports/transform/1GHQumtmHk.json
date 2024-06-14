@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/formattedTextRenderer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as DOM from './dom.js';\nexport function renderText(text, options = {}) {\n    const element = createElement(options);\n    element.textContent = text;\n    return element;\n}\nexport function renderFormattedText(formattedText, options = {}) {\n    const element = createElement(options);\n    _renderFormattedText(element, parseFormattedText(formattedText, !!options.renderCodeSegments), options.actionHandler, options.renderCodeSegments);\n    return element;\n}\nexport function createElement(options) {\n    const tagName = options.inline ? 'span' : 'div';\n    const element = document.createElement(tagName);\n    if (options.className) {\n        element.className = options.className;\n    }\n    return element;\n}\nclass StringStream {\n    constructor(source) {\n        this.source = source;\n        this.index = 0;\n    }\n    eos() {\n        return this.index >= this.source.length;\n    }\n    next() {\n        const next = this.peek();\n        this.advance();\n        return next;\n    }\n    peek() {\n        return this.source[this.index];\n    }\n    advance() {\n        this.index++;\n    }\n}\nfunction _renderFormattedText(element, treeNode, actionHandler, renderCodeSegments) {\n    let child;\n    if (treeNode.type === 2 /* Text */) {\n        child = document.createTextNode(treeNode.content || '');\n    }\n    else if (treeNode.type === 3 /* Bold */) {\n        child = document.createElement('b');\n    }\n    else if (treeNode.type === 4 /* Italics */) {\n        child = document.createElement('i');\n    }\n    else if (treeNode.type === 7 /* Code */ && renderCodeSegments) {\n        child = document.createElement('code');\n    }\n    else if (treeNode.type === 5 /* Action */ && actionHandler) {\n        const a = document.createElement('a');\n        actionHandler.disposables.add(DOM.addStandardDisposableListener(a, 'click', (event) => {\n            actionHandler.callback(String(treeNode.index), event);\n        }));\n        child = a;\n    }\n    else if (treeNode.type === 8 /* NewLine */) {\n        child = document.createElement('br');\n    }\n    else if (treeNode.type === 1 /* Root */) {\n        child = element;\n    }\n    if (child && element !== child) {\n        element.appendChild(child);\n    }\n    if (child && Array.isArray(treeNode.children)) {\n        treeNode.children.forEach((nodeChild) => {\n            _renderFormattedText(child, nodeChild, actionHandler, renderCodeSegments);\n        });\n    }\n}\nfunction parseFormattedText(content, parseCodeSegments) {\n    const root = {\n        type: 1 /* Root */,\n        children: []\n    };\n    let actionViewItemIndex = 0;\n    let current = root;\n    const stack = [];\n    const stream = new StringStream(content);\n    while (!stream.eos()) {\n        let next = stream.next();\n        const isEscapedFormatType = (next === '\\\\' && formatTagType(stream.peek(), parseCodeSegments) !== 0 /* Invalid */);\n        if (isEscapedFormatType) {\n            next = stream.next(); // unread the backslash if it escapes a format tag type\n        }\n        if (!isEscapedFormatType && isFormatTag(next, parseCodeSegments) && next === stream.peek()) {\n            stream.advance();\n            if (current.type === 2 /* Text */) {\n                current = stack.pop();\n            }\n            const type = formatTagType(next, parseCodeSegments);\n            if (current.type === type || (current.type === 5 /* Action */ && type === 6 /* ActionClose */)) {\n                current = stack.pop();\n            }\n            else {\n                const newCurrent = {\n                    type: type,\n                    children: []\n                };\n                if (type === 5 /* Action */) {\n                    newCurrent.index = actionViewItemIndex;\n                    actionViewItemIndex++;\n                }\n                current.children.push(newCurrent);\n                stack.push(current);\n                current = newCurrent;\n            }\n        }\n        else if (next === '\\n') {\n            if (current.type === 2 /* Text */) {\n                current = stack.pop();\n            }\n            current.children.push({\n                type: 8 /* NewLine */\n            });\n        }\n        else {\n            if (current.type !== 2 /* Text */) {\n                const textCurrent = {\n                    type: 2 /* Text */,\n                    content: next\n                };\n                current.children.push(textCurrent);\n                stack.push(current);\n                current = textCurrent;\n            }\n            else {\n                current.content += next;\n            }\n        }\n    }\n    if (current.type === 2 /* Text */) {\n        current = stack.pop();\n    }\n    if (stack.length) {\n        // incorrectly formatted string literal\n    }\n    return root;\n}\nfunction isFormatTag(char, supportCodeSegments) {\n    return formatTagType(char, supportCodeSegments) !== 0 /* Invalid */;\n}\nfunction formatTagType(char, supportCodeSegments) {\n    switch (char) {\n        case '*':\n            return 3 /* Bold */;\n        case '_':\n            return 4 /* Italics */;\n        case '[':\n            return 5 /* Action */;\n        case ']':\n            return 6 /* ActionClose */;\n        case '`':\n            return supportCodeSegments ? 7 /* Code */ : 0 /* Invalid */;\n        default:\n            return 0 /* Invalid */;\n    }\n}\n",
+      "start": 1711096854647,
+      "end": 1711096854849,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854849,
+      "end": 1711096854849,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854853,
+      "end": 1711096854853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854854,
+      "end": 1711096854854,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854855,
+      "end": 1711096854855,
+      "order": "normal"
+    }
+  ]
+}

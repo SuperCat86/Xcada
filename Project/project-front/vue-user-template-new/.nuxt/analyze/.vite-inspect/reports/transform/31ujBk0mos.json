@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/suggestWidgetInlineCompletionProvider.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { compareBy, findMaxBy, numberComparator } from '../../../../base/common/arrays.js';\nimport { RunOnceScheduler } from '../../../../base/common/async.js';\nimport { Emitter, Event } from '../../../../base/common/event.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { SnippetParser } from '../../snippet/browser/snippetParser.js';\nimport { SnippetSession } from '../../snippet/browser/snippetSession.js';\nimport { SuggestController } from '../../suggest/browser/suggestController.js';\nimport { minimizeInlineCompletion } from './inlineCompletionsModel.js';\nimport { normalizedInlineCompletionsEquals } from './inlineCompletionToGhostText.js';\nexport class SuggestWidgetInlineCompletionProvider extends Disposable {\n    constructor(editor, suggestControllerPreselector) {\n        super();\n        this.editor = editor;\n        this.suggestControllerPreselector = suggestControllerPreselector;\n        this.isSuggestWidgetVisible = false;\n        this.isShiftKeyPressed = false;\n        this._isActive = false;\n        this._currentSuggestItemInfo = undefined;\n        this.onDidChangeEmitter = new Emitter();\n        this.onDidChange = this.onDidChangeEmitter.event;\n        // This delay fixes a suggest widget issue when typing \".\" immediately restarts the suggestion session.\n        this.setInactiveDelayed = this._register(new RunOnceScheduler(() => {\n            if (!this.isSuggestWidgetVisible) {\n                if (this._isActive) {\n                    this._isActive = false;\n                    this.onDidChangeEmitter.fire();\n                }\n            }\n        }, 100));\n        // See the command acceptAlternativeSelectedSuggestion that is bound to shift+tab\n        this._register(editor.onKeyDown(e => {\n            if (e.shiftKey && !this.isShiftKeyPressed) {\n                this.isShiftKeyPressed = true;\n                this.update(this._isActive);\n            }\n        }));\n        this._register(editor.onKeyUp(e => {\n            if (e.shiftKey && this.isShiftKeyPressed) {\n                this.isShiftKeyPressed = false;\n                this.update(this._isActive);\n            }\n        }));\n        const suggestController = SuggestController.get(this.editor);\n        if (suggestController) {\n            this._register(suggestController.registerSelector({\n                priority: 100,\n                select: (model, pos, suggestItems) => {\n                    const textModel = this.editor.getModel();\n                    const normalizedItemToPreselect = minimizeInlineCompletion(textModel, this.suggestControllerPreselector());\n                    if (!normalizedItemToPreselect) {\n                        return -1;\n                    }\n                    const position = Position.lift(pos);\n                    const candidates = suggestItems\n                        .map((suggestItem, index) => {\n                        const inlineSuggestItem = suggestionToSuggestItemInfo(suggestController, position, suggestItem, this.isShiftKeyPressed);\n                        const normalizedSuggestItem = minimizeInlineCompletion(textModel, inlineSuggestItem === null || inlineSuggestItem === void 0 ? void 0 : inlineSuggestItem.normalizedInlineCompletion);\n                        if (!normalizedSuggestItem) {\n                            return undefined;\n                        }\n                        const valid = rangeStartsWith(normalizedItemToPreselect.range, normalizedSuggestItem.range) &&\n                            normalizedItemToPreselect.text.startsWith(normalizedSuggestItem.text);\n                        return { index, valid, prefixLength: normalizedSuggestItem.text.length, suggestItem };\n                    })\n                        .filter(item => item && item.valid);\n                    const result = findMaxBy(candidates, compareBy(s => s.prefixLength, numberComparator));\n                    return result ? result.index : -1;\n                }\n            }));\n            let isBoundToSuggestWidget = false;\n            const bindToSuggestWidget = () => {\n                if (isBoundToSuggestWidget) {\n                    return;\n                }\n                isBoundToSuggestWidget = true;\n                this._register(suggestController.widget.value.onDidShow(() => {\n                    this.isSuggestWidgetVisible = true;\n                    this.update(true);\n                }));\n                this._register(suggestController.widget.value.onDidHide(() => {\n                    this.isSuggestWidgetVisible = false;\n                    this.setInactiveDelayed.schedule();\n                    this.update(this._isActive);\n                }));\n                this._register(suggestController.widget.value.onDidFocus(() => {\n                    this.isSuggestWidgetVisible = true;\n                    this.update(true);\n                }));\n            };\n            this._register(Event.once(suggestController.model.onDidTrigger)(e => {\n                bindToSuggestWidget();\n            }));\n        }\n        this.update(this._isActive);\n    }\n    /**\n     * Returns undefined if the suggest widget is not active.\n    */\n    get state() {\n        if (!this._isActive) {\n            return undefined;\n        }\n        return { selectedItem: this._currentSuggestItemInfo };\n    }\n    update(newActive) {\n        const newInlineCompletion = this.getSuggestItemInfo();\n        let shouldFire = false;\n        if (!suggestItemInfoEquals(this._currentSuggestItemInfo, newInlineCompletion)) {\n            this._currentSuggestItemInfo = newInlineCompletion;\n            shouldFire = true;\n        }\n        if (this._isActive !== newActive) {\n            this._isActive = newActive;\n            shouldFire = true;\n        }\n        if (shouldFire) {\n            this.onDidChangeEmitter.fire();\n        }\n    }\n    getSuggestItemInfo() {\n        const suggestController = SuggestController.get(this.editor);\n        if (!suggestController) {\n            return undefined;\n        }\n        if (!this.isSuggestWidgetVisible) {\n            return undefined;\n        }\n        const focusedItem = suggestController.widget.value.getFocusedItem();\n        if (!focusedItem) {\n            return undefined;\n        }\n        // TODO: item.isResolved\n        return suggestionToSuggestItemInfo(suggestController, this.editor.getPosition(), focusedItem.item, this.isShiftKeyPressed);\n    }\n    stopForceRenderingAbove() {\n        const suggestController = SuggestController.get(this.editor);\n        if (suggestController) {\n            suggestController.stopForceRenderingAbove();\n        }\n    }\n    forceRenderingAbove() {\n        const suggestController = SuggestController.get(this.editor);\n        if (suggestController) {\n            suggestController.forceRenderingAbove();\n        }\n    }\n}\nexport function rangeStartsWith(rangeToTest, prefix) {\n    return (prefix.startLineNumber === rangeToTest.startLineNumber &&\n        prefix.startColumn === rangeToTest.startColumn &&\n        (prefix.endLineNumber < rangeToTest.endLineNumber ||\n            (prefix.endLineNumber === rangeToTest.endLineNumber &&\n                prefix.endColumn <= rangeToTest.endColumn)));\n}\nfunction suggestItemInfoEquals(a, b) {\n    if (a === b) {\n        return true;\n    }\n    if (!a || !b) {\n        return false;\n    }\n    return a.completionItemKind === b.completionItemKind &&\n        a.isSnippetText === b.isSnippetText &&\n        normalizedInlineCompletionsEquals(a.normalizedInlineCompletion, b.normalizedInlineCompletion);\n}\nfunction suggestionToSuggestItemInfo(suggestController, position, item, toggleMode) {\n    // additionalTextEdits might not be resolved here, this could be problematic.\n    if (Array.isArray(item.completion.additionalTextEdits) && item.completion.additionalTextEdits.length > 0) {\n        // cannot represent additional text edits\n        return {\n            completionItemKind: item.completion.kind,\n            isSnippetText: false,\n            normalizedInlineCompletion: {\n                // Dummy element, so that space is reserved, but no text is shown\n                range: Range.fromPositions(position, position),\n                text: ''\n            },\n        };\n    }\n    let { insertText } = item.completion;\n    let isSnippetText = false;\n    if (item.completion.insertTextRules & 4 /* InsertAsSnippet */) {\n        const snippet = new SnippetParser().parse(insertText);\n        const model = suggestController.editor.getModel();\n        // Ignore snippets that are too large.\n        // Adjust whitespace is expensive for them.\n        if (snippet.children.length > 100) {\n            return undefined;\n        }\n        SnippetSession.adjustWhitespace(model, position, snippet, true, true);\n        insertText = snippet.toString();\n        isSnippetText = true;\n    }\n    const info = suggestController.getOverwriteInfo(item, toggleMode);\n    return {\n        isSnippetText,\n        completionItemKind: item.completion.kind,\n        normalizedInlineCompletion: {\n            text: insertText,\n            range: Range.fromPositions(position.delta(0, -info.overwriteBefore), position.delta(0, Math.max(info.overwriteAfter, 0))),\n        }\n    };\n}\n",
+      "start": 1711096857660,
+      "end": 1711096857730,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857730,
+      "end": 1711096857731,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857731,
+      "end": 1711096857731,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/abstractScrollbar.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { createFastDomNode } from '../../fastDomNode.js';\nimport { GlobalMouseMoveMonitor, standardMouseMoveMerger } from '../../globalMouseMoveMonitor.js';\nimport { ScrollbarArrow } from './scrollbarArrow.js';\nimport { ScrollbarVisibilityController } from './scrollbarVisibilityController.js';\nimport { Widget } from '../widget.js';\nimport * as platform from '../../../common/platform.js';\n/**\n * The orthogonal distance to the slider at which dragging \"resets\". This implements \"snapping\"\n */\nconst MOUSE_DRAG_RESET_DISTANCE = 140;\nexport class AbstractScrollbar extends Widget {\n    constructor(opts) {\n        super();\n        this._lazyRender = opts.lazyRender;\n        this._host = opts.host;\n        this._scrollable = opts.scrollable;\n        this._scrollByPage = opts.scrollByPage;\n        this._scrollbarState = opts.scrollbarState;\n        this._visibilityController = this._register(new ScrollbarVisibilityController(opts.visibility, 'visible scrollbar ' + opts.extraScrollbarClassName, 'invisible scrollbar ' + opts.extraScrollbarClassName));\n        this._visibilityController.setIsNeeded(this._scrollbarState.isNeeded());\n        this._mouseMoveMonitor = this._register(new GlobalMouseMoveMonitor());\n        this._shouldRender = true;\n        this.domNode = createFastDomNode(document.createElement('div'));\n        this.domNode.setAttribute('role', 'presentation');\n        this.domNode.setAttribute('aria-hidden', 'true');\n        this._visibilityController.setDomNode(this.domNode);\n        this.domNode.setPosition('absolute');\n        this.onmousedown(this.domNode.domNode, (e) => this._domNodeMouseDown(e));\n    }\n    // ----------------- creation\n    /**\n     * Creates the dom node for an arrow & adds it to the container\n     */\n    _createArrow(opts) {\n        const arrow = this._register(new ScrollbarArrow(opts));\n        this.domNode.domNode.appendChild(arrow.bgDomNode);\n        this.domNode.domNode.appendChild(arrow.domNode);\n    }\n    /**\n     * Creates the slider dom node, adds it to the container & hooks up the events\n     */\n    _createSlider(top, left, width, height) {\n        this.slider = createFastDomNode(document.createElement('div'));\n        this.slider.setClassName('slider');\n        this.slider.setPosition('absolute');\n        this.slider.setTop(top);\n        this.slider.setLeft(left);\n        if (typeof width === 'number') {\n            this.slider.setWidth(width);\n        }\n        if (typeof height === 'number') {\n            this.slider.setHeight(height);\n        }\n        this.slider.setLayerHinting(true);\n        this.slider.setContain('strict');\n        this.domNode.domNode.appendChild(this.slider.domNode);\n        this.onmousedown(this.slider.domNode, (e) => {\n            if (e.leftButton) {\n                e.preventDefault();\n                this._sliderMouseDown(e, () => { });\n            }\n        });\n        this.onclick(this.slider.domNode, e => {\n            if (e.leftButton) {\n                e.stopPropagation();\n            }\n        });\n    }\n    // ----------------- Update state\n    _onElementSize(visibleSize) {\n        if (this._scrollbarState.setVisibleSize(visibleSize)) {\n            this._visibilityController.setIsNeeded(this._scrollbarState.isNeeded());\n            this._shouldRender = true;\n            if (!this._lazyRender) {\n                this.render();\n            }\n        }\n        return this._shouldRender;\n    }\n    _onElementScrollSize(elementScrollSize) {\n        if (this._scrollbarState.setScrollSize(elementScrollSize)) {\n            this._visibilityController.setIsNeeded(this._scrollbarState.isNeeded());\n            this._shouldRender = true;\n            if (!this._lazyRender) {\n                this.render();\n            }\n        }\n        return this._shouldRender;\n    }\n    _onElementScrollPosition(elementScrollPosition) {\n        if (this._scrollbarState.setScrollPosition(elementScrollPosition)) {\n            this._visibilityController.setIsNeeded(this._scrollbarState.isNeeded());\n            this._shouldRender = true;\n            if (!this._lazyRender) {\n                this.render();\n            }\n        }\n        return this._shouldRender;\n    }\n    // ----------------- rendering\n    beginReveal() {\n        this._visibilityController.setShouldBeVisible(true);\n    }\n    beginHide() {\n        this._visibilityController.setShouldBeVisible(false);\n    }\n    render() {\n        if (!this._shouldRender) {\n            return;\n        }\n        this._shouldRender = false;\n        this._renderDomNode(this._scrollbarState.getRectangleLargeSize(), this._scrollbarState.getRectangleSmallSize());\n        this._updateSlider(this._scrollbarState.getSliderSize(), this._scrollbarState.getArrowSize() + this._scrollbarState.getSliderPosition());\n    }\n    // ----------------- DOM events\n    _domNodeMouseDown(e) {\n        if (e.target !== this.domNode.domNode) {\n            return;\n        }\n        this._onMouseDown(e);\n    }\n    delegateMouseDown(e) {\n        const domTop = this.domNode.domNode.getClientRects()[0].top;\n        const sliderStart = domTop + this._scrollbarState.getSliderPosition();\n        const sliderStop = domTop + this._scrollbarState.getSliderPosition() + this._scrollbarState.getSliderSize();\n        const mousePos = this._sliderMousePosition(e);\n        if (sliderStart <= mousePos && mousePos <= sliderStop) {\n            // Act as if it was a mouse down on the slider\n            if (e.leftButton) {\n                e.preventDefault();\n                this._sliderMouseDown(e, () => { });\n            }\n        }\n        else {\n            // Act as if it was a mouse down on the scrollbar\n            this._onMouseDown(e);\n        }\n    }\n    _onMouseDown(e) {\n        let offsetX;\n        let offsetY;\n        if (e.target === this.domNode.domNode && typeof e.browserEvent.offsetX === 'number' && typeof e.browserEvent.offsetY === 'number') {\n            offsetX = e.browserEvent.offsetX;\n            offsetY = e.browserEvent.offsetY;\n        }\n        else {\n            const domNodePosition = dom.getDomNodePagePosition(this.domNode.domNode);\n            offsetX = e.posx - domNodePosition.left;\n            offsetY = e.posy - domNodePosition.top;\n        }\n        const offset = this._mouseDownRelativePosition(offsetX, offsetY);\n        this._setDesiredScrollPositionNow(this._scrollByPage\n            ? this._scrollbarState.getDesiredScrollPositionFromOffsetPaged(offset)\n            : this._scrollbarState.getDesiredScrollPositionFromOffset(offset));\n        if (e.leftButton) {\n            e.preventDefault();\n            this._sliderMouseDown(e, () => { });\n        }\n    }\n    _sliderMouseDown(e, onDragFinished) {\n        const initialMousePosition = this._sliderMousePosition(e);\n        const initialMouseOrthogonalPosition = this._sliderOrthogonalMousePosition(e);\n        const initialScrollbarState = this._scrollbarState.clone();\n        this.slider.toggleClassName('active', true);\n        this._mouseMoveMonitor.startMonitoring(e.target, e.buttons, standardMouseMoveMerger, (mouseMoveData) => {\n            const mouseOrthogonalPosition = this._sliderOrthogonalMousePosition(mouseMoveData);\n            const mouseOrthogonalDelta = Math.abs(mouseOrthogonalPosition - initialMouseOrthogonalPosition);\n            if (platform.isWindows && mouseOrthogonalDelta > MOUSE_DRAG_RESET_DISTANCE) {\n                // The mouse has wondered away from the scrollbar => reset dragging\n                this._setDesiredScrollPositionNow(initialScrollbarState.getScrollPosition());\n                return;\n            }\n            const mousePosition = this._sliderMousePosition(mouseMoveData);\n            const mouseDelta = mousePosition - initialMousePosition;\n            this._setDesiredScrollPositionNow(initialScrollbarState.getDesiredScrollPositionFromDelta(mouseDelta));\n        }, () => {\n            this.slider.toggleClassName('active', false);\n            this._host.onDragEnd();\n            onDragFinished();\n        });\n        this._host.onDragStart();\n    }\n    _setDesiredScrollPositionNow(_desiredScrollPosition) {\n        const desiredScrollPosition = {};\n        this.writeScrollPosition(desiredScrollPosition, _desiredScrollPosition);\n        this._scrollable.setScrollPositionNow(desiredScrollPosition);\n    }\n    updateScrollbarSize(scrollbarSize) {\n        this._updateScrollbarSize(scrollbarSize);\n        this._scrollbarState.setScrollbarSize(scrollbarSize);\n        this._shouldRender = true;\n        if (!this._lazyRender) {\n            this.render();\n        }\n    }\n    isNeeded() {\n        return this._scrollbarState.isNeeded();\n    }\n}\n",
+      "start": 1711096857568,
+      "end": 1711096857675,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857675,
+      "end": 1711096857675,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857675,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    }
+  ]
+}

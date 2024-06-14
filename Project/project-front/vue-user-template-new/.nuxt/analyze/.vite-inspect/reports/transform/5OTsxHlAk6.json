@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/actionbar/actionViewItems.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { isFirefox } from '../../browser.js';\nimport { DataTransfers } from '../../dnd.js';\nimport { $, addDisposableListener, append, EventHelper, EventType } from '../../dom.js';\nimport { EventType as TouchEventType, Gesture } from '../../touch.js';\nimport { Action, ActionRunner, Separator } from '../../../common/actions.js';\nimport { Disposable } from '../../../common/lifecycle.js';\nimport * as platform from '../../../common/platform.js';\nimport * as types from '../../../common/types.js';\nimport './actionbar.css';\nimport * as nls from '../../../../nls.js';\nexport class BaseActionViewItem extends Disposable {\n    constructor(context, action, options = {}) {\n        super();\n        this.options = options;\n        this._context = context || this;\n        this._action = action;\n        if (action instanceof Action) {\n            this._register(action.onDidChange(event => {\n                if (!this.element) {\n                    // we have not been rendered yet, so there\n                    // is no point in updating the UI\n                    return;\n                }\n                this.handleActionChangeEvent(event);\n            }));\n        }\n    }\n    handleActionChangeEvent(event) {\n        if (event.enabled !== undefined) {\n            this.updateEnabled();\n        }\n        if (event.checked !== undefined) {\n            this.updateChecked();\n        }\n        if (event.class !== undefined) {\n            this.updateClass();\n        }\n        if (event.label !== undefined) {\n            this.updateLabel();\n            this.updateTooltip();\n        }\n        if (event.tooltip !== undefined) {\n            this.updateTooltip();\n        }\n    }\n    get actionRunner() {\n        if (!this._actionRunner) {\n            this._actionRunner = this._register(new ActionRunner());\n        }\n        return this._actionRunner;\n    }\n    set actionRunner(actionRunner) {\n        this._actionRunner = actionRunner;\n    }\n    getAction() {\n        return this._action;\n    }\n    isEnabled() {\n        return this._action.enabled;\n    }\n    setActionContext(newContext) {\n        this._context = newContext;\n    }\n    render(container) {\n        const element = this.element = container;\n        this._register(Gesture.addTarget(container));\n        const enableDragging = this.options && this.options.draggable;\n        if (enableDragging) {\n            container.draggable = true;\n            if (isFirefox) {\n                // Firefox: requires to set a text data transfer to get going\n                this._register(addDisposableListener(container, EventType.DRAG_START, e => { var _a; return (_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData(DataTransfers.TEXT, this._action.label); }));\n            }\n        }\n        this._register(addDisposableListener(element, TouchEventType.Tap, e => this.onClick(e, true))); // Preserve focus on tap #125470\n        this._register(addDisposableListener(element, EventType.MOUSE_DOWN, e => {\n            if (!enableDragging) {\n                EventHelper.stop(e, true); // do not run when dragging is on because that would disable it\n            }\n            if (this._action.enabled && e.button === 0) {\n                element.classList.add('active');\n            }\n        }));\n        if (platform.isMacintosh) {\n            // macOS: allow to trigger the button when holding Ctrl+key and pressing the\n            // main mouse button. This is for scenarios where e.g. some interaction forces\n            // the Ctrl+key to be pressed and hold but the user still wants to interact\n            // with the actions (for example quick access in quick navigation mode).\n            this._register(addDisposableListener(element, EventType.CONTEXT_MENU, e => {\n                if (e.button === 0 && e.ctrlKey === true) {\n                    this.onClick(e);\n                }\n            }));\n        }\n        this._register(addDisposableListener(element, EventType.CLICK, e => {\n            EventHelper.stop(e, true);\n            // menus do not use the click event\n            if (!(this.options && this.options.isMenu)) {\n                this.onClick(e);\n            }\n        }));\n        this._register(addDisposableListener(element, EventType.DBLCLICK, e => {\n            EventHelper.stop(e, true);\n        }));\n        [EventType.MOUSE_UP, EventType.MOUSE_OUT].forEach(event => {\n            this._register(addDisposableListener(element, event, e => {\n                EventHelper.stop(e);\n                element.classList.remove('active');\n            }));\n        });\n    }\n    onClick(event, preserveFocus = false) {\n        var _a;\n        EventHelper.stop(event, true);\n        const context = types.isUndefinedOrNull(this._context) ? ((_a = this.options) === null || _a === void 0 ? void 0 : _a.useEventAsContext) ? event : { preserveFocus } : this._context;\n        this.actionRunner.run(this._action, context);\n    }\n    // Only set the tabIndex on the element once it is about to get focused\n    // That way this element wont be a tab stop when it is not needed #106441\n    focus() {\n        if (this.element) {\n            this.element.tabIndex = 0;\n            this.element.focus();\n            this.element.classList.add('focused');\n        }\n    }\n    blur() {\n        if (this.element) {\n            this.element.blur();\n            this.element.tabIndex = -1;\n            this.element.classList.remove('focused');\n        }\n    }\n    setFocusable(focusable) {\n        if (this.element) {\n            this.element.tabIndex = focusable ? 0 : -1;\n        }\n    }\n    get trapsArrowNavigation() {\n        return false;\n    }\n    updateEnabled() {\n        // implement in subclass\n    }\n    updateLabel() {\n        // implement in subclass\n    }\n    updateTooltip() {\n        // implement in subclass\n    }\n    updateClass() {\n        // implement in subclass\n    }\n    updateChecked() {\n        // implement in subclass\n    }\n    dispose() {\n        if (this.element) {\n            this.element.remove();\n            this.element = undefined;\n        }\n        super.dispose();\n    }\n}\nexport class ActionViewItem extends BaseActionViewItem {\n    constructor(context, action, options = {}) {\n        super(context, action, options);\n        this.options = options;\n        this.options.icon = options.icon !== undefined ? options.icon : false;\n        this.options.label = options.label !== undefined ? options.label : true;\n        this.cssClass = '';\n    }\n    render(container) {\n        super.render(container);\n        if (this.element) {\n            this.label = append(this.element, $('a.action-label'));\n        }\n        if (this.label) {\n            if (this._action.id === Separator.ID) {\n                this.label.setAttribute('role', 'presentation'); // A separator is a presentation item\n            }\n            else {\n                if (this.options.isMenu) {\n                    this.label.setAttribute('role', 'menuitem');\n                }\n                else {\n                    this.label.setAttribute('role', 'button');\n                }\n            }\n        }\n        if (this.options.label && this.options.keybinding && this.element) {\n            append(this.element, $('span.keybinding')).textContent = this.options.keybinding;\n        }\n        this.updateClass();\n        this.updateLabel();\n        this.updateTooltip();\n        this.updateEnabled();\n        this.updateChecked();\n    }\n    // Only set the tabIndex on the element once it is about to get focused\n    // That way this element wont be a tab stop when it is not needed #106441\n    focus() {\n        if (this.label) {\n            this.label.tabIndex = 0;\n            this.label.focus();\n        }\n    }\n    blur() {\n        if (this.label) {\n            this.label.tabIndex = -1;\n        }\n    }\n    setFocusable(focusable) {\n        if (this.label) {\n            this.label.tabIndex = focusable ? 0 : -1;\n        }\n    }\n    updateLabel() {\n        if (this.options.label && this.label) {\n            this.label.textContent = this.getAction().label;\n        }\n    }\n    updateTooltip() {\n        let title = null;\n        if (this.getAction().tooltip) {\n            title = this.getAction().tooltip;\n        }\n        else if (!this.options.label && this.getAction().label && this.options.icon) {\n            title = this.getAction().label;\n            if (this.options.keybinding) {\n                title = nls.localize({ key: 'titleLabel', comment: ['action title', 'action keybinding'] }, \"{0} ({1})\", title, this.options.keybinding);\n            }\n        }\n        if (title && this.label) {\n            this.label.title = title;\n        }\n    }\n    updateClass() {\n        if (this.cssClass && this.label) {\n            this.label.classList.remove(...this.cssClass.split(' '));\n        }\n        if (this.options.icon) {\n            this.cssClass = this.getAction().class;\n            if (this.label) {\n                this.label.classList.add('codicon');\n                if (this.cssClass) {\n                    this.label.classList.add(...this.cssClass.split(' '));\n                }\n            }\n            this.updateEnabled();\n        }\n        else {\n            if (this.label) {\n                this.label.classList.remove('codicon');\n            }\n        }\n    }\n    updateEnabled() {\n        if (this.getAction().enabled) {\n            if (this.label) {\n                this.label.removeAttribute('aria-disabled');\n                this.label.classList.remove('disabled');\n            }\n            if (this.element) {\n                this.element.classList.remove('disabled');\n            }\n        }\n        else {\n            if (this.label) {\n                this.label.setAttribute('aria-disabled', 'true');\n                this.label.classList.add('disabled');\n            }\n            if (this.element) {\n                this.element.classList.add('disabled');\n            }\n        }\n    }\n    updateChecked() {\n        if (this.label) {\n            if (this.getAction().checked) {\n                this.label.classList.add('checked');\n            }\n            else {\n                this.label.classList.remove('checked');\n            }\n        }\n    }\n}\n",
+      "start": 1711096855577,
+      "end": 1711096855675,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855675,
+      "end": 1711096855675,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855676,
+      "end": 1711096855676,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855676,
+      "end": 1711096855677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855677,
+      "end": 1711096855677,
+      "order": "normal"
+    }
+  ]
+}

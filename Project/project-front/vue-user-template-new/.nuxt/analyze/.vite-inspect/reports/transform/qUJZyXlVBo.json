@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/keybindingLabels.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as nls from '../../nls.js';\nexport class ModifierLabelProvider {\n    constructor(mac, windows, linux = windows) {\n        this.modifierLabels = [null]; // index 0 will never me accessed.\n        this.modifierLabels[2 /* Macintosh */] = mac;\n        this.modifierLabels[1 /* Windows */] = windows;\n        this.modifierLabels[3 /* Linux */] = linux;\n    }\n    toLabel(OS, parts, keyLabelProvider) {\n        if (parts.length === 0) {\n            return null;\n        }\n        const result = [];\n        for (let i = 0, len = parts.length; i < len; i++) {\n            const part = parts[i];\n            const keyLabel = keyLabelProvider(part);\n            if (keyLabel === null) {\n                // this keybinding cannot be expressed...\n                return null;\n            }\n            result[i] = _simpleAsString(part, keyLabel, this.modifierLabels[OS]);\n        }\n        return result.join(' ');\n    }\n}\n/**\n * A label provider that prints modifiers in a suitable format for displaying in the UI.\n */\nexport const UILabelProvider = new ModifierLabelProvider({\n    ctrlKey: '\\u2303',\n    shiftKey: '⇧',\n    altKey: '⌥',\n    metaKey: '⌘',\n    separator: '',\n}, {\n    ctrlKey: nls.localize({ key: 'ctrlKey', comment: ['This is the short form for the Control key on the keyboard'] }, \"Ctrl\"),\n    shiftKey: nls.localize({ key: 'shiftKey', comment: ['This is the short form for the Shift key on the keyboard'] }, \"Shift\"),\n    altKey: nls.localize({ key: 'altKey', comment: ['This is the short form for the Alt key on the keyboard'] }, \"Alt\"),\n    metaKey: nls.localize({ key: 'windowsKey', comment: ['This is the short form for the Windows key on the keyboard'] }, \"Windows\"),\n    separator: '+',\n}, {\n    ctrlKey: nls.localize({ key: 'ctrlKey', comment: ['This is the short form for the Control key on the keyboard'] }, \"Ctrl\"),\n    shiftKey: nls.localize({ key: 'shiftKey', comment: ['This is the short form for the Shift key on the keyboard'] }, \"Shift\"),\n    altKey: nls.localize({ key: 'altKey', comment: ['This is the short form for the Alt key on the keyboard'] }, \"Alt\"),\n    metaKey: nls.localize({ key: 'superKey', comment: ['This is the short form for the Super key on the keyboard'] }, \"Super\"),\n    separator: '+',\n});\n/**\n * A label provider that prints modifiers in a suitable format for ARIA.\n */\nexport const AriaLabelProvider = new ModifierLabelProvider({\n    ctrlKey: nls.localize({ key: 'ctrlKey.long', comment: ['This is the long form for the Control key on the keyboard'] }, \"Control\"),\n    shiftKey: nls.localize({ key: 'shiftKey.long', comment: ['This is the long form for the Shift key on the keyboard'] }, \"Shift\"),\n    altKey: nls.localize({ key: 'optKey.long', comment: ['This is the long form for the Alt/Option key on the keyboard'] }, \"Option\"),\n    metaKey: nls.localize({ key: 'cmdKey.long', comment: ['This is the long form for the Command key on the keyboard'] }, \"Command\"),\n    separator: '+',\n}, {\n    ctrlKey: nls.localize({ key: 'ctrlKey.long', comment: ['This is the long form for the Control key on the keyboard'] }, \"Control\"),\n    shiftKey: nls.localize({ key: 'shiftKey.long', comment: ['This is the long form for the Shift key on the keyboard'] }, \"Shift\"),\n    altKey: nls.localize({ key: 'altKey.long', comment: ['This is the long form for the Alt key on the keyboard'] }, \"Alt\"),\n    metaKey: nls.localize({ key: 'windowsKey.long', comment: ['This is the long form for the Windows key on the keyboard'] }, \"Windows\"),\n    separator: '+',\n}, {\n    ctrlKey: nls.localize({ key: 'ctrlKey.long', comment: ['This is the long form for the Control key on the keyboard'] }, \"Control\"),\n    shiftKey: nls.localize({ key: 'shiftKey.long', comment: ['This is the long form for the Shift key on the keyboard'] }, \"Shift\"),\n    altKey: nls.localize({ key: 'altKey.long', comment: ['This is the long form for the Alt key on the keyboard'] }, \"Alt\"),\n    metaKey: nls.localize({ key: 'superKey.long', comment: ['This is the long form for the Super key on the keyboard'] }, \"Super\"),\n    separator: '+',\n});\n/**\n * A label provider that prints modifiers in a suitable format for Electron Accelerators.\n * See https://github.com/electron/electron/blob/master/docs/api/accelerator.md\n */\nexport const ElectronAcceleratorLabelProvider = new ModifierLabelProvider({\n    ctrlKey: 'Ctrl',\n    shiftKey: 'Shift',\n    altKey: 'Alt',\n    metaKey: 'Cmd',\n    separator: '+',\n}, {\n    ctrlKey: 'Ctrl',\n    shiftKey: 'Shift',\n    altKey: 'Alt',\n    metaKey: 'Super',\n    separator: '+',\n});\n/**\n * A label provider that prints modifiers in a suitable format for user settings.\n */\nexport const UserSettingsLabelProvider = new ModifierLabelProvider({\n    ctrlKey: 'ctrl',\n    shiftKey: 'shift',\n    altKey: 'alt',\n    metaKey: 'cmd',\n    separator: '+',\n}, {\n    ctrlKey: 'ctrl',\n    shiftKey: 'shift',\n    altKey: 'alt',\n    metaKey: 'win',\n    separator: '+',\n}, {\n    ctrlKey: 'ctrl',\n    shiftKey: 'shift',\n    altKey: 'alt',\n    metaKey: 'meta',\n    separator: '+',\n});\nfunction _simpleAsString(modifiers, key, labels) {\n    if (key === null) {\n        return '';\n    }\n    const result = [];\n    // translate modifier keys: Ctrl-Shift-Alt-Meta\n    if (modifiers.ctrlKey) {\n        result.push(labels.ctrlKey);\n    }\n    if (modifiers.shiftKey) {\n        result.push(labels.shiftKey);\n    }\n    if (modifiers.altKey) {\n        result.push(labels.altKey);\n    }\n    if (modifiers.metaKey) {\n        result.push(labels.metaKey);\n    }\n    // the actual key\n    if (key !== '') {\n        result.push(key);\n    }\n    return result.join(labels.separator);\n}\n",
+      "start": 1711096857358,
+      "end": 1711096857472,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857472,
+      "end": 1711096857472,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857473,
+      "end": 1711096857473,
+      "order": "normal"
+    }
+  ]
+}

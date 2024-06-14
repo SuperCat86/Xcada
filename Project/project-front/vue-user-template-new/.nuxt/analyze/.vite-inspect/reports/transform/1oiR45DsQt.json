@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/config/editorConfigurationSchema.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { editorOptionsRegistry } from './editorOptions.js';\nimport { EDITOR_MODEL_DEFAULTS } from '../core/textModelDefaults.js';\nimport * as nls from '../../../nls.js';\nimport { Extensions } from '../../../platform/configuration/common/configurationRegistry.js';\nimport { Registry } from '../../../platform/registry/common/platform.js';\nexport const editorConfigurationBaseNode = Object.freeze({\n    id: 'editor',\n    order: 5,\n    type: 'object',\n    title: nls.localize('editorConfigurationTitle', \"Editor\"),\n    scope: 5 /* LANGUAGE_OVERRIDABLE */,\n});\nconst editorConfiguration = Object.assign(Object.assign({}, editorConfigurationBaseNode), { properties: {\n        'editor.tabSize': {\n            type: 'number',\n            default: EDITOR_MODEL_DEFAULTS.tabSize,\n            minimum: 1,\n            markdownDescription: nls.localize('tabSize', \"The number of spaces a tab is equal to. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on.\")\n        },\n        // 'editor.indentSize': {\n        // \t'anyOf': [\n        // \t\t{\n        // \t\t\ttype: 'string',\n        // \t\t\tenum: ['tabSize']\n        // \t\t},\n        // \t\t{\n        // \t\t\ttype: 'number',\n        // \t\t\tminimum: 1\n        // \t\t}\n        // \t],\n        // \tdefault: 'tabSize',\n        // \tmarkdownDescription: nls.localize('indentSize', \"The number of spaces used for indentation or 'tabSize' to use the value from `#editor.tabSize#`. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on.\")\n        // },\n        'editor.insertSpaces': {\n            type: 'boolean',\n            default: EDITOR_MODEL_DEFAULTS.insertSpaces,\n            markdownDescription: nls.localize('insertSpaces', \"Insert spaces when pressing `Tab`. This setting is overridden based on the file contents when `#editor.detectIndentation#` is on.\")\n        },\n        'editor.detectIndentation': {\n            type: 'boolean',\n            default: EDITOR_MODEL_DEFAULTS.detectIndentation,\n            markdownDescription: nls.localize('detectIndentation', \"Controls whether `#editor.tabSize#` and `#editor.insertSpaces#` will be automatically detected when a file is opened based on the file contents.\")\n        },\n        'editor.trimAutoWhitespace': {\n            type: 'boolean',\n            default: EDITOR_MODEL_DEFAULTS.trimAutoWhitespace,\n            description: nls.localize('trimAutoWhitespace', \"Remove trailing auto inserted whitespace.\")\n        },\n        'editor.largeFileOptimizations': {\n            type: 'boolean',\n            default: EDITOR_MODEL_DEFAULTS.largeFileOptimizations,\n            description: nls.localize('largeFileOptimizations', \"Special handling for large files to disable certain memory intensive features.\")\n        },\n        'editor.wordBasedSuggestions': {\n            type: 'boolean',\n            default: true,\n            description: nls.localize('wordBasedSuggestions', \"Controls whether completions should be computed based on words in the document.\")\n        },\n        'editor.wordBasedSuggestionsMode': {\n            enum: ['currentDocument', 'matchingDocuments', 'allDocuments'],\n            default: 'matchingDocuments',\n            enumDescriptions: [\n                nls.localize('wordBasedSuggestionsMode.currentDocument', 'Only suggest words from the active document.'),\n                nls.localize('wordBasedSuggestionsMode.matchingDocuments', 'Suggest words from all open documents of the same language.'),\n                nls.localize('wordBasedSuggestionsMode.allDocuments', 'Suggest words from all open documents.')\n            ],\n            description: nls.localize('wordBasedSuggestionsMode', \"Controls from which documents word based completions are computed.\")\n        },\n        'editor.semanticHighlighting.enabled': {\n            enum: [true, false, 'configuredByTheme'],\n            enumDescriptions: [\n                nls.localize('semanticHighlighting.true', 'Semantic highlighting enabled for all color themes.'),\n                nls.localize('semanticHighlighting.false', 'Semantic highlighting disabled for all color themes.'),\n                nls.localize('semanticHighlighting.configuredByTheme', 'Semantic highlighting is configured by the current color theme\\'s `semanticHighlighting` setting.')\n            ],\n            default: 'configuredByTheme',\n            description: nls.localize('semanticHighlighting.enabled', \"Controls whether the semanticHighlighting is shown for the languages that support it.\")\n        },\n        'editor.stablePeek': {\n            type: 'boolean',\n            default: false,\n            markdownDescription: nls.localize('stablePeek', \"Keep peek editors open even when double clicking their content or when hitting `Escape`.\")\n        },\n        'editor.maxTokenizationLineLength': {\n            type: 'integer',\n            default: 20000,\n            description: nls.localize('maxTokenizationLineLength', \"Lines above this length will not be tokenized for performance reasons\")\n        },\n        'editor.language.brackets': {\n            type: 'array',\n            default: false,\n            description: nls.localize('schema.brackets', 'Defines the bracket symbols that increase or decrease the indentation.'),\n            items: {\n                type: 'array',\n                items: [\n                    {\n                        type: 'string',\n                        description: nls.localize('schema.openBracket', 'The opening bracket character or string sequence.')\n                    },\n                    {\n                        type: 'string',\n                        description: nls.localize('schema.closeBracket', 'The closing bracket character or string sequence.')\n                    }\n                ]\n            }\n        },\n        'editor.language.colorizedBracketPairs': {\n            type: 'array',\n            default: false,\n            description: nls.localize('schema.colorizedBracketPairs', 'Defines the bracket pairs that are colorized by their nesting level if bracket pair colorization is enabled.'),\n            items: {\n                type: 'array',\n                items: [\n                    {\n                        type: 'string',\n                        description: nls.localize('schema.openBracket', 'The opening bracket character or string sequence.')\n                    },\n                    {\n                        type: 'string',\n                        description: nls.localize('schema.closeBracket', 'The closing bracket character or string sequence.')\n                    }\n                ]\n            }\n        },\n        'diffEditor.maxComputationTime': {\n            type: 'number',\n            default: 5000,\n            description: nls.localize('maxComputationTime', \"Timeout in milliseconds after which diff computation is cancelled. Use 0 for no timeout.\")\n        },\n        'diffEditor.maxFileSize': {\n            type: 'number',\n            default: 50,\n            description: nls.localize('maxFileSize', \"Maximum file size in MB for which to compute diffs. Use 0 for no limit.\")\n        },\n        'diffEditor.renderSideBySide': {\n            type: 'boolean',\n            default: true,\n            description: nls.localize('sideBySide', \"Controls whether the diff editor shows the diff side by side or inline.\")\n        },\n        'diffEditor.ignoreTrimWhitespace': {\n            type: 'boolean',\n            default: true,\n            description: nls.localize('ignoreTrimWhitespace', \"When enabled, the diff editor ignores changes in leading or trailing whitespace.\")\n        },\n        'diffEditor.renderIndicators': {\n            type: 'boolean',\n            default: true,\n            description: nls.localize('renderIndicators', \"Controls whether the diff editor shows +/- indicators for added/removed changes.\")\n        },\n        'diffEditor.codeLens': {\n            type: 'boolean',\n            default: false,\n            description: nls.localize('codeLens', \"Controls whether the editor shows CodeLens.\")\n        },\n        'diffEditor.wordWrap': {\n            type: 'string',\n            enum: ['off', 'on', 'inherit'],\n            default: 'inherit',\n            markdownEnumDescriptions: [\n                nls.localize('wordWrap.off', \"Lines will never wrap.\"),\n                nls.localize('wordWrap.on', \"Lines will wrap at the viewport width.\"),\n                nls.localize('wordWrap.inherit', \"Lines will wrap according to the `#editor.wordWrap#` setting.\"),\n            ]\n        }\n    } });\nfunction isConfigurationPropertySchema(x) {\n    return (typeof x.type !== 'undefined' || typeof x.anyOf !== 'undefined');\n}\n// Add properties from the Editor Option Registry\nfor (const editorOption of editorOptionsRegistry) {\n    const schema = editorOption.schema;\n    if (typeof schema !== 'undefined') {\n        if (isConfigurationPropertySchema(schema)) {\n            // This is a single schema contribution\n            editorConfiguration.properties[`editor.${editorOption.name}`] = schema;\n        }\n        else {\n            for (const key in schema) {\n                if (Object.hasOwnProperty.call(schema, key)) {\n                    editorConfiguration.properties[key] = schema[key];\n                }\n            }\n        }\n    }\n}\nlet cachedEditorConfigurationKeys = null;\nfunction getEditorConfigurationKeys() {\n    if (cachedEditorConfigurationKeys === null) {\n        cachedEditorConfigurationKeys = Object.create(null);\n        Object.keys(editorConfiguration.properties).forEach((prop) => {\n            cachedEditorConfigurationKeys[prop] = true;\n        });\n    }\n    return cachedEditorConfigurationKeys;\n}\nexport function isEditorConfigurationKey(key) {\n    const editorConfigurationKeys = getEditorConfigurationKeys();\n    return (editorConfigurationKeys[`editor.${key}`] || false);\n}\nexport function isDiffEditorConfigurationKey(key) {\n    const editorConfigurationKeys = getEditorConfigurationKeys();\n    return (editorConfigurationKeys[`diffEditor.${key}`] || false);\n}\nconst configurationRegistry = Registry.as(Extensions.Configuration);\nconfigurationRegistry.registerConfiguration(editorConfiguration);\n",
+      "start": 1711096856196,
+      "end": 1711096856296,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856296,
+      "end": 1711096856296,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856296,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856297,
+      "end": 1711096856297,
+      "order": "normal"
+    }
+  ]
+}

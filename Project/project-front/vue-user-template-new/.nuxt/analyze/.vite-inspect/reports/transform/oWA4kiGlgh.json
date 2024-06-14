@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/viewCursors/viewCursors.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n.monaco-editor .cursors-layer {\n\tposition: absolute;\n\ttop: 0;\n}\n\n.monaco-editor .cursors-layer > .cursor {\n\tposition: absolute;\n\toverflow: hidden;\n}\n\n/* -- smooth-caret-animation -- */\n.monaco-editor .cursors-layer.cursor-smooth-caret-animation > .cursor {\n\ttransition: all 80ms;\n}\n\n/* -- block-outline-style -- */\n.monaco-editor .cursors-layer.cursor-block-outline-style > .cursor {\n\tbox-sizing: border-box;\n\tbackground: transparent !important;\n\tborder-style: solid;\n\tborder-width: 1px;\n}\n\n/* -- underline-style -- */\n.monaco-editor .cursors-layer.cursor-underline-style > .cursor {\n\tborder-bottom-width: 2px;\n\tborder-bottom-style: solid;\n\tbackground: transparent !important;\n\tbox-sizing: border-box;\n}\n\n/* -- underline-thin-style -- */\n.monaco-editor .cursors-layer.cursor-underline-thin-style > .cursor {\n\tborder-bottom-width: 1px;\n\tborder-bottom-style: solid;\n\tbackground: transparent !important;\n\tbox-sizing: border-box;\n}\n\n@keyframes monaco-cursor-smooth {\n\t0%,\n\t20% {\n\t\topacity: 1;\n\t}\n\t60%,\n\t100% {\n\t\topacity: 0;\n\t}\n}\n\n@keyframes monaco-cursor-phase {\n\t0%,\n\t20% {\n\t\topacity: 1;\n\t}\n\t90%,\n\t100% {\n\t\topacity: 0;\n\t}\n}\n\n@keyframes monaco-cursor-expand {\n\t0%,\n\t20% {\n\t\ttransform: scaleY(1);\n\t}\n\t80%,\n\t100% {\n\t\ttransform: scaleY(0);\n\t}\n}\n\n.cursor-smooth {\n\tanimation: monaco-cursor-smooth 0.5s ease-in-out 0s 20 alternate;\n}\n\n.cursor-phase {\n\tanimation: monaco-cursor-phase 0.5s ease-in-out 0s 20 alternate;\n}\n\n.cursor-expand > .cursor {\n\tanimation: monaco-cursor-expand 0.5s ease-in-out 0s 20 alternate;\n}\n",
+      "start": 1711096857211,
+      "end": 1711096857313,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857313,
+      "end": 1711096857313,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857313,
+      "end": 1711096857313,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857313,
+      "end": 1711096857313,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .cursors-layer{position:absolute;top:0}.monaco-editor .cursors-layer>.cursor{overflow:hidden;position:absolute}.monaco-editor .cursors-layer.cursor-smooth-caret-animation>.cursor{transition:all 80ms}.monaco-editor .cursors-layer.cursor-block-outline-style>.cursor{background:transparent!important;border-style:solid;border-width:1px;box-sizing:border-box}.monaco-editor .cursors-layer.cursor-underline-style>.cursor{background:transparent!important;border-bottom-style:solid;border-bottom-width:2px;box-sizing:border-box}.monaco-editor .cursors-layer.cursor-underline-thin-style>.cursor{background:transparent!important;border-bottom-style:solid;border-bottom-width:1px;box-sizing:border-box}@keyframes monaco-cursor-smooth{0%,20%{opacity:1}60%,to{opacity:0}}@keyframes monaco-cursor-phase{0%,20%{opacity:1}90%,to{opacity:0}}@keyframes monaco-cursor-expand{0%,20%{transform:scaleY(1)}80%,to{transform:scaleY(0)}}.cursor-smooth{animation:monaco-cursor-smooth .5s ease-in-out 0s 20 alternate}.cursor-phase{animation:monaco-cursor-phase .5s ease-in-out 0s 20 alternate}.cursor-expand>.cursor{animation:monaco-cursor-expand .5s ease-in-out 0s 20 alternate}",
+      "start": 1711096857313,
+      "end": 1711096857320,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857320,
+      "end": 1711096857320,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857320,
+      "end": 1711096857320,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857320,
+      "end": 1711096857320,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857320,
+      "end": 1711096857320,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857320,
+      "end": 1711096857320,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857320,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857321,
+      "end": 1711096857321,
+      "order": "normal"
+    }
+  ]
+}

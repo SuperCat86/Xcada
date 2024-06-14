@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/cursor/cursorColumnSelection.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { SingleCursorState } from '../cursorCommon.js';\nimport { Position } from '../core/position.js';\nimport { Range } from '../core/range.js';\nexport class ColumnSelection {\n    static columnSelect(config, model, fromLineNumber, fromVisibleColumn, toLineNumber, toVisibleColumn) {\n        const lineCount = Math.abs(toLineNumber - fromLineNumber) + 1;\n        const reversed = (fromLineNumber > toLineNumber);\n        const isRTL = (fromVisibleColumn > toVisibleColumn);\n        const isLTR = (fromVisibleColumn < toVisibleColumn);\n        const result = [];\n        // console.log(`fromVisibleColumn: ${fromVisibleColumn}, toVisibleColumn: ${toVisibleColumn}`);\n        for (let i = 0; i < lineCount; i++) {\n            const lineNumber = fromLineNumber + (reversed ? -i : i);\n            const startColumn = config.columnFromVisibleColumn(model, lineNumber, fromVisibleColumn);\n            const endColumn = config.columnFromVisibleColumn(model, lineNumber, toVisibleColumn);\n            const visibleStartColumn = config.visibleColumnFromColumn(model, new Position(lineNumber, startColumn));\n            const visibleEndColumn = config.visibleColumnFromColumn(model, new Position(lineNumber, endColumn));\n            // console.log(`lineNumber: ${lineNumber}: visibleStartColumn: ${visibleStartColumn}, visibleEndColumn: ${visibleEndColumn}`);\n            if (isLTR) {\n                if (visibleStartColumn > toVisibleColumn) {\n                    continue;\n                }\n                if (visibleEndColumn < fromVisibleColumn) {\n                    continue;\n                }\n            }\n            if (isRTL) {\n                if (visibleEndColumn > fromVisibleColumn) {\n                    continue;\n                }\n                if (visibleStartColumn < toVisibleColumn) {\n                    continue;\n                }\n            }\n            result.push(new SingleCursorState(new Range(lineNumber, startColumn, lineNumber, startColumn), 0, new Position(lineNumber, endColumn), 0));\n        }\n        if (result.length === 0) {\n            // We are after all the lines, so add cursor at the end of each line\n            for (let i = 0; i < lineCount; i++) {\n                const lineNumber = fromLineNumber + (reversed ? -i : i);\n                const maxColumn = model.getLineMaxColumn(lineNumber);\n                result.push(new SingleCursorState(new Range(lineNumber, maxColumn, lineNumber, maxColumn), 0, new Position(lineNumber, maxColumn), 0));\n            }\n        }\n        return {\n            viewStates: result,\n            reversed: reversed,\n            fromLineNumber: fromLineNumber,\n            fromVisualColumn: fromVisibleColumn,\n            toLineNumber: toLineNumber,\n            toVisualColumn: toVisibleColumn\n        };\n    }\n    static columnSelectLeft(config, model, prevColumnSelectData) {\n        let toViewVisualColumn = prevColumnSelectData.toViewVisualColumn;\n        if (toViewVisualColumn > 0) {\n            toViewVisualColumn--;\n        }\n        return ColumnSelection.columnSelect(config, model, prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.fromViewVisualColumn, prevColumnSelectData.toViewLineNumber, toViewVisualColumn);\n    }\n    static columnSelectRight(config, model, prevColumnSelectData) {\n        let maxVisualViewColumn = 0;\n        const minViewLineNumber = Math.min(prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.toViewLineNumber);\n        const maxViewLineNumber = Math.max(prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.toViewLineNumber);\n        for (let lineNumber = minViewLineNumber; lineNumber <= maxViewLineNumber; lineNumber++) {\n            const lineMaxViewColumn = model.getLineMaxColumn(lineNumber);\n            const lineMaxVisualViewColumn = config.visibleColumnFromColumn(model, new Position(lineNumber, lineMaxViewColumn));\n            maxVisualViewColumn = Math.max(maxVisualViewColumn, lineMaxVisualViewColumn);\n        }\n        let toViewVisualColumn = prevColumnSelectData.toViewVisualColumn;\n        if (toViewVisualColumn < maxVisualViewColumn) {\n            toViewVisualColumn++;\n        }\n        return this.columnSelect(config, model, prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.fromViewVisualColumn, prevColumnSelectData.toViewLineNumber, toViewVisualColumn);\n    }\n    static columnSelectUp(config, model, prevColumnSelectData, isPaged) {\n        const linesCount = isPaged ? config.pageSize : 1;\n        const toViewLineNumber = Math.max(1, prevColumnSelectData.toViewLineNumber - linesCount);\n        return this.columnSelect(config, model, prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.fromViewVisualColumn, toViewLineNumber, prevColumnSelectData.toViewVisualColumn);\n    }\n    static columnSelectDown(config, model, prevColumnSelectData, isPaged) {\n        const linesCount = isPaged ? config.pageSize : 1;\n        const toViewLineNumber = Math.min(model.getLineCount(), prevColumnSelectData.toViewLineNumber + linesCount);\n        return this.columnSelect(config, model, prevColumnSelectData.fromViewLineNumber, prevColumnSelectData.fromViewVisualColumn, toViewLineNumber, prevColumnSelectData.toViewVisualColumn);\n    }\n}\n",
+      "start": 1711096855231,
+      "end": 1711096855305,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855305,
+      "end": 1711096855306,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855306,
+      "end": 1711096855306,
+      "order": "normal"
+    }
+  ]
+}

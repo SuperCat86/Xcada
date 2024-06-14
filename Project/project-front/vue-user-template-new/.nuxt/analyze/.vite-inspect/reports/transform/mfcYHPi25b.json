@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/format/browser/formatActions.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { isNonEmptyArray } from '../../../../base/common/arrays.js';\nimport { CancellationToken, CancellationTokenSource } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { KeyChord } from '../../../../base/common/keyCodes.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { EditorAction, registerEditorAction, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { CharacterSet } from '../../../common/core/characterClassifier.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { IEditorWorkerService } from '../../../common/services/editorWorker.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { alertFormattingEdits, formatDocumentRangesWithSelectedProvider, formatDocumentWithSelectedProvider, getOnTypeFormattingEdits } from './format.js';\nimport { FormattingEdit } from './formattingEdit.js';\nimport * as nls from '../../../../nls.js';\nimport { CommandsRegistry, ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IEditorProgressService, Progress } from '../../../../platform/progress/common/progress.js';\nlet FormatOnType = class FormatOnType {\n    constructor(_editor, _languageFeaturesService, _workerService) {\n        this._editor = _editor;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._workerService = _workerService;\n        this._disposables = new DisposableStore();\n        this._sessionDisposables = new DisposableStore();\n        this._disposables.add(_languageFeaturesService.onTypeFormattingEditProvider.onDidChange(this._update, this));\n        this._disposables.add(_editor.onDidChangeModel(() => this._update()));\n        this._disposables.add(_editor.onDidChangeModelLanguage(() => this._update()));\n        this._disposables.add(_editor.onDidChangeConfiguration(e => {\n            if (e.hasChanged(49 /* formatOnType */)) {\n                this._update();\n            }\n        }));\n    }\n    dispose() {\n        this._disposables.dispose();\n        this._sessionDisposables.dispose();\n    }\n    _update() {\n        // clean up\n        this._sessionDisposables.clear();\n        // we are disabled\n        if (!this._editor.getOption(49 /* formatOnType */)) {\n            return;\n        }\n        // no model\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        const model = this._editor.getModel();\n        // no support\n        const [support] = this._languageFeaturesService.onTypeFormattingEditProvider.ordered(model);\n        if (!support || !support.autoFormatTriggerCharacters) {\n            return;\n        }\n        // register typing listeners that will trigger the format\n        let triggerChars = new CharacterSet();\n        for (let ch of support.autoFormatTriggerCharacters) {\n            triggerChars.add(ch.charCodeAt(0));\n        }\n        this._sessionDisposables.add(this._editor.onDidType((text) => {\n            let lastCharCode = text.charCodeAt(text.length - 1);\n            if (triggerChars.has(lastCharCode)) {\n                this._trigger(String.fromCharCode(lastCharCode));\n            }\n        }));\n    }\n    _trigger(ch) {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        if (this._editor.getSelections().length > 1 || !this._editor.getSelection().isEmpty()) {\n            return;\n        }\n        const model = this._editor.getModel();\n        const position = this._editor.getPosition();\n        const cts = new CancellationTokenSource();\n        // install a listener that checks if edits happens before the\n        // position on which we format right now. If so, we won't\n        // apply the format edits\n        const unbind = this._editor.onDidChangeModelContent((e) => {\n            if (e.isFlush) {\n                // a model.setValue() was called\n                // cancel only once\n                cts.cancel();\n                unbind.dispose();\n                return;\n            }\n            for (let i = 0, len = e.changes.length; i < len; i++) {\n                const change = e.changes[i];\n                if (change.range.endLineNumber <= position.lineNumber) {\n                    // cancel only once\n                    cts.cancel();\n                    unbind.dispose();\n                    return;\n                }\n            }\n        });\n        getOnTypeFormattingEdits(this._workerService, this._languageFeaturesService, model, position, ch, model.getFormattingOptions(), cts.token).then(edits => {\n            if (cts.token.isCancellationRequested) {\n                return;\n            }\n            if (isNonEmptyArray(edits)) {\n                FormattingEdit.execute(this._editor, edits, true);\n                alertFormattingEdits(edits);\n            }\n        }).finally(() => {\n            unbind.dispose();\n        });\n    }\n};\nFormatOnType.ID = 'editor.contrib.autoFormat';\nFormatOnType = __decorate([\n    __param(1, ILanguageFeaturesService),\n    __param(2, IEditorWorkerService)\n], FormatOnType);\nlet FormatOnPaste = class FormatOnPaste {\n    constructor(editor, _languageFeaturesService, _instantiationService) {\n        this.editor = editor;\n        this._languageFeaturesService = _languageFeaturesService;\n        this._instantiationService = _instantiationService;\n        this._callOnDispose = new DisposableStore();\n        this._callOnModel = new DisposableStore();\n        this._callOnDispose.add(editor.onDidChangeConfiguration(() => this._update()));\n        this._callOnDispose.add(editor.onDidChangeModel(() => this._update()));\n        this._callOnDispose.add(editor.onDidChangeModelLanguage(() => this._update()));\n        this._callOnDispose.add(_languageFeaturesService.documentRangeFormattingEditProvider.onDidChange(this._update, this));\n    }\n    dispose() {\n        this._callOnDispose.dispose();\n        this._callOnModel.dispose();\n    }\n    _update() {\n        // clean up\n        this._callOnModel.clear();\n        // we are disabled\n        if (!this.editor.getOption(48 /* formatOnPaste */)) {\n            return;\n        }\n        // no model\n        if (!this.editor.hasModel()) {\n            return;\n        }\n        // no formatter\n        if (!this._languageFeaturesService.documentRangeFormattingEditProvider.has(this.editor.getModel())) {\n            return;\n        }\n        this._callOnModel.add(this.editor.onDidPaste(({ range }) => this._trigger(range)));\n    }\n    _trigger(range) {\n        if (!this.editor.hasModel()) {\n            return;\n        }\n        if (this.editor.getSelections().length > 1) {\n            return;\n        }\n        this._instantiationService.invokeFunction(formatDocumentRangesWithSelectedProvider, this.editor, range, 2 /* Silent */, Progress.None, CancellationToken.None).catch(onUnexpectedError);\n    }\n};\nFormatOnPaste.ID = 'editor.contrib.formatOnPaste';\nFormatOnPaste = __decorate([\n    __param(1, ILanguageFeaturesService),\n    __param(2, IInstantiationService)\n], FormatOnPaste);\nclass FormatDocumentAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.formatDocument',\n            label: nls.localize('formatDocument.label', \"Format Document\"),\n            alias: 'Format Document',\n            precondition: ContextKeyExpr.and(EditorContextKeys.notInCompositeEditor, EditorContextKeys.writable, EditorContextKeys.hasDocumentFormattingProvider),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 36 /* KeyF */,\n                linux: { primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 39 /* KeyI */ },\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                group: '1_modification',\n                order: 1.3\n            }\n        });\n    }\n    run(accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (editor.hasModel()) {\n                const instaService = accessor.get(IInstantiationService);\n                const progressService = accessor.get(IEditorProgressService);\n                yield progressService.showWhile(instaService.invokeFunction(formatDocumentWithSelectedProvider, editor, 1 /* Explicit */, Progress.None, CancellationToken.None), 250);\n            }\n        });\n    }\n}\nclass FormatSelectionAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.formatSelection',\n            label: nls.localize('formatSelection.label', \"Format Selection\"),\n            alias: 'Format Selection',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasDocumentSelectionFormattingProvider),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: KeyChord(2048 /* CtrlCmd */ | 41 /* KeyK */, 2048 /* CtrlCmd */ | 36 /* KeyF */),\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                when: EditorContextKeys.hasNonEmptySelection,\n                group: '1_modification',\n                order: 1.31\n            }\n        });\n    }\n    run(accessor, editor) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!editor.hasModel()) {\n                return;\n            }\n            const instaService = accessor.get(IInstantiationService);\n            const model = editor.getModel();\n            const ranges = editor.getSelections().map(range => {\n                return range.isEmpty()\n                    ? new Range(range.startLineNumber, 1, range.startLineNumber, model.getLineMaxColumn(range.startLineNumber))\n                    : range;\n            });\n            const progressService = accessor.get(IEditorProgressService);\n            yield progressService.showWhile(instaService.invokeFunction(formatDocumentRangesWithSelectedProvider, editor, ranges, 1 /* Explicit */, Progress.None, CancellationToken.None), 250);\n        });\n    }\n}\nregisterEditorContribution(FormatOnType.ID, FormatOnType);\nregisterEditorContribution(FormatOnPaste.ID, FormatOnPaste);\nregisterEditorAction(FormatDocumentAction);\nregisterEditorAction(FormatSelectionAction);\n// this is the old format action that does both (format document OR format selection)\n// and we keep it here such that existing keybinding configurations etc will still work\nCommandsRegistry.registerCommand('editor.action.format', (accessor) => __awaiter(void 0, void 0, void 0, function* () {\n    const editor = accessor.get(ICodeEditorService).getFocusedCodeEditor();\n    if (!editor || !editor.hasModel()) {\n        return;\n    }\n    const commandService = accessor.get(ICommandService);\n    if (editor.getSelection().isEmpty()) {\n        yield commandService.executeCommand('editor.action.formatDocument');\n    }\n    else {\n        yield commandService.executeCommand('editor.action.formatSelection');\n    }\n}));\n",
+      "start": 1711096854424,
+      "end": 1711096854595,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854595,
+      "end": 1711096854595,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854596,
+      "end": 1711096854596,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854596,
+      "end": 1711096854597,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854597,
+      "end": 1711096854597,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/services/abstractCodeEditorService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { IThemeService } from '../../../platform/theme/common/themeService.js';\nlet AbstractCodeEditorService = class AbstractCodeEditorService extends Disposable {\n    constructor(_themeService) {\n        super();\n        this._themeService = _themeService;\n        this._onCodeEditorAdd = this._register(new Emitter());\n        this.onCodeEditorAdd = this._onCodeEditorAdd.event;\n        this._onCodeEditorRemove = this._register(new Emitter());\n        this.onCodeEditorRemove = this._onCodeEditorRemove.event;\n        this._onDiffEditorAdd = this._register(new Emitter());\n        this.onDiffEditorAdd = this._onDiffEditorAdd.event;\n        this._onDiffEditorRemove = this._register(new Emitter());\n        this.onDiffEditorRemove = this._onDiffEditorRemove.event;\n        this._decorationOptionProviders = new Map();\n        this._modelProperties = new Map();\n        this._codeEditors = Object.create(null);\n        this._diffEditors = Object.create(null);\n        this._globalStyleSheet = null;\n    }\n    addCodeEditor(editor) {\n        this._codeEditors[editor.getId()] = editor;\n        this._onCodeEditorAdd.fire(editor);\n    }\n    removeCodeEditor(editor) {\n        if (delete this._codeEditors[editor.getId()]) {\n            this._onCodeEditorRemove.fire(editor);\n        }\n    }\n    listCodeEditors() {\n        return Object.keys(this._codeEditors).map(id => this._codeEditors[id]);\n    }\n    addDiffEditor(editor) {\n        this._diffEditors[editor.getId()] = editor;\n        this._onDiffEditorAdd.fire(editor);\n    }\n    removeDiffEditor(editor) {\n        if (delete this._diffEditors[editor.getId()]) {\n            this._onDiffEditorRemove.fire(editor);\n        }\n    }\n    listDiffEditors() {\n        return Object.keys(this._diffEditors).map(id => this._diffEditors[id]);\n    }\n    getFocusedCodeEditor() {\n        let editorWithWidgetFocus = null;\n        const editors = this.listCodeEditors();\n        for (const editor of editors) {\n            if (editor.hasTextFocus()) {\n                // bingo!\n                return editor;\n            }\n            if (editor.hasWidgetFocus()) {\n                editorWithWidgetFocus = editor;\n            }\n        }\n        return editorWithWidgetFocus;\n    }\n    removeDecorationType(key) {\n        const provider = this._decorationOptionProviders.get(key);\n        if (provider) {\n            provider.refCount--;\n            if (provider.refCount <= 0) {\n                this._decorationOptionProviders.delete(key);\n                provider.dispose();\n                this.listCodeEditors().forEach((ed) => ed.removeDecorations(key));\n            }\n        }\n    }\n    setModelProperty(resource, key, value) {\n        const key1 = resource.toString();\n        let dest;\n        if (this._modelProperties.has(key1)) {\n            dest = this._modelProperties.get(key1);\n        }\n        else {\n            dest = new Map();\n            this._modelProperties.set(key1, dest);\n        }\n        dest.set(key, value);\n    }\n    getModelProperty(resource, key) {\n        const key1 = resource.toString();\n        if (this._modelProperties.has(key1)) {\n            const innerMap = this._modelProperties.get(key1);\n            return innerMap.get(key);\n        }\n        return undefined;\n    }\n};\nAbstractCodeEditorService = __decorate([\n    __param(0, IThemeService)\n], AbstractCodeEditorService);\nexport { AbstractCodeEditorService };\nexport class GlobalStyleSheet {\n    constructor(styleSheet) {\n        this._styleSheet = styleSheet;\n    }\n}\n",
+      "start": 1711096857045,
+      "end": 1711096857151,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857151,
+      "end": 1711096857151,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857151,
+      "end": 1711096857151,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857151,
+      "end": 1711096857151,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857151,
+      "end": 1711096857151,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857151,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857152,
+      "end": 1711096857152,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857152,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857153,
+      "end": 1711096857153,
+      "order": "normal"
+    }
+  ]
+}

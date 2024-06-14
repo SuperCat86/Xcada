@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/browser/color.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { illegalArgument } from '../../../../base/common/errors.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { Range } from '../../../common/core/range.js';\nimport { IModelService } from '../../../common/services/model.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nexport function getColors(registry, model, token) {\n    const colors = [];\n    const providers = registry.ordered(model).reverse();\n    const promises = providers.map(provider => Promise.resolve(provider.provideDocumentColors(model, token)).then(result => {\n        if (Array.isArray(result)) {\n            for (let colorInfo of result) {\n                colors.push({ colorInfo, provider });\n            }\n        }\n    }));\n    return Promise.all(promises).then(() => colors);\n}\nexport function getColorPresentations(model, colorInfo, provider, token) {\n    return Promise.resolve(provider.provideColorPresentations(model, colorInfo, token));\n}\nCommandsRegistry.registerCommand('_executeDocumentColorProvider', function (accessor, ...args) {\n    const [resource] = args;\n    if (!(resource instanceof URI)) {\n        throw illegalArgument();\n    }\n    const { colorProvider: colorProviderRegistry } = accessor.get(ILanguageFeaturesService);\n    const model = accessor.get(IModelService).getModel(resource);\n    if (!model) {\n        throw illegalArgument();\n    }\n    const rawCIs = [];\n    const providers = colorProviderRegistry.ordered(model).reverse();\n    const promises = providers.map(provider => Promise.resolve(provider.provideDocumentColors(model, CancellationToken.None)).then(result => {\n        if (Array.isArray(result)) {\n            for (let ci of result) {\n                rawCIs.push({ range: ci.range, color: [ci.color.red, ci.color.green, ci.color.blue, ci.color.alpha] });\n            }\n        }\n    }));\n    return Promise.all(promises).then(() => rawCIs);\n});\nCommandsRegistry.registerCommand('_executeColorPresentationProvider', function (accessor, ...args) {\n    const [color, context] = args;\n    const { uri, range } = context;\n    if (!(uri instanceof URI) || !Array.isArray(color) || color.length !== 4 || !Range.isIRange(range)) {\n        throw illegalArgument();\n    }\n    const [red, green, blue, alpha] = color;\n    const { colorProvider: colorProviderRegistry } = accessor.get(ILanguageFeaturesService);\n    const model = accessor.get(IModelService).getModel(uri);\n    if (!model) {\n        throw illegalArgument();\n    }\n    const colorInfo = {\n        range,\n        color: { red, green, blue, alpha }\n    };\n    const presentations = [];\n    const providers = colorProviderRegistry.ordered(model).reverse();\n    const promises = providers.map(provider => Promise.resolve(provider.provideColorPresentations(model, colorInfo, CancellationToken.None)).then(result => {\n        if (Array.isArray(result)) {\n            presentations.push(...result);\n        }\n    }));\n    return Promise.all(promises).then(() => presentations);\n});\n",
+      "start": 1711096856619,
+      "end": 1711096856699,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856700,
+      "end": 1711096856700,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856700,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856701,
+      "end": 1711096856701,
+      "order": "normal"
+    }
+  ]
+}

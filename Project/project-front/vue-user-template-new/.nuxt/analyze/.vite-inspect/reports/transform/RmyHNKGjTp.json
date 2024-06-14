@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/clipboard/browser/clipboardService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { isSafari, isWebkitWebView } from '../../../base/browser/browser.js';\nimport { $, addDisposableListener } from '../../../base/browser/dom.js';\nimport { DeferredPromise } from '../../../base/common/async.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { ILayoutService } from '../../layout/browser/layoutService.js';\nimport { ILogService } from '../../log/common/log.js';\nlet BrowserClipboardService = class BrowserClipboardService extends Disposable {\n    constructor(layoutService, logService) {\n        super();\n        this.layoutService = layoutService;\n        this.logService = logService;\n        this.mapTextToType = new Map(); // unsupported in web (only in-memory)\n        this.findText = ''; // unsupported in web (only in-memory)\n        if (isSafari || isWebkitWebView) {\n            this.installWebKitWriteTextWorkaround();\n        }\n    }\n    // In Safari, it has the following note:\n    //\n    // \"The request to write to the clipboard must be triggered during a user gesture.\n    // A call to clipboard.write or clipboard.writeText outside the scope of a user\n    // gesture(such as \"click\" or \"touch\" event handlers) will result in the immediate\n    // rejection of the promise returned by the API call.\"\n    // From: https://webkit.org/blog/10855/async-clipboard-api/\n    //\n    // Since extensions run in a web worker, and handle gestures in an asynchronous way,\n    // they are not classified by Safari as \"in response to a user gesture\" and will reject.\n    //\n    // This function sets up some handlers to work around that behavior.\n    installWebKitWriteTextWorkaround() {\n        const handler = () => {\n            const currentWritePromise = new DeferredPromise();\n            // Cancel the previous promise since we just created a new one in response to this new event\n            if (this.webKitPendingClipboardWritePromise && !this.webKitPendingClipboardWritePromise.isSettled) {\n                this.webKitPendingClipboardWritePromise.cancel();\n            }\n            this.webKitPendingClipboardWritePromise = currentWritePromise;\n            // The ctor of ClipboardItem allows you to pass in a promise that will resolve to a string.\n            // This allows us to pass in a Promise that will either be cancelled by another event or\n            // resolved with the contents of the first call to this.writeText.\n            // see https://developer.mozilla.org/en-US/docs/Web/API/ClipboardItem/ClipboardItem#parameters\n            navigator.clipboard.write([new ClipboardItem({\n                    'text/plain': currentWritePromise.p,\n                })]).catch((err) => __awaiter(this, void 0, void 0, function* () {\n                if (!(err instanceof Error) || err.name !== 'NotAllowedError' || !currentWritePromise.isRejected) {\n                    this.logService.error(err);\n                }\n            }));\n        };\n        if (this.layoutService.hasContainer) {\n            this._register(addDisposableListener(this.layoutService.container, 'click', handler));\n            this._register(addDisposableListener(this.layoutService.container, 'keydown', handler));\n        }\n    }\n    writeText(text, type) {\n        return __awaiter(this, void 0, void 0, function* () {\n            // With type: only in-memory is supported\n            if (type) {\n                this.mapTextToType.set(type, text);\n                return;\n            }\n            if (this.webKitPendingClipboardWritePromise) {\n                // For Safari, we complete this Promise which allows the call to `navigator.clipboard.write()`\n                // above to resolve and successfully copy to the clipboard. If we let this continue, Safari\n                // would throw an error because this call stack doesn't appear to originate from a user gesture.\n                return this.webKitPendingClipboardWritePromise.complete(text);\n            }\n            // Guard access to navigator.clipboard with try/catch\n            // as we have seen DOMExceptions in certain browsers\n            // due to security policies.\n            try {\n                return yield navigator.clipboard.writeText(text);\n            }\n            catch (error) {\n                console.error(error);\n            }\n            // Fallback to textarea and execCommand solution\n            const activeElement = document.activeElement;\n            const textArea = document.body.appendChild($('textarea', { 'aria-hidden': true }));\n            textArea.style.height = '1px';\n            textArea.style.width = '1px';\n            textArea.style.position = 'absolute';\n            textArea.value = text;\n            textArea.focus();\n            textArea.select();\n            document.execCommand('copy');\n            if (activeElement instanceof HTMLElement) {\n                activeElement.focus();\n            }\n            document.body.removeChild(textArea);\n            return;\n        });\n    }\n    readText(type) {\n        return __awaiter(this, void 0, void 0, function* () {\n            // With type: only in-memory is supported\n            if (type) {\n                return this.mapTextToType.get(type) || '';\n            }\n            // Guard access to navigator.clipboard with try/catch\n            // as we have seen DOMExceptions in certain browsers\n            // due to security policies.\n            try {\n                return yield navigator.clipboard.readText();\n            }\n            catch (error) {\n                console.error(error);\n                return '';\n            }\n        });\n    }\n    readFindText() {\n        return __awaiter(this, void 0, void 0, function* () {\n            return this.findText;\n        });\n    }\n    writeFindText(text) {\n        return __awaiter(this, void 0, void 0, function* () {\n            this.findText = text;\n        });\n    }\n};\nBrowserClipboardService = __decorate([\n    __param(0, ILayoutService),\n    __param(1, ILogService)\n], BrowserClipboardService);\nexport { BrowserClipboardService };\n",
+      "start": 1711096856287,
+      "end": 1711096856371,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856371,
+      "end": 1711096856371,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856371,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    }
+  ]
+}

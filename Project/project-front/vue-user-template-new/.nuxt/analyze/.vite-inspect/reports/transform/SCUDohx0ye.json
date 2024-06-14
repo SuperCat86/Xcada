@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/browser/markerNavigationService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { binarySearch } from '../../../../base/common/arrays.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { LinkedList } from '../../../../base/common/linkedList.js';\nimport { compare } from '../../../../base/common/strings.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { Range } from '../../../common/core/range.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IMarkerService, MarkerSeverity } from '../../../../platform/markers/common/markers.js';\nimport { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';\nexport class MarkerCoordinate {\n    constructor(marker, index, total) {\n        this.marker = marker;\n        this.index = index;\n        this.total = total;\n    }\n}\nlet MarkerList = class MarkerList {\n    constructor(resourceFilter, _markerService, _configService) {\n        this._markerService = _markerService;\n        this._configService = _configService;\n        this._onDidChange = new Emitter();\n        this.onDidChange = this._onDidChange.event;\n        this._dispoables = new DisposableStore();\n        this._markers = [];\n        this._nextIdx = -1;\n        if (URI.isUri(resourceFilter)) {\n            this._resourceFilter = uri => uri.toString() === resourceFilter.toString();\n        }\n        else if (resourceFilter) {\n            this._resourceFilter = resourceFilter;\n        }\n        const compareOrder = this._configService.getValue('problems.sortOrder');\n        const compareMarker = (a, b) => {\n            let res = compare(a.resource.toString(), b.resource.toString());\n            if (res === 0) {\n                if (compareOrder === 'position') {\n                    res = Range.compareRangesUsingStarts(a, b) || MarkerSeverity.compare(a.severity, b.severity);\n                }\n                else {\n                    res = MarkerSeverity.compare(a.severity, b.severity) || Range.compareRangesUsingStarts(a, b);\n                }\n            }\n            return res;\n        };\n        const updateMarker = () => {\n            this._markers = this._markerService.read({\n                resource: URI.isUri(resourceFilter) ? resourceFilter : undefined,\n                severities: MarkerSeverity.Error | MarkerSeverity.Warning | MarkerSeverity.Info\n            });\n            if (typeof resourceFilter === 'function') {\n                this._markers = this._markers.filter(m => this._resourceFilter(m.resource));\n            }\n            this._markers.sort(compareMarker);\n        };\n        updateMarker();\n        this._dispoables.add(_markerService.onMarkerChanged(uris => {\n            if (!this._resourceFilter || uris.some(uri => this._resourceFilter(uri))) {\n                updateMarker();\n                this._nextIdx = -1;\n                this._onDidChange.fire();\n            }\n        }));\n    }\n    dispose() {\n        this._dispoables.dispose();\n        this._onDidChange.dispose();\n    }\n    matches(uri) {\n        if (!this._resourceFilter && !uri) {\n            return true;\n        }\n        if (!this._resourceFilter || !uri) {\n            return false;\n        }\n        return this._resourceFilter(uri);\n    }\n    get selected() {\n        const marker = this._markers[this._nextIdx];\n        return marker && new MarkerCoordinate(marker, this._nextIdx + 1, this._markers.length);\n    }\n    _initIdx(model, position, fwd) {\n        let found = false;\n        let idx = this._markers.findIndex(marker => marker.resource.toString() === model.uri.toString());\n        if (idx < 0) {\n            idx = binarySearch(this._markers, { resource: model.uri }, (a, b) => compare(a.resource.toString(), b.resource.toString()));\n            if (idx < 0) {\n                idx = ~idx;\n            }\n        }\n        for (let i = idx; i < this._markers.length; i++) {\n            let range = Range.lift(this._markers[i]);\n            if (range.isEmpty()) {\n                const word = model.getWordAtPosition(range.getStartPosition());\n                if (word) {\n                    range = new Range(range.startLineNumber, word.startColumn, range.startLineNumber, word.endColumn);\n                }\n            }\n            if (position && (range.containsPosition(position) || position.isBeforeOrEqual(range.getStartPosition()))) {\n                this._nextIdx = i;\n                found = true;\n                break;\n            }\n            if (this._markers[i].resource.toString() !== model.uri.toString()) {\n                break;\n            }\n        }\n        if (!found) {\n            // after the last change\n            this._nextIdx = fwd ? 0 : this._markers.length - 1;\n        }\n        if (this._nextIdx < 0) {\n            this._nextIdx = this._markers.length - 1;\n        }\n    }\n    resetIndex() {\n        this._nextIdx = -1;\n    }\n    move(fwd, model, position) {\n        if (this._markers.length === 0) {\n            return false;\n        }\n        let oldIdx = this._nextIdx;\n        if (this._nextIdx === -1) {\n            this._initIdx(model, position, fwd);\n        }\n        else if (fwd) {\n            this._nextIdx = (this._nextIdx + 1) % this._markers.length;\n        }\n        else if (!fwd) {\n            this._nextIdx = (this._nextIdx - 1 + this._markers.length) % this._markers.length;\n        }\n        if (oldIdx !== this._nextIdx) {\n            return true;\n        }\n        return false;\n    }\n    find(uri, position) {\n        let idx = this._markers.findIndex(marker => marker.resource.toString() === uri.toString());\n        if (idx < 0) {\n            return undefined;\n        }\n        for (; idx < this._markers.length; idx++) {\n            if (Range.containsPosition(this._markers[idx], position)) {\n                return new MarkerCoordinate(this._markers[idx], idx + 1, this._markers.length);\n            }\n        }\n        return undefined;\n    }\n};\nMarkerList = __decorate([\n    __param(1, IMarkerService),\n    __param(2, IConfigurationService)\n], MarkerList);\nexport { MarkerList };\nexport const IMarkerNavigationService = createDecorator('IMarkerNavigationService');\nlet MarkerNavigationService = class MarkerNavigationService {\n    constructor(_markerService, _configService) {\n        this._markerService = _markerService;\n        this._configService = _configService;\n        this._provider = new LinkedList();\n    }\n    getMarkerList(resource) {\n        for (let provider of this._provider) {\n            const result = provider.getMarkerList(resource);\n            if (result) {\n                return result;\n            }\n        }\n        // default\n        return new MarkerList(resource, this._markerService, this._configService);\n    }\n};\nMarkerNavigationService = __decorate([\n    __param(0, IMarkerService),\n    __param(1, IConfigurationService)\n], MarkerNavigationService);\nregisterSingleton(IMarkerNavigationService, MarkerNavigationService, true);\n",
+      "start": 1711096855740,
+      "end": 1711096855844,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855844,
+      "end": 1711096855844,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855845,
+      "end": 1711096855845,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855845,
+      "end": 1711096855846,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855846,
+      "end": 1711096855846,
+      "order": "normal"
+    }
+  ]
+}

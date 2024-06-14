@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { RunOnceScheduler } from '../../../../base/common/async.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { LRUCache, TernarySearchTree } from '../../../../base/common/map.js';\nimport { CompletionItemKinds } from '../../../common/languages.js';\nimport { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';\nimport { registerSingleton } from '../../../../platform/instantiation/common/extensions.js';\nimport { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IStorageService, WillSaveStateReason } from '../../../../platform/storage/common/storage.js';\nexport class Memory {\n    constructor(name) {\n        this.name = name;\n    }\n    select(model, pos, items) {\n        if (items.length === 0) {\n            return 0;\n        }\n        let topScore = items[0].score[0];\n        for (let i = 0; i < items.length; i++) {\n            const { score, completion: suggestion } = items[i];\n            if (score[0] !== topScore) {\n                // stop when leaving the group of top matches\n                break;\n            }\n            if (suggestion.preselect) {\n                // stop when seeing an auto-select-item\n                return i;\n            }\n        }\n        return 0;\n    }\n}\nexport class NoMemory extends Memory {\n    constructor() {\n        super('first');\n    }\n    memorize(model, pos, item) {\n        // no-op\n    }\n    toJSON() {\n        return undefined;\n    }\n    fromJSON() {\n        //\n    }\n}\nexport class LRUMemory extends Memory {\n    constructor() {\n        super('recentlyUsed');\n        this._cache = new LRUCache(300, 0.66);\n        this._seq = 0;\n    }\n    memorize(model, pos, item) {\n        const key = `${model.getLanguageId()}/${item.textLabel}`;\n        this._cache.set(key, {\n            touch: this._seq++,\n            type: item.completion.kind,\n            insertText: item.completion.insertText\n        });\n    }\n    select(model, pos, items) {\n        if (items.length === 0) {\n            return 0;\n        }\n        const lineSuffix = model.getLineContent(pos.lineNumber).substr(pos.column - 10, pos.column - 1);\n        if (/\\s$/.test(lineSuffix)) {\n            return super.select(model, pos, items);\n        }\n        let topScore = items[0].score[0];\n        let indexPreselect = -1;\n        let indexRecency = -1;\n        let seq = -1;\n        for (let i = 0; i < items.length; i++) {\n            if (items[i].score[0] !== topScore) {\n                // consider only top items\n                break;\n            }\n            const key = `${model.getLanguageId()}/${items[i].textLabel}`;\n            const item = this._cache.peek(key);\n            if (item && item.touch > seq && item.type === items[i].completion.kind && item.insertText === items[i].completion.insertText) {\n                seq = item.touch;\n                indexRecency = i;\n            }\n            if (items[i].completion.preselect && indexPreselect === -1) {\n                // stop when seeing an auto-select-item\n                return indexPreselect = i;\n            }\n        }\n        if (indexRecency !== -1) {\n            return indexRecency;\n        }\n        else if (indexPreselect !== -1) {\n            return indexPreselect;\n        }\n        else {\n            return 0;\n        }\n    }\n    toJSON() {\n        return this._cache.toJSON();\n    }\n    fromJSON(data) {\n        this._cache.clear();\n        let seq = 0;\n        for (const [key, value] of data) {\n            value.touch = seq;\n            value.type = typeof value.type === 'number' ? value.type : CompletionItemKinds.fromString(value.type);\n            this._cache.set(key, value);\n        }\n        this._seq = this._cache.size;\n    }\n}\nexport class PrefixMemory extends Memory {\n    constructor() {\n        super('recentlyUsedByPrefix');\n        this._trie = TernarySearchTree.forStrings();\n        this._seq = 0;\n    }\n    memorize(model, pos, item) {\n        const { word } = model.getWordUntilPosition(pos);\n        const key = `${model.getLanguageId()}/${word}`;\n        this._trie.set(key, {\n            type: item.completion.kind,\n            insertText: item.completion.insertText,\n            touch: this._seq++\n        });\n    }\n    select(model, pos, items) {\n        let { word } = model.getWordUntilPosition(pos);\n        if (!word) {\n            return super.select(model, pos, items);\n        }\n        let key = `${model.getLanguageId()}/${word}`;\n        let item = this._trie.get(key);\n        if (!item) {\n            item = this._trie.findSubstr(key);\n        }\n        if (item) {\n            for (let i = 0; i < items.length; i++) {\n                let { kind, insertText } = items[i].completion;\n                if (kind === item.type && insertText === item.insertText) {\n                    return i;\n                }\n            }\n        }\n        return super.select(model, pos, items);\n    }\n    toJSON() {\n        let entries = [];\n        this._trie.forEach((value, key) => entries.push([key, value]));\n        // sort by last recently used (touch), then\n        // take the top 200 item and normalize their\n        // touch\n        entries\n            .sort((a, b) => -(a[1].touch - b[1].touch))\n            .forEach((value, i) => value[1].touch = i);\n        return entries.slice(0, 200);\n    }\n    fromJSON(data) {\n        this._trie.clear();\n        if (data.length > 0) {\n            this._seq = data[0][1].touch + 1;\n            for (const [key, value] of data) {\n                value.type = typeof value.type === 'number' ? value.type : CompletionItemKinds.fromString(value.type);\n                this._trie.set(key, value);\n            }\n        }\n    }\n}\nlet SuggestMemoryService = class SuggestMemoryService {\n    constructor(_storageService, _configService) {\n        this._storageService = _storageService;\n        this._configService = _configService;\n        this._disposables = new DisposableStore();\n        this._persistSoon = new RunOnceScheduler(() => this._saveState(), 500);\n        this._disposables.add(_storageService.onWillSaveState(e => {\n            if (e.reason === WillSaveStateReason.SHUTDOWN) {\n                this._saveState();\n            }\n        }));\n    }\n    dispose() {\n        this._disposables.dispose();\n        this._persistSoon.dispose();\n    }\n    memorize(model, pos, item) {\n        this._withStrategy(model, pos).memorize(model, pos, item);\n        this._persistSoon.schedule();\n    }\n    select(model, pos, items) {\n        return this._withStrategy(model, pos).select(model, pos, items);\n    }\n    _withStrategy(model, pos) {\n        var _a;\n        const mode = this._configService.getValue('editor.suggestSelection', {\n            overrideIdentifier: model.getLanguageIdAtPosition(pos.lineNumber, pos.column),\n            resource: model.uri\n        });\n        if (((_a = this._strategy) === null || _a === void 0 ? void 0 : _a.name) !== mode) {\n            this._saveState();\n            const ctor = SuggestMemoryService._strategyCtors.get(mode) || NoMemory;\n            this._strategy = new ctor();\n            try {\n                const share = this._configService.getValue('editor.suggest.shareSuggestSelections');\n                const scope = share ? 0 /* GLOBAL */ : 1 /* WORKSPACE */;\n                const raw = this._storageService.get(`${SuggestMemoryService._storagePrefix}/${mode}`, scope);\n                if (raw) {\n                    this._strategy.fromJSON(JSON.parse(raw));\n                }\n            }\n            catch (e) {\n                // things can go wrong with JSON...\n            }\n        }\n        return this._strategy;\n    }\n    _saveState() {\n        if (this._strategy) {\n            const share = this._configService.getValue('editor.suggest.shareSuggestSelections');\n            const scope = share ? 0 /* GLOBAL */ : 1 /* WORKSPACE */;\n            const raw = JSON.stringify(this._strategy);\n            this._storageService.store(`${SuggestMemoryService._storagePrefix}/${this._strategy.name}`, raw, scope, 1 /* MACHINE */);\n        }\n    }\n};\nSuggestMemoryService._strategyCtors = new Map([\n    ['recentlyUsedByPrefix', PrefixMemory],\n    ['recentlyUsed', LRUMemory],\n    ['first', NoMemory]\n]);\nSuggestMemoryService._storagePrefix = 'suggest/memories';\nSuggestMemoryService = __decorate([\n    __param(0, IStorageService),\n    __param(1, IConfigurationService)\n], SuggestMemoryService);\nexport { SuggestMemoryService };\nexport const ISuggestMemoryService = createDecorator('ISuggestMemories');\nregisterSingleton(ISuggestMemoryService, SuggestMemoryService, true);\n",
+      "start": 1711096855918,
+      "end": 1711096856020,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856021,
+      "end": 1711096856021,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856021,
+      "end": 1711096856022,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856022,
+      "end": 1711096856022,
+      "order": "normal"
+    }
+  ]
+}

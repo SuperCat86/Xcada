@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/widget/diffNavigator.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as assert from '../../../base/common/assert.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport * as objects from '../../../base/common/objects.js';\nimport { Range } from '../../common/core/range.js';\nconst defaultOptions = {\n    followsCaret: true,\n    ignoreCharChanges: true,\n    alwaysRevealFirst: true\n};\n/**\n * Create a new diff navigator for the provided diff editor.\n */\nexport class DiffNavigator extends Disposable {\n    constructor(editor, options = {}) {\n        super();\n        this._onDidUpdate = this._register(new Emitter());\n        this._editor = editor;\n        this._options = objects.mixin(options, defaultOptions, false);\n        this.disposed = false;\n        this.nextIdx = -1;\n        this.ranges = [];\n        this.ignoreSelectionChange = false;\n        this.revealFirst = Boolean(this._options.alwaysRevealFirst);\n        // hook up to diff editor for diff, disposal, and caret move\n        this._register(this._editor.onDidDispose(() => this.dispose()));\n        this._register(this._editor.onDidUpdateDiff(() => this._onDiffUpdated()));\n        if (this._options.followsCaret) {\n            this._register(this._editor.getModifiedEditor().onDidChangeCursorPosition((e) => {\n                if (this.ignoreSelectionChange) {\n                    return;\n                }\n                this.nextIdx = -1;\n            }));\n        }\n        if (this._options.alwaysRevealFirst) {\n            this._register(this._editor.getModifiedEditor().onDidChangeModel((e) => {\n                this.revealFirst = true;\n            }));\n        }\n        // init things\n        this._init();\n    }\n    _init() {\n        const changes = this._editor.getLineChanges();\n        if (!changes) {\n            return;\n        }\n    }\n    _onDiffUpdated() {\n        this._init();\n        this._compute(this._editor.getLineChanges());\n        if (this.revealFirst) {\n            // Only reveal first on first non-null changes\n            if (this._editor.getLineChanges() !== null) {\n                this.revealFirst = false;\n                this.nextIdx = -1;\n                this.next(1 /* Immediate */);\n            }\n        }\n    }\n    _compute(lineChanges) {\n        // new ranges\n        this.ranges = [];\n        if (lineChanges) {\n            // create ranges from changes\n            lineChanges.forEach((lineChange) => {\n                if (!this._options.ignoreCharChanges && lineChange.charChanges) {\n                    lineChange.charChanges.forEach((charChange) => {\n                        this.ranges.push({\n                            rhs: true,\n                            range: new Range(charChange.modifiedStartLineNumber, charChange.modifiedStartColumn, charChange.modifiedEndLineNumber, charChange.modifiedEndColumn)\n                        });\n                    });\n                }\n                else {\n                    if (lineChange.modifiedEndLineNumber === 0) {\n                        // a deletion\n                        this.ranges.push({\n                            rhs: true,\n                            range: new Range(lineChange.modifiedStartLineNumber, 1, lineChange.modifiedStartLineNumber + 1, 1)\n                        });\n                    }\n                    else {\n                        // an insertion or modification\n                        this.ranges.push({\n                            rhs: true,\n                            range: new Range(lineChange.modifiedStartLineNumber, 1, lineChange.modifiedEndLineNumber + 1, 1)\n                        });\n                    }\n                }\n            });\n        }\n        // sort\n        this.ranges.sort((left, right) => Range.compareRangesUsingStarts(left.range, right.range));\n        this._onDidUpdate.fire(this);\n    }\n    _initIdx(fwd) {\n        let found = false;\n        const position = this._editor.getPosition();\n        if (!position) {\n            this.nextIdx = 0;\n            return;\n        }\n        for (let i = 0, len = this.ranges.length; i < len && !found; i++) {\n            const range = this.ranges[i].range;\n            if (position.isBeforeOrEqual(range.getStartPosition())) {\n                this.nextIdx = i + (fwd ? 0 : -1);\n                found = true;\n            }\n        }\n        if (!found) {\n            // after the last change\n            this.nextIdx = fwd ? 0 : this.ranges.length - 1;\n        }\n        if (this.nextIdx < 0) {\n            this.nextIdx = this.ranges.length - 1;\n        }\n    }\n    _move(fwd, scrollType) {\n        assert.ok(!this.disposed, 'Illegal State - diff navigator has been disposed');\n        if (!this.canNavigate()) {\n            return;\n        }\n        if (this.nextIdx === -1) {\n            this._initIdx(fwd);\n        }\n        else if (fwd) {\n            this.nextIdx += 1;\n            if (this.nextIdx >= this.ranges.length) {\n                this.nextIdx = 0;\n            }\n        }\n        else {\n            this.nextIdx -= 1;\n            if (this.nextIdx < 0) {\n                this.nextIdx = this.ranges.length - 1;\n            }\n        }\n        const info = this.ranges[this.nextIdx];\n        this.ignoreSelectionChange = true;\n        try {\n            const pos = info.range.getStartPosition();\n            this._editor.setPosition(pos);\n            this._editor.revealRangeInCenter(info.range, scrollType);\n        }\n        finally {\n            this.ignoreSelectionChange = false;\n        }\n    }\n    canNavigate() {\n        return this.ranges && this.ranges.length > 0;\n    }\n    next(scrollType = 0 /* Smooth */) {\n        this._move(true, scrollType);\n    }\n    previous(scrollType = 0 /* Smooth */) {\n        this._move(false, scrollType);\n    }\n    dispose() {\n        super.dispose();\n        this.ranges = [];\n        this.disposed = true;\n    }\n}\n",
+      "start": 1711096854387,
+      "end": 1711096854470,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854470,
+      "end": 1711096854470,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854470,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854471,
+      "end": 1711096854471,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854472,
+      "end": 1711096854472,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/theme/common/iconRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { RunOnceScheduler } from '../../../base/common/async.js';\nimport { Codicon, CSSIcon } from '../../../base/common/codicons.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { localize } from '../../../nls.js';\nimport { Extensions as JSONExtensions } from '../../jsonschemas/common/jsonContributionRegistry.js';\nimport * as platform from '../../registry/common/platform.js';\nimport { ThemeIcon } from './themeService.js';\n// icon registry\nexport const Extensions = {\n    IconContribution: 'base.contributions.icons'\n};\nexport var IconContribution;\n(function (IconContribution) {\n    function getDefinition(contribution, registry) {\n        let definition = contribution.defaults;\n        while (ThemeIcon.isThemeIcon(definition)) {\n            const c = iconRegistry.getIcon(definition.id);\n            if (!c) {\n                return undefined;\n            }\n            definition = c.defaults;\n        }\n        return definition;\n    }\n    IconContribution.getDefinition = getDefinition;\n})(IconContribution || (IconContribution = {}));\nclass IconRegistry {\n    constructor() {\n        this._onDidChange = new Emitter();\n        this.onDidChange = this._onDidChange.event;\n        this.iconSchema = {\n            definitions: {\n                icons: {\n                    type: 'object',\n                    properties: {\n                        fontId: { type: 'string', description: localize('iconDefinition.fontId', 'The id of the font to use. If not set, the font that is defined first is used.') },\n                        fontCharacter: { type: 'string', description: localize('iconDefinition.fontCharacter', 'The font character associated with the icon definition.') }\n                    },\n                    additionalProperties: false,\n                    defaultSnippets: [{ body: { fontCharacter: '\\\\\\\\e030' } }]\n                }\n            },\n            type: 'object',\n            properties: {}\n        };\n        this.iconReferenceSchema = { type: 'string', pattern: `^${CSSIcon.iconNameExpression}$`, enum: [], enumDescriptions: [] };\n        this.iconsById = {};\n        this.iconFontsById = {};\n    }\n    registerIcon(id, defaults, description, deprecationMessage) {\n        const existing = this.iconsById[id];\n        if (existing) {\n            if (description && !existing.description) {\n                existing.description = description;\n                this.iconSchema.properties[id].markdownDescription = `${description} $(${id})`;\n                const enumIndex = this.iconReferenceSchema.enum.indexOf(id);\n                if (enumIndex !== -1) {\n                    this.iconReferenceSchema.enumDescriptions[enumIndex] = description;\n                }\n                this._onDidChange.fire();\n            }\n            return existing;\n        }\n        let iconContribution = { id, description, defaults, deprecationMessage };\n        this.iconsById[id] = iconContribution;\n        let propertySchema = { $ref: '#/definitions/icons' };\n        if (deprecationMessage) {\n            propertySchema.deprecationMessage = deprecationMessage;\n        }\n        if (description) {\n            propertySchema.markdownDescription = `${description}: $(${id})`;\n        }\n        this.iconSchema.properties[id] = propertySchema;\n        this.iconReferenceSchema.enum.push(id);\n        this.iconReferenceSchema.enumDescriptions.push(description || '');\n        this._onDidChange.fire();\n        return { id };\n    }\n    getIcons() {\n        return Object.keys(this.iconsById).map(id => this.iconsById[id]);\n    }\n    getIcon(id) {\n        return this.iconsById[id];\n    }\n    getIconSchema() {\n        return this.iconSchema;\n    }\n    toString() {\n        const sorter = (i1, i2) => {\n            return i1.id.localeCompare(i2.id);\n        };\n        const classNames = (i) => {\n            while (ThemeIcon.isThemeIcon(i.defaults)) {\n                i = this.iconsById[i.defaults.id];\n            }\n            return `codicon codicon-${i ? i.id : ''}`;\n        };\n        let reference = [];\n        reference.push(`| preview     | identifier                        | default codicon ID                | description`);\n        reference.push(`| ----------- | --------------------------------- | --------------------------------- | --------------------------------- |`);\n        const contributions = Object.keys(this.iconsById).map(key => this.iconsById[key]);\n        for (const i of contributions.filter(i => !!i.description).sort(sorter)) {\n            reference.push(`|<i class=\"${classNames(i)}\"></i>|${i.id}|${ThemeIcon.isThemeIcon(i.defaults) ? i.defaults.id : i.id}|${i.description || ''}|`);\n        }\n        reference.push(`| preview     | identifier                        `);\n        reference.push(`| ----------- | --------------------------------- |`);\n        for (const i of contributions.filter(i => !ThemeIcon.isThemeIcon(i.defaults)).sort(sorter)) {\n            reference.push(`|<i class=\"${classNames(i)}\"></i>|${i.id}|`);\n        }\n        return reference.join('\\n');\n    }\n}\nconst iconRegistry = new IconRegistry();\nplatform.Registry.add(Extensions.IconContribution, iconRegistry);\nexport function registerIcon(id, defaults, description, deprecationMessage) {\n    return iconRegistry.registerIcon(id, defaults, description, deprecationMessage);\n}\nexport function getIconRegistry() {\n    return iconRegistry;\n}\nfunction initialize() {\n    for (const icon of Codicon.getAll()) {\n        iconRegistry.registerIcon(icon.id, icon.definition, icon.description);\n    }\n}\ninitialize();\nexport const iconsSchemaId = 'vscode://schemas/icons';\nlet schemaRegistry = platform.Registry.as(JSONExtensions.JSONContribution);\nschemaRegistry.registerSchema(iconsSchemaId, iconRegistry.getIconSchema());\nconst delayer = new RunOnceScheduler(() => schemaRegistry.notifySchemaChanged(iconsSchemaId), 200);\niconRegistry.onDidChange(() => {\n    if (!delayer.isScheduled()) {\n        delayer.schedule();\n    }\n});\n//setTimeout(_ => console.log(iconRegistry.toString()), 5000);\n// common icons\nexport const widgetClose = registerIcon('widget-close', Codicon.close, localize('widgetClose', 'Icon for the close action in widgets.'));\nexport const gotoPreviousLocation = registerIcon('goto-previous-location', Codicon.arrowUp, localize('previousChangeIcon', 'Icon for goto previous editor location.'));\nexport const gotoNextLocation = registerIcon('goto-next-location', Codicon.arrowDown, localize('nextChangeIcon', 'Icon for goto next editor location.'));\nexport const syncing = ThemeIcon.modify(Codicon.sync, 'spin');\nexport const spinningLoading = ThemeIcon.modify(Codicon.loading, 'spin');\n",
+      "start": 1711096855412,
+      "end": 1711096855575,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855575,
+      "end": 1711096855575,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855575,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855576,
+      "end": 1711096855576,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/view/viewLayer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar _a;\nimport { createFastDomNode } from '../../../base/browser/fastDomNode.js';\nimport { createStringBuilder } from '../../common/core/stringBuilder.js';\nexport class RenderedLinesCollection {\n    constructor(createLine) {\n        this._createLine = createLine;\n        this._set(1, []);\n    }\n    flush() {\n        this._set(1, []);\n    }\n    _set(rendLineNumberStart, lines) {\n        this._lines = lines;\n        this._rendLineNumberStart = rendLineNumberStart;\n    }\n    _get() {\n        return {\n            rendLineNumberStart: this._rendLineNumberStart,\n            lines: this._lines\n        };\n    }\n    /**\n     * @returns Inclusive line number that is inside this collection\n     */\n    getStartLineNumber() {\n        return this._rendLineNumberStart;\n    }\n    /**\n     * @returns Inclusive line number that is inside this collection\n     */\n    getEndLineNumber() {\n        return this._rendLineNumberStart + this._lines.length - 1;\n    }\n    getCount() {\n        return this._lines.length;\n    }\n    getLine(lineNumber) {\n        const lineIndex = lineNumber - this._rendLineNumberStart;\n        if (lineIndex < 0 || lineIndex >= this._lines.length) {\n            throw new Error('Illegal value for lineNumber');\n        }\n        return this._lines[lineIndex];\n    }\n    /**\n     * @returns Lines that were removed from this collection\n     */\n    onLinesDeleted(deleteFromLineNumber, deleteToLineNumber) {\n        if (this.getCount() === 0) {\n            // no lines\n            return null;\n        }\n        const startLineNumber = this.getStartLineNumber();\n        const endLineNumber = this.getEndLineNumber();\n        if (deleteToLineNumber < startLineNumber) {\n            // deleting above the viewport\n            const deleteCnt = deleteToLineNumber - deleteFromLineNumber + 1;\n            this._rendLineNumberStart -= deleteCnt;\n            return null;\n        }\n        if (deleteFromLineNumber > endLineNumber) {\n            // deleted below the viewport\n            return null;\n        }\n        // Record what needs to be deleted\n        let deleteStartIndex = 0;\n        let deleteCount = 0;\n        for (let lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++) {\n            const lineIndex = lineNumber - this._rendLineNumberStart;\n            if (deleteFromLineNumber <= lineNumber && lineNumber <= deleteToLineNumber) {\n                // this is a line to be deleted\n                if (deleteCount === 0) {\n                    // this is the first line to be deleted\n                    deleteStartIndex = lineIndex;\n                    deleteCount = 1;\n                }\n                else {\n                    deleteCount++;\n                }\n            }\n        }\n        // Adjust this._rendLineNumberStart for lines deleted above\n        if (deleteFromLineNumber < startLineNumber) {\n            // Something was deleted above\n            let deleteAboveCount = 0;\n            if (deleteToLineNumber < startLineNumber) {\n                // the entire deleted lines are above\n                deleteAboveCount = deleteToLineNumber - deleteFromLineNumber + 1;\n            }\n            else {\n                deleteAboveCount = startLineNumber - deleteFromLineNumber;\n            }\n            this._rendLineNumberStart -= deleteAboveCount;\n        }\n        const deleted = this._lines.splice(deleteStartIndex, deleteCount);\n        return deleted;\n    }\n    onLinesChanged(changeFromLineNumber, changeToLineNumber) {\n        if (this.getCount() === 0) {\n            // no lines\n            return false;\n        }\n        const startLineNumber = this.getStartLineNumber();\n        const endLineNumber = this.getEndLineNumber();\n        let someoneNotified = false;\n        for (let changedLineNumber = changeFromLineNumber; changedLineNumber <= changeToLineNumber; changedLineNumber++) {\n            if (changedLineNumber >= startLineNumber && changedLineNumber <= endLineNumber) {\n                // Notify the line\n                this._lines[changedLineNumber - this._rendLineNumberStart].onContentChanged();\n                someoneNotified = true;\n            }\n        }\n        return someoneNotified;\n    }\n    onLinesInserted(insertFromLineNumber, insertToLineNumber) {\n        if (this.getCount() === 0) {\n            // no lines\n            return null;\n        }\n        const insertCnt = insertToLineNumber - insertFromLineNumber + 1;\n        const startLineNumber = this.getStartLineNumber();\n        const endLineNumber = this.getEndLineNumber();\n        if (insertFromLineNumber <= startLineNumber) {\n            // inserting above the viewport\n            this._rendLineNumberStart += insertCnt;\n            return null;\n        }\n        if (insertFromLineNumber > endLineNumber) {\n            // inserting below the viewport\n            return null;\n        }\n        if (insertCnt + insertFromLineNumber > endLineNumber) {\n            // insert inside the viewport in such a way that all remaining lines are pushed outside\n            const deleted = this._lines.splice(insertFromLineNumber - this._rendLineNumberStart, endLineNumber - insertFromLineNumber + 1);\n            return deleted;\n        }\n        // insert inside the viewport, push out some lines, but not all remaining lines\n        const newLines = [];\n        for (let i = 0; i < insertCnt; i++) {\n            newLines[i] = this._createLine();\n        }\n        const insertIndex = insertFromLineNumber - this._rendLineNumberStart;\n        const beforeLines = this._lines.slice(0, insertIndex);\n        const afterLines = this._lines.slice(insertIndex, this._lines.length - insertCnt);\n        const deletedLines = this._lines.slice(this._lines.length - insertCnt, this._lines.length);\n        this._lines = beforeLines.concat(newLines).concat(afterLines);\n        return deletedLines;\n    }\n    onTokensChanged(ranges) {\n        if (this.getCount() === 0) {\n            // no lines\n            return false;\n        }\n        const startLineNumber = this.getStartLineNumber();\n        const endLineNumber = this.getEndLineNumber();\n        let notifiedSomeone = false;\n        for (let i = 0, len = ranges.length; i < len; i++) {\n            const rng = ranges[i];\n            if (rng.toLineNumber < startLineNumber || rng.fromLineNumber > endLineNumber) {\n                // range outside viewport\n                continue;\n            }\n            const from = Math.max(startLineNumber, rng.fromLineNumber);\n            const to = Math.min(endLineNumber, rng.toLineNumber);\n            for (let lineNumber = from; lineNumber <= to; lineNumber++) {\n                const lineIndex = lineNumber - this._rendLineNumberStart;\n                this._lines[lineIndex].onTokensChanged();\n                notifiedSomeone = true;\n            }\n        }\n        return notifiedSomeone;\n    }\n}\nexport class VisibleLinesCollection {\n    constructor(host) {\n        this._host = host;\n        this.domNode = this._createDomNode();\n        this._linesCollection = new RenderedLinesCollection(() => this._host.createVisibleLine());\n    }\n    _createDomNode() {\n        const domNode = createFastDomNode(document.createElement('div'));\n        domNode.setClassName('view-layer');\n        domNode.setPosition('absolute');\n        domNode.domNode.setAttribute('role', 'presentation');\n        domNode.domNode.setAttribute('aria-hidden', 'true');\n        return domNode;\n    }\n    // ---- begin view event handlers\n    onConfigurationChanged(e) {\n        if (e.hasChanged(131 /* layoutInfo */)) {\n            return true;\n        }\n        return false;\n    }\n    onFlushed(e) {\n        this._linesCollection.flush();\n        // No need to clear the dom node because a full .innerHTML will occur in ViewLayerRenderer._render\n        return true;\n    }\n    onLinesChanged(e) {\n        return this._linesCollection.onLinesChanged(e.fromLineNumber, e.toLineNumber);\n    }\n    onLinesDeleted(e) {\n        const deleted = this._linesCollection.onLinesDeleted(e.fromLineNumber, e.toLineNumber);\n        if (deleted) {\n            // Remove from DOM\n            for (let i = 0, len = deleted.length; i < len; i++) {\n                const lineDomNode = deleted[i].getDomNode();\n                if (lineDomNode) {\n                    this.domNode.domNode.removeChild(lineDomNode);\n                }\n            }\n        }\n        return true;\n    }\n    onLinesInserted(e) {\n        const deleted = this._linesCollection.onLinesInserted(e.fromLineNumber, e.toLineNumber);\n        if (deleted) {\n            // Remove from DOM\n            for (let i = 0, len = deleted.length; i < len; i++) {\n                const lineDomNode = deleted[i].getDomNode();\n                if (lineDomNode) {\n                    this.domNode.domNode.removeChild(lineDomNode);\n                }\n            }\n        }\n        return true;\n    }\n    onScrollChanged(e) {\n        return e.scrollTopChanged;\n    }\n    onTokensChanged(e) {\n        return this._linesCollection.onTokensChanged(e.ranges);\n    }\n    onZonesChanged(e) {\n        return true;\n    }\n    // ---- end view event handlers\n    getStartLineNumber() {\n        return this._linesCollection.getStartLineNumber();\n    }\n    getEndLineNumber() {\n        return this._linesCollection.getEndLineNumber();\n    }\n    getVisibleLine(lineNumber) {\n        return this._linesCollection.getLine(lineNumber);\n    }\n    renderLines(viewportData) {\n        const inp = this._linesCollection._get();\n        const renderer = new ViewLayerRenderer(this.domNode.domNode, this._host, viewportData);\n        const ctx = {\n            rendLineNumberStart: inp.rendLineNumberStart,\n            lines: inp.lines,\n            linesLength: inp.lines.length\n        };\n        // Decide if this render will do a single update (single large .innerHTML) or many updates (inserting/removing dom nodes)\n        const resCtx = renderer.render(ctx, viewportData.startLineNumber, viewportData.endLineNumber, viewportData.relativeVerticalOffset);\n        this._linesCollection._set(resCtx.rendLineNumberStart, resCtx.lines);\n    }\n}\nclass ViewLayerRenderer {\n    constructor(domNode, host, viewportData) {\n        this.domNode = domNode;\n        this.host = host;\n        this.viewportData = viewportData;\n    }\n    render(inContext, startLineNumber, stopLineNumber, deltaTop) {\n        const ctx = {\n            rendLineNumberStart: inContext.rendLineNumberStart,\n            lines: inContext.lines.slice(0),\n            linesLength: inContext.linesLength\n        };\n        if ((ctx.rendLineNumberStart + ctx.linesLength - 1 < startLineNumber) || (stopLineNumber < ctx.rendLineNumberStart)) {\n            // There is no overlap whatsoever\n            ctx.rendLineNumberStart = startLineNumber;\n            ctx.linesLength = stopLineNumber - startLineNumber + 1;\n            ctx.lines = [];\n            for (let x = startLineNumber; x <= stopLineNumber; x++) {\n                ctx.lines[x - startLineNumber] = this.host.createVisibleLine();\n            }\n            this._finishRendering(ctx, true, deltaTop);\n            return ctx;\n        }\n        // Update lines which will remain untouched\n        this._renderUntouchedLines(ctx, Math.max(startLineNumber - ctx.rendLineNumberStart, 0), Math.min(stopLineNumber - ctx.rendLineNumberStart, ctx.linesLength - 1), deltaTop, startLineNumber);\n        if (ctx.rendLineNumberStart > startLineNumber) {\n            // Insert lines before\n            const fromLineNumber = startLineNumber;\n            const toLineNumber = Math.min(stopLineNumber, ctx.rendLineNumberStart - 1);\n            if (fromLineNumber <= toLineNumber) {\n                this._insertLinesBefore(ctx, fromLineNumber, toLineNumber, deltaTop, startLineNumber);\n                ctx.linesLength += toLineNumber - fromLineNumber + 1;\n            }\n        }\n        else if (ctx.rendLineNumberStart < startLineNumber) {\n            // Remove lines before\n            const removeCnt = Math.min(ctx.linesLength, startLineNumber - ctx.rendLineNumberStart);\n            if (removeCnt > 0) {\n                this._removeLinesBefore(ctx, removeCnt);\n                ctx.linesLength -= removeCnt;\n            }\n        }\n        ctx.rendLineNumberStart = startLineNumber;\n        if (ctx.rendLineNumberStart + ctx.linesLength - 1 < stopLineNumber) {\n            // Insert lines after\n            const fromLineNumber = ctx.rendLineNumberStart + ctx.linesLength;\n            const toLineNumber = stopLineNumber;\n            if (fromLineNumber <= toLineNumber) {\n                this._insertLinesAfter(ctx, fromLineNumber, toLineNumber, deltaTop, startLineNumber);\n                ctx.linesLength += toLineNumber - fromLineNumber + 1;\n            }\n        }\n        else if (ctx.rendLineNumberStart + ctx.linesLength - 1 > stopLineNumber) {\n            // Remove lines after\n            const fromLineNumber = Math.max(0, stopLineNumber - ctx.rendLineNumberStart + 1);\n            const toLineNumber = ctx.linesLength - 1;\n            const removeCnt = toLineNumber - fromLineNumber + 1;\n            if (removeCnt > 0) {\n                this._removeLinesAfter(ctx, removeCnt);\n                ctx.linesLength -= removeCnt;\n            }\n        }\n        this._finishRendering(ctx, false, deltaTop);\n        return ctx;\n    }\n    _renderUntouchedLines(ctx, startIndex, endIndex, deltaTop, deltaLN) {\n        const rendLineNumberStart = ctx.rendLineNumberStart;\n        const lines = ctx.lines;\n        for (let i = startIndex; i <= endIndex; i++) {\n            const lineNumber = rendLineNumberStart + i;\n            lines[i].layoutLine(lineNumber, deltaTop[lineNumber - deltaLN]);\n        }\n    }\n    _insertLinesBefore(ctx, fromLineNumber, toLineNumber, deltaTop, deltaLN) {\n        const newLines = [];\n        let newLinesLen = 0;\n        for (let lineNumber = fromLineNumber; lineNumber <= toLineNumber; lineNumber++) {\n            newLines[newLinesLen++] = this.host.createVisibleLine();\n        }\n        ctx.lines = newLines.concat(ctx.lines);\n    }\n    _removeLinesBefore(ctx, removeCount) {\n        for (let i = 0; i < removeCount; i++) {\n            const lineDomNode = ctx.lines[i].getDomNode();\n            if (lineDomNode) {\n                this.domNode.removeChild(lineDomNode);\n            }\n        }\n        ctx.lines.splice(0, removeCount);\n    }\n    _insertLinesAfter(ctx, fromLineNumber, toLineNumber, deltaTop, deltaLN) {\n        const newLines = [];\n        let newLinesLen = 0;\n        for (let lineNumber = fromLineNumber; lineNumber <= toLineNumber; lineNumber++) {\n            newLines[newLinesLen++] = this.host.createVisibleLine();\n        }\n        ctx.lines = ctx.lines.concat(newLines);\n    }\n    _removeLinesAfter(ctx, removeCount) {\n        const removeIndex = ctx.linesLength - removeCount;\n        for (let i = 0; i < removeCount; i++) {\n            const lineDomNode = ctx.lines[removeIndex + i].getDomNode();\n            if (lineDomNode) {\n                this.domNode.removeChild(lineDomNode);\n            }\n        }\n        ctx.lines.splice(removeIndex, removeCount);\n    }\n    _finishRenderingNewLines(ctx, domNodeIsEmpty, newLinesHTML, wasNew) {\n        if (ViewLayerRenderer._ttPolicy) {\n            newLinesHTML = ViewLayerRenderer._ttPolicy.createHTML(newLinesHTML);\n        }\n        const lastChild = this.domNode.lastChild;\n        if (domNodeIsEmpty || !lastChild) {\n            this.domNode.innerHTML = newLinesHTML; // explains the ugly casts -> https://github.com/microsoft/vscode/issues/106396#issuecomment-692625393;\n        }\n        else {\n            lastChild.insertAdjacentHTML('afterend', newLinesHTML);\n        }\n        let currChild = this.domNode.lastChild;\n        for (let i = ctx.linesLength - 1; i >= 0; i--) {\n            const line = ctx.lines[i];\n            if (wasNew[i]) {\n                line.setDomNode(currChild);\n                currChild = currChild.previousSibling;\n            }\n        }\n    }\n    _finishRenderingInvalidLines(ctx, invalidLinesHTML, wasInvalid) {\n        const hugeDomNode = document.createElement('div');\n        if (ViewLayerRenderer._ttPolicy) {\n            invalidLinesHTML = ViewLayerRenderer._ttPolicy.createHTML(invalidLinesHTML);\n        }\n        hugeDomNode.innerHTML = invalidLinesHTML;\n        for (let i = 0; i < ctx.linesLength; i++) {\n            const line = ctx.lines[i];\n            if (wasInvalid[i]) {\n                const source = hugeDomNode.firstChild;\n                const lineDomNode = line.getDomNode();\n                lineDomNode.parentNode.replaceChild(source, lineDomNode);\n                line.setDomNode(source);\n            }\n        }\n    }\n    _finishRendering(ctx, domNodeIsEmpty, deltaTop) {\n        const sb = ViewLayerRenderer._sb;\n        const linesLength = ctx.linesLength;\n        const lines = ctx.lines;\n        const rendLineNumberStart = ctx.rendLineNumberStart;\n        const wasNew = [];\n        {\n            sb.reset();\n            let hadNewLine = false;\n            for (let i = 0; i < linesLength; i++) {\n                const line = lines[i];\n                wasNew[i] = false;\n                const lineDomNode = line.getDomNode();\n                if (lineDomNode) {\n                    // line is not new\n                    continue;\n                }\n                const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this.viewportData, sb);\n                if (!renderResult) {\n                    // line does not need rendering\n                    continue;\n                }\n                wasNew[i] = true;\n                hadNewLine = true;\n            }\n            if (hadNewLine) {\n                this._finishRenderingNewLines(ctx, domNodeIsEmpty, sb.build(), wasNew);\n            }\n        }\n        {\n            sb.reset();\n            let hadInvalidLine = false;\n            const wasInvalid = [];\n            for (let i = 0; i < linesLength; i++) {\n                const line = lines[i];\n                wasInvalid[i] = false;\n                if (wasNew[i]) {\n                    // line was new\n                    continue;\n                }\n                const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this.viewportData, sb);\n                if (!renderResult) {\n                    // line does not need rendering\n                    continue;\n                }\n                wasInvalid[i] = true;\n                hadInvalidLine = true;\n            }\n            if (hadInvalidLine) {\n                this._finishRenderingInvalidLines(ctx, sb.build(), wasInvalid);\n            }\n        }\n    }\n}\nViewLayerRenderer._ttPolicy = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('editorViewLayer', { createHTML: value => value });\nViewLayerRenderer._sb = createStringBuilder(100000);\n",
+      "start": 1711096857103,
+      "end": 1711096857206,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857206,
+      "end": 1711096857206,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857206,
+      "end": 1711096857207,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857207,
+      "end": 1711096857207,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857207,
+      "end": 1711096857208,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857208,
+      "end": 1711096857208,
+      "order": "normal"
+    }
+  ]
+}

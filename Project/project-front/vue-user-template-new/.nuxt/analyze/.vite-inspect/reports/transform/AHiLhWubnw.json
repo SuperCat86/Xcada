@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/marginHover.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../../base/browser/dom.js';\nimport { asArray } from '../../../../base/common/arrays.js';\nimport { isEmptyMarkdownString } from '../../../../base/common/htmlContent.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { MarkdownRenderer } from '../../markdownRenderer/browser/markdownRenderer.js';\nimport { HoverOperation } from './hoverOperation.js';\nimport { NullOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { HoverWidget } from '../../../../base/browser/ui/hover/hoverWidget.js';\nconst $ = dom.$;\nexport class MarginHoverWidget extends Disposable {\n    constructor(editor, languageService, openerService = NullOpenerService) {\n        super();\n        this._renderDisposeables = this._register(new DisposableStore());\n        this._editor = editor;\n        this._isVisible = false;\n        this._messages = [];\n        this._hover = this._register(new HoverWidget());\n        this._hover.containerDomNode.classList.toggle('hidden', !this._isVisible);\n        this._markdownRenderer = this._register(new MarkdownRenderer({ editor: this._editor }, languageService, openerService));\n        this._computer = new MarginHoverComputer(this._editor);\n        this._hoverOperation = this._register(new HoverOperation(this._editor, this._computer));\n        this._register(this._hoverOperation.onResult((result) => {\n            this._withResult(result.value);\n        }));\n        this._register(this._editor.onDidChangeModelDecorations(() => this._onModelDecorationsChanged()));\n        this._register(this._editor.onDidChangeConfiguration((e) => {\n            if (e.hasChanged(44 /* fontInfo */)) {\n                this._updateFont();\n            }\n        }));\n        this._editor.addOverlayWidget(this);\n    }\n    dispose() {\n        this._editor.removeOverlayWidget(this);\n        super.dispose();\n    }\n    getId() {\n        return MarginHoverWidget.ID;\n    }\n    getDomNode() {\n        return this._hover.containerDomNode;\n    }\n    getPosition() {\n        return null;\n    }\n    _updateFont() {\n        const codeClasses = Array.prototype.slice.call(this._hover.contentsDomNode.getElementsByClassName('code'));\n        codeClasses.forEach(node => this._editor.applyFontInfo(node));\n    }\n    _onModelDecorationsChanged() {\n        if (this._isVisible) {\n            // The decorations have changed and the hover is visible,\n            // we need to recompute the displayed text\n            this._hoverOperation.cancel();\n            this._hoverOperation.start(0 /* Delayed */);\n        }\n    }\n    startShowingAt(lineNumber) {\n        if (this._computer.lineNumber === lineNumber) {\n            // We have to show the widget at the exact same line number as before, so no work is needed\n            return;\n        }\n        this._hoverOperation.cancel();\n        this.hide();\n        this._computer.lineNumber = lineNumber;\n        this._hoverOperation.start(0 /* Delayed */);\n    }\n    hide() {\n        this._computer.lineNumber = -1;\n        this._hoverOperation.cancel();\n        if (!this._isVisible) {\n            return;\n        }\n        this._isVisible = false;\n        this._hover.containerDomNode.classList.toggle('hidden', !this._isVisible);\n    }\n    _withResult(result) {\n        this._messages = result;\n        if (this._messages.length > 0) {\n            this._renderMessages(this._computer.lineNumber, this._messages);\n        }\n        else {\n            this.hide();\n        }\n    }\n    _renderMessages(lineNumber, messages) {\n        this._renderDisposeables.clear();\n        const fragment = document.createDocumentFragment();\n        for (const msg of messages) {\n            const markdownHoverElement = $('div.hover-row.markdown-hover');\n            const hoverContentsElement = dom.append(markdownHoverElement, $('div.hover-contents'));\n            const renderedContents = this._renderDisposeables.add(this._markdownRenderer.render(msg.value));\n            hoverContentsElement.appendChild(renderedContents.element);\n            fragment.appendChild(markdownHoverElement);\n        }\n        this._updateContents(fragment);\n        this._showAt(lineNumber);\n    }\n    _updateContents(node) {\n        this._hover.contentsDomNode.textContent = '';\n        this._hover.contentsDomNode.appendChild(node);\n        this._updateFont();\n    }\n    _showAt(lineNumber) {\n        if (!this._isVisible) {\n            this._isVisible = true;\n            this._hover.containerDomNode.classList.toggle('hidden', !this._isVisible);\n        }\n        const editorLayout = this._editor.getLayoutInfo();\n        const topForLineNumber = this._editor.getTopForLineNumber(lineNumber);\n        const editorScrollTop = this._editor.getScrollTop();\n        const lineHeight = this._editor.getOption(59 /* lineHeight */);\n        const nodeHeight = this._hover.containerDomNode.clientHeight;\n        const top = topForLineNumber - editorScrollTop - ((nodeHeight - lineHeight) / 2);\n        this._hover.containerDomNode.style.left = `${editorLayout.glyphMarginLeft + editorLayout.glyphMarginWidth}px`;\n        this._hover.containerDomNode.style.top = `${Math.max(Math.round(top), 0)}px`;\n    }\n}\nMarginHoverWidget.ID = 'editor.contrib.modesGlyphHoverWidget';\nclass MarginHoverComputer {\n    constructor(_editor) {\n        this._editor = _editor;\n        this._lineNumber = -1;\n    }\n    get lineNumber() {\n        return this._lineNumber;\n    }\n    set lineNumber(value) {\n        this._lineNumber = value;\n    }\n    computeSync() {\n        const toHoverMessage = (contents) => {\n            return {\n                value: contents\n            };\n        };\n        const lineDecorations = this._editor.getLineDecorations(this._lineNumber);\n        const result = [];\n        if (!lineDecorations) {\n            return result;\n        }\n        for (const d of lineDecorations) {\n            if (!d.options.glyphMarginClassName) {\n                continue;\n            }\n            const hoverMessage = d.options.glyphMarginHoverMessage;\n            if (!hoverMessage || isEmptyMarkdownString(hoverMessage)) {\n                continue;\n            }\n            result.push(...asArray(hoverMessage).map(toHoverMessage));\n        }\n        return result;\n    }\n}\n",
+      "start": 1711096855748,
+      "end": 1711096855852,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855852,
+      "end": 1711096855852,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855853,
+      "end": 1711096855853,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855854,
+      "end": 1711096855854,
+      "order": "normal"
+    }
+  ]
+}

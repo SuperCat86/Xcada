@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/history/browser/contextScopedHistoryWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { FindInput } from '../../../base/browser/ui/findinput/findInput.js';\nimport { ReplaceInput } from '../../../base/browser/ui/findinput/replaceInput.js';\nimport { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../contextkey/common/contextkey.js';\nimport { KeybindingsRegistry } from '../../keybinding/common/keybindingsRegistry.js';\nimport { localize } from '../../../nls.js';\nexport const historyNavigationVisible = new RawContextKey('suggestWidgetVisible', false, localize('suggestWidgetVisible', \"Whether suggestion are visible\"));\nexport const HistoryNavigationWidgetContext = 'historyNavigationWidget';\nconst HistoryNavigationForwardsEnablementContext = 'historyNavigationForwardsEnabled';\nconst HistoryNavigationBackwardsEnablementContext = 'historyNavigationBackwardsEnabled';\nfunction bindContextScopedWidget(contextKeyService, widget, contextKey) {\n    new RawContextKey(contextKey, widget).bindTo(contextKeyService);\n}\nfunction createWidgetScopedContextKeyService(contextKeyService, widget) {\n    return contextKeyService.createScoped(widget.target);\n}\nfunction getContextScopedWidget(contextKeyService, contextKey) {\n    return contextKeyService.getContext(document.activeElement).getValue(contextKey);\n}\nexport function createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, widget) {\n    const scopedContextKeyService = createWidgetScopedContextKeyService(contextKeyService, widget);\n    bindContextScopedWidget(scopedContextKeyService, widget, HistoryNavigationWidgetContext);\n    const historyNavigationForwardsEnablement = new RawContextKey(HistoryNavigationForwardsEnablementContext, true).bindTo(scopedContextKeyService);\n    const historyNavigationBackwardsEnablement = new RawContextKey(HistoryNavigationBackwardsEnablementContext, true).bindTo(scopedContextKeyService);\n    return {\n        scopedContextKeyService,\n        historyNavigationForwardsEnablement,\n        historyNavigationBackwardsEnablement,\n    };\n}\nlet ContextScopedFindInput = class ContextScopedFindInput extends FindInput {\n    constructor(container, contextViewProvider, options, contextKeyService, showFindOptions = false) {\n        super(container, contextViewProvider, showFindOptions, options);\n        this._register(createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, { target: this.inputBox.element, historyNavigator: this.inputBox }).scopedContextKeyService);\n    }\n};\nContextScopedFindInput = __decorate([\n    __param(3, IContextKeyService)\n], ContextScopedFindInput);\nexport { ContextScopedFindInput };\nlet ContextScopedReplaceInput = class ContextScopedReplaceInput extends ReplaceInput {\n    constructor(container, contextViewProvider, options, contextKeyService, showReplaceOptions = false) {\n        super(container, contextViewProvider, showReplaceOptions, options);\n        this._register(createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, { target: this.inputBox.element, historyNavigator: this.inputBox }).scopedContextKeyService);\n    }\n};\nContextScopedReplaceInput = __decorate([\n    __param(3, IContextKeyService)\n], ContextScopedReplaceInput);\nexport { ContextScopedReplaceInput };\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'history.showPrevious',\n    weight: 200 /* WorkbenchContrib */,\n    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationBackwardsEnablementContext, true), historyNavigationVisible.isEqualTo(false)),\n    primary: 16 /* UpArrow */,\n    secondary: [512 /* Alt */ | 16 /* UpArrow */],\n    handler: (accessor) => {\n        const widget = getContextScopedWidget(accessor.get(IContextKeyService), HistoryNavigationWidgetContext);\n        if (widget) {\n            const historyInputBox = widget.historyNavigator;\n            historyInputBox.showPreviousValue();\n        }\n    }\n});\nKeybindingsRegistry.registerCommandAndKeybindingRule({\n    id: 'history.showNext',\n    weight: 200 /* WorkbenchContrib */,\n    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationForwardsEnablementContext, true), historyNavigationVisible.isEqualTo(false)),\n    primary: 18 /* DownArrow */,\n    secondary: [512 /* Alt */ | 18 /* DownArrow */],\n    handler: (accessor) => {\n        const widget = getContextScopedWidget(accessor.get(IContextKeyService), HistoryNavigationWidgetContext);\n        if (widget) {\n            const historyInputBox = widget.historyNavigator;\n            historyInputBox.showNextValue();\n        }\n    }\n});\n",
+      "start": 1711096856678,
+      "end": 1711096856773,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856773,
+      "end": 1711096856773,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856773,
+      "end": 1711096856774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856774,
+      "end": 1711096856774,
+      "order": "normal"
+    }
+  ]
+}

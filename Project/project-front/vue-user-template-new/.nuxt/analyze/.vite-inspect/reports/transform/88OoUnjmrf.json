@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/viewParts/scrollDecoration/scrollDecoration.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport './scrollDecoration.css';\nimport { createFastDomNode } from '../../../../base/browser/fastDomNode.js';\nimport { ViewPart } from '../../view/viewPart.js';\nimport { scrollbarShadow } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nexport class ScrollDecorationViewPart extends ViewPart {\n    constructor(context) {\n        super(context);\n        this._scrollTop = 0;\n        this._width = 0;\n        this._updateWidth();\n        this._shouldShow = false;\n        const options = this._context.configuration.options;\n        const scrollbar = options.get(92 /* scrollbar */);\n        this._useShadows = scrollbar.useShadows;\n        this._domNode = createFastDomNode(document.createElement('div'));\n        this._domNode.setAttribute('role', 'presentation');\n        this._domNode.setAttribute('aria-hidden', 'true');\n    }\n    dispose() {\n        super.dispose();\n    }\n    _updateShouldShow() {\n        const newShouldShow = (this._useShadows && this._scrollTop > 0);\n        if (this._shouldShow !== newShouldShow) {\n            this._shouldShow = newShouldShow;\n            return true;\n        }\n        return false;\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    _updateWidth() {\n        const options = this._context.configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        if (layoutInfo.minimap.renderMinimap === 0 || (layoutInfo.minimap.minimapWidth > 0 && layoutInfo.minimap.minimapLeft === 0)) {\n            this._width = layoutInfo.width;\n        }\n        else {\n            this._width = layoutInfo.width - layoutInfo.minimap.minimapWidth - layoutInfo.verticalScrollbarWidth;\n        }\n    }\n    // --- begin event handlers\n    onConfigurationChanged(e) {\n        const options = this._context.configuration.options;\n        const scrollbar = options.get(92 /* scrollbar */);\n        this._useShadows = scrollbar.useShadows;\n        this._updateWidth();\n        this._updateShouldShow();\n        return true;\n    }\n    onScrollChanged(e) {\n        this._scrollTop = e.scrollTop;\n        return this._updateShouldShow();\n    }\n    // --- end event handlers\n    prepareRender(ctx) {\n        // Nothing to read\n    }\n    render(ctx) {\n        this._domNode.setWidth(this._width);\n        this._domNode.setClassName(this._shouldShow ? 'scroll-decoration' : '');\n    }\n}\nregisterThemingParticipant((theme, collector) => {\n    const shadow = theme.getColor(scrollbarShadow);\n    if (shadow) {\n        collector.addRule(`.monaco-editor .scroll-decoration { box-shadow: ${shadow} 0 6px 6px -6px inset; }`);\n    }\n});\n",
+      "start": 1711096856416,
+      "end": 1711096856501,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856501,
+      "end": 1711096856501,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856501,
+      "end": 1711096856501,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856501,
+      "end": 1711096856501,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856501,
+      "end": 1711096856501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856501,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856502,
+      "end": 1711096856502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856502,
+      "end": 1711096856503,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856503,
+      "end": 1711096856503,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/linesOperations/browser/copyLinesCommand.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nexport class CopyLinesCommand {\n    constructor(selection, isCopyingDown, noop) {\n        this._selection = selection;\n        this._isCopyingDown = isCopyingDown;\n        this._noop = noop || false;\n        this._selectionDirection = 0 /* LTR */;\n        this._selectionId = null;\n        this._startLineNumberDelta = 0;\n        this._endLineNumberDelta = 0;\n    }\n    getEditOperations(model, builder) {\n        let s = this._selection;\n        this._startLineNumberDelta = 0;\n        this._endLineNumberDelta = 0;\n        if (s.startLineNumber < s.endLineNumber && s.endColumn === 1) {\n            this._endLineNumberDelta = 1;\n            s = s.setEndPosition(s.endLineNumber - 1, model.getLineMaxColumn(s.endLineNumber - 1));\n        }\n        let sourceLines = [];\n        for (let i = s.startLineNumber; i <= s.endLineNumber; i++) {\n            sourceLines.push(model.getLineContent(i));\n        }\n        const sourceText = sourceLines.join('\\n');\n        if (sourceText === '') {\n            // Duplicating empty line\n            if (this._isCopyingDown) {\n                this._startLineNumberDelta++;\n                this._endLineNumberDelta++;\n            }\n        }\n        if (this._noop) {\n            builder.addEditOperation(new Range(s.endLineNumber, model.getLineMaxColumn(s.endLineNumber), s.endLineNumber + 1, 1), s.endLineNumber === model.getLineCount() ? '' : '\\n');\n        }\n        else {\n            if (!this._isCopyingDown) {\n                builder.addEditOperation(new Range(s.endLineNumber, model.getLineMaxColumn(s.endLineNumber), s.endLineNumber, model.getLineMaxColumn(s.endLineNumber)), '\\n' + sourceText);\n            }\n            else {\n                builder.addEditOperation(new Range(s.startLineNumber, 1, s.startLineNumber, 1), sourceText + '\\n');\n            }\n        }\n        this._selectionId = builder.trackSelection(s);\n        this._selectionDirection = this._selection.getDirection();\n    }\n    computeCursorState(model, helper) {\n        let result = helper.getTrackedSelection(this._selectionId);\n        if (this._startLineNumberDelta !== 0 || this._endLineNumberDelta !== 0) {\n            let startLineNumber = result.startLineNumber;\n            let startColumn = result.startColumn;\n            let endLineNumber = result.endLineNumber;\n            let endColumn = result.endColumn;\n            if (this._startLineNumberDelta !== 0) {\n                startLineNumber = startLineNumber + this._startLineNumberDelta;\n                startColumn = 1;\n            }\n            if (this._endLineNumberDelta !== 0) {\n                endLineNumber = endLineNumber + this._endLineNumberDelta;\n                endColumn = 1;\n            }\n            result = Selection.createWithDirection(startLineNumber, startColumn, endLineNumber, endColumn, this._selectionDirection);\n        }\n        return result;\n    }\n}\n",
+      "start": 1711096855800,
+      "end": 1711096855917,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855917,
+      "end": 1711096855917,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855917,
+      "end": 1711096855918,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855918,
+      "end": 1711096855918,
+      "order": "normal"
+    }
+  ]
+}

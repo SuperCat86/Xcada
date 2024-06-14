@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/scrollbar/scrollbarState.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n/**\n * The minimal size of the slider (such that it can still be clickable) -- it is artificially enlarged.\n */\nconst MINIMUM_SLIDER_SIZE = 20;\nexport class ScrollbarState {\n    constructor(arrowSize, scrollbarSize, oppositeScrollbarSize, visibleSize, scrollSize, scrollPosition) {\n        this._scrollbarSize = Math.round(scrollbarSize);\n        this._oppositeScrollbarSize = Math.round(oppositeScrollbarSize);\n        this._arrowSize = Math.round(arrowSize);\n        this._visibleSize = visibleSize;\n        this._scrollSize = scrollSize;\n        this._scrollPosition = scrollPosition;\n        this._computedAvailableSize = 0;\n        this._computedIsNeeded = false;\n        this._computedSliderSize = 0;\n        this._computedSliderRatio = 0;\n        this._computedSliderPosition = 0;\n        this._refreshComputedValues();\n    }\n    clone() {\n        return new ScrollbarState(this._arrowSize, this._scrollbarSize, this._oppositeScrollbarSize, this._visibleSize, this._scrollSize, this._scrollPosition);\n    }\n    setVisibleSize(visibleSize) {\n        const iVisibleSize = Math.round(visibleSize);\n        if (this._visibleSize !== iVisibleSize) {\n            this._visibleSize = iVisibleSize;\n            this._refreshComputedValues();\n            return true;\n        }\n        return false;\n    }\n    setScrollSize(scrollSize) {\n        const iScrollSize = Math.round(scrollSize);\n        if (this._scrollSize !== iScrollSize) {\n            this._scrollSize = iScrollSize;\n            this._refreshComputedValues();\n            return true;\n        }\n        return false;\n    }\n    setScrollPosition(scrollPosition) {\n        const iScrollPosition = Math.round(scrollPosition);\n        if (this._scrollPosition !== iScrollPosition) {\n            this._scrollPosition = iScrollPosition;\n            this._refreshComputedValues();\n            return true;\n        }\n        return false;\n    }\n    setScrollbarSize(scrollbarSize) {\n        this._scrollbarSize = Math.round(scrollbarSize);\n    }\n    setOppositeScrollbarSize(oppositeScrollbarSize) {\n        this._oppositeScrollbarSize = Math.round(oppositeScrollbarSize);\n    }\n    static _computeValues(oppositeScrollbarSize, arrowSize, visibleSize, scrollSize, scrollPosition) {\n        const computedAvailableSize = Math.max(0, visibleSize - oppositeScrollbarSize);\n        const computedRepresentableSize = Math.max(0, computedAvailableSize - 2 * arrowSize);\n        const computedIsNeeded = (scrollSize > 0 && scrollSize > visibleSize);\n        if (!computedIsNeeded) {\n            // There is no need for a slider\n            return {\n                computedAvailableSize: Math.round(computedAvailableSize),\n                computedIsNeeded: computedIsNeeded,\n                computedSliderSize: Math.round(computedRepresentableSize),\n                computedSliderRatio: 0,\n                computedSliderPosition: 0,\n            };\n        }\n        // We must artificially increase the size of the slider if needed, since the slider would be too small to grab with the mouse otherwise\n        const computedSliderSize = Math.round(Math.max(MINIMUM_SLIDER_SIZE, Math.floor(visibleSize * computedRepresentableSize / scrollSize)));\n        // The slider can move from 0 to `computedRepresentableSize` - `computedSliderSize`\n        // in the same way `scrollPosition` can move from 0 to `scrollSize` - `visibleSize`.\n        const computedSliderRatio = (computedRepresentableSize - computedSliderSize) / (scrollSize - visibleSize);\n        const computedSliderPosition = (scrollPosition * computedSliderRatio);\n        return {\n            computedAvailableSize: Math.round(computedAvailableSize),\n            computedIsNeeded: computedIsNeeded,\n            computedSliderSize: Math.round(computedSliderSize),\n            computedSliderRatio: computedSliderRatio,\n            computedSliderPosition: Math.round(computedSliderPosition),\n        };\n    }\n    _refreshComputedValues() {\n        const r = ScrollbarState._computeValues(this._oppositeScrollbarSize, this._arrowSize, this._visibleSize, this._scrollSize, this._scrollPosition);\n        this._computedAvailableSize = r.computedAvailableSize;\n        this._computedIsNeeded = r.computedIsNeeded;\n        this._computedSliderSize = r.computedSliderSize;\n        this._computedSliderRatio = r.computedSliderRatio;\n        this._computedSliderPosition = r.computedSliderPosition;\n    }\n    getArrowSize() {\n        return this._arrowSize;\n    }\n    getScrollPosition() {\n        return this._scrollPosition;\n    }\n    getRectangleLargeSize() {\n        return this._computedAvailableSize;\n    }\n    getRectangleSmallSize() {\n        return this._scrollbarSize;\n    }\n    isNeeded() {\n        return this._computedIsNeeded;\n    }\n    getSliderSize() {\n        return this._computedSliderSize;\n    }\n    getSliderPosition() {\n        return this._computedSliderPosition;\n    }\n    /**\n     * Compute a desired `scrollPosition` such that `offset` ends up in the center of the slider.\n     * `offset` is based on the same coordinate system as the `sliderPosition`.\n     */\n    getDesiredScrollPositionFromOffset(offset) {\n        if (!this._computedIsNeeded) {\n            // no need for a slider\n            return 0;\n        }\n        const desiredSliderPosition = offset - this._arrowSize - this._computedSliderSize / 2;\n        return Math.round(desiredSliderPosition / this._computedSliderRatio);\n    }\n    /**\n     * Compute a desired `scrollPosition` from if offset is before or after the slider position.\n     * If offset is before slider, treat as a page up (or left).  If after, page down (or right).\n     * `offset` and `_computedSliderPosition` are based on the same coordinate system.\n     * `_visibleSize` corresponds to a \"page\" of lines in the returned coordinate system.\n     */\n    getDesiredScrollPositionFromOffsetPaged(offset) {\n        if (!this._computedIsNeeded) {\n            // no need for a slider\n            return 0;\n        }\n        const correctedOffset = offset - this._arrowSize; // compensate if has arrows\n        let desiredScrollPosition = this._scrollPosition;\n        if (correctedOffset < this._computedSliderPosition) {\n            desiredScrollPosition -= this._visibleSize; // page up/left\n        }\n        else {\n            desiredScrollPosition += this._visibleSize; // page down/right\n        }\n        return desiredScrollPosition;\n    }\n    /**\n     * Compute a desired `scrollPosition` such that the slider moves by `delta`.\n     */\n    getDesiredScrollPositionFromDelta(delta) {\n        if (!this._computedIsNeeded) {\n            // no need for a slider\n            return 0;\n        }\n        const desiredSliderPosition = this._computedSliderPosition + delta;\n        return Math.round(desiredSliderPosition / this._computedSliderRatio);\n    }\n}\n",
+      "start": 1711096857584,
+      "end": 1711096857676,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857676,
+      "end": 1711096857676,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857676,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857677,
+      "end": 1711096857677,
+      "order": "normal"
+    }
+  ]
+}

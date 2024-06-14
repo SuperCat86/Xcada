@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneCodeEditor.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as aria from '../../../base/browser/ui/aria/aria.js';\nimport { Disposable, toDisposable, DisposableStore } from '../../../base/common/lifecycle.js';\nimport { ICodeEditorService } from '../../browser/services/codeEditorService.js';\nimport { CodeEditorWidget } from '../../browser/widget/codeEditorWidget.js';\nimport { DiffEditorWidget } from '../../browser/widget/diffEditorWidget.js';\nimport { InternalEditorAction } from '../../common/editorAction.js';\nimport { IEditorWorkerService } from '../../common/services/editorWorker.js';\nimport { StandaloneKeybindingService, updateConfigurationService } from './standaloneServices.js';\nimport { IStandaloneThemeService } from '../common/standaloneTheme.js';\nimport { MenuId, MenuRegistry } from '../../../platform/actions/common/actions.js';\nimport { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';\nimport { IConfigurationService } from '../../../platform/configuration/common/configuration.js';\nimport { ContextKeyExpr, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';\nimport { IContextMenuService } from '../../../platform/contextview/browser/contextView.js';\nimport { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';\nimport { INotificationService } from '../../../platform/notification/common/notification.js';\nimport { IThemeService } from '../../../platform/theme/common/themeService.js';\nimport { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';\nimport { StandaloneCodeEditorNLS } from '../../common/standaloneStrings.js';\nimport { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';\nimport { IEditorProgressService } from '../../../platform/progress/common/progress.js';\nimport { IModelService } from '../../common/services/model.js';\nimport { ILanguageService } from '../../common/languages/language.js';\nimport { StandaloneCodeEditorService } from './standaloneCodeEditorService.js';\nimport { PLAINTEXT_LANGUAGE_ID } from '../../common/languages/modesRegistry.js';\nimport { ILanguageConfigurationService } from '../../common/languages/languageConfigurationRegistry.js';\nimport { ILanguageFeaturesService } from '../../common/services/languageFeatures.js';\nlet LAST_GENERATED_COMMAND_ID = 0;\nlet ariaDomNodeCreated = false;\n/**\n * Create ARIA dom node inside parent,\n * or only for the first editor instantiation inside document.body.\n * @param parent container element for ARIA dom node\n */\nfunction createAriaDomNode(parent) {\n    if (!parent) {\n        if (ariaDomNodeCreated) {\n            return;\n        }\n        ariaDomNodeCreated = true;\n    }\n    aria.setARIAContainer(parent || document.body);\n}\n/**\n * A code editor to be used both by the standalone editor and the standalone diff editor.\n */\nlet StandaloneCodeEditor = class StandaloneCodeEditor extends CodeEditorWidget {\n    constructor(domElement, _options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, accessibilityService, languageConfigurationService, languageFeaturesService) {\n        const options = Object.assign({}, _options);\n        options.ariaLabel = options.ariaLabel || StandaloneCodeEditorNLS.editorViewAccessibleLabel;\n        options.ariaLabel = options.ariaLabel + ';' + (StandaloneCodeEditorNLS.accessibilityHelpMessage);\n        super(domElement, options, {}, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService, accessibilityService, languageConfigurationService, languageFeaturesService);\n        if (keybindingService instanceof StandaloneKeybindingService) {\n            this._standaloneKeybindingService = keybindingService;\n        }\n        else {\n            this._standaloneKeybindingService = null;\n        }\n        createAriaDomNode(options.ariaContainerElement);\n    }\n    addCommand(keybinding, handler, context) {\n        if (!this._standaloneKeybindingService) {\n            console.warn('Cannot add command because the editor is configured with an unrecognized KeybindingService');\n            return null;\n        }\n        const commandId = 'DYNAMIC_' + (++LAST_GENERATED_COMMAND_ID);\n        const whenExpression = ContextKeyExpr.deserialize(context);\n        this._standaloneKeybindingService.addDynamicKeybinding(commandId, keybinding, handler, whenExpression);\n        return commandId;\n    }\n    createContextKey(key, defaultValue) {\n        return this._contextKeyService.createKey(key, defaultValue);\n    }\n    addAction(_descriptor) {\n        if ((typeof _descriptor.id !== 'string') || (typeof _descriptor.label !== 'string') || (typeof _descriptor.run !== 'function')) {\n            throw new Error('Invalid action descriptor, `id`, `label` and `run` are required properties!');\n        }\n        if (!this._standaloneKeybindingService) {\n            console.warn('Cannot add keybinding because the editor is configured with an unrecognized KeybindingService');\n            return Disposable.None;\n        }\n        // Read descriptor options\n        const id = _descriptor.id;\n        const label = _descriptor.label;\n        const precondition = ContextKeyExpr.and(ContextKeyExpr.equals('editorId', this.getId()), ContextKeyExpr.deserialize(_descriptor.precondition));\n        const keybindings = _descriptor.keybindings;\n        const keybindingsWhen = ContextKeyExpr.and(precondition, ContextKeyExpr.deserialize(_descriptor.keybindingContext));\n        const contextMenuGroupId = _descriptor.contextMenuGroupId || null;\n        const contextMenuOrder = _descriptor.contextMenuOrder || 0;\n        const run = (accessor, ...args) => {\n            return Promise.resolve(_descriptor.run(this, ...args));\n        };\n        const toDispose = new DisposableStore();\n        // Generate a unique id to allow the same descriptor.id across multiple editor instances\n        const uniqueId = this.getId() + ':' + id;\n        // Register the command\n        toDispose.add(CommandsRegistry.registerCommand(uniqueId, run));\n        // Register the context menu item\n        if (contextMenuGroupId) {\n            const menuItem = {\n                command: {\n                    id: uniqueId,\n                    title: label\n                },\n                when: precondition,\n                group: contextMenuGroupId,\n                order: contextMenuOrder\n            };\n            toDispose.add(MenuRegistry.appendMenuItem(MenuId.EditorContext, menuItem));\n        }\n        // Register the keybindings\n        if (Array.isArray(keybindings)) {\n            for (const kb of keybindings) {\n                toDispose.add(this._standaloneKeybindingService.addDynamicKeybinding(uniqueId, kb, run, keybindingsWhen));\n            }\n        }\n        // Finally, register an internal editor action\n        const internalAction = new InternalEditorAction(uniqueId, label, label, precondition, run, this._contextKeyService);\n        // Store it under the original id, such that trigger with the original id will work\n        this._actions[id] = internalAction;\n        toDispose.add(toDisposable(() => {\n            delete this._actions[id];\n        }));\n        return toDispose;\n    }\n    _triggerCommand(handlerId, payload) {\n        if (this._codeEditorService instanceof StandaloneCodeEditorService) {\n            // Help commands find this editor as the active editor\n            try {\n                this._codeEditorService.setActiveCodeEditor(this);\n                super._triggerCommand(handlerId, payload);\n            }\n            finally {\n                this._codeEditorService.setActiveCodeEditor(null);\n            }\n        }\n        else {\n            super._triggerCommand(handlerId, payload);\n        }\n    }\n};\nStandaloneCodeEditor = __decorate([\n    __param(2, IInstantiationService),\n    __param(3, ICodeEditorService),\n    __param(4, ICommandService),\n    __param(5, IContextKeyService),\n    __param(6, IKeybindingService),\n    __param(7, IThemeService),\n    __param(8, INotificationService),\n    __param(9, IAccessibilityService),\n    __param(10, ILanguageConfigurationService),\n    __param(11, ILanguageFeaturesService)\n], StandaloneCodeEditor);\nexport { StandaloneCodeEditor };\nlet StandaloneEditor = class StandaloneEditor extends StandaloneCodeEditor {\n    constructor(domElement, _options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, configurationService, accessibilityService, modelService, languageService, languageConfigurationService, languageFeaturesService) {\n        const options = Object.assign({}, _options);\n        updateConfigurationService(configurationService, options, false);\n        const themeDomRegistration = themeService.registerEditorContainer(domElement);\n        if (typeof options.theme === 'string') {\n            themeService.setTheme(options.theme);\n        }\n        if (typeof options.autoDetectHighContrast !== 'undefined') {\n            themeService.setAutoDetectHighContrast(Boolean(options.autoDetectHighContrast));\n        }\n        const _model = options.model;\n        delete options.model;\n        super(domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, accessibilityService, languageConfigurationService, languageFeaturesService);\n        this._configurationService = configurationService;\n        this._standaloneThemeService = themeService;\n        this._register(themeDomRegistration);\n        let model;\n        if (typeof _model === 'undefined') {\n            const languageId = languageService.getLanguageIdByMimeType(options.language) || options.language || PLAINTEXT_LANGUAGE_ID;\n            model = createTextModel(modelService, languageService, options.value || '', languageId, undefined);\n            this._ownsModel = true;\n        }\n        else {\n            model = _model;\n            this._ownsModel = false;\n        }\n        this._attachModel(model);\n        if (model) {\n            const e = {\n                oldModelUrl: null,\n                newModelUrl: model.uri\n            };\n            this._onDidChangeModel.fire(e);\n        }\n    }\n    dispose() {\n        super.dispose();\n    }\n    updateOptions(newOptions) {\n        updateConfigurationService(this._configurationService, newOptions, false);\n        if (typeof newOptions.theme === 'string') {\n            this._standaloneThemeService.setTheme(newOptions.theme);\n        }\n        if (typeof newOptions.autoDetectHighContrast !== 'undefined') {\n            this._standaloneThemeService.setAutoDetectHighContrast(Boolean(newOptions.autoDetectHighContrast));\n        }\n        super.updateOptions(newOptions);\n    }\n    _postDetachModelCleanup(detachedModel) {\n        super._postDetachModelCleanup(detachedModel);\n        if (detachedModel && this._ownsModel) {\n            detachedModel.dispose();\n            this._ownsModel = false;\n        }\n    }\n};\nStandaloneEditor = __decorate([\n    __param(2, IInstantiationService),\n    __param(3, ICodeEditorService),\n    __param(4, ICommandService),\n    __param(5, IContextKeyService),\n    __param(6, IKeybindingService),\n    __param(7, IStandaloneThemeService),\n    __param(8, INotificationService),\n    __param(9, IConfigurationService),\n    __param(10, IAccessibilityService),\n    __param(11, IModelService),\n    __param(12, ILanguageService),\n    __param(13, ILanguageConfigurationService),\n    __param(14, ILanguageFeaturesService)\n], StandaloneEditor);\nexport { StandaloneEditor };\nlet StandaloneDiffEditor = class StandaloneDiffEditor extends DiffEditorWidget {\n    constructor(domElement, _options, instantiationService, contextKeyService, editorWorkerService, codeEditorService, themeService, notificationService, configurationService, contextMenuService, editorProgressService, clipboardService) {\n        const options = Object.assign({}, _options);\n        updateConfigurationService(configurationService, options, true);\n        const themeDomRegistration = themeService.registerEditorContainer(domElement);\n        if (typeof options.theme === 'string') {\n            themeService.setTheme(options.theme);\n        }\n        if (typeof options.autoDetectHighContrast !== 'undefined') {\n            themeService.setAutoDetectHighContrast(Boolean(options.autoDetectHighContrast));\n        }\n        super(domElement, options, {}, clipboardService, editorWorkerService, contextKeyService, instantiationService, codeEditorService, themeService, notificationService, contextMenuService, editorProgressService);\n        this._configurationService = configurationService;\n        this._standaloneThemeService = themeService;\n        this._register(themeDomRegistration);\n    }\n    dispose() {\n        super.dispose();\n    }\n    updateOptions(newOptions) {\n        updateConfigurationService(this._configurationService, newOptions, true);\n        if (typeof newOptions.theme === 'string') {\n            this._standaloneThemeService.setTheme(newOptions.theme);\n        }\n        if (typeof newOptions.autoDetectHighContrast !== 'undefined') {\n            this._standaloneThemeService.setAutoDetectHighContrast(Boolean(newOptions.autoDetectHighContrast));\n        }\n        super.updateOptions(newOptions);\n    }\n    _createInnerEditor(instantiationService, container, options) {\n        return instantiationService.createInstance(StandaloneCodeEditor, container, options);\n    }\n    getOriginalEditor() {\n        return super.getOriginalEditor();\n    }\n    getModifiedEditor() {\n        return super.getModifiedEditor();\n    }\n    addCommand(keybinding, handler, context) {\n        return this.getModifiedEditor().addCommand(keybinding, handler, context);\n    }\n    createContextKey(key, defaultValue) {\n        return this.getModifiedEditor().createContextKey(key, defaultValue);\n    }\n    addAction(descriptor) {\n        return this.getModifiedEditor().addAction(descriptor);\n    }\n};\nStandaloneDiffEditor = __decorate([\n    __param(2, IInstantiationService),\n    __param(3, IContextKeyService),\n    __param(4, IEditorWorkerService),\n    __param(5, ICodeEditorService),\n    __param(6, IStandaloneThemeService),\n    __param(7, INotificationService),\n    __param(8, IConfigurationService),\n    __param(9, IContextMenuService),\n    __param(10, IEditorProgressService),\n    __param(11, IClipboardService)\n], StandaloneDiffEditor);\nexport { StandaloneDiffEditor };\n/**\n * @internal\n */\nexport function createTextModel(modelService, languageService, value, languageId, uri) {\n    value = value || '';\n    if (!languageId) {\n        const firstLF = value.indexOf('\\n');\n        let firstLine = value;\n        if (firstLF !== -1) {\n            firstLine = value.substring(0, firstLF);\n        }\n        return doCreateModel(modelService, value, languageService.createByFilepathOrFirstLine(uri || null, firstLine), uri);\n    }\n    return doCreateModel(modelService, value, languageService.createById(languageId), uri);\n}\n/**\n * @internal\n */\nfunction doCreateModel(modelService, value, languageSelection, uri) {\n    return modelService.createModel(value, languageSelection, uri);\n}\n",
+      "start": 1711096855079,
+      "end": 1711096855173,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855173,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855174,
+      "end": 1711096855174,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855174,
+      "end": 1711096855175,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855175,
+      "end": 1711096855175,
+      "order": "normal"
+    }
+  ]
+}

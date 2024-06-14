@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/quickinput/common/quickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { coalesce } from '../../../base/common/arrays.js';\nimport { toDisposable } from '../../../base/common/lifecycle.js';\nimport { Registry } from '../../registry/common/platform.js';\nexport var DefaultQuickAccessFilterValue;\n(function (DefaultQuickAccessFilterValue) {\n    /**\n     * Keep the value as it is given to quick access.\n     */\n    DefaultQuickAccessFilterValue[DefaultQuickAccessFilterValue[\"PRESERVE\"] = 0] = \"PRESERVE\";\n    /**\n     * Use the value that was used last time something was accepted from the picker.\n     */\n    DefaultQuickAccessFilterValue[DefaultQuickAccessFilterValue[\"LAST\"] = 1] = \"LAST\";\n})(DefaultQuickAccessFilterValue || (DefaultQuickAccessFilterValue = {}));\nexport const Extensions = {\n    Quickaccess: 'workbench.contributions.quickaccess'\n};\nexport class QuickAccessRegistry {\n    constructor() {\n        this.providers = [];\n        this.defaultProvider = undefined;\n    }\n    registerQuickAccessProvider(provider) {\n        // Extract the default provider when no prefix is present\n        if (provider.prefix.length === 0) {\n            this.defaultProvider = provider;\n        }\n        else {\n            this.providers.push(provider);\n        }\n        // sort the providers by decreasing prefix length, such that longer\n        // prefixes take priority: 'ext' vs 'ext install' - the latter should win\n        this.providers.sort((providerA, providerB) => providerB.prefix.length - providerA.prefix.length);\n        return toDisposable(() => {\n            this.providers.splice(this.providers.indexOf(provider), 1);\n            if (this.defaultProvider === provider) {\n                this.defaultProvider = undefined;\n            }\n        });\n    }\n    getQuickAccessProviders() {\n        return coalesce([this.defaultProvider, ...this.providers]);\n    }\n    getQuickAccessProvider(prefix) {\n        const result = prefix ? (this.providers.find(provider => prefix.startsWith(provider.prefix)) || undefined) : undefined;\n        return result || this.defaultProvider;\n    }\n}\nRegistry.add(Extensions.Quickaccess, new QuickAccessRegistry());\n",
+      "start": 1711096854862,
+      "end": 1711096855038,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855038,
+      "end": 1711096855038,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855038,
+      "end": 1711096855039,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855039,
+      "end": 1711096855039,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/comparers.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { IdleValue } from './async.js';\n// When comparing large numbers of strings it's better for performance to create an\n// Intl.Collator object and use the function provided by its compare property\n// than it is to use String.prototype.localeCompare()\n// A collator with numeric sorting enabled, and no sensitivity to case, accents or diacritics.\nconst intlFileNameCollatorBaseNumeric = new IdleValue(() => {\n    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });\n    return {\n        collator: collator,\n        collatorIsNumeric: collator.resolvedOptions().numeric\n    };\n});\n// A collator with numeric sorting enabled.\nconst intlFileNameCollatorNumeric = new IdleValue(() => {\n    const collator = new Intl.Collator(undefined, { numeric: true });\n    return {\n        collator: collator\n    };\n});\n// A collator with numeric sorting enabled, and sensitivity to accents and diacritics but not case.\nconst intlFileNameCollatorNumericCaseInsensitive = new IdleValue(() => {\n    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'accent' });\n    return {\n        collator: collator\n    };\n});\n/** Compares filenames without distinguishing the name from the extension. Disambiguates by unicode comparison. */\nexport function compareFileNames(one, other, caseSensitive = false) {\n    const a = one || '';\n    const b = other || '';\n    const result = intlFileNameCollatorBaseNumeric.value.collator.compare(a, b);\n    // Using the numeric option will make compare(`foo1`, `foo01`) === 0. Disambiguate.\n    if (intlFileNameCollatorBaseNumeric.value.collatorIsNumeric && result === 0 && a !== b) {\n        return a < b ? -1 : 1;\n    }\n    return result;\n}\nexport function compareAnything(one, other, lookFor) {\n    const elementAName = one.toLowerCase();\n    const elementBName = other.toLowerCase();\n    // Sort prefix matches over non prefix matches\n    const prefixCompare = compareByPrefix(one, other, lookFor);\n    if (prefixCompare) {\n        return prefixCompare;\n    }\n    // Sort suffix matches over non suffix matches\n    const elementASuffixMatch = elementAName.endsWith(lookFor);\n    const elementBSuffixMatch = elementBName.endsWith(lookFor);\n    if (elementASuffixMatch !== elementBSuffixMatch) {\n        return elementASuffixMatch ? -1 : 1;\n    }\n    // Understand file names\n    const r = compareFileNames(elementAName, elementBName);\n    if (r !== 0) {\n        return r;\n    }\n    // Compare by name\n    return elementAName.localeCompare(elementBName);\n}\nexport function compareByPrefix(one, other, lookFor) {\n    const elementAName = one.toLowerCase();\n    const elementBName = other.toLowerCase();\n    // Sort prefix matches over non prefix matches\n    const elementAPrefixMatch = elementAName.startsWith(lookFor);\n    const elementBPrefixMatch = elementBName.startsWith(lookFor);\n    if (elementAPrefixMatch !== elementBPrefixMatch) {\n        return elementAPrefixMatch ? -1 : 1;\n    }\n    // Same prefix: Sort shorter matches to the top to have those on top that match more precisely\n    else if (elementAPrefixMatch && elementBPrefixMatch) {\n        if (elementAName.length < elementBName.length) {\n            return -1;\n        }\n        if (elementAName.length > elementBName.length) {\n            return 1;\n        }\n    }\n    return 0;\n}\n",
+      "start": 1711096857872,
+      "end": 1711096857910,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857910,
+      "end": 1711096857910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857911,
+      "end": 1711096857911,
+      "order": "normal"
+    }
+  ]
+}

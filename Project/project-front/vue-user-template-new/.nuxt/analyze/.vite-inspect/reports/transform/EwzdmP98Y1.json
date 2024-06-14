@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/config/elementSizeObserver.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { Emitter } from '../../../base/common/event.js';\nexport class ElementSizeObserver extends Disposable {\n    constructor(referenceDomElement, dimension) {\n        super();\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        this._referenceDomElement = referenceDomElement;\n        this._width = -1;\n        this._height = -1;\n        this._resizeObserver = null;\n        this.measureReferenceDomElement(false, dimension);\n    }\n    dispose() {\n        this.stopObserving();\n        super.dispose();\n    }\n    getWidth() {\n        return this._width;\n    }\n    getHeight() {\n        return this._height;\n    }\n    startObserving() {\n        if (!this._resizeObserver && this._referenceDomElement) {\n            this._resizeObserver = new ResizeObserver((entries) => {\n                if (entries && entries[0] && entries[0].contentRect) {\n                    this.observe({ width: entries[0].contentRect.width, height: entries[0].contentRect.height });\n                }\n                else {\n                    this.observe();\n                }\n            });\n            this._resizeObserver.observe(this._referenceDomElement);\n        }\n    }\n    stopObserving() {\n        if (this._resizeObserver) {\n            this._resizeObserver.disconnect();\n            this._resizeObserver = null;\n        }\n    }\n    observe(dimension) {\n        this.measureReferenceDomElement(true, dimension);\n    }\n    measureReferenceDomElement(emitEvent, dimension) {\n        let observedWidth = 0;\n        let observedHeight = 0;\n        if (dimension) {\n            observedWidth = dimension.width;\n            observedHeight = dimension.height;\n        }\n        else if (this._referenceDomElement) {\n            observedWidth = this._referenceDomElement.clientWidth;\n            observedHeight = this._referenceDomElement.clientHeight;\n        }\n        observedWidth = Math.max(5, observedWidth);\n        observedHeight = Math.max(5, observedHeight);\n        if (this._width !== observedWidth || this._height !== observedHeight) {\n            this._width = observedWidth;\n            this._height = observedHeight;\n            if (emitEvent) {\n                this._onDidChange.fire();\n            }\n        }\n    }\n}\n",
+      "start": 1711096855401,
+      "end": 1711096855560,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855560,
+      "end": 1711096855560,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855561,
+      "end": 1711096855561,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855561,
+      "end": 1711096855561,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855561,
+      "end": 1711096855561,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855561,
+      "end": 1711096855561,
+      "order": "normal"
+    }
+  ]
+}

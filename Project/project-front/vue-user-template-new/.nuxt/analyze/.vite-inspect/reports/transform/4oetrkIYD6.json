@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/keybinding/common/usLayoutResolvedKeybinding.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { KeyCodeUtils, IMMUTABLE_CODE_TO_KEY_CODE } from '../../../base/common/keyCodes.js';\nimport { ChordKeybinding, SimpleKeybinding } from '../../../base/common/keybindings.js';\nimport { BaseResolvedKeybinding } from './baseResolvedKeybinding.js';\nimport { removeElementsAfterNulls } from './resolvedKeybindingItem.js';\n/**\n * Do not instantiate. Use KeybindingService to get a ResolvedKeybinding seeded with information about the current kb layout.\n */\nexport class USLayoutResolvedKeybinding extends BaseResolvedKeybinding {\n    constructor(actual, os) {\n        super(os, actual.parts);\n    }\n    _keyCodeToUILabel(keyCode) {\n        if (this._os === 2 /* Macintosh */) {\n            switch (keyCode) {\n                case 15 /* LeftArrow */:\n                    return '←';\n                case 16 /* UpArrow */:\n                    return '↑';\n                case 17 /* RightArrow */:\n                    return '→';\n                case 18 /* DownArrow */:\n                    return '↓';\n            }\n        }\n        return KeyCodeUtils.toString(keyCode);\n    }\n    _getLabel(keybinding) {\n        if (keybinding.isDuplicateModifierCase()) {\n            return '';\n        }\n        return this._keyCodeToUILabel(keybinding.keyCode);\n    }\n    _getAriaLabel(keybinding) {\n        if (keybinding.isDuplicateModifierCase()) {\n            return '';\n        }\n        return KeyCodeUtils.toString(keybinding.keyCode);\n    }\n    _getElectronAccelerator(keybinding) {\n        return KeyCodeUtils.toElectronAccelerator(keybinding.keyCode);\n    }\n    _getDispatchPart(keybinding) {\n        return USLayoutResolvedKeybinding.getDispatchStr(keybinding);\n    }\n    static getDispatchStr(keybinding) {\n        if (keybinding.isModifierKey()) {\n            return null;\n        }\n        let result = '';\n        if (keybinding.ctrlKey) {\n            result += 'ctrl+';\n        }\n        if (keybinding.shiftKey) {\n            result += 'shift+';\n        }\n        if (keybinding.altKey) {\n            result += 'alt+';\n        }\n        if (keybinding.metaKey) {\n            result += 'meta+';\n        }\n        result += KeyCodeUtils.toString(keybinding.keyCode);\n        return result;\n    }\n    _getSingleModifierDispatchPart(keybinding) {\n        if (keybinding.keyCode === 5 /* Ctrl */ && !keybinding.shiftKey && !keybinding.altKey && !keybinding.metaKey) {\n            return 'ctrl';\n        }\n        if (keybinding.keyCode === 4 /* Shift */ && !keybinding.ctrlKey && !keybinding.altKey && !keybinding.metaKey) {\n            return 'shift';\n        }\n        if (keybinding.keyCode === 6 /* Alt */ && !keybinding.ctrlKey && !keybinding.shiftKey && !keybinding.metaKey) {\n            return 'alt';\n        }\n        if (keybinding.keyCode === 57 /* Meta */ && !keybinding.ctrlKey && !keybinding.shiftKey && !keybinding.altKey) {\n            return 'meta';\n        }\n        return null;\n    }\n    /**\n     * *NOTE*: Check return value for `KeyCode.Unknown`.\n     */\n    static _scanCodeToKeyCode(scanCode) {\n        const immutableKeyCode = IMMUTABLE_CODE_TO_KEY_CODE[scanCode];\n        if (immutableKeyCode !== -1 /* DependsOnKbLayout */) {\n            return immutableKeyCode;\n        }\n        switch (scanCode) {\n            case 10 /* KeyA */: return 31 /* KeyA */;\n            case 11 /* KeyB */: return 32 /* KeyB */;\n            case 12 /* KeyC */: return 33 /* KeyC */;\n            case 13 /* KeyD */: return 34 /* KeyD */;\n            case 14 /* KeyE */: return 35 /* KeyE */;\n            case 15 /* KeyF */: return 36 /* KeyF */;\n            case 16 /* KeyG */: return 37 /* KeyG */;\n            case 17 /* KeyH */: return 38 /* KeyH */;\n            case 18 /* KeyI */: return 39 /* KeyI */;\n            case 19 /* KeyJ */: return 40 /* KeyJ */;\n            case 20 /* KeyK */: return 41 /* KeyK */;\n            case 21 /* KeyL */: return 42 /* KeyL */;\n            case 22 /* KeyM */: return 43 /* KeyM */;\n            case 23 /* KeyN */: return 44 /* KeyN */;\n            case 24 /* KeyO */: return 45 /* KeyO */;\n            case 25 /* KeyP */: return 46 /* KeyP */;\n            case 26 /* KeyQ */: return 47 /* KeyQ */;\n            case 27 /* KeyR */: return 48 /* KeyR */;\n            case 28 /* KeyS */: return 49 /* KeyS */;\n            case 29 /* KeyT */: return 50 /* KeyT */;\n            case 30 /* KeyU */: return 51 /* KeyU */;\n            case 31 /* KeyV */: return 52 /* KeyV */;\n            case 32 /* KeyW */: return 53 /* KeyW */;\n            case 33 /* KeyX */: return 54 /* KeyX */;\n            case 34 /* KeyY */: return 55 /* KeyY */;\n            case 35 /* KeyZ */: return 56 /* KeyZ */;\n            case 36 /* Digit1 */: return 22 /* Digit1 */;\n            case 37 /* Digit2 */: return 23 /* Digit2 */;\n            case 38 /* Digit3 */: return 24 /* Digit3 */;\n            case 39 /* Digit4 */: return 25 /* Digit4 */;\n            case 40 /* Digit5 */: return 26 /* Digit5 */;\n            case 41 /* Digit6 */: return 27 /* Digit6 */;\n            case 42 /* Digit7 */: return 28 /* Digit7 */;\n            case 43 /* Digit8 */: return 29 /* Digit8 */;\n            case 44 /* Digit9 */: return 30 /* Digit9 */;\n            case 45 /* Digit0 */: return 21 /* Digit0 */;\n            case 51 /* Minus */: return 83 /* Minus */;\n            case 52 /* Equal */: return 81 /* Equal */;\n            case 53 /* BracketLeft */: return 87 /* BracketLeft */;\n            case 54 /* BracketRight */: return 89 /* BracketRight */;\n            case 55 /* Backslash */: return 88 /* Backslash */;\n            case 56 /* IntlHash */: return 0 /* Unknown */; // missing\n            case 57 /* Semicolon */: return 80 /* Semicolon */;\n            case 58 /* Quote */: return 90 /* Quote */;\n            case 59 /* Backquote */: return 86 /* Backquote */;\n            case 60 /* Comma */: return 82 /* Comma */;\n            case 61 /* Period */: return 84 /* Period */;\n            case 62 /* Slash */: return 85 /* Slash */;\n            case 106 /* IntlBackslash */: return 92 /* IntlBackslash */;\n        }\n        return 0 /* Unknown */;\n    }\n    static _resolveSimpleUserBinding(binding) {\n        if (!binding) {\n            return null;\n        }\n        if (binding instanceof SimpleKeybinding) {\n            return binding;\n        }\n        const keyCode = this._scanCodeToKeyCode(binding.scanCode);\n        if (keyCode === 0 /* Unknown */) {\n            return null;\n        }\n        return new SimpleKeybinding(binding.ctrlKey, binding.shiftKey, binding.altKey, binding.metaKey, keyCode);\n    }\n    static resolveUserBinding(input, os) {\n        const parts = removeElementsAfterNulls(input.map(keybinding => this._resolveSimpleUserBinding(keybinding)));\n        if (parts.length > 0) {\n            return [new USLayoutResolvedKeybinding(new ChordKeybinding(parts), os)];\n        }\n        return [];\n    }\n}\n",
+      "start": 1711096856211,
+      "end": 1711096856301,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856301,
+      "end": 1711096856301,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856302,
+      "end": 1711096856302,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    }
+  ]
+}

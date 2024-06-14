@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/colorPicker/browser/colorContributions.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Range } from '../../../common/core/range.js';\nimport { ColorDecorationInjectedTextMarker } from './colorDetector.js';\nimport { ColorHoverParticipant } from './colorHoverParticipant.js';\nimport { ModesHoverController } from '../../hover/browser/hover.js';\nimport { HoverParticipantRegistry } from '../../hover/browser/hoverTypes.js';\nexport class ColorContribution extends Disposable {\n    constructor(_editor) {\n        super();\n        this._editor = _editor;\n        this._register(_editor.onMouseDown((e) => this.onMouseDown(e)));\n    }\n    dispose() {\n        super.dispose();\n    }\n    onMouseDown(mouseEvent) {\n        const target = mouseEvent.target;\n        if (target.type !== 6 /* CONTENT_TEXT */) {\n            return;\n        }\n        if (!target.detail.injectedText) {\n            return;\n        }\n        if (target.detail.injectedText.options.attachedData !== ColorDecorationInjectedTextMarker) {\n            return;\n        }\n        if (!target.range) {\n            return;\n        }\n        const hoverController = this._editor.getContribution(ModesHoverController.ID);\n        if (!hoverController) {\n            return;\n        }\n        if (!hoverController.isColorPickerVisible()) {\n            const range = new Range(target.range.startLineNumber, target.range.startColumn + 1, target.range.endLineNumber, target.range.endColumn + 1);\n            hoverController.showContentHover(range, 1 /* Immediate */, false);\n        }\n    }\n}\nColorContribution.ID = 'editor.contrib.colorContribution'; // ms\nregisterEditorContribution(ColorContribution.ID, ColorContribution);\nHoverParticipantRegistry.register(ColorHoverParticipant);\n",
+      "start": 1711096854398,
+      "end": 1711096854501,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854501,
+      "end": 1711096854501,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854502,
+      "end": 1711096854502,
+      "order": "normal"
+    }
+  ]
+}

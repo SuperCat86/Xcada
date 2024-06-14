@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/hoverTypes.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nexport class HoverRangeAnchor {\n    constructor(priority, range) {\n        this.priority = priority;\n        this.range = range;\n        this.type = 1 /* Range */;\n    }\n    equals(other) {\n        return (other.type === 1 /* Range */ && this.range.equalsRange(other.range));\n    }\n    canAdoptVisibleHover(lastAnchor, showAtPosition) {\n        return (lastAnchor.type === 1 /* Range */ && showAtPosition.lineNumber === this.range.startLineNumber);\n    }\n}\nexport class HoverForeignElementAnchor {\n    constructor(priority, owner, range) {\n        this.priority = priority;\n        this.owner = owner;\n        this.range = range;\n        this.type = 2 /* ForeignElement */;\n    }\n    equals(other) {\n        return (other.type === 2 /* ForeignElement */ && this.owner === other.owner);\n    }\n    canAdoptVisibleHover(lastAnchor, showAtPosition) {\n        return (lastAnchor.type === 2 /* ForeignElement */ && this.owner === lastAnchor.owner);\n    }\n}\nexport const HoverParticipantRegistry = (new class HoverParticipantRegistry {\n    constructor() {\n        this._participants = [];\n    }\n    register(ctor) {\n        this._participants.push(ctor);\n    }\n    getAll() {\n        return this._participants;\n    }\n}());\n",
+      "start": 1711096855557,
+      "end": 1711096855661,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855661,
+      "end": 1711096855661,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855661,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855662,
+      "end": 1711096855662,
+      "order": "normal"
+    }
+  ]
+}

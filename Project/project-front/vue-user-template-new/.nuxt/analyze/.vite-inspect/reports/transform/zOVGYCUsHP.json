@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/widget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../dom.js';\nimport { StandardKeyboardEvent } from '../keyboardEvent.js';\nimport { StandardMouseEvent } from '../mouseEvent.js';\nimport { Gesture } from '../touch.js';\nimport { Disposable } from '../../common/lifecycle.js';\nexport class Widget extends Disposable {\n    onclick(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.CLICK, (e) => listener(new StandardMouseEvent(e))));\n    }\n    onmousedown(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.MOUSE_DOWN, (e) => listener(new StandardMouseEvent(e))));\n    }\n    onmouseover(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.MOUSE_OVER, (e) => listener(new StandardMouseEvent(e))));\n    }\n    onnonbubblingmouseout(domNode, listener) {\n        this._register(dom.addDisposableNonBubblingMouseOutListener(domNode, (e) => listener(new StandardMouseEvent(e))));\n    }\n    onkeydown(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.KEY_DOWN, (e) => listener(new StandardKeyboardEvent(e))));\n    }\n    onkeyup(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.KEY_UP, (e) => listener(new StandardKeyboardEvent(e))));\n    }\n    oninput(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.INPUT, listener));\n    }\n    onblur(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.BLUR, listener));\n    }\n    onfocus(domNode, listener) {\n        this._register(dom.addDisposableListener(domNode, dom.EventType.FOCUS, listener));\n    }\n    ignoreGesture(domNode) {\n        Gesture.ignoreTarget(domNode);\n    }\n}\n",
+      "start": 1711096854653,
+      "end": 1711096854856,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854856,
+      "end": 1711096854856,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854857,
+      "end": 1711096854857,
+      "order": "normal"
+    }
+  ]
+}

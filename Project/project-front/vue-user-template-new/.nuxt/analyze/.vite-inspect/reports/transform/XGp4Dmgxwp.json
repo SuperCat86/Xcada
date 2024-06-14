@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/cursor/cursorAtomicMoveOperations.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { CursorColumns } from '../core/cursorColumns.js';\nexport class AtomicTabMoveOperations {\n    /**\n     * Get the visible column at the position. If we get to a non-whitespace character first\n     * or past the end of string then return -1.\n     *\n     * **Note** `position` and the return value are 0-based.\n     */\n    static whitespaceVisibleColumn(lineContent, position, tabSize) {\n        const lineLength = lineContent.length;\n        let visibleColumn = 0;\n        let prevTabStopPosition = -1;\n        let prevTabStopVisibleColumn = -1;\n        for (let i = 0; i < lineLength; i++) {\n            if (i === position) {\n                return [prevTabStopPosition, prevTabStopVisibleColumn, visibleColumn];\n            }\n            if (visibleColumn % tabSize === 0) {\n                prevTabStopPosition = i;\n                prevTabStopVisibleColumn = visibleColumn;\n            }\n            const chCode = lineContent.charCodeAt(i);\n            switch (chCode) {\n                case 32 /* Space */:\n                    visibleColumn += 1;\n                    break;\n                case 9 /* Tab */:\n                    // Skip to the next multiple of tabSize.\n                    visibleColumn = CursorColumns.nextRenderTabStop(visibleColumn, tabSize);\n                    break;\n                default:\n                    return [-1, -1, -1];\n            }\n        }\n        if (position === lineLength) {\n            return [prevTabStopPosition, prevTabStopVisibleColumn, visibleColumn];\n        }\n        return [-1, -1, -1];\n    }\n    /**\n     * Return the position that should result from a move left, right or to the\n     * nearest tab, if atomic tabs are enabled. Left and right are used for the\n     * arrow key movements, nearest is used for mouse selection. It returns\n     * -1 if atomic tabs are not relevant and you should fall back to normal\n     * behaviour.\n     *\n     * **Note**: `position` and the return value are 0-based.\n     */\n    static atomicPosition(lineContent, position, tabSize, direction) {\n        const lineLength = lineContent.length;\n        // Get the 0-based visible column corresponding to the position, or return\n        // -1 if it is not in the initial whitespace.\n        const [prevTabStopPosition, prevTabStopVisibleColumn, visibleColumn] = AtomicTabMoveOperations.whitespaceVisibleColumn(lineContent, position, tabSize);\n        if (visibleColumn === -1) {\n            return -1;\n        }\n        // Is the output left or right of the current position. The case for nearest\n        // where it is the same as the current position is handled in the switch.\n        let left;\n        switch (direction) {\n            case 0 /* Left */:\n                left = true;\n                break;\n            case 1 /* Right */:\n                left = false;\n                break;\n            case 2 /* Nearest */:\n                // The code below assumes the output position is either left or right\n                // of the input position. If it is the same, return immediately.\n                if (visibleColumn % tabSize === 0) {\n                    return position;\n                }\n                // Go to the nearest indentation.\n                left = visibleColumn % tabSize <= (tabSize / 2);\n                break;\n        }\n        // If going left, we can just use the info about the last tab stop position and\n        // last tab stop visible column that we computed in the first walk over the whitespace.\n        if (left) {\n            if (prevTabStopPosition === -1) {\n                return -1;\n            }\n            // If the direction is left, we need to keep scanning right to ensure\n            // that targetVisibleColumn + tabSize is before non-whitespace.\n            // This is so that when we press left at the end of a partial\n            // indentation it only goes one character. For example '      foo' with\n            // tabSize 4, should jump from position 6 to position 5, not 4.\n            let currentVisibleColumn = prevTabStopVisibleColumn;\n            for (let i = prevTabStopPosition; i < lineLength; ++i) {\n                if (currentVisibleColumn === prevTabStopVisibleColumn + tabSize) {\n                    // It is a full indentation.\n                    return prevTabStopPosition;\n                }\n                const chCode = lineContent.charCodeAt(i);\n                switch (chCode) {\n                    case 32 /* Space */:\n                        currentVisibleColumn += 1;\n                        break;\n                    case 9 /* Tab */:\n                        currentVisibleColumn = CursorColumns.nextRenderTabStop(currentVisibleColumn, tabSize);\n                        break;\n                    default:\n                        return -1;\n                }\n            }\n            if (currentVisibleColumn === prevTabStopVisibleColumn + tabSize) {\n                return prevTabStopPosition;\n            }\n            // It must have been a partial indentation.\n            return -1;\n        }\n        // We are going right.\n        const targetVisibleColumn = CursorColumns.nextRenderTabStop(visibleColumn, tabSize);\n        // We can just continue from where whitespaceVisibleColumn got to.\n        let currentVisibleColumn = visibleColumn;\n        for (let i = position; i < lineLength; i++) {\n            if (currentVisibleColumn === targetVisibleColumn) {\n                return i;\n            }\n            const chCode = lineContent.charCodeAt(i);\n            switch (chCode) {\n                case 32 /* Space */:\n                    currentVisibleColumn += 1;\n                    break;\n                case 9 /* Tab */:\n                    currentVisibleColumn = CursorColumns.nextRenderTabStop(currentVisibleColumn, tabSize);\n                    break;\n                default:\n                    return -1;\n            }\n        }\n        // This condition handles when the target column is at the end of the line.\n        if (currentVisibleColumn === targetVisibleColumn) {\n            return lineLength;\n        }\n        return -1;\n    }\n}\n",
+      "start": 1711096856588,
+      "end": 1711096856680,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856680,
+      "end": 1711096856680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856681,
+      "end": 1711096856681,
+      "order": "normal"
+    }
+  ]
+}

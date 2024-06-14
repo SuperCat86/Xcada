@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/viewLayout/viewLayout.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { Scrollable } from '../../../base/common/scrollable.js';\nimport { LinesLayout } from './linesLayout.js';\nimport { Viewport } from '../viewModel.js';\nimport { ContentSizeChangedEvent } from '../viewModelEventDispatcher.js';\nconst SMOOTH_SCROLLING_TIME = 125;\nclass EditorScrollDimensions {\n    constructor(width, contentWidth, height, contentHeight) {\n        width = width | 0;\n        contentWidth = contentWidth | 0;\n        height = height | 0;\n        contentHeight = contentHeight | 0;\n        if (width < 0) {\n            width = 0;\n        }\n        if (contentWidth < 0) {\n            contentWidth = 0;\n        }\n        if (height < 0) {\n            height = 0;\n        }\n        if (contentHeight < 0) {\n            contentHeight = 0;\n        }\n        this.width = width;\n        this.contentWidth = contentWidth;\n        this.scrollWidth = Math.max(width, contentWidth);\n        this.height = height;\n        this.contentHeight = contentHeight;\n        this.scrollHeight = Math.max(height, contentHeight);\n    }\n    equals(other) {\n        return (this.width === other.width\n            && this.contentWidth === other.contentWidth\n            && this.height === other.height\n            && this.contentHeight === other.contentHeight);\n    }\n}\nclass EditorScrollable extends Disposable {\n    constructor(smoothScrollDuration, scheduleAtNextAnimationFrame) {\n        super();\n        this._onDidContentSizeChange = this._register(new Emitter());\n        this.onDidContentSizeChange = this._onDidContentSizeChange.event;\n        this._dimensions = new EditorScrollDimensions(0, 0, 0, 0);\n        this._scrollable = this._register(new Scrollable({\n            forceIntegerValues: true,\n            smoothScrollDuration,\n            scheduleAtNextAnimationFrame\n        }));\n        this.onDidScroll = this._scrollable.onScroll;\n    }\n    getScrollable() {\n        return this._scrollable;\n    }\n    setSmoothScrollDuration(smoothScrollDuration) {\n        this._scrollable.setSmoothScrollDuration(smoothScrollDuration);\n    }\n    validateScrollPosition(scrollPosition) {\n        return this._scrollable.validateScrollPosition(scrollPosition);\n    }\n    getScrollDimensions() {\n        return this._dimensions;\n    }\n    setScrollDimensions(dimensions) {\n        if (this._dimensions.equals(dimensions)) {\n            return;\n        }\n        const oldDimensions = this._dimensions;\n        this._dimensions = dimensions;\n        this._scrollable.setScrollDimensions({\n            width: dimensions.width,\n            scrollWidth: dimensions.scrollWidth,\n            height: dimensions.height,\n            scrollHeight: dimensions.scrollHeight\n        }, true);\n        const contentWidthChanged = (oldDimensions.contentWidth !== dimensions.contentWidth);\n        const contentHeightChanged = (oldDimensions.contentHeight !== dimensions.contentHeight);\n        if (contentWidthChanged || contentHeightChanged) {\n            this._onDidContentSizeChange.fire(new ContentSizeChangedEvent(oldDimensions.contentWidth, oldDimensions.contentHeight, dimensions.contentWidth, dimensions.contentHeight));\n        }\n    }\n    getFutureScrollPosition() {\n        return this._scrollable.getFutureScrollPosition();\n    }\n    getCurrentScrollPosition() {\n        return this._scrollable.getCurrentScrollPosition();\n    }\n    setScrollPositionNow(update) {\n        this._scrollable.setScrollPositionNow(update);\n    }\n    setScrollPositionSmooth(update) {\n        this._scrollable.setScrollPositionSmooth(update);\n    }\n}\nexport class ViewLayout extends Disposable {\n    constructor(configuration, lineCount, scheduleAtNextAnimationFrame) {\n        super();\n        this._configuration = configuration;\n        const options = this._configuration.options;\n        const layoutInfo = options.get(131 /* layoutInfo */);\n        const padding = options.get(75 /* padding */);\n        this._linesLayout = new LinesLayout(lineCount, options.get(59 /* lineHeight */), padding.top, padding.bottom);\n        this._scrollable = this._register(new EditorScrollable(0, scheduleAtNextAnimationFrame));\n        this._configureSmoothScrollDuration();\n        this._scrollable.setScrollDimensions(new EditorScrollDimensions(layoutInfo.contentWidth, 0, layoutInfo.height, 0));\n        this.onDidScroll = this._scrollable.onDidScroll;\n        this.onDidContentSizeChange = this._scrollable.onDidContentSizeChange;\n        this._updateHeight();\n    }\n    dispose() {\n        super.dispose();\n    }\n    getScrollable() {\n        return this._scrollable.getScrollable();\n    }\n    onHeightMaybeChanged() {\n        this._updateHeight();\n    }\n    _configureSmoothScrollDuration() {\n        this._scrollable.setSmoothScrollDuration(this._configuration.options.get(103 /* smoothScrolling */) ? SMOOTH_SCROLLING_TIME : 0);\n    }\n    // ---- begin view event handlers\n    onConfigurationChanged(e) {\n        const options = this._configuration.options;\n        if (e.hasChanged(59 /* lineHeight */)) {\n            this._linesLayout.setLineHeight(options.get(59 /* lineHeight */));\n        }\n        if (e.hasChanged(75 /* padding */)) {\n            const padding = options.get(75 /* padding */);\n            this._linesLayout.setPadding(padding.top, padding.bottom);\n        }\n        if (e.hasChanged(131 /* layoutInfo */)) {\n            const layoutInfo = options.get(131 /* layoutInfo */);\n            const width = layoutInfo.contentWidth;\n            const height = layoutInfo.height;\n            const scrollDimensions = this._scrollable.getScrollDimensions();\n            const contentWidth = scrollDimensions.contentWidth;\n            this._scrollable.setScrollDimensions(new EditorScrollDimensions(width, scrollDimensions.contentWidth, height, this._getContentHeight(width, height, contentWidth)));\n        }\n        else {\n            this._updateHeight();\n        }\n        if (e.hasChanged(103 /* smoothScrolling */)) {\n            this._configureSmoothScrollDuration();\n        }\n    }\n    onFlushed(lineCount) {\n        this._linesLayout.onFlushed(lineCount);\n    }\n    onLinesDeleted(fromLineNumber, toLineNumber) {\n        this._linesLayout.onLinesDeleted(fromLineNumber, toLineNumber);\n    }\n    onLinesInserted(fromLineNumber, toLineNumber) {\n        this._linesLayout.onLinesInserted(fromLineNumber, toLineNumber);\n    }\n    // ---- end view event handlers\n    _getHorizontalScrollbarHeight(width, scrollWidth) {\n        const options = this._configuration.options;\n        const scrollbar = options.get(92 /* scrollbar */);\n        if (scrollbar.horizontal === 2 /* Hidden */) {\n            // horizontal scrollbar not visible\n            return 0;\n        }\n        if (width >= scrollWidth) {\n            // horizontal scrollbar not visible\n            return 0;\n        }\n        return scrollbar.horizontalScrollbarSize;\n    }\n    _getContentHeight(width, height, contentWidth) {\n        const options = this._configuration.options;\n        let result = this._linesLayout.getLinesTotalHeight();\n        if (options.get(94 /* scrollBeyondLastLine */)) {\n            result += Math.max(0, height - options.get(59 /* lineHeight */) - options.get(75 /* padding */).bottom);\n        }\n        else {\n            result += this._getHorizontalScrollbarHeight(width, contentWidth);\n        }\n        return result;\n    }\n    _updateHeight() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        const width = scrollDimensions.width;\n        const height = scrollDimensions.height;\n        const contentWidth = scrollDimensions.contentWidth;\n        this._scrollable.setScrollDimensions(new EditorScrollDimensions(width, scrollDimensions.contentWidth, height, this._getContentHeight(width, height, contentWidth)));\n    }\n    // ---- Layouting logic\n    getCurrentViewport() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        const currentScrollPosition = this._scrollable.getCurrentScrollPosition();\n        return new Viewport(currentScrollPosition.scrollTop, currentScrollPosition.scrollLeft, scrollDimensions.width, scrollDimensions.height);\n    }\n    getFutureViewport() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        const currentScrollPosition = this._scrollable.getFutureScrollPosition();\n        return new Viewport(currentScrollPosition.scrollTop, currentScrollPosition.scrollLeft, scrollDimensions.width, scrollDimensions.height);\n    }\n    _computeContentWidth(maxLineWidth) {\n        const options = this._configuration.options;\n        const wrappingInfo = options.get(132 /* wrappingInfo */);\n        const fontInfo = options.get(44 /* fontInfo */);\n        if (wrappingInfo.isViewportWrapping) {\n            const layoutInfo = options.get(131 /* layoutInfo */);\n            const minimap = options.get(65 /* minimap */);\n            if (maxLineWidth > layoutInfo.contentWidth + fontInfo.typicalHalfwidthCharacterWidth) {\n                // This is a case where viewport wrapping is on, but the line extends above the viewport\n                if (minimap.enabled && minimap.side === 'right') {\n                    // We need to accomodate the scrollbar width\n                    return maxLineWidth + layoutInfo.verticalScrollbarWidth;\n                }\n            }\n            return maxLineWidth;\n        }\n        else {\n            const extraHorizontalSpace = options.get(93 /* scrollBeyondLastColumn */) * fontInfo.typicalHalfwidthCharacterWidth;\n            const whitespaceMinWidth = this._linesLayout.getWhitespaceMinWidth();\n            return Math.max(maxLineWidth + extraHorizontalSpace, whitespaceMinWidth);\n        }\n    }\n    setMaxLineWidth(maxLineWidth) {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        // const newScrollWidth = ;\n        this._scrollable.setScrollDimensions(new EditorScrollDimensions(scrollDimensions.width, this._computeContentWidth(maxLineWidth), scrollDimensions.height, scrollDimensions.contentHeight));\n        // The height might depend on the fact that there is a horizontal scrollbar or not\n        this._updateHeight();\n    }\n    // ---- view state\n    saveState() {\n        const currentScrollPosition = this._scrollable.getFutureScrollPosition();\n        const scrollTop = currentScrollPosition.scrollTop;\n        const firstLineNumberInViewport = this._linesLayout.getLineNumberAtOrAfterVerticalOffset(scrollTop);\n        const whitespaceAboveFirstLine = this._linesLayout.getWhitespaceAccumulatedHeightBeforeLineNumber(firstLineNumberInViewport);\n        return {\n            scrollTop: scrollTop,\n            scrollTopWithoutViewZones: scrollTop - whitespaceAboveFirstLine,\n            scrollLeft: currentScrollPosition.scrollLeft\n        };\n    }\n    // ----\n    changeWhitespace(callback) {\n        const hadAChange = this._linesLayout.changeWhitespace(callback);\n        if (hadAChange) {\n            this.onHeightMaybeChanged();\n        }\n        return hadAChange;\n    }\n    getVerticalOffsetForLineNumber(lineNumber) {\n        return this._linesLayout.getVerticalOffsetForLineNumber(lineNumber);\n    }\n    isAfterLines(verticalOffset) {\n        return this._linesLayout.isAfterLines(verticalOffset);\n    }\n    isInTopPadding(verticalOffset) {\n        return this._linesLayout.isInTopPadding(verticalOffset);\n    }\n    isInBottomPadding(verticalOffset) {\n        return this._linesLayout.isInBottomPadding(verticalOffset);\n    }\n    getLineNumberAtVerticalOffset(verticalOffset) {\n        return this._linesLayout.getLineNumberAtOrAfterVerticalOffset(verticalOffset);\n    }\n    getWhitespaceAtVerticalOffset(verticalOffset) {\n        return this._linesLayout.getWhitespaceAtVerticalOffset(verticalOffset);\n    }\n    getLinesViewportData() {\n        const visibleBox = this.getCurrentViewport();\n        return this._linesLayout.getLinesViewportData(visibleBox.top, visibleBox.top + visibleBox.height);\n    }\n    getLinesViewportDataAtScrollTop(scrollTop) {\n        // do some minimal validations on scrollTop\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        if (scrollTop + scrollDimensions.height > scrollDimensions.scrollHeight) {\n            scrollTop = scrollDimensions.scrollHeight - scrollDimensions.height;\n        }\n        if (scrollTop < 0) {\n            scrollTop = 0;\n        }\n        return this._linesLayout.getLinesViewportData(scrollTop, scrollTop + scrollDimensions.height);\n    }\n    getWhitespaceViewportData() {\n        const visibleBox = this.getCurrentViewport();\n        return this._linesLayout.getWhitespaceViewportData(visibleBox.top, visibleBox.top + visibleBox.height);\n    }\n    getWhitespaces() {\n        return this._linesLayout.getWhitespaces();\n    }\n    // ----\n    getContentWidth() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        return scrollDimensions.contentWidth;\n    }\n    getScrollWidth() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        return scrollDimensions.scrollWidth;\n    }\n    getContentHeight() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        return scrollDimensions.contentHeight;\n    }\n    getScrollHeight() {\n        const scrollDimensions = this._scrollable.getScrollDimensions();\n        return scrollDimensions.scrollHeight;\n    }\n    getCurrentScrollLeft() {\n        const currentScrollPosition = this._scrollable.getCurrentScrollPosition();\n        return currentScrollPosition.scrollLeft;\n    }\n    getCurrentScrollTop() {\n        const currentScrollPosition = this._scrollable.getCurrentScrollPosition();\n        return currentScrollPosition.scrollTop;\n    }\n    validateScrollPosition(scrollPosition) {\n        return this._scrollable.validateScrollPosition(scrollPosition);\n    }\n    setScrollPosition(position, type) {\n        if (type === 1 /* Immediate */) {\n            this._scrollable.setScrollPositionNow(position);\n        }\n        else {\n            this._scrollable.setScrollPositionSmooth(position);\n        }\n    }\n    deltaScrollNow(deltaScrollLeft, deltaScrollTop) {\n        const currentScrollPosition = this._scrollable.getCurrentScrollPosition();\n        this._scrollable.setScrollPositionNow({\n            scrollLeft: currentScrollPosition.scrollLeft + deltaScrollLeft,\n            scrollTop: currentScrollPosition.scrollTop + deltaScrollTop\n        });\n    }\n}\n",
+      "start": 1711096856455,
+      "end": 1711096856536,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856536,
+      "end": 1711096856536,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856536,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856537,
+      "end": 1711096856537,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856537,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856538,
+      "end": 1711096856538,
+      "order": "normal"
+    }
+  ]
+}

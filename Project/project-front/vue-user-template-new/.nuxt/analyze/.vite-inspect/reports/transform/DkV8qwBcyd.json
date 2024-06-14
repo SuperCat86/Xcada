@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneThemeService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../base/browser/dom.js';\nimport { Color } from '../../../base/common/color.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { TokenizationRegistry, TokenMetadata } from '../../common/languages.js';\nimport { TokenTheme, generateTokensCSSForColorMap } from '../../common/languages/supports/tokenization.js';\nimport { hc_black, vs, vs_dark } from '../common/themes.js';\nimport { Registry } from '../../../platform/registry/common/platform.js';\nimport { asCssVariableName, Extensions } from '../../../platform/theme/common/colorRegistry.js';\nimport { Extensions as ThemingExtensions } from '../../../platform/theme/common/themeService.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { ColorScheme } from '../../../platform/theme/common/theme.js';\nimport { getIconsStyleSheet, UnthemedProductIconTheme } from '../../../platform/theme/browser/iconsStyleSheet.js';\nconst VS_THEME_NAME = 'vs';\nconst VS_DARK_THEME_NAME = 'vs-dark';\nconst HC_BLACK_THEME_NAME = 'hc-black';\nconst colorRegistry = Registry.as(Extensions.ColorContribution);\nconst themingRegistry = Registry.as(ThemingExtensions.ThemingContribution);\nclass StandaloneTheme {\n    constructor(name, standaloneThemeData) {\n        this.semanticHighlighting = false;\n        this.themeData = standaloneThemeData;\n        const base = standaloneThemeData.base;\n        if (name.length > 0) {\n            if (isBuiltinTheme(name)) {\n                this.id = name;\n            }\n            else {\n                this.id = base + ' ' + name;\n            }\n            this.themeName = name;\n        }\n        else {\n            this.id = base;\n            this.themeName = base;\n        }\n        this.colors = null;\n        this.defaultColors = Object.create(null);\n        this._tokenTheme = null;\n    }\n    get base() {\n        return this.themeData.base;\n    }\n    notifyBaseUpdated() {\n        if (this.themeData.inherit) {\n            this.colors = null;\n            this._tokenTheme = null;\n        }\n    }\n    getColors() {\n        if (!this.colors) {\n            const colors = new Map();\n            for (let id in this.themeData.colors) {\n                colors.set(id, Color.fromHex(this.themeData.colors[id]));\n            }\n            if (this.themeData.inherit) {\n                const baseData = getBuiltinRules(this.themeData.base);\n                for (let id in baseData.colors) {\n                    if (!colors.has(id)) {\n                        colors.set(id, Color.fromHex(baseData.colors[id]));\n                    }\n                }\n            }\n            this.colors = colors;\n        }\n        return this.colors;\n    }\n    getColor(colorId, useDefault) {\n        const color = this.getColors().get(colorId);\n        if (color) {\n            return color;\n        }\n        if (useDefault !== false) {\n            return this.getDefault(colorId);\n        }\n        return undefined;\n    }\n    getDefault(colorId) {\n        let color = this.defaultColors[colorId];\n        if (color) {\n            return color;\n        }\n        color = colorRegistry.resolveDefaultColor(colorId, this);\n        this.defaultColors[colorId] = color;\n        return color;\n    }\n    defines(colorId) {\n        return Object.prototype.hasOwnProperty.call(this.getColors(), colorId);\n    }\n    get type() {\n        switch (this.base) {\n            case VS_THEME_NAME: return ColorScheme.LIGHT;\n            case HC_BLACK_THEME_NAME: return ColorScheme.HIGH_CONTRAST;\n            default: return ColorScheme.DARK;\n        }\n    }\n    get tokenTheme() {\n        if (!this._tokenTheme) {\n            let rules = [];\n            let encodedTokensColors = [];\n            if (this.themeData.inherit) {\n                const baseData = getBuiltinRules(this.themeData.base);\n                rules = baseData.rules;\n                if (baseData.encodedTokensColors) {\n                    encodedTokensColors = baseData.encodedTokensColors;\n                }\n            }\n            // Pick up default colors from `editor.foreground` and `editor.background` if available\n            const editorForeground = this.themeData.colors['editor.foreground'];\n            const editorBackground = this.themeData.colors['editor.background'];\n            if (editorForeground || editorBackground) {\n                const rule = { token: '' };\n                if (editorForeground) {\n                    rule.foreground = editorForeground;\n                }\n                if (editorBackground) {\n                    rule.background = editorBackground;\n                }\n                rules.push(rule);\n            }\n            rules = rules.concat(this.themeData.rules);\n            if (this.themeData.encodedTokensColors) {\n                encodedTokensColors = this.themeData.encodedTokensColors;\n            }\n            this._tokenTheme = TokenTheme.createFromRawTokenTheme(rules, encodedTokensColors);\n        }\n        return this._tokenTheme;\n    }\n    getTokenStyleMetadata(type, modifiers, modelLanguage) {\n        // use theme rules match\n        const style = this.tokenTheme._match([type].concat(modifiers).join('.'));\n        const metadata = style.metadata;\n        const foreground = TokenMetadata.getForeground(metadata);\n        const fontStyle = TokenMetadata.getFontStyle(metadata);\n        return {\n            foreground: foreground,\n            italic: Boolean(fontStyle & 1 /* Italic */),\n            bold: Boolean(fontStyle & 2 /* Bold */),\n            underline: Boolean(fontStyle & 4 /* Underline */),\n            strikethrough: Boolean(fontStyle & 8 /* Strikethrough */)\n        };\n    }\n}\nfunction isBuiltinTheme(themeName) {\n    return (themeName === VS_THEME_NAME\n        || themeName === VS_DARK_THEME_NAME\n        || themeName === HC_BLACK_THEME_NAME);\n}\nfunction getBuiltinRules(builtinTheme) {\n    switch (builtinTheme) {\n        case VS_THEME_NAME:\n            return vs;\n        case VS_DARK_THEME_NAME:\n            return vs_dark;\n        case HC_BLACK_THEME_NAME:\n            return hc_black;\n    }\n}\nfunction newBuiltInTheme(builtinTheme) {\n    const themeData = getBuiltinRules(builtinTheme);\n    return new StandaloneTheme(builtinTheme, themeData);\n}\nexport class StandaloneThemeService extends Disposable {\n    constructor() {\n        super();\n        this._onColorThemeChange = this._register(new Emitter());\n        this.onDidColorThemeChange = this._onColorThemeChange.event;\n        this._onProductIconThemeChange = this._register(new Emitter());\n        this.onDidProductIconThemeChange = this._onProductIconThemeChange.event;\n        this._environment = Object.create(null);\n        this._builtInProductIconTheme = new UnthemedProductIconTheme();\n        this._autoDetectHighContrast = true;\n        this._knownThemes = new Map();\n        this._knownThemes.set(VS_THEME_NAME, newBuiltInTheme(VS_THEME_NAME));\n        this._knownThemes.set(VS_DARK_THEME_NAME, newBuiltInTheme(VS_DARK_THEME_NAME));\n        this._knownThemes.set(HC_BLACK_THEME_NAME, newBuiltInTheme(HC_BLACK_THEME_NAME));\n        const iconsStyleSheet = getIconsStyleSheet(this);\n        this._codiconCSS = iconsStyleSheet.getCSS();\n        this._themeCSS = '';\n        this._allCSS = `${this._codiconCSS}\\n${this._themeCSS}`;\n        this._globalStyleElement = null;\n        this._styleElements = [];\n        this._colorMapOverride = null;\n        this.setTheme(VS_THEME_NAME);\n        iconsStyleSheet.onDidChange(() => {\n            this._codiconCSS = iconsStyleSheet.getCSS();\n            this._updateCSS();\n        });\n        dom.addMatchMediaChangeListener('(forced-colors: active)', () => {\n            this._updateActualTheme();\n        });\n    }\n    registerEditorContainer(domNode) {\n        if (dom.isInShadowDOM(domNode)) {\n            return this._registerShadowDomContainer(domNode);\n        }\n        return this._registerRegularEditorContainer();\n    }\n    _registerRegularEditorContainer() {\n        if (!this._globalStyleElement) {\n            this._globalStyleElement = dom.createStyleSheet();\n            this._globalStyleElement.className = 'monaco-colors';\n            this._globalStyleElement.textContent = this._allCSS;\n            this._styleElements.push(this._globalStyleElement);\n        }\n        return Disposable.None;\n    }\n    _registerShadowDomContainer(domNode) {\n        const styleElement = dom.createStyleSheet(domNode);\n        styleElement.className = 'monaco-colors';\n        styleElement.textContent = this._allCSS;\n        this._styleElements.push(styleElement);\n        return {\n            dispose: () => {\n                for (let i = 0; i < this._styleElements.length; i++) {\n                    if (this._styleElements[i] === styleElement) {\n                        this._styleElements.splice(i, 1);\n                        return;\n                    }\n                }\n            }\n        };\n    }\n    defineTheme(themeName, themeData) {\n        if (!/^[a-z0-9\\-]+$/i.test(themeName)) {\n            throw new Error('Illegal theme name!');\n        }\n        if (!isBuiltinTheme(themeData.base) && !isBuiltinTheme(themeName)) {\n            throw new Error('Illegal theme base!');\n        }\n        // set or replace theme\n        this._knownThemes.set(themeName, new StandaloneTheme(themeName, themeData));\n        if (isBuiltinTheme(themeName)) {\n            this._knownThemes.forEach(theme => {\n                if (theme.base === themeName) {\n                    theme.notifyBaseUpdated();\n                }\n            });\n        }\n        if (this._theme.themeName === themeName) {\n            this.setTheme(themeName); // refresh theme\n        }\n    }\n    getColorTheme() {\n        return this._theme;\n    }\n    setColorMapOverride(colorMapOverride) {\n        this._colorMapOverride = colorMapOverride;\n        this._updateThemeOrColorMap();\n    }\n    setTheme(themeName) {\n        let theme;\n        if (this._knownThemes.has(themeName)) {\n            theme = this._knownThemes.get(themeName);\n        }\n        else {\n            theme = this._knownThemes.get(VS_THEME_NAME);\n        }\n        this._desiredTheme = theme;\n        this._updateActualTheme();\n    }\n    _updateActualTheme() {\n        const theme = (this._autoDetectHighContrast && window.matchMedia(`(forced-colors: active)`).matches\n            ? this._knownThemes.get(HC_BLACK_THEME_NAME)\n            : this._desiredTheme);\n        if (this._theme === theme) {\n            // Nothing to do\n            return;\n        }\n        this._theme = theme;\n        this._updateThemeOrColorMap();\n    }\n    setAutoDetectHighContrast(autoDetectHighContrast) {\n        this._autoDetectHighContrast = autoDetectHighContrast;\n        this._updateActualTheme();\n    }\n    _updateThemeOrColorMap() {\n        const cssRules = [];\n        const hasRule = {};\n        const ruleCollector = {\n            addRule: (rule) => {\n                if (!hasRule[rule]) {\n                    cssRules.push(rule);\n                    hasRule[rule] = true;\n                }\n            }\n        };\n        themingRegistry.getThemingParticipants().forEach(p => p(this._theme, ruleCollector, this._environment));\n        const colorVariables = [];\n        for (const item of colorRegistry.getColors()) {\n            const color = this._theme.getColor(item.id, true);\n            if (color) {\n                colorVariables.push(`${asCssVariableName(item.id)}: ${color.toString()};`);\n            }\n        }\n        ruleCollector.addRule(`.monaco-editor { ${colorVariables.join('\\n')} }`);\n        const colorMap = this._colorMapOverride || this._theme.tokenTheme.getColorMap();\n        ruleCollector.addRule(generateTokensCSSForColorMap(colorMap));\n        this._themeCSS = cssRules.join('\\n');\n        this._updateCSS();\n        TokenizationRegistry.setColorMap(colorMap);\n        this._onColorThemeChange.fire(this._theme);\n    }\n    _updateCSS() {\n        this._allCSS = `${this._codiconCSS}\\n${this._themeCSS}`;\n        this._styleElements.forEach(styleElement => styleElement.textContent = this._allCSS);\n    }\n    getFileIconTheme() {\n        return {\n            hasFileIcons: false,\n            hasFolderIcons: false,\n            hidesExplorerArrows: false\n        };\n    }\n    getProductIconTheme() {\n        return this._builtInProductIconTheme;\n    }\n}\n",
+      "start": 1711096856283,
+      "end": 1711096856364,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856364,
+      "end": 1711096856364,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856364,
+      "end": 1711096856365,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856365,
+      "end": 1711096856365,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/dnd/browser/dnd.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { isMacintosh } from '../../../../base/common/platform.js';\nimport './dnd.css';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { DragAndDropCommand } from './dragAndDropCommand.js';\nfunction hasTriggerModifier(e) {\n    if (isMacintosh) {\n        return e.altKey;\n    }\n    else {\n        return e.ctrlKey;\n    }\n}\nexport class DragAndDropController extends Disposable {\n    constructor(editor) {\n        super();\n        this._editor = editor;\n        this._register(this._editor.onMouseDown((e) => this._onEditorMouseDown(e)));\n        this._register(this._editor.onMouseUp((e) => this._onEditorMouseUp(e)));\n        this._register(this._editor.onMouseDrag((e) => this._onEditorMouseDrag(e)));\n        this._register(this._editor.onMouseDrop((e) => this._onEditorMouseDrop(e)));\n        this._register(this._editor.onMouseDropCanceled(() => this._onEditorMouseDropCanceled()));\n        this._register(this._editor.onKeyDown((e) => this.onEditorKeyDown(e)));\n        this._register(this._editor.onKeyUp((e) => this.onEditorKeyUp(e)));\n        this._register(this._editor.onDidBlurEditorWidget(() => this.onEditorBlur()));\n        this._register(this._editor.onDidBlurEditorText(() => this.onEditorBlur()));\n        this._dndDecorationIds = [];\n        this._mouseDown = false;\n        this._modifierPressed = false;\n        this._dragSelection = null;\n    }\n    onEditorBlur() {\n        this._removeDecoration();\n        this._dragSelection = null;\n        this._mouseDown = false;\n        this._modifierPressed = false;\n    }\n    onEditorKeyDown(e) {\n        if (!this._editor.getOption(31 /* dragAndDrop */) || this._editor.getOption(18 /* columnSelection */)) {\n            return;\n        }\n        if (hasTriggerModifier(e)) {\n            this._modifierPressed = true;\n        }\n        if (this._mouseDown && hasTriggerModifier(e)) {\n            this._editor.updateOptions({\n                mouseStyle: 'copy'\n            });\n        }\n    }\n    onEditorKeyUp(e) {\n        if (!this._editor.getOption(31 /* dragAndDrop */) || this._editor.getOption(18 /* columnSelection */)) {\n            return;\n        }\n        if (hasTriggerModifier(e)) {\n            this._modifierPressed = false;\n        }\n        if (this._mouseDown && e.keyCode === DragAndDropController.TRIGGER_KEY_VALUE) {\n            this._editor.updateOptions({\n                mouseStyle: 'default'\n            });\n        }\n    }\n    _onEditorMouseDown(mouseEvent) {\n        this._mouseDown = true;\n    }\n    _onEditorMouseUp(mouseEvent) {\n        this._mouseDown = false;\n        // Whenever users release the mouse, the drag and drop operation should finish and the cursor should revert to text.\n        this._editor.updateOptions({\n            mouseStyle: 'text'\n        });\n    }\n    _onEditorMouseDrag(mouseEvent) {\n        let target = mouseEvent.target;\n        if (this._dragSelection === null) {\n            const selections = this._editor.getSelections() || [];\n            let possibleSelections = selections.filter(selection => target.position && selection.containsPosition(target.position));\n            if (possibleSelections.length === 1) {\n                this._dragSelection = possibleSelections[0];\n            }\n            else {\n                return;\n            }\n        }\n        if (hasTriggerModifier(mouseEvent.event)) {\n            this._editor.updateOptions({\n                mouseStyle: 'copy'\n            });\n        }\n        else {\n            this._editor.updateOptions({\n                mouseStyle: 'default'\n            });\n        }\n        if (target.position) {\n            if (this._dragSelection.containsPosition(target.position)) {\n                this._removeDecoration();\n            }\n            else {\n                this.showAt(target.position);\n            }\n        }\n    }\n    _onEditorMouseDropCanceled() {\n        this._editor.updateOptions({\n            mouseStyle: 'text'\n        });\n        this._removeDecoration();\n        this._dragSelection = null;\n        this._mouseDown = false;\n    }\n    _onEditorMouseDrop(mouseEvent) {\n        if (mouseEvent.target && (this._hitContent(mouseEvent.target) || this._hitMargin(mouseEvent.target)) && mouseEvent.target.position) {\n            let newCursorPosition = new Position(mouseEvent.target.position.lineNumber, mouseEvent.target.position.column);\n            if (this._dragSelection === null) {\n                let newSelections = null;\n                if (mouseEvent.event.shiftKey) {\n                    let primarySelection = this._editor.getSelection();\n                    if (primarySelection) {\n                        const { selectionStartLineNumber, selectionStartColumn } = primarySelection;\n                        newSelections = [new Selection(selectionStartLineNumber, selectionStartColumn, newCursorPosition.lineNumber, newCursorPosition.column)];\n                    }\n                }\n                else {\n                    newSelections = (this._editor.getSelections() || []).map(selection => {\n                        if (selection.containsPosition(newCursorPosition)) {\n                            return new Selection(newCursorPosition.lineNumber, newCursorPosition.column, newCursorPosition.lineNumber, newCursorPosition.column);\n                        }\n                        else {\n                            return selection;\n                        }\n                    });\n                }\n                // Use `mouse` as the source instead of `api` and setting the reason to explicit (to behave like any other mouse operation).\n                this._editor.setSelections(newSelections || [], 'mouse', 3 /* Explicit */);\n            }\n            else if (!this._dragSelection.containsPosition(newCursorPosition) ||\n                ((hasTriggerModifier(mouseEvent.event) ||\n                    this._modifierPressed) && (this._dragSelection.getEndPosition().equals(newCursorPosition) || this._dragSelection.getStartPosition().equals(newCursorPosition)) // we allow users to paste content beside the selection\n                )) {\n                this._editor.pushUndoStop();\n                this._editor.executeCommand(DragAndDropController.ID, new DragAndDropCommand(this._dragSelection, newCursorPosition, hasTriggerModifier(mouseEvent.event) || this._modifierPressed));\n                this._editor.pushUndoStop();\n            }\n        }\n        this._editor.updateOptions({\n            mouseStyle: 'text'\n        });\n        this._removeDecoration();\n        this._dragSelection = null;\n        this._mouseDown = false;\n    }\n    showAt(position) {\n        let newDecorations = [{\n                range: new Range(position.lineNumber, position.column, position.lineNumber, position.column),\n                options: DragAndDropController._DECORATION_OPTIONS\n            }];\n        this._dndDecorationIds = this._editor.deltaDecorations(this._dndDecorationIds, newDecorations);\n        this._editor.revealPosition(position, 1 /* Immediate */);\n    }\n    _removeDecoration() {\n        this._dndDecorationIds = this._editor.deltaDecorations(this._dndDecorationIds, []);\n    }\n    _hitContent(target) {\n        return target.type === 6 /* CONTENT_TEXT */ ||\n            target.type === 7 /* CONTENT_EMPTY */;\n    }\n    _hitMargin(target) {\n        return target.type === 2 /* GUTTER_GLYPH_MARGIN */ ||\n            target.type === 3 /* GUTTER_LINE_NUMBERS */ ||\n            target.type === 4 /* GUTTER_LINE_DECORATIONS */;\n    }\n    dispose() {\n        this._removeDecoration();\n        this._dragSelection = null;\n        this._mouseDown = false;\n        this._modifierPressed = false;\n        super.dispose();\n    }\n}\nDragAndDropController.ID = 'editor.contrib.dragAndDrop';\nDragAndDropController.TRIGGER_KEY_VALUE = isMacintosh ? 6 /* Alt */ : 5 /* Ctrl */;\nDragAndDropController._DECORATION_OPTIONS = ModelDecorationOptions.register({\n    description: 'dnd-target',\n    className: 'dnd-target'\n});\nregisterEditorContribution(DragAndDropController.ID, DragAndDropController);\n",
+      "start": 1711096854405,
+      "end": 1711096854508,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854508,
+      "end": 1711096854508,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854508,
+      "end": 1711096854509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854509,
+      "end": 1711096854509,
+      "order": "normal"
+    }
+  ]
+}

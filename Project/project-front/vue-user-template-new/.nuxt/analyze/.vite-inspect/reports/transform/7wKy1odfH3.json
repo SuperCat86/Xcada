@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/table/tableWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { $, append, clearNode, createStyleSheet } from '../../dom.js';\nimport { List } from '../list/listWidget.js';\nimport { SplitView } from '../splitview/splitview.js';\nimport { Emitter, Event } from '../../../common/event.js';\nimport { DisposableStore } from '../../../common/lifecycle.js';\nimport './table.css';\nclass TableListRenderer {\n    constructor(columns, renderers, getColumnSize) {\n        this.columns = columns;\n        this.getColumnSize = getColumnSize;\n        this.templateId = TableListRenderer.TemplateId;\n        this.renderedTemplates = new Set();\n        const rendererMap = new Map(renderers.map(r => [r.templateId, r]));\n        this.renderers = [];\n        for (const column of columns) {\n            const renderer = rendererMap.get(column.templateId);\n            if (!renderer) {\n                throw new Error(`Table cell renderer for template id ${column.templateId} not found.`);\n            }\n            this.renderers.push(renderer);\n        }\n    }\n    renderTemplate(container) {\n        const rowContainer = append(container, $('.monaco-table-tr'));\n        const cellContainers = [];\n        const cellTemplateData = [];\n        for (let i = 0; i < this.columns.length; i++) {\n            const renderer = this.renderers[i];\n            const cellContainer = append(rowContainer, $('.monaco-table-td', { 'data-col-index': i }));\n            cellContainer.style.width = `${this.getColumnSize(i)}px`;\n            cellContainers.push(cellContainer);\n            cellTemplateData.push(renderer.renderTemplate(cellContainer));\n        }\n        const result = { container, cellContainers, cellTemplateData };\n        this.renderedTemplates.add(result);\n        return result;\n    }\n    renderElement(element, index, templateData, height) {\n        for (let i = 0; i < this.columns.length; i++) {\n            const column = this.columns[i];\n            const cell = column.project(element);\n            const renderer = this.renderers[i];\n            renderer.renderElement(cell, index, templateData.cellTemplateData[i], height);\n        }\n    }\n    disposeElement(element, index, templateData, height) {\n        for (let i = 0; i < this.columns.length; i++) {\n            const renderer = this.renderers[i];\n            if (renderer.disposeElement) {\n                const column = this.columns[i];\n                const cell = column.project(element);\n                renderer.disposeElement(cell, index, templateData.cellTemplateData[i], height);\n            }\n        }\n    }\n    disposeTemplate(templateData) {\n        for (let i = 0; i < this.columns.length; i++) {\n            const renderer = this.renderers[i];\n            renderer.disposeTemplate(templateData.cellTemplateData[i]);\n        }\n        clearNode(templateData.container);\n        this.renderedTemplates.delete(templateData);\n    }\n    layoutColumn(index, size) {\n        for (const { cellContainers } of this.renderedTemplates) {\n            cellContainers[index].style.width = `${size}px`;\n        }\n    }\n}\nTableListRenderer.TemplateId = 'row';\nfunction asListVirtualDelegate(delegate) {\n    return {\n        getHeight(row) { return delegate.getHeight(row); },\n        getTemplateId() { return TableListRenderer.TemplateId; },\n    };\n}\nclass ColumnHeader {\n    constructor(column, index) {\n        this.column = column;\n        this.index = index;\n        this._onDidLayout = new Emitter();\n        this.onDidLayout = this._onDidLayout.event;\n        this.element = $('.monaco-table-th', { 'data-col-index': index, title: column.tooltip }, column.label);\n    }\n    get minimumSize() { var _a; return (_a = this.column.minimumWidth) !== null && _a !== void 0 ? _a : 120; }\n    get maximumSize() { var _a; return (_a = this.column.maximumWidth) !== null && _a !== void 0 ? _a : Number.POSITIVE_INFINITY; }\n    get onDidChange() { var _a; return (_a = this.column.onDidChangeWidthConstraints) !== null && _a !== void 0 ? _a : Event.None; }\n    layout(size) {\n        this._onDidLayout.fire([this.index, size]);\n    }\n}\nexport class Table {\n    constructor(user, container, virtualDelegate, columns, renderers, _options) {\n        this.virtualDelegate = virtualDelegate;\n        this.domId = `table_id_${++Table.InstanceCount}`;\n        this.disposables = new DisposableStore();\n        this.cachedWidth = 0;\n        this.cachedHeight = 0;\n        this.domNode = append(container, $(`.monaco-table.${this.domId}`));\n        const headers = columns.map((c, i) => new ColumnHeader(c, i));\n        const descriptor = {\n            size: headers.reduce((a, b) => a + b.column.weight, 0),\n            views: headers.map(view => ({ size: view.column.weight, view }))\n        };\n        this.splitview = this.disposables.add(new SplitView(this.domNode, {\n            orientation: 1 /* HORIZONTAL */,\n            scrollbarVisibility: 2 /* Hidden */,\n            getSashOrthogonalSize: () => this.cachedHeight,\n            descriptor\n        }));\n        this.splitview.el.style.height = `${virtualDelegate.headerRowHeight}px`;\n        this.splitview.el.style.lineHeight = `${virtualDelegate.headerRowHeight}px`;\n        const renderer = new TableListRenderer(columns, renderers, i => this.splitview.getViewSize(i));\n        this.list = this.disposables.add(new List(user, this.domNode, asListVirtualDelegate(virtualDelegate), [renderer], _options));\n        Event.any(...headers.map(h => h.onDidLayout))(([index, size]) => renderer.layoutColumn(index, size), null, this.disposables);\n        this.splitview.onDidSashReset(index => {\n            const totalWeight = columns.reduce((r, c) => r + c.weight, 0);\n            const size = columns[index].weight / totalWeight * this.cachedWidth;\n            this.splitview.resizeView(index, size);\n        }, null, this.disposables);\n        this.styleElement = createStyleSheet(this.domNode);\n        this.style({});\n    }\n    get onDidChangeFocus() { return this.list.onDidChangeFocus; }\n    get onDidChangeSelection() { return this.list.onDidChangeSelection; }\n    get onMouseDblClick() { return this.list.onMouseDblClick; }\n    get onPointer() { return this.list.onPointer; }\n    get onDidFocus() { return this.list.onDidFocus; }\n    get onDidDispose() { return this.list.onDidDispose; }\n    updateOptions(options) {\n        this.list.updateOptions(options);\n    }\n    splice(start, deleteCount, elements = []) {\n        this.list.splice(start, deleteCount, elements);\n    }\n    getHTMLElement() {\n        return this.domNode;\n    }\n    style(styles) {\n        const content = [];\n        content.push(`.monaco-table.${this.domId} > .monaco-split-view2 .monaco-sash.vertical::before {\n\t\t\ttop: ${this.virtualDelegate.headerRowHeight + 1}px;\n\t\t\theight: calc(100% - ${this.virtualDelegate.headerRowHeight}px);\n\t\t}`);\n        this.styleElement.textContent = content.join('\\n');\n        this.list.style(styles);\n    }\n    getSelectedElements() {\n        return this.list.getSelectedElements();\n    }\n    getSelection() {\n        return this.list.getSelection();\n    }\n    getFocus() {\n        return this.list.getFocus();\n    }\n    dispose() {\n        this.disposables.dispose();\n    }\n}\nTable.InstanceCount = 0;\n",
+      "start": 1711096856920,
+      "end": 1711096857075,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857075,
+      "end": 1711096857075,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857076,
+      "end": 1711096857076,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857077,
+      "end": 1711096857077,
+      "order": "normal"
+    }
+  ]
+}

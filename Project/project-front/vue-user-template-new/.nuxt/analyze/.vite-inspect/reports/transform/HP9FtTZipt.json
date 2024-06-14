@@ -1,0 +1,212 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/language/typescript/monaco.contribution.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "import '../../editor/editor.api.js';\n/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __reExport = (target, module, copyDefault, desc) => {\n  if (module && typeof module === \"object\" || typeof module === \"function\") {\n    for (let key of __getOwnPropNames(module))\n      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\"))\n        __defProp(target, key, { get: () => module[key], enumerable: !(desc = __getOwnPropDesc(module, key)) || desc.enumerable });\n  }\n  return target;\n};\n\n// src/language/typescript/lib/typescriptServicesMetadata.ts\nvar typescriptVersion = \"4.5.5\";\n\n// src/fillers/monaco-editor-core.ts\nvar monaco_editor_core_exports = {};\n__reExport(monaco_editor_core_exports, monaco_editor_core_star);\nimport * as monaco_editor_core_star from \"../../editor/editor.api.js\";\n\n// src/language/typescript/monaco.contribution.ts\nvar ModuleKind = /* @__PURE__ */ ((ModuleKind2) => {\n  ModuleKind2[ModuleKind2[\"None\"] = 0] = \"None\";\n  ModuleKind2[ModuleKind2[\"CommonJS\"] = 1] = \"CommonJS\";\n  ModuleKind2[ModuleKind2[\"AMD\"] = 2] = \"AMD\";\n  ModuleKind2[ModuleKind2[\"UMD\"] = 3] = \"UMD\";\n  ModuleKind2[ModuleKind2[\"System\"] = 4] = \"System\";\n  ModuleKind2[ModuleKind2[\"ES2015\"] = 5] = \"ES2015\";\n  ModuleKind2[ModuleKind2[\"ESNext\"] = 99] = \"ESNext\";\n  return ModuleKind2;\n})(ModuleKind || {});\nvar JsxEmit = /* @__PURE__ */ ((JsxEmit2) => {\n  JsxEmit2[JsxEmit2[\"None\"] = 0] = \"None\";\n  JsxEmit2[JsxEmit2[\"Preserve\"] = 1] = \"Preserve\";\n  JsxEmit2[JsxEmit2[\"React\"] = 2] = \"React\";\n  JsxEmit2[JsxEmit2[\"ReactNative\"] = 3] = \"ReactNative\";\n  JsxEmit2[JsxEmit2[\"ReactJSX\"] = 4] = \"ReactJSX\";\n  JsxEmit2[JsxEmit2[\"ReactJSXDev\"] = 5] = \"ReactJSXDev\";\n  return JsxEmit2;\n})(JsxEmit || {});\nvar NewLineKind = /* @__PURE__ */ ((NewLineKind2) => {\n  NewLineKind2[NewLineKind2[\"CarriageReturnLineFeed\"] = 0] = \"CarriageReturnLineFeed\";\n  NewLineKind2[NewLineKind2[\"LineFeed\"] = 1] = \"LineFeed\";\n  return NewLineKind2;\n})(NewLineKind || {});\nvar ScriptTarget = /* @__PURE__ */ ((ScriptTarget2) => {\n  ScriptTarget2[ScriptTarget2[\"ES3\"] = 0] = \"ES3\";\n  ScriptTarget2[ScriptTarget2[\"ES5\"] = 1] = \"ES5\";\n  ScriptTarget2[ScriptTarget2[\"ES2015\"] = 2] = \"ES2015\";\n  ScriptTarget2[ScriptTarget2[\"ES2016\"] = 3] = \"ES2016\";\n  ScriptTarget2[ScriptTarget2[\"ES2017\"] = 4] = \"ES2017\";\n  ScriptTarget2[ScriptTarget2[\"ES2018\"] = 5] = \"ES2018\";\n  ScriptTarget2[ScriptTarget2[\"ES2019\"] = 6] = \"ES2019\";\n  ScriptTarget2[ScriptTarget2[\"ES2020\"] = 7] = \"ES2020\";\n  ScriptTarget2[ScriptTarget2[\"ESNext\"] = 99] = \"ESNext\";\n  ScriptTarget2[ScriptTarget2[\"JSON\"] = 100] = \"JSON\";\n  ScriptTarget2[ScriptTarget2[\"Latest\"] = 99] = \"Latest\";\n  return ScriptTarget2;\n})(ScriptTarget || {});\nvar ModuleResolutionKind = /* @__PURE__ */ ((ModuleResolutionKind2) => {\n  ModuleResolutionKind2[ModuleResolutionKind2[\"Classic\"] = 1] = \"Classic\";\n  ModuleResolutionKind2[ModuleResolutionKind2[\"NodeJs\"] = 2] = \"NodeJs\";\n  return ModuleResolutionKind2;\n})(ModuleResolutionKind || {});\nvar LanguageServiceDefaultsImpl = class {\n  _onDidChange = new monaco_editor_core_exports.Emitter();\n  _onDidExtraLibsChange = new monaco_editor_core_exports.Emitter();\n  _extraLibs;\n  _removedExtraLibs;\n  _eagerModelSync;\n  _compilerOptions;\n  _diagnosticsOptions;\n  _workerOptions;\n  _onDidExtraLibsChangeTimeout;\n  _inlayHintsOptions;\n  constructor(compilerOptions, diagnosticsOptions, workerOptions, inlayHintsOptions) {\n    this._extraLibs = /* @__PURE__ */ Object.create(null);\n    this._removedExtraLibs = /* @__PURE__ */ Object.create(null);\n    this._eagerModelSync = false;\n    this.setCompilerOptions(compilerOptions);\n    this.setDiagnosticsOptions(diagnosticsOptions);\n    this.setWorkerOptions(workerOptions);\n    this.setInlayHintsOptions(inlayHintsOptions);\n    this._onDidExtraLibsChangeTimeout = -1;\n  }\n  get onDidChange() {\n    return this._onDidChange.event;\n  }\n  get onDidExtraLibsChange() {\n    return this._onDidExtraLibsChange.event;\n  }\n  get workerOptions() {\n    return this._workerOptions;\n  }\n  get inlayHintsOptions() {\n    return this._inlayHintsOptions;\n  }\n  getExtraLibs() {\n    return this._extraLibs;\n  }\n  addExtraLib(content, _filePath) {\n    let filePath;\n    if (typeof _filePath === \"undefined\") {\n      filePath = `ts:extralib-${Math.random().toString(36).substring(2, 15)}`;\n    } else {\n      filePath = _filePath;\n    }\n    if (this._extraLibs[filePath] && this._extraLibs[filePath].content === content) {\n      return {\n        dispose: () => {\n        }\n      };\n    }\n    let myVersion = 1;\n    if (this._removedExtraLibs[filePath]) {\n      myVersion = this._removedExtraLibs[filePath] + 1;\n    }\n    if (this._extraLibs[filePath]) {\n      myVersion = this._extraLibs[filePath].version + 1;\n    }\n    this._extraLibs[filePath] = {\n      content,\n      version: myVersion\n    };\n    this._fireOnDidExtraLibsChangeSoon();\n    return {\n      dispose: () => {\n        let extraLib = this._extraLibs[filePath];\n        if (!extraLib) {\n          return;\n        }\n        if (extraLib.version !== myVersion) {\n          return;\n        }\n        delete this._extraLibs[filePath];\n        this._removedExtraLibs[filePath] = myVersion;\n        this._fireOnDidExtraLibsChangeSoon();\n      }\n    };\n  }\n  setExtraLibs(libs) {\n    for (const filePath in this._extraLibs) {\n      this._removedExtraLibs[filePath] = this._extraLibs[filePath].version;\n    }\n    this._extraLibs = /* @__PURE__ */ Object.create(null);\n    if (libs && libs.length > 0) {\n      for (const lib of libs) {\n        const filePath = lib.filePath || `ts:extralib-${Math.random().toString(36).substring(2, 15)}`;\n        const content = lib.content;\n        let myVersion = 1;\n        if (this._removedExtraLibs[filePath]) {\n          myVersion = this._removedExtraLibs[filePath] + 1;\n        }\n        this._extraLibs[filePath] = {\n          content,\n          version: myVersion\n        };\n      }\n    }\n    this._fireOnDidExtraLibsChangeSoon();\n  }\n  _fireOnDidExtraLibsChangeSoon() {\n    if (this._onDidExtraLibsChangeTimeout !== -1) {\n      return;\n    }\n    this._onDidExtraLibsChangeTimeout = window.setTimeout(() => {\n      this._onDidExtraLibsChangeTimeout = -1;\n      this._onDidExtraLibsChange.fire(void 0);\n    }, 0);\n  }\n  getCompilerOptions() {\n    return this._compilerOptions;\n  }\n  setCompilerOptions(options) {\n    this._compilerOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  getDiagnosticsOptions() {\n    return this._diagnosticsOptions;\n  }\n  setDiagnosticsOptions(options) {\n    this._diagnosticsOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setWorkerOptions(options) {\n    this._workerOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setInlayHintsOptions(options) {\n    this._inlayHintsOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setMaximumWorkerIdleTime(value) {\n  }\n  setEagerModelSync(value) {\n    this._eagerModelSync = value;\n  }\n  getEagerModelSync() {\n    return this._eagerModelSync;\n  }\n};\nvar typescriptVersion2 = typescriptVersion;\nvar typescriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, target: 99 /* Latest */ }, { noSemanticValidation: false, noSyntaxValidation: false, onlyVisible: false }, {}, {});\nvar javascriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, allowJs: true, target: 99 /* Latest */ }, { noSemanticValidation: true, noSyntaxValidation: false, onlyVisible: false }, {}, {});\nvar getTypeScriptWorker = () => {\n  return getMode().then((mode) => mode.getTypeScriptWorker());\n};\nvar getJavaScriptWorker = () => {\n  return getMode().then((mode) => mode.getJavaScriptWorker());\n};\nmonaco_editor_core_exports.languages.typescript = {\n  ModuleKind,\n  JsxEmit,\n  NewLineKind,\n  ScriptTarget,\n  ModuleResolutionKind,\n  typescriptVersion: typescriptVersion2,\n  typescriptDefaults,\n  javascriptDefaults,\n  getTypeScriptWorker,\n  getJavaScriptWorker\n};\nfunction getMode() {\n  if (false) {\n    return new Promise((resolve, reject) => {\n      __require([\"vs/language/typescript/tsMode\"], resolve, reject);\n    });\n  } else {\n    return import(\"./tsMode\");\n  }\n}\nmonaco_editor_core_exports.languages.onLanguage(\"typescript\", () => {\n  return getMode().then((mode) => mode.setupTypeScript(typescriptDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"javascript\", () => {\n  return getMode().then((mode) => mode.setupJavaScript(javascriptDefaults));\n});\nexport {\n  JsxEmit,\n  ModuleKind,\n  ModuleResolutionKind,\n  NewLineKind,\n  ScriptTarget,\n  getJavaScriptWorker,\n  getTypeScriptWorker,\n  javascriptDefaults,\n  typescriptDefaults,\n  typescriptVersion2 as typescriptVersion\n};\n",
+      "start": 1711096853398,
+      "end": 1711096853683,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853684,
+      "end": 1711096853684,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853684,
+      "end": 1711096853685,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";import '../../editor/editor.api.js';\n/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __reExport = (target, module, copyDefault, desc) => {\n  if (module && typeof module === \"object\" || typeof module === \"function\") {\n    for (let key of __getOwnPropNames(module))\n      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\"))\n        __defProp(target, key, { get: () => module[key], enumerable: !(desc = __getOwnPropDesc(module, key)) || desc.enumerable });\n  }\n  return target;\n};\n\n// src/language/typescript/lib/typescriptServicesMetadata.ts\nvar typescriptVersion = \"4.5.5\";\n\n// src/fillers/monaco-editor-core.ts\nvar monaco_editor_core_exports = {};\n__reExport(monaco_editor_core_exports, monaco_editor_core_star);\nimport * as monaco_editor_core_star from \"../../editor/editor.api.js\";\n\n// src/language/typescript/monaco.contribution.ts\nvar ModuleKind = /* @__PURE__ */ ((ModuleKind2) => {\n  ModuleKind2[ModuleKind2[\"None\"] = 0] = \"None\";\n  ModuleKind2[ModuleKind2[\"CommonJS\"] = 1] = \"CommonJS\";\n  ModuleKind2[ModuleKind2[\"AMD\"] = 2] = \"AMD\";\n  ModuleKind2[ModuleKind2[\"UMD\"] = 3] = \"UMD\";\n  ModuleKind2[ModuleKind2[\"System\"] = 4] = \"System\";\n  ModuleKind2[ModuleKind2[\"ES2015\"] = 5] = \"ES2015\";\n  ModuleKind2[ModuleKind2[\"ESNext\"] = 99] = \"ESNext\";\n  return ModuleKind2;\n})(ModuleKind || {});\nvar JsxEmit = /* @__PURE__ */ ((JsxEmit2) => {\n  JsxEmit2[JsxEmit2[\"None\"] = 0] = \"None\";\n  JsxEmit2[JsxEmit2[\"Preserve\"] = 1] = \"Preserve\";\n  JsxEmit2[JsxEmit2[\"React\"] = 2] = \"React\";\n  JsxEmit2[JsxEmit2[\"ReactNative\"] = 3] = \"ReactNative\";\n  JsxEmit2[JsxEmit2[\"ReactJSX\"] = 4] = \"ReactJSX\";\n  JsxEmit2[JsxEmit2[\"ReactJSXDev\"] = 5] = \"ReactJSXDev\";\n  return JsxEmit2;\n})(JsxEmit || {});\nvar NewLineKind = /* @__PURE__ */ ((NewLineKind2) => {\n  NewLineKind2[NewLineKind2[\"CarriageReturnLineFeed\"] = 0] = \"CarriageReturnLineFeed\";\n  NewLineKind2[NewLineKind2[\"LineFeed\"] = 1] = \"LineFeed\";\n  return NewLineKind2;\n})(NewLineKind || {});\nvar ScriptTarget = /* @__PURE__ */ ((ScriptTarget2) => {\n  ScriptTarget2[ScriptTarget2[\"ES3\"] = 0] = \"ES3\";\n  ScriptTarget2[ScriptTarget2[\"ES5\"] = 1] = \"ES5\";\n  ScriptTarget2[ScriptTarget2[\"ES2015\"] = 2] = \"ES2015\";\n  ScriptTarget2[ScriptTarget2[\"ES2016\"] = 3] = \"ES2016\";\n  ScriptTarget2[ScriptTarget2[\"ES2017\"] = 4] = \"ES2017\";\n  ScriptTarget2[ScriptTarget2[\"ES2018\"] = 5] = \"ES2018\";\n  ScriptTarget2[ScriptTarget2[\"ES2019\"] = 6] = \"ES2019\";\n  ScriptTarget2[ScriptTarget2[\"ES2020\"] = 7] = \"ES2020\";\n  ScriptTarget2[ScriptTarget2[\"ESNext\"] = 99] = \"ESNext\";\n  ScriptTarget2[ScriptTarget2[\"JSON\"] = 100] = \"JSON\";\n  ScriptTarget2[ScriptTarget2[\"Latest\"] = 99] = \"Latest\";\n  return ScriptTarget2;\n})(ScriptTarget || {});\nvar ModuleResolutionKind = /* @__PURE__ */ ((ModuleResolutionKind2) => {\n  ModuleResolutionKind2[ModuleResolutionKind2[\"Classic\"] = 1] = \"Classic\";\n  ModuleResolutionKind2[ModuleResolutionKind2[\"NodeJs\"] = 2] = \"NodeJs\";\n  return ModuleResolutionKind2;\n})(ModuleResolutionKind || {});\nvar LanguageServiceDefaultsImpl = class {\n  _onDidChange = new monaco_editor_core_exports.Emitter();\n  _onDidExtraLibsChange = new monaco_editor_core_exports.Emitter();\n  _extraLibs;\n  _removedExtraLibs;\n  _eagerModelSync;\n  _compilerOptions;\n  _diagnosticsOptions;\n  _workerOptions;\n  _onDidExtraLibsChangeTimeout;\n  _inlayHintsOptions;\n  constructor(compilerOptions, diagnosticsOptions, workerOptions, inlayHintsOptions) {\n    this._extraLibs = /* @__PURE__ */ Object.create(null);\n    this._removedExtraLibs = /* @__PURE__ */ Object.create(null);\n    this._eagerModelSync = false;\n    this.setCompilerOptions(compilerOptions);\n    this.setDiagnosticsOptions(diagnosticsOptions);\n    this.setWorkerOptions(workerOptions);\n    this.setInlayHintsOptions(inlayHintsOptions);\n    this._onDidExtraLibsChangeTimeout = -1;\n  }\n  get onDidChange() {\n    return this._onDidChange.event;\n  }\n  get onDidExtraLibsChange() {\n    return this._onDidExtraLibsChange.event;\n  }\n  get workerOptions() {\n    return this._workerOptions;\n  }\n  get inlayHintsOptions() {\n    return this._inlayHintsOptions;\n  }\n  getExtraLibs() {\n    return this._extraLibs;\n  }\n  addExtraLib(content, _filePath) {\n    let filePath;\n    if (typeof _filePath === \"undefined\") {\n      filePath = `ts:extralib-${Math.random().toString(36).substring(2, 15)}`;\n    } else {\n      filePath = _filePath;\n    }\n    if (this._extraLibs[filePath] && this._extraLibs[filePath].content === content) {\n      return {\n        dispose: () => {\n        }\n      };\n    }\n    let myVersion = 1;\n    if (this._removedExtraLibs[filePath]) {\n      myVersion = this._removedExtraLibs[filePath] + 1;\n    }\n    if (this._extraLibs[filePath]) {\n      myVersion = this._extraLibs[filePath].version + 1;\n    }\n    this._extraLibs[filePath] = {\n      content,\n      version: myVersion\n    };\n    this._fireOnDidExtraLibsChangeSoon();\n    return {\n      dispose: () => {\n        let extraLib = this._extraLibs[filePath];\n        if (!extraLib) {\n          return;\n        }\n        if (extraLib.version !== myVersion) {\n          return;\n        }\n        delete this._extraLibs[filePath];\n        this._removedExtraLibs[filePath] = myVersion;\n        this._fireOnDidExtraLibsChangeSoon();\n      }\n    };\n  }\n  setExtraLibs(libs) {\n    for (const filePath in this._extraLibs) {\n      this._removedExtraLibs[filePath] = this._extraLibs[filePath].version;\n    }\n    this._extraLibs = /* @__PURE__ */ Object.create(null);\n    if (libs && libs.length > 0) {\n      for (const lib of libs) {\n        const filePath = lib.filePath || `ts:extralib-${Math.random().toString(36).substring(2, 15)}`;\n        const content = lib.content;\n        let myVersion = 1;\n        if (this._removedExtraLibs[filePath]) {\n          myVersion = this._removedExtraLibs[filePath] + 1;\n        }\n        this._extraLibs[filePath] = {\n          content,\n          version: myVersion\n        };\n      }\n    }\n    this._fireOnDidExtraLibsChangeSoon();\n  }\n  _fireOnDidExtraLibsChangeSoon() {\n    if (this._onDidExtraLibsChangeTimeout !== -1) {\n      return;\n    }\n    this._onDidExtraLibsChangeTimeout = window.setTimeout(() => {\n      this._onDidExtraLibsChangeTimeout = -1;\n      this._onDidExtraLibsChange.fire(void 0);\n    }, 0);\n  }\n  getCompilerOptions() {\n    return this._compilerOptions;\n  }\n  setCompilerOptions(options) {\n    this._compilerOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  getDiagnosticsOptions() {\n    return this._diagnosticsOptions;\n  }\n  setDiagnosticsOptions(options) {\n    this._diagnosticsOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setWorkerOptions(options) {\n    this._workerOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setInlayHintsOptions(options) {\n    this._inlayHintsOptions = options || /* @__PURE__ */ Object.create(null);\n    this._onDidChange.fire(void 0);\n  }\n  setMaximumWorkerIdleTime(value) {\n  }\n  setEagerModelSync(value) {\n    this._eagerModelSync = value;\n  }\n  getEagerModelSync() {\n    return this._eagerModelSync;\n  }\n};\nvar typescriptVersion2 = typescriptVersion;\nvar typescriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, target: 99 /* Latest */ }, { noSemanticValidation: false, noSyntaxValidation: false, onlyVisible: false }, {}, {});\nvar javascriptDefaults = new LanguageServiceDefaultsImpl({ allowNonTsExtensions: true, allowJs: true, target: 99 /* Latest */ }, { noSemanticValidation: true, noSyntaxValidation: false, onlyVisible: false }, {}, {});\nvar getTypeScriptWorker = () => {\n  return getMode().then((mode) => mode.getTypeScriptWorker());\n};\nvar getJavaScriptWorker = () => {\n  return getMode().then((mode) => mode.getJavaScriptWorker());\n};\nmonaco_editor_core_exports.languages.typescript = {\n  ModuleKind,\n  JsxEmit,\n  NewLineKind,\n  ScriptTarget,\n  ModuleResolutionKind,\n  typescriptVersion: typescriptVersion2,\n  typescriptDefaults,\n  javascriptDefaults,\n  getTypeScriptWorker,\n  getJavaScriptWorker\n};\nfunction getMode() {\n  if (false) {\n    return new Promise((resolve, reject) => {\n      __require([\"vs/language/typescript/tsMode\"], resolve, reject);\n    });\n  } else {\n    return __vitePreload(() => import(\"./tsMode\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url);\n  }\n}\nmonaco_editor_core_exports.languages.onLanguage(\"typescript\", () => {\n  return getMode().then((mode) => mode.setupTypeScript(typescriptDefaults));\n});\nmonaco_editor_core_exports.languages.onLanguage(\"javascript\", () => {\n  return getMode().then((mode) => mode.setupJavaScript(javascriptDefaults));\n});\nexport {\n  JsxEmit,\n  ModuleKind,\n  ModuleResolutionKind,\n  NewLineKind,\n  ScriptTarget,\n  getJavaScriptWorker,\n  getTypeScriptWorker,\n  javascriptDefaults,\n  typescriptDefaults,\n  typescriptVersion2 as typescriptVersion\n};\n",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853685,
+      "end": 1711096853685,
+      "order": "normal"
+    }
+  ]
+}

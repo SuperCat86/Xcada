@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/peek/referencesTree.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../../base/browser/dom.js';\nimport { CountBadge } from '../../../../../base/browser/ui/countBadge/countBadge.js';\nimport { HighlightedLabel } from '../../../../../base/browser/ui/highlightedlabel/highlightedLabel.js';\nimport { IconLabel } from '../../../../../base/browser/ui/iconLabel/iconLabel.js';\nimport { createMatches, FuzzyScore } from '../../../../../base/common/filters.js';\nimport { getBaseLabel } from '../../../../../base/common/labels.js';\nimport { Disposable } from '../../../../../base/common/lifecycle.js';\nimport { basename, dirname } from '../../../../../base/common/resources.js';\nimport { ITextModelService } from '../../../../common/services/resolverService.js';\nimport { localize } from '../../../../../nls.js';\nimport { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../../../platform/keybinding/common/keybinding.js';\nimport { ILabelService } from '../../../../../platform/label/common/label.js';\nimport { attachBadgeStyler } from '../../../../../platform/theme/common/styler.js';\nimport { IThemeService } from '../../../../../platform/theme/common/themeService.js';\nimport { FileReferences, OneReference, ReferencesModel } from '../referencesModel.js';\nlet DataSource = class DataSource {\n    constructor(_resolverService) {\n        this._resolverService = _resolverService;\n    }\n    hasChildren(element) {\n        if (element instanceof ReferencesModel) {\n            return true;\n        }\n        if (element instanceof FileReferences) {\n            return true;\n        }\n        return false;\n    }\n    getChildren(element) {\n        if (element instanceof ReferencesModel) {\n            return element.groups;\n        }\n        if (element instanceof FileReferences) {\n            return element.resolve(this._resolverService).then(val => {\n                // if (element.failure) {\n                // \t// refresh the element on failure so that\n                // \t// we can update its rendering\n                // \treturn tree.refresh(element).then(() => val.children);\n                // }\n                return val.children;\n            });\n        }\n        throw new Error('bad tree');\n    }\n};\nDataSource = __decorate([\n    __param(0, ITextModelService)\n], DataSource);\nexport { DataSource };\n//#endregion\nexport class Delegate {\n    getHeight() {\n        return 23;\n    }\n    getTemplateId(element) {\n        if (element instanceof FileReferences) {\n            return FileReferencesRenderer.id;\n        }\n        else {\n            return OneReferenceRenderer.id;\n        }\n    }\n}\nlet StringRepresentationProvider = class StringRepresentationProvider {\n    constructor(_keybindingService) {\n        this._keybindingService = _keybindingService;\n    }\n    getKeyboardNavigationLabel(element) {\n        var _a;\n        if (element instanceof OneReference) {\n            const parts = (_a = element.parent.getPreview(element)) === null || _a === void 0 ? void 0 : _a.preview(element.range);\n            if (parts) {\n                return parts.value;\n            }\n        }\n        // FileReferences or unresolved OneReference\n        return basename(element.uri);\n    }\n};\nStringRepresentationProvider = __decorate([\n    __param(0, IKeybindingService)\n], StringRepresentationProvider);\nexport { StringRepresentationProvider };\nexport class IdentityProvider {\n    getId(element) {\n        return element instanceof OneReference ? element.id : element.uri;\n    }\n}\n//#region render: File\nlet FileReferencesTemplate = class FileReferencesTemplate extends Disposable {\n    constructor(container, _uriLabel, themeService) {\n        super();\n        this._uriLabel = _uriLabel;\n        const parent = document.createElement('div');\n        parent.classList.add('reference-file');\n        this.file = this._register(new IconLabel(parent, { supportHighlights: true }));\n        this.badge = new CountBadge(dom.append(parent, dom.$('.count')));\n        this._register(attachBadgeStyler(this.badge, themeService));\n        container.appendChild(parent);\n    }\n    set(element, matches) {\n        let parent = dirname(element.uri);\n        this.file.setLabel(getBaseLabel(element.uri), this._uriLabel.getUriLabel(parent, { relative: true }), { title: this._uriLabel.getUriLabel(element.uri), matches });\n        const len = element.children.length;\n        this.badge.setCount(len);\n        if (len > 1) {\n            this.badge.setTitleFormat(localize('referencesCount', \"{0} references\", len));\n        }\n        else {\n            this.badge.setTitleFormat(localize('referenceCount', \"{0} reference\", len));\n        }\n    }\n};\nFileReferencesTemplate = __decorate([\n    __param(1, ILabelService),\n    __param(2, IThemeService)\n], FileReferencesTemplate);\nlet FileReferencesRenderer = class FileReferencesRenderer {\n    constructor(_instantiationService) {\n        this._instantiationService = _instantiationService;\n        this.templateId = FileReferencesRenderer.id;\n    }\n    renderTemplate(container) {\n        return this._instantiationService.createInstance(FileReferencesTemplate, container);\n    }\n    renderElement(node, index, template) {\n        template.set(node.element, createMatches(node.filterData));\n    }\n    disposeTemplate(templateData) {\n        templateData.dispose();\n    }\n};\nFileReferencesRenderer.id = 'FileReferencesRenderer';\nFileReferencesRenderer = __decorate([\n    __param(0, IInstantiationService)\n], FileReferencesRenderer);\nexport { FileReferencesRenderer };\n//#endregion\n//#region render: Reference\nclass OneReferenceTemplate {\n    constructor(container) {\n        this.label = new HighlightedLabel(container);\n    }\n    set(element, score) {\n        var _a;\n        const preview = (_a = element.parent.getPreview(element)) === null || _a === void 0 ? void 0 : _a.preview(element.range);\n        if (!preview || !preview.value) {\n            // this means we FAILED to resolve the document or the value is the empty string\n            this.label.set(`${basename(element.uri)}:${element.range.startLineNumber + 1}:${element.range.startColumn + 1}`);\n        }\n        else {\n            // render search match as highlight unless\n            // we have score, then render the score\n            const { value, highlight } = preview;\n            if (score && !FuzzyScore.isDefault(score)) {\n                this.label.element.classList.toggle('referenceMatch', false);\n                this.label.set(value, createMatches(score));\n            }\n            else {\n                this.label.element.classList.toggle('referenceMatch', true);\n                this.label.set(value, [highlight]);\n            }\n        }\n    }\n}\nexport class OneReferenceRenderer {\n    constructor() {\n        this.templateId = OneReferenceRenderer.id;\n    }\n    renderTemplate(container) {\n        return new OneReferenceTemplate(container);\n    }\n    renderElement(node, index, templateData) {\n        templateData.set(node.element, node.filterData);\n    }\n    disposeTemplate() {\n    }\n}\nOneReferenceRenderer.id = 'OneReferenceRenderer';\n//#endregion\nexport class AccessibilityProvider {\n    getWidgetAriaLabel() {\n        return localize('treeAriaLabel', \"References\");\n    }\n    getAriaLabel(element) {\n        return element.ariaMessage;\n    }\n}\n",
+      "start": 1711096856946,
+      "end": 1711096857086,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857086,
+      "end": 1711096857086,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857087,
+      "end": 1711096857087,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857087,
+      "end": 1711096857088,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857088,
+      "end": 1711096857088,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/bracketPairsTree/tokenizer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { NotSupportedError } from '../../../../../base/common/errors.js';\nimport { TokenMetadata } from '../../../languages.js';\nimport { TextAstNode } from './ast.js';\nimport { lengthAdd, lengthDiff, lengthGetColumnCountIfZeroLineCount, lengthToObj, lengthZero, toLength } from './length.js';\nimport { SmallImmutableSet } from './smallImmutableSet.js';\nexport class Token {\n    constructor(length, kind, \n    /**\n     * If this token is an opening bracket, this is the id of the opening bracket.\n     * If this token is a closing bracket, this is the id of the first opening bracket that is closed by this bracket.\n     * Otherwise, it is -1.\n     */\n    bracketId, \n    /**\n     * If this token is an opening bracket, this just contains `bracketId`.\n     * If this token is a closing bracket, this lists all opening bracket ids, that it closes.\n     * Otherwise, it is empty.\n     */\n    bracketIds, astNode) {\n        this.length = length;\n        this.kind = kind;\n        this.bracketId = bracketId;\n        this.bracketIds = bracketIds;\n        this.astNode = astNode;\n    }\n}\nexport class TextBufferTokenizer {\n    constructor(textModel, bracketTokens) {\n        this.textModel = textModel;\n        this.bracketTokens = bracketTokens;\n        this.reader = new NonPeekableTextBufferTokenizer(this.textModel, this.bracketTokens);\n        this._offset = lengthZero;\n        this.didPeek = false;\n        this.peeked = null;\n        this.textBufferLineCount = textModel.getLineCount();\n        this.textBufferLastLineLength = textModel.getLineLength(this.textBufferLineCount);\n    }\n    get offset() {\n        return this._offset;\n    }\n    get length() {\n        return toLength(this.textBufferLineCount, this.textBufferLastLineLength);\n    }\n    skip(length) {\n        this.didPeek = false;\n        this._offset = lengthAdd(this._offset, length);\n        const obj = lengthToObj(this._offset);\n        this.reader.setPosition(obj.lineCount, obj.columnCount);\n    }\n    read() {\n        let token;\n        if (this.peeked) {\n            this.didPeek = false;\n            token = this.peeked;\n        }\n        else {\n            token = this.reader.read();\n        }\n        if (token) {\n            this._offset = lengthAdd(this._offset, token.length);\n        }\n        return token;\n    }\n    peek() {\n        if (!this.didPeek) {\n            this.peeked = this.reader.read();\n            this.didPeek = true;\n        }\n        return this.peeked;\n    }\n}\n/**\n * Does not support peek.\n*/\nclass NonPeekableTextBufferTokenizer {\n    constructor(textModel, bracketTokens) {\n        this.textModel = textModel;\n        this.bracketTokens = bracketTokens;\n        this.lineIdx = 0;\n        this.line = null;\n        this.lineCharOffset = 0;\n        this.lineTokens = null;\n        this.lineTokenOffset = 0;\n        /** Must be a zero line token. The end of the document cannot be peeked. */\n        this.peekedToken = null;\n        this.textBufferLineCount = textModel.getLineCount();\n        this.textBufferLastLineLength = textModel.getLineLength(this.textBufferLineCount);\n    }\n    setPosition(lineIdx, column) {\n        // We must not jump into a token!\n        if (lineIdx === this.lineIdx) {\n            this.lineCharOffset = column;\n            this.lineTokenOffset = this.lineCharOffset === 0 ? 0 : this.lineTokens.findTokenIndexAtOffset(this.lineCharOffset);\n        }\n        else {\n            this.lineIdx = lineIdx;\n            this.lineCharOffset = column;\n            this.line = null;\n        }\n        this.peekedToken = null;\n    }\n    read() {\n        if (this.peekedToken) {\n            const token = this.peekedToken;\n            this.peekedToken = null;\n            this.lineCharOffset += lengthGetColumnCountIfZeroLineCount(token.length);\n            return token;\n        }\n        if (this.lineIdx > this.textBufferLineCount - 1 || (this.lineIdx === this.textBufferLineCount - 1 && this.lineCharOffset >= this.textBufferLastLineLength)) {\n            // We are after the end\n            return null;\n        }\n        if (this.line === null) {\n            this.lineTokens = this.textModel.getLineTokens(this.lineIdx + 1);\n            this.line = this.lineTokens.getLineContent();\n            this.lineTokenOffset = this.lineCharOffset === 0 ? 0 : this.lineTokens.findTokenIndexAtOffset(this.lineCharOffset);\n        }\n        const startLineIdx = this.lineIdx;\n        const startLineCharOffset = this.lineCharOffset;\n        // limits the length of text tokens.\n        // If text tokens get too long, incremental updates will be slow\n        let lengthHeuristic = 0;\n        while (true) {\n            const lineTokens = this.lineTokens;\n            const tokenCount = lineTokens.getCount();\n            let peekedBracketToken = null;\n            if (this.lineTokenOffset < tokenCount) {\n                const tokenMetadata = lineTokens.getMetadata(this.lineTokenOffset);\n                while (this.lineTokenOffset + 1 < tokenCount && tokenMetadata === lineTokens.getMetadata(this.lineTokenOffset + 1)) {\n                    // Skip tokens that are identical.\n                    // Sometimes, (bracket) identifiers are split up into multiple tokens.\n                    this.lineTokenOffset++;\n                }\n                const isOther = TokenMetadata.getTokenType(tokenMetadata) === 0 /* Other */;\n                const endOffset = lineTokens.getEndOffset(this.lineTokenOffset);\n                // Is there a bracket token next? Only consume text.\n                if (isOther && endOffset !== this.lineCharOffset) {\n                    const languageId = lineTokens.getLanguageId(this.lineTokenOffset);\n                    const text = this.line.substring(this.lineCharOffset, endOffset);\n                    const brackets = this.bracketTokens.getSingleLanguageBracketTokens(languageId);\n                    const regexp = brackets.regExpGlobal;\n                    if (regexp) {\n                        regexp.lastIndex = 0;\n                        const match = regexp.exec(text);\n                        if (match) {\n                            peekedBracketToken = brackets.getToken(match[0]);\n                            if (peekedBracketToken) {\n                                // Consume leading text of the token\n                                this.lineCharOffset += match.index;\n                            }\n                        }\n                    }\n                }\n                lengthHeuristic += endOffset - this.lineCharOffset;\n                if (peekedBracketToken) {\n                    // Don't skip the entire token, as a single token could contain multiple brackets.\n                    if (startLineIdx !== this.lineIdx || startLineCharOffset !== this.lineCharOffset) {\n                        // There is text before the bracket\n                        this.peekedToken = peekedBracketToken;\n                        break;\n                    }\n                    else {\n                        // Consume the peeked token\n                        this.lineCharOffset += lengthGetColumnCountIfZeroLineCount(peekedBracketToken.length);\n                        return peekedBracketToken;\n                    }\n                }\n                else {\n                    // Skip the entire token, as the token contains no brackets at all.\n                    this.lineTokenOffset++;\n                    this.lineCharOffset = endOffset;\n                }\n            }\n            else {\n                if (this.lineIdx === this.textBufferLineCount - 1) {\n                    break;\n                }\n                this.lineIdx++;\n                this.lineTokens = this.textModel.getLineTokens(this.lineIdx + 1);\n                this.lineTokenOffset = 0;\n                this.line = this.lineTokens.getLineContent();\n                this.lineCharOffset = 0;\n                lengthHeuristic += 33; // max 1000/33 = 30 lines\n                // This limits the amount of work to recompute min-indentation\n                if (lengthHeuristic > 1000) {\n                    // only break (automatically) at the end of line.\n                    break;\n                }\n            }\n            if (lengthHeuristic > 1500) {\n                // Eventually break regardless of the line length so that\n                // very long lines do not cause bad performance.\n                // This effective limits max indentation to 500, as\n                // indentation is not computed across multiple text nodes.\n                break;\n            }\n        }\n        // If a token contains some proper indentation, it also contains \\n{INDENTATION+}(?!{INDENTATION}),\n        // unless the line is too long.\n        // Thus, the min indentation of the document is the minimum min indentation of every text node.\n        const length = lengthDiff(startLineIdx, startLineCharOffset, this.lineIdx, this.lineCharOffset);\n        return new Token(length, 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(length));\n    }\n}\nexport class FastTokenizer {\n    constructor(text, brackets) {\n        this.text = text;\n        this._offset = lengthZero;\n        this.idx = 0;\n        const regExpStr = brackets.getRegExpStr();\n        const regexp = regExpStr ? new RegExp(brackets.getRegExpStr() + '|\\n', 'g') : null;\n        const tokens = [];\n        let match;\n        let curLineCount = 0;\n        let lastLineBreakOffset = 0;\n        let lastTokenEndOffset = 0;\n        let lastTokenEndLine = 0;\n        const smallTextTokens0Line = new Array();\n        for (let i = 0; i < 60; i++) {\n            smallTextTokens0Line.push(new Token(toLength(0, i), 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(toLength(0, i))));\n        }\n        const smallTextTokens1Line = new Array();\n        for (let i = 0; i < 60; i++) {\n            smallTextTokens1Line.push(new Token(toLength(1, i), 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(toLength(1, i))));\n        }\n        if (regexp) {\n            regexp.lastIndex = 0;\n            // If a token contains indentation, it also contains \\n{INDENTATION+}(?!{INDENTATION})\n            while ((match = regexp.exec(text)) !== null) {\n                const curOffset = match.index;\n                const value = match[0];\n                if (value === '\\n') {\n                    curLineCount++;\n                    lastLineBreakOffset = curOffset + 1;\n                }\n                else {\n                    if (lastTokenEndOffset !== curOffset) {\n                        let token;\n                        if (lastTokenEndLine === curLineCount) {\n                            const colCount = curOffset - lastTokenEndOffset;\n                            if (colCount < smallTextTokens0Line.length) {\n                                token = smallTextTokens0Line[colCount];\n                            }\n                            else {\n                                const length = toLength(0, colCount);\n                                token = new Token(length, 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(length));\n                            }\n                        }\n                        else {\n                            const lineCount = curLineCount - lastTokenEndLine;\n                            const colCount = curOffset - lastLineBreakOffset;\n                            if (lineCount === 1 && colCount < smallTextTokens1Line.length) {\n                                token = smallTextTokens1Line[colCount];\n                            }\n                            else {\n                                const length = toLength(lineCount, colCount);\n                                token = new Token(length, 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(length));\n                            }\n                        }\n                        tokens.push(token);\n                    }\n                    // value is matched by regexp, so the token must exist\n                    tokens.push(brackets.getToken(value));\n                    lastTokenEndOffset = curOffset + value.length;\n                    lastTokenEndLine = curLineCount;\n                }\n            }\n        }\n        const offset = text.length;\n        if (lastTokenEndOffset !== offset) {\n            const length = (lastTokenEndLine === curLineCount)\n                ? toLength(0, offset - lastTokenEndOffset)\n                : toLength(curLineCount - lastTokenEndLine, offset - lastLineBreakOffset);\n            tokens.push(new Token(length, 0 /* Text */, -1, SmallImmutableSet.getEmpty(), new TextAstNode(length)));\n        }\n        this.length = toLength(curLineCount, offset - lastLineBreakOffset);\n        this.tokens = tokens;\n    }\n    get offset() {\n        return this._offset;\n    }\n    read() {\n        return this.tokens[this.idx++] || null;\n    }\n    peek() {\n        return this.tokens[this.idx] || null;\n    }\n    skip(length) {\n        throw new NotSupportedError();\n    }\n}\n",
+      "start": 1711096857597,
+      "end": 1711096857684,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857684,
+      "end": 1711096857684,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857684,
+      "end": 1711096857685,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857685,
+      "end": 1711096857685,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857686,
+      "end": 1711096857686,
+      "order": "normal"
+    }
+  ]
+}

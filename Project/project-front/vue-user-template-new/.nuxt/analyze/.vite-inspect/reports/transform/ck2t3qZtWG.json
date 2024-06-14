@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/commands/shiftCommand.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../base/common/strings.js';\nimport { CursorColumns } from '../core/cursorColumns.js';\nimport { Range } from '../core/range.js';\nimport { Selection } from '../core/selection.js';\nimport { LanguageConfigurationRegistry } from '../languages/languageConfigurationRegistry.js';\nconst repeatCache = Object.create(null);\nexport function cachedStringRepeat(str, count) {\n    if (count <= 0) {\n        return '';\n    }\n    if (!repeatCache[str]) {\n        repeatCache[str] = ['', str];\n    }\n    const cache = repeatCache[str];\n    for (let i = cache.length; i <= count; i++) {\n        cache[i] = cache[i - 1] + str;\n    }\n    return cache[count];\n}\nexport class ShiftCommand {\n    constructor(range, opts) {\n        this._opts = opts;\n        this._selection = range;\n        this._selectionId = null;\n        this._useLastEditRangeForCursorEndPosition = false;\n        this._selectionStartColumnStaysPut = false;\n    }\n    static unshiftIndent(line, column, tabSize, indentSize, insertSpaces) {\n        // Determine the visible column where the content starts\n        const contentStartVisibleColumn = CursorColumns.visibleColumnFromColumn(line, column, tabSize);\n        if (insertSpaces) {\n            const indent = cachedStringRepeat(' ', indentSize);\n            const desiredTabStop = CursorColumns.prevIndentTabStop(contentStartVisibleColumn, indentSize);\n            const indentCount = desiredTabStop / indentSize; // will be an integer\n            return cachedStringRepeat(indent, indentCount);\n        }\n        else {\n            const indent = '\\t';\n            const desiredTabStop = CursorColumns.prevRenderTabStop(contentStartVisibleColumn, tabSize);\n            const indentCount = desiredTabStop / tabSize; // will be an integer\n            return cachedStringRepeat(indent, indentCount);\n        }\n    }\n    static shiftIndent(line, column, tabSize, indentSize, insertSpaces) {\n        // Determine the visible column where the content starts\n        const contentStartVisibleColumn = CursorColumns.visibleColumnFromColumn(line, column, tabSize);\n        if (insertSpaces) {\n            const indent = cachedStringRepeat(' ', indentSize);\n            const desiredTabStop = CursorColumns.nextIndentTabStop(contentStartVisibleColumn, indentSize);\n            const indentCount = desiredTabStop / indentSize; // will be an integer\n            return cachedStringRepeat(indent, indentCount);\n        }\n        else {\n            const indent = '\\t';\n            const desiredTabStop = CursorColumns.nextRenderTabStop(contentStartVisibleColumn, tabSize);\n            const indentCount = desiredTabStop / tabSize; // will be an integer\n            return cachedStringRepeat(indent, indentCount);\n        }\n    }\n    _addEditOperation(builder, range, text) {\n        if (this._useLastEditRangeForCursorEndPosition) {\n            builder.addTrackedEditOperation(range, text);\n        }\n        else {\n            builder.addEditOperation(range, text);\n        }\n    }\n    getEditOperations(model, builder) {\n        const startLine = this._selection.startLineNumber;\n        let endLine = this._selection.endLineNumber;\n        if (this._selection.endColumn === 1 && startLine !== endLine) {\n            endLine = endLine - 1;\n        }\n        const { tabSize, indentSize, insertSpaces } = this._opts;\n        const shouldIndentEmptyLines = (startLine === endLine);\n        if (this._opts.useTabStops) {\n            // if indenting or outdenting on a whitespace only line\n            if (this._selection.isEmpty()) {\n                if (/^\\s*$/.test(model.getLineContent(startLine))) {\n                    this._useLastEditRangeForCursorEndPosition = true;\n                }\n            }\n            // keep track of previous line's \"miss-alignment\"\n            let previousLineExtraSpaces = 0, extraSpaces = 0;\n            for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++, previousLineExtraSpaces = extraSpaces) {\n                extraSpaces = 0;\n                const lineText = model.getLineContent(lineNumber);\n                let indentationEndIndex = strings.firstNonWhitespaceIndex(lineText);\n                if (this._opts.isUnshift && (lineText.length === 0 || indentationEndIndex === 0)) {\n                    // empty line or line with no leading whitespace => nothing to do\n                    continue;\n                }\n                if (!shouldIndentEmptyLines && !this._opts.isUnshift && lineText.length === 0) {\n                    // do not indent empty lines => nothing to do\n                    continue;\n                }\n                if (indentationEndIndex === -1) {\n                    // the entire line is whitespace\n                    indentationEndIndex = lineText.length;\n                }\n                if (lineNumber > 1) {\n                    const contentStartVisibleColumn = CursorColumns.visibleColumnFromColumn(lineText, indentationEndIndex + 1, tabSize);\n                    if (contentStartVisibleColumn % indentSize !== 0) {\n                        // The current line is \"miss-aligned\", so let's see if this is expected...\n                        // This can only happen when it has trailing commas in the indent\n                        if (model.isCheapToTokenize(lineNumber - 1)) {\n                            const enterAction = LanguageConfigurationRegistry.getEnterAction(this._opts.autoIndent, model, new Range(lineNumber - 1, model.getLineMaxColumn(lineNumber - 1), lineNumber - 1, model.getLineMaxColumn(lineNumber - 1)));\n                            if (enterAction) {\n                                extraSpaces = previousLineExtraSpaces;\n                                if (enterAction.appendText) {\n                                    for (let j = 0, lenJ = enterAction.appendText.length; j < lenJ && extraSpaces < indentSize; j++) {\n                                        if (enterAction.appendText.charCodeAt(j) === 32 /* Space */) {\n                                            extraSpaces++;\n                                        }\n                                        else {\n                                            break;\n                                        }\n                                    }\n                                }\n                                if (enterAction.removeText) {\n                                    extraSpaces = Math.max(0, extraSpaces - enterAction.removeText);\n                                }\n                                // Act as if `prefixSpaces` is not part of the indentation\n                                for (let j = 0; j < extraSpaces; j++) {\n                                    if (indentationEndIndex === 0 || lineText.charCodeAt(indentationEndIndex - 1) !== 32 /* Space */) {\n                                        break;\n                                    }\n                                    indentationEndIndex--;\n                                }\n                            }\n                        }\n                    }\n                }\n                if (this._opts.isUnshift && indentationEndIndex === 0) {\n                    // line with no leading whitespace => nothing to do\n                    continue;\n                }\n                let desiredIndent;\n                if (this._opts.isUnshift) {\n                    desiredIndent = ShiftCommand.unshiftIndent(lineText, indentationEndIndex + 1, tabSize, indentSize, insertSpaces);\n                }\n                else {\n                    desiredIndent = ShiftCommand.shiftIndent(lineText, indentationEndIndex + 1, tabSize, indentSize, insertSpaces);\n                }\n                this._addEditOperation(builder, new Range(lineNumber, 1, lineNumber, indentationEndIndex + 1), desiredIndent);\n                if (lineNumber === startLine && !this._selection.isEmpty()) {\n                    // Force the startColumn to stay put because we're inserting after it\n                    this._selectionStartColumnStaysPut = (this._selection.startColumn <= indentationEndIndex + 1);\n                }\n            }\n        }\n        else {\n            // if indenting or outdenting on a whitespace only line\n            if (!this._opts.isUnshift && this._selection.isEmpty() && model.getLineLength(startLine) === 0) {\n                this._useLastEditRangeForCursorEndPosition = true;\n            }\n            const oneIndent = (insertSpaces ? cachedStringRepeat(' ', indentSize) : '\\t');\n            for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {\n                const lineText = model.getLineContent(lineNumber);\n                let indentationEndIndex = strings.firstNonWhitespaceIndex(lineText);\n                if (this._opts.isUnshift && (lineText.length === 0 || indentationEndIndex === 0)) {\n                    // empty line or line with no leading whitespace => nothing to do\n                    continue;\n                }\n                if (!shouldIndentEmptyLines && !this._opts.isUnshift && lineText.length === 0) {\n                    // do not indent empty lines => nothing to do\n                    continue;\n                }\n                if (indentationEndIndex === -1) {\n                    // the entire line is whitespace\n                    indentationEndIndex = lineText.length;\n                }\n                if (this._opts.isUnshift && indentationEndIndex === 0) {\n                    // line with no leading whitespace => nothing to do\n                    continue;\n                }\n                if (this._opts.isUnshift) {\n                    indentationEndIndex = Math.min(indentationEndIndex, indentSize);\n                    for (let i = 0; i < indentationEndIndex; i++) {\n                        const chr = lineText.charCodeAt(i);\n                        if (chr === 9 /* Tab */) {\n                            indentationEndIndex = i + 1;\n                            break;\n                        }\n                    }\n                    this._addEditOperation(builder, new Range(lineNumber, 1, lineNumber, indentationEndIndex + 1), '');\n                }\n                else {\n                    this._addEditOperation(builder, new Range(lineNumber, 1, lineNumber, 1), oneIndent);\n                    if (lineNumber === startLine && !this._selection.isEmpty()) {\n                        // Force the startColumn to stay put because we're inserting after it\n                        this._selectionStartColumnStaysPut = (this._selection.startColumn === 1);\n                    }\n                }\n            }\n        }\n        this._selectionId = builder.trackSelection(this._selection);\n    }\n    computeCursorState(model, helper) {\n        if (this._useLastEditRangeForCursorEndPosition) {\n            const lastOp = helper.getInverseEditOperations()[0];\n            return new Selection(lastOp.range.endLineNumber, lastOp.range.endColumn, lastOp.range.endLineNumber, lastOp.range.endColumn);\n        }\n        const result = helper.getTrackedSelection(this._selectionId);\n        if (this._selectionStartColumnStaysPut) {\n            // The selection start should not move\n            const initialStartColumn = this._selection.startColumn;\n            const resultStartColumn = result.startColumn;\n            if (resultStartColumn <= initialStartColumn) {\n                return result;\n            }\n            if (result.getDirection() === 0 /* LTR */) {\n                return new Selection(result.startLineNumber, initialStartColumn, result.endLineNumber, result.endColumn);\n            }\n            return new Selection(result.endLineNumber, result.endColumn, result.startLineNumber, initialStartColumn);\n        }\n        return result;\n    }\n}\n",
+      "start": 1711096855785,
+      "end": 1711096855909,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855909,
+      "end": 1711096855909,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855910,
+      "end": 1711096855910,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855910,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855911,
+      "end": 1711096855911,
+      "order": "normal"
+    }
+  ]
+}

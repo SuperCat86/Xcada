@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/tree/compressedObjectTreeModel.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { ObjectTreeModel } from './objectTreeModel.js';\nimport { TreeError, WeakMapper } from './tree.js';\nimport { Event } from '../../../common/event.js';\nimport { Iterable } from '../../../common/iterator.js';\nfunction noCompress(element) {\n    const elements = [element.element];\n    const incompressible = element.incompressible || false;\n    return {\n        element: { elements, incompressible },\n        children: Iterable.map(Iterable.from(element.children), noCompress),\n        collapsible: element.collapsible,\n        collapsed: element.collapsed\n    };\n}\n// Exported only for test reasons, do not use directly\nexport function compress(element) {\n    const elements = [element.element];\n    const incompressible = element.incompressible || false;\n    let childrenIterator;\n    let children;\n    while (true) {\n        [children, childrenIterator] = Iterable.consume(Iterable.from(element.children), 2);\n        if (children.length !== 1) {\n            break;\n        }\n        if (children[0].incompressible) {\n            break;\n        }\n        element = children[0];\n        elements.push(element.element);\n    }\n    return {\n        element: { elements, incompressible },\n        children: Iterable.map(Iterable.concat(children, childrenIterator), compress),\n        collapsible: element.collapsible,\n        collapsed: element.collapsed\n    };\n}\nfunction _decompress(element, index = 0) {\n    let children;\n    if (index < element.element.elements.length - 1) {\n        children = [_decompress(element, index + 1)];\n    }\n    else {\n        children = Iterable.map(Iterable.from(element.children), el => _decompress(el, 0));\n    }\n    if (index === 0 && element.element.incompressible) {\n        return {\n            element: element.element.elements[index],\n            children,\n            incompressible: true,\n            collapsible: element.collapsible,\n            collapsed: element.collapsed\n        };\n    }\n    return {\n        element: element.element.elements[index],\n        children,\n        collapsible: element.collapsible,\n        collapsed: element.collapsed\n    };\n}\n// Exported only for test reasons, do not use directly\nexport function decompress(element) {\n    return _decompress(element, 0);\n}\nfunction splice(treeElement, element, children) {\n    if (treeElement.element === element) {\n        return Object.assign(Object.assign({}, treeElement), { children });\n    }\n    return Object.assign(Object.assign({}, treeElement), { children: Iterable.map(Iterable.from(treeElement.children), e => splice(e, element, children)) });\n}\nconst wrapIdentityProvider = (base) => ({\n    getId(node) {\n        return node.elements.map(e => base.getId(e).toString()).join('\\0');\n    }\n});\n// Exported only for test reasons, do not use directly\nexport class CompressedObjectTreeModel {\n    constructor(user, list, options = {}) {\n        this.user = user;\n        this.rootRef = null;\n        this.nodes = new Map();\n        this.model = new ObjectTreeModel(user, list, options);\n        this.enabled = typeof options.compressionEnabled === 'undefined' ? true : options.compressionEnabled;\n        this.identityProvider = options.identityProvider;\n    }\n    get onDidSplice() { return this.model.onDidSplice; }\n    get onDidChangeCollapseState() { return this.model.onDidChangeCollapseState; }\n    get onDidChangeRenderNodeCount() { return this.model.onDidChangeRenderNodeCount; }\n    setChildren(element, children = Iterable.empty(), options) {\n        // Diffs must be deem, since the compression can affect nested elements.\n        // @see https://github.com/microsoft/vscode/pull/114237#issuecomment-759425034\n        const diffIdentityProvider = options.diffIdentityProvider && wrapIdentityProvider(options.diffIdentityProvider);\n        if (element === null) {\n            const compressedChildren = Iterable.map(children, this.enabled ? compress : noCompress);\n            this._setChildren(null, compressedChildren, { diffIdentityProvider, diffDepth: Infinity });\n            return;\n        }\n        const compressedNode = this.nodes.get(element);\n        if (!compressedNode) {\n            throw new Error('Unknown compressed tree node');\n        }\n        const node = this.model.getNode(compressedNode);\n        const compressedParentNode = this.model.getParentNodeLocation(compressedNode);\n        const parent = this.model.getNode(compressedParentNode);\n        const decompressedElement = decompress(node);\n        const splicedElement = splice(decompressedElement, element, children);\n        const recompressedElement = (this.enabled ? compress : noCompress)(splicedElement);\n        const parentChildren = parent.children\n            .map(child => child === node ? recompressedElement : child);\n        this._setChildren(parent.element, parentChildren, {\n            diffIdentityProvider,\n            diffDepth: node.depth - parent.depth,\n        });\n    }\n    setCompressionEnabled(enabled) {\n        if (enabled === this.enabled) {\n            return;\n        }\n        this.enabled = enabled;\n        const root = this.model.getNode();\n        const rootChildren = root.children;\n        const decompressedRootChildren = Iterable.map(rootChildren, decompress);\n        const recompressedRootChildren = Iterable.map(decompressedRootChildren, enabled ? compress : noCompress);\n        // it should be safe to always use deep diff mode here if an identity\n        // provider is available, since we know the raw nodes are unchanged.\n        this._setChildren(null, recompressedRootChildren, {\n            diffIdentityProvider: this.identityProvider,\n            diffDepth: Infinity,\n        });\n    }\n    _setChildren(node, children, options) {\n        const insertedElements = new Set();\n        const onDidCreateNode = (node) => {\n            for (const element of node.element.elements) {\n                insertedElements.add(element);\n                this.nodes.set(element, node.element);\n            }\n        };\n        const onDidDeleteNode = (node) => {\n            for (const element of node.element.elements) {\n                if (!insertedElements.has(element)) {\n                    this.nodes.delete(element);\n                }\n            }\n        };\n        this.model.setChildren(node, children, Object.assign(Object.assign({}, options), { onDidCreateNode, onDidDeleteNode }));\n    }\n    has(element) {\n        return this.nodes.has(element);\n    }\n    getListIndex(location) {\n        const node = this.getCompressedNode(location);\n        return this.model.getListIndex(node);\n    }\n    getListRenderCount(location) {\n        const node = this.getCompressedNode(location);\n        return this.model.getListRenderCount(node);\n    }\n    getNode(location) {\n        if (typeof location === 'undefined') {\n            return this.model.getNode();\n        }\n        const node = this.getCompressedNode(location);\n        return this.model.getNode(node);\n    }\n    // TODO: review this\n    getNodeLocation(node) {\n        const compressedNode = this.model.getNodeLocation(node);\n        if (compressedNode === null) {\n            return null;\n        }\n        return compressedNode.elements[compressedNode.elements.length - 1];\n    }\n    // TODO: review this\n    getParentNodeLocation(location) {\n        const compressedNode = this.getCompressedNode(location);\n        const parentNode = this.model.getParentNodeLocation(compressedNode);\n        if (parentNode === null) {\n            return null;\n        }\n        return parentNode.elements[parentNode.elements.length - 1];\n    }\n    getFirstElementChild(location) {\n        const compressedNode = this.getCompressedNode(location);\n        return this.model.getFirstElementChild(compressedNode);\n    }\n    isCollapsible(location) {\n        const compressedNode = this.getCompressedNode(location);\n        return this.model.isCollapsible(compressedNode);\n    }\n    setCollapsible(location, collapsible) {\n        const compressedNode = this.getCompressedNode(location);\n        return this.model.setCollapsible(compressedNode, collapsible);\n    }\n    isCollapsed(location) {\n        const compressedNode = this.getCompressedNode(location);\n        return this.model.isCollapsed(compressedNode);\n    }\n    setCollapsed(location, collapsed, recursive) {\n        const compressedNode = this.getCompressedNode(location);\n        return this.model.setCollapsed(compressedNode, collapsed, recursive);\n    }\n    expandTo(location) {\n        const compressedNode = this.getCompressedNode(location);\n        this.model.expandTo(compressedNode);\n    }\n    rerender(location) {\n        const compressedNode = this.getCompressedNode(location);\n        this.model.rerender(compressedNode);\n    }\n    refilter() {\n        this.model.refilter();\n    }\n    getCompressedNode(element) {\n        if (element === null) {\n            return null;\n        }\n        const node = this.nodes.get(element);\n        if (!node) {\n            throw new TreeError(this.user, `Tree element not found: ${element}`);\n        }\n        return node;\n    }\n}\nexport const DefaultElementMapper = elements => elements[elements.length - 1];\nclass CompressedTreeNodeWrapper {\n    constructor(unwrapper, node) {\n        this.unwrapper = unwrapper;\n        this.node = node;\n    }\n    get element() { return this.node.element === null ? null : this.unwrapper(this.node.element); }\n    get children() { return this.node.children.map(node => new CompressedTreeNodeWrapper(this.unwrapper, node)); }\n    get depth() { return this.node.depth; }\n    get visibleChildrenCount() { return this.node.visibleChildrenCount; }\n    get visibleChildIndex() { return this.node.visibleChildIndex; }\n    get collapsible() { return this.node.collapsible; }\n    get collapsed() { return this.node.collapsed; }\n    get visible() { return this.node.visible; }\n    get filterData() { return this.node.filterData; }\n}\nfunction mapList(nodeMapper, list) {\n    return {\n        splice(start, deleteCount, toInsert) {\n            list.splice(start, deleteCount, toInsert.map(node => nodeMapper.map(node)));\n        },\n        updateElementHeight(index, height) {\n            list.updateElementHeight(index, height);\n        }\n    };\n}\nfunction mapOptions(compressedNodeUnwrapper, options) {\n    return Object.assign(Object.assign({}, options), { identityProvider: options.identityProvider && {\n            getId(node) {\n                return options.identityProvider.getId(compressedNodeUnwrapper(node));\n            }\n        }, sorter: options.sorter && {\n            compare(node, otherNode) {\n                return options.sorter.compare(node.elements[0], otherNode.elements[0]);\n            }\n        }, filter: options.filter && {\n            filter(node, parentVisibility) {\n                return options.filter.filter(compressedNodeUnwrapper(node), parentVisibility);\n            }\n        } });\n}\nexport class CompressibleObjectTreeModel {\n    constructor(user, list, options = {}) {\n        this.rootRef = null;\n        this.elementMapper = options.elementMapper || DefaultElementMapper;\n        const compressedNodeUnwrapper = node => this.elementMapper(node.elements);\n        this.nodeMapper = new WeakMapper(node => new CompressedTreeNodeWrapper(compressedNodeUnwrapper, node));\n        this.model = new CompressedObjectTreeModel(user, mapList(this.nodeMapper, list), mapOptions(compressedNodeUnwrapper, options));\n    }\n    get onDidSplice() {\n        return Event.map(this.model.onDidSplice, ({ insertedNodes, deletedNodes }) => ({\n            insertedNodes: insertedNodes.map(node => this.nodeMapper.map(node)),\n            deletedNodes: deletedNodes.map(node => this.nodeMapper.map(node)),\n        }));\n    }\n    get onDidChangeCollapseState() {\n        return Event.map(this.model.onDidChangeCollapseState, ({ node, deep }) => ({\n            node: this.nodeMapper.map(node),\n            deep\n        }));\n    }\n    get onDidChangeRenderNodeCount() {\n        return Event.map(this.model.onDidChangeRenderNodeCount, node => this.nodeMapper.map(node));\n    }\n    setChildren(element, children = Iterable.empty(), options = {}) {\n        this.model.setChildren(element, children, options);\n    }\n    setCompressionEnabled(enabled) {\n        this.model.setCompressionEnabled(enabled);\n    }\n    has(location) {\n        return this.model.has(location);\n    }\n    getListIndex(location) {\n        return this.model.getListIndex(location);\n    }\n    getListRenderCount(location) {\n        return this.model.getListRenderCount(location);\n    }\n    getNode(location) {\n        return this.nodeMapper.map(this.model.getNode(location));\n    }\n    getNodeLocation(node) {\n        return node.element;\n    }\n    getParentNodeLocation(location) {\n        return this.model.getParentNodeLocation(location);\n    }\n    getFirstElementChild(location) {\n        const result = this.model.getFirstElementChild(location);\n        if (result === null || typeof result === 'undefined') {\n            return result;\n        }\n        return this.elementMapper(result.elements);\n    }\n    isCollapsible(location) {\n        return this.model.isCollapsible(location);\n    }\n    setCollapsible(location, collapsed) {\n        return this.model.setCollapsible(location, collapsed);\n    }\n    isCollapsed(location) {\n        return this.model.isCollapsed(location);\n    }\n    setCollapsed(location, collapsed, recursive) {\n        return this.model.setCollapsed(location, collapsed, recursive);\n    }\n    expandTo(location) {\n        return this.model.expandTo(location);\n    }\n    rerender(location) {\n        return this.model.rerender(location);\n    }\n    refilter() {\n        return this.model.refilter();\n    }\n    getCompressedTreeNode(location = null) {\n        return this.model.getNode(location);\n    }\n}\n",
+      "start": 1711096857435,
+      "end": 1711096857555,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857555,
+      "end": 1711096857555,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857555,
+      "end": 1711096857556,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857556,
+      "end": 1711096857556,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857556,
+      "end": 1711096857557,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857557,
+      "end": 1711096857557,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857557,
+      "end": 1711096857557,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857557,
+      "end": 1711096857557,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857557,
+      "end": 1711096857557,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857557,
+      "end": 1711096857557,
+      "order": "normal"
+    }
+  ]
+}

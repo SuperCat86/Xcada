@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/find/browser/findOptionsWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../../base/browser/dom.js';\nimport { CaseSensitiveCheckbox, RegexCheckbox, WholeWordsCheckbox } from '../../../../base/browser/ui/findinput/findInputCheckboxes.js';\nimport { Widget } from '../../../../base/browser/ui/widget.js';\nimport { RunOnceScheduler } from '../../../../base/common/async.js';\nimport { FIND_IDS } from './findModel.js';\nimport { contrastBorder, editorWidgetBackground, editorWidgetForeground, inputActiveOptionBackground, inputActiveOptionBorder, inputActiveOptionForeground, widgetShadow } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nexport class FindOptionsWidget extends Widget {\n    constructor(editor, state, keybindingService, themeService) {\n        super();\n        this._hideSoon = this._register(new RunOnceScheduler(() => this._hide(), 2000));\n        this._isVisible = false;\n        this._editor = editor;\n        this._state = state;\n        this._keybindingService = keybindingService;\n        this._domNode = document.createElement('div');\n        this._domNode.className = 'findOptionsWidget';\n        this._domNode.style.display = 'none';\n        this._domNode.style.top = '10px';\n        this._domNode.setAttribute('role', 'presentation');\n        this._domNode.setAttribute('aria-hidden', 'true');\n        const inputActiveOptionBorderColor = themeService.getColorTheme().getColor(inputActiveOptionBorder);\n        const inputActiveOptionForegroundColor = themeService.getColorTheme().getColor(inputActiveOptionForeground);\n        const inputActiveOptionBackgroundColor = themeService.getColorTheme().getColor(inputActiveOptionBackground);\n        this.caseSensitive = this._register(new CaseSensitiveCheckbox({\n            appendTitle: this._keybindingLabelFor(FIND_IDS.ToggleCaseSensitiveCommand),\n            isChecked: this._state.matchCase,\n            inputActiveOptionBorder: inputActiveOptionBorderColor,\n            inputActiveOptionForeground: inputActiveOptionForegroundColor,\n            inputActiveOptionBackground: inputActiveOptionBackgroundColor\n        }));\n        this._domNode.appendChild(this.caseSensitive.domNode);\n        this._register(this.caseSensitive.onChange(() => {\n            this._state.change({\n                matchCase: this.caseSensitive.checked\n            }, false);\n        }));\n        this.wholeWords = this._register(new WholeWordsCheckbox({\n            appendTitle: this._keybindingLabelFor(FIND_IDS.ToggleWholeWordCommand),\n            isChecked: this._state.wholeWord,\n            inputActiveOptionBorder: inputActiveOptionBorderColor,\n            inputActiveOptionForeground: inputActiveOptionForegroundColor,\n            inputActiveOptionBackground: inputActiveOptionBackgroundColor\n        }));\n        this._domNode.appendChild(this.wholeWords.domNode);\n        this._register(this.wholeWords.onChange(() => {\n            this._state.change({\n                wholeWord: this.wholeWords.checked\n            }, false);\n        }));\n        this.regex = this._register(new RegexCheckbox({\n            appendTitle: this._keybindingLabelFor(FIND_IDS.ToggleRegexCommand),\n            isChecked: this._state.isRegex,\n            inputActiveOptionBorder: inputActiveOptionBorderColor,\n            inputActiveOptionForeground: inputActiveOptionForegroundColor,\n            inputActiveOptionBackground: inputActiveOptionBackgroundColor\n        }));\n        this._domNode.appendChild(this.regex.domNode);\n        this._register(this.regex.onChange(() => {\n            this._state.change({\n                isRegex: this.regex.checked\n            }, false);\n        }));\n        this._editor.addOverlayWidget(this);\n        this._register(this._state.onFindReplaceStateChange((e) => {\n            let somethingChanged = false;\n            if (e.isRegex) {\n                this.regex.checked = this._state.isRegex;\n                somethingChanged = true;\n            }\n            if (e.wholeWord) {\n                this.wholeWords.checked = this._state.wholeWord;\n                somethingChanged = true;\n            }\n            if (e.matchCase) {\n                this.caseSensitive.checked = this._state.matchCase;\n                somethingChanged = true;\n            }\n            if (!this._state.isRevealed && somethingChanged) {\n                this._revealTemporarily();\n            }\n        }));\n        this._register(dom.addDisposableNonBubblingMouseOutListener(this._domNode, (e) => this._onMouseOut()));\n        this._register(dom.addDisposableListener(this._domNode, 'mouseover', (e) => this._onMouseOver()));\n        this._applyTheme(themeService.getColorTheme());\n        this._register(themeService.onDidColorThemeChange(this._applyTheme.bind(this)));\n    }\n    _keybindingLabelFor(actionId) {\n        let kb = this._keybindingService.lookupKeybinding(actionId);\n        if (!kb) {\n            return '';\n        }\n        return ` (${kb.getLabel()})`;\n    }\n    dispose() {\n        this._editor.removeOverlayWidget(this);\n        super.dispose();\n    }\n    // ----- IOverlayWidget API\n    getId() {\n        return FindOptionsWidget.ID;\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    getPosition() {\n        return {\n            preference: 0 /* TOP_RIGHT_CORNER */\n        };\n    }\n    highlightFindOptions() {\n        this._revealTemporarily();\n    }\n    _revealTemporarily() {\n        this._show();\n        this._hideSoon.schedule();\n    }\n    _onMouseOut() {\n        this._hideSoon.schedule();\n    }\n    _onMouseOver() {\n        this._hideSoon.cancel();\n    }\n    _show() {\n        if (this._isVisible) {\n            return;\n        }\n        this._isVisible = true;\n        this._domNode.style.display = 'block';\n    }\n    _hide() {\n        if (!this._isVisible) {\n            return;\n        }\n        this._isVisible = false;\n        this._domNode.style.display = 'none';\n    }\n    _applyTheme(theme) {\n        let inputStyles = {\n            inputActiveOptionBorder: theme.getColor(inputActiveOptionBorder),\n            inputActiveOptionForeground: theme.getColor(inputActiveOptionForeground),\n            inputActiveOptionBackground: theme.getColor(inputActiveOptionBackground)\n        };\n        this.caseSensitive.style(inputStyles);\n        this.wholeWords.style(inputStyles);\n        this.regex.style(inputStyles);\n    }\n}\nFindOptionsWidget.ID = 'editor.contrib.findOptionsWidget';\nregisterThemingParticipant((theme, collector) => {\n    const widgetBackground = theme.getColor(editorWidgetBackground);\n    if (widgetBackground) {\n        collector.addRule(`.monaco-editor .findOptionsWidget { background-color: ${widgetBackground}; }`);\n    }\n    const widgetForeground = theme.getColor(editorWidgetForeground);\n    if (widgetForeground) {\n        collector.addRule(`.monaco-editor .findOptionsWidget { color: ${widgetForeground}; }`);\n    }\n    const widgetShadowColor = theme.getColor(widgetShadow);\n    if (widgetShadowColor) {\n        collector.addRule(`.monaco-editor .findOptionsWidget { box-shadow: 0 0 8px 2px ${widgetShadowColor}; }`);\n    }\n    const hcBorder = theme.getColor(contrastBorder);\n    if (hcBorder) {\n        collector.addRule(`.monaco-editor .findOptionsWidget { border: 2px solid ${hcBorder}; }`);\n    }\n});\n",
+      "start": 1711096855619,
+      "end": 1711096855736,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855736,
+      "end": 1711096855736,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855736,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855737,
+      "end": 1711096855737,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855737,
+      "end": 1711096855738,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855738,
+      "end": 1711096855738,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/codelens/browser/codelensWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../../../base/browser/dom.js';\nimport { renderLabelWithIcons } from '../../../../base/browser/ui/iconLabel/iconLabels.js';\nimport './codelensWidget.css';\nimport { Range } from '../../../common/core/range.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nclass CodeLensViewZone {\n    constructor(afterLineNumber, heightInPx, onHeight) {\n        /**\n         * We want that this view zone, which reserves space for a code lens appears\n         * as close as possible to the next line, so we use a very large value here.\n         */\n        this.afterColumn = 1073741824 /* MAX_SAFE_SMALL_INTEGER */;\n        this.afterLineNumber = afterLineNumber;\n        this.heightInPx = heightInPx;\n        this._onHeight = onHeight;\n        this.suppressMouseDown = true;\n        this.domNode = document.createElement('div');\n    }\n    onComputedHeight(height) {\n        if (this._lastHeight === undefined) {\n            this._lastHeight = height;\n        }\n        else if (this._lastHeight !== height) {\n            this._lastHeight = height;\n            this._onHeight();\n        }\n    }\n    isVisible() {\n        return this._lastHeight !== 0\n            && this.domNode.hasAttribute('monaco-visible-view-zone');\n    }\n}\nclass CodeLensContentWidget {\n    constructor(editor, className, line) {\n        // Editor.IContentWidget.allowEditorOverflow\n        this.allowEditorOverflow = false;\n        this.suppressMouseDown = true;\n        this._commands = new Map();\n        this._isEmpty = true;\n        this._editor = editor;\n        this._id = `codelens.widget-${(CodeLensContentWidget._idPool++)}`;\n        this.updatePosition(line);\n        this._domNode = document.createElement('span');\n        this._domNode.className = `codelens-decoration ${className}`;\n    }\n    withCommands(lenses, animate) {\n        this._commands.clear();\n        let children = [];\n        let hasSymbol = false;\n        for (let i = 0; i < lenses.length; i++) {\n            const lens = lenses[i];\n            if (!lens) {\n                continue;\n            }\n            hasSymbol = true;\n            if (lens.command) {\n                const title = renderLabelWithIcons(lens.command.title.trim());\n                if (lens.command.id) {\n                    children.push(dom.$('a', { id: String(i), title: lens.command.tooltip }, ...title));\n                    this._commands.set(String(i), lens.command);\n                }\n                else {\n                    children.push(dom.$('span', { title: lens.command.tooltip }, ...title));\n                }\n                if (i + 1 < lenses.length) {\n                    children.push(dom.$('span', undefined, '\\u00a0|\\u00a0'));\n                }\n            }\n        }\n        if (!hasSymbol) {\n            // symbols but no commands\n            dom.reset(this._domNode, dom.$('span', undefined, 'no commands'));\n        }\n        else {\n            // symbols and commands\n            dom.reset(this._domNode, ...children);\n            if (this._isEmpty && animate) {\n                this._domNode.classList.add('fadein');\n            }\n            this._isEmpty = false;\n        }\n    }\n    getCommand(link) {\n        return link.parentElement === this._domNode\n            ? this._commands.get(link.id)\n            : undefined;\n    }\n    getId() {\n        return this._id;\n    }\n    getDomNode() {\n        return this._domNode;\n    }\n    updatePosition(line) {\n        const column = this._editor.getModel().getLineFirstNonWhitespaceColumn(line);\n        this._widgetPosition = {\n            position: { lineNumber: line, column: column },\n            preference: [1 /* ABOVE */]\n        };\n    }\n    getPosition() {\n        return this._widgetPosition || null;\n    }\n}\nCodeLensContentWidget._idPool = 0;\nexport class CodeLensHelper {\n    constructor() {\n        this._removeDecorations = [];\n        this._addDecorations = [];\n        this._addDecorationsCallbacks = [];\n    }\n    addDecoration(decoration, callback) {\n        this._addDecorations.push(decoration);\n        this._addDecorationsCallbacks.push(callback);\n    }\n    removeDecoration(decorationId) {\n        this._removeDecorations.push(decorationId);\n    }\n    commit(changeAccessor) {\n        let resultingDecorations = changeAccessor.deltaDecorations(this._removeDecorations, this._addDecorations);\n        for (let i = 0, len = resultingDecorations.length; i < len; i++) {\n            this._addDecorationsCallbacks[i](resultingDecorations[i]);\n        }\n    }\n}\nexport class CodeLensWidget {\n    constructor(data, editor, className, helper, viewZoneChangeAccessor, heightInPx, updateCallback) {\n        this._isDisposed = false;\n        this._editor = editor;\n        this._className = className;\n        this._data = data;\n        // create combined range, track all ranges with decorations,\n        // check if there is already something to render\n        this._decorationIds = [];\n        let range;\n        let lenses = [];\n        this._data.forEach((codeLensData, i) => {\n            if (codeLensData.symbol.command) {\n                lenses.push(codeLensData.symbol);\n            }\n            helper.addDecoration({\n                range: codeLensData.symbol.range,\n                options: ModelDecorationOptions.EMPTY\n            }, id => this._decorationIds[i] = id);\n            // the range contains all lenses on this line\n            if (!range) {\n                range = Range.lift(codeLensData.symbol.range);\n            }\n            else {\n                range = Range.plusRange(range, codeLensData.symbol.range);\n            }\n        });\n        this._viewZone = new CodeLensViewZone(range.startLineNumber - 1, heightInPx, updateCallback);\n        this._viewZoneId = viewZoneChangeAccessor.addZone(this._viewZone);\n        if (lenses.length > 0) {\n            this._createContentWidgetIfNecessary();\n            this._contentWidget.withCommands(lenses, false);\n        }\n    }\n    _createContentWidgetIfNecessary() {\n        if (!this._contentWidget) {\n            this._contentWidget = new CodeLensContentWidget(this._editor, this._className, this._viewZone.afterLineNumber + 1);\n            this._editor.addContentWidget(this._contentWidget);\n        }\n        else {\n            this._editor.layoutContentWidget(this._contentWidget);\n        }\n    }\n    dispose(helper, viewZoneChangeAccessor) {\n        this._decorationIds.forEach(helper.removeDecoration, helper);\n        this._decorationIds = [];\n        if (viewZoneChangeAccessor) {\n            viewZoneChangeAccessor.removeZone(this._viewZoneId);\n        }\n        if (this._contentWidget) {\n            this._editor.removeContentWidget(this._contentWidget);\n            this._contentWidget = undefined;\n        }\n        this._isDisposed = true;\n    }\n    isDisposed() {\n        return this._isDisposed;\n    }\n    isValid() {\n        return this._decorationIds.some((id, i) => {\n            const range = this._editor.getModel().getDecorationRange(id);\n            const symbol = this._data[i].symbol;\n            return !!(range && Range.isEmpty(symbol.range) === range.isEmpty());\n        });\n    }\n    updateCodeLensSymbols(data, helper) {\n        this._decorationIds.forEach(helper.removeDecoration, helper);\n        this._decorationIds = [];\n        this._data = data;\n        this._data.forEach((codeLensData, i) => {\n            helper.addDecoration({\n                range: codeLensData.symbol.range,\n                options: ModelDecorationOptions.EMPTY\n            }, id => this._decorationIds[i] = id);\n        });\n    }\n    updateHeight(height, viewZoneChangeAccessor) {\n        this._viewZone.heightInPx = height;\n        viewZoneChangeAccessor.layoutZone(this._viewZoneId);\n        if (this._contentWidget) {\n            this._editor.layoutContentWidget(this._contentWidget);\n        }\n    }\n    computeIfNecessary(model) {\n        if (!this._viewZone.isVisible()) {\n            return null;\n        }\n        // Read editor current state\n        for (let i = 0; i < this._decorationIds.length; i++) {\n            const range = model.getDecorationRange(this._decorationIds[i]);\n            if (range) {\n                this._data[i].symbol.range = range;\n            }\n        }\n        return this._data;\n    }\n    updateCommands(symbols) {\n        this._createContentWidgetIfNecessary();\n        this._contentWidget.withCommands(symbols, true);\n        for (let i = 0; i < this._data.length; i++) {\n            const resolved = symbols[i];\n            if (resolved) {\n                const { symbol } = this._data[i];\n                symbol.command = resolved.command || symbol.command;\n            }\n        }\n    }\n    getCommand(link) {\n        var _a;\n        return (_a = this._contentWidget) === null || _a === void 0 ? void 0 : _a.getCommand(link);\n    }\n    getLineNumber() {\n        const range = this._editor.getModel().getDecorationRange(this._decorationIds[0]);\n        if (range) {\n            return range.startLineNumber;\n        }\n        return -1;\n    }\n    update(viewZoneChangeAccessor) {\n        if (this.isValid()) {\n            const range = this._editor.getModel().getDecorationRange(this._decorationIds[0]);\n            if (range) {\n                this._viewZone.afterLineNumber = range.startLineNumber - 1;\n                viewZoneChangeAccessor.layoutZone(this._viewZoneId);\n                if (this._contentWidget) {\n                    this._contentWidget.updatePosition(range.startLineNumber);\n                    this._editor.layoutContentWidget(this._contentWidget);\n                }\n            }\n        }\n    }\n}\n",
+      "start": 1711096855561,
+      "end": 1711096855666,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855666,
+      "end": 1711096855666,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855667,
+      "end": 1711096855667,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855667,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855668,
+      "end": 1711096855668,
+      "order": "normal"
+    }
+  ]
+}

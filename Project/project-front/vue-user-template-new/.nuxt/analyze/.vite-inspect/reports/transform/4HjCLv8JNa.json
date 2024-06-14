@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/browser/services/openerService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as dom from '../../../base/browser/dom.js';\nimport { CancellationToken } from '../../../base/common/cancellation.js';\nimport { LinkedList } from '../../../base/common/linkedList.js';\nimport { ResourceMap } from '../../../base/common/map.js';\nimport { parse } from '../../../base/common/marshalling.js';\nimport { Schemas } from '../../../base/common/network.js';\nimport { normalizePath } from '../../../base/common/resources.js';\nimport { URI } from '../../../base/common/uri.js';\nimport { ICodeEditorService } from './codeEditorService.js';\nimport { ICommandService } from '../../../platform/commands/common/commands.js';\nimport { EditorOpenSource } from '../../../platform/editor/common/editor.js';\nimport { extractSelection, matchesScheme, matchesSomeScheme } from '../../../platform/opener/common/opener.js';\nlet CommandOpener = class CommandOpener {\n    constructor(_commandService) {\n        this._commandService = _commandService;\n    }\n    open(target, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!matchesScheme(target, Schemas.command)) {\n                return false;\n            }\n            if (!(options === null || options === void 0 ? void 0 : options.allowCommands)) {\n                // silently ignore commands when command-links are disabled, also\n                // surpress other openers by returning TRUE\n                return true;\n            }\n            // run command or bail out if command isn't known\n            if (typeof target === 'string') {\n                target = URI.parse(target);\n            }\n            // execute as command\n            let args = [];\n            try {\n                args = parse(decodeURIComponent(target.query));\n            }\n            catch (_a) {\n                // ignore and retry\n                try {\n                    args = parse(target.query);\n                }\n                catch (_b) {\n                    // ignore error\n                }\n            }\n            if (!Array.isArray(args)) {\n                args = [args];\n            }\n            yield this._commandService.executeCommand(target.path, ...args);\n            return true;\n        });\n    }\n};\nCommandOpener = __decorate([\n    __param(0, ICommandService)\n], CommandOpener);\nlet EditorOpener = class EditorOpener {\n    constructor(_editorService) {\n        this._editorService = _editorService;\n    }\n    open(target, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (typeof target === 'string') {\n                target = URI.parse(target);\n            }\n            const { selection, uri } = extractSelection(target);\n            target = uri;\n            if (target.scheme === Schemas.file) {\n                target = normalizePath(target); // workaround for non-normalized paths (https://github.com/microsoft/vscode/issues/12954)\n            }\n            yield this._editorService.openCodeEditor({\n                resource: target,\n                options: Object.assign({ selection, source: (options === null || options === void 0 ? void 0 : options.fromUserGesture) ? EditorOpenSource.USER : EditorOpenSource.API }, options === null || options === void 0 ? void 0 : options.editorOptions)\n            }, this._editorService.getFocusedCodeEditor(), options === null || options === void 0 ? void 0 : options.openToSide);\n            return true;\n        });\n    }\n};\nEditorOpener = __decorate([\n    __param(0, ICodeEditorService)\n], EditorOpener);\nlet OpenerService = class OpenerService {\n    constructor(editorService, commandService) {\n        this._openers = new LinkedList();\n        this._validators = new LinkedList();\n        this._resolvers = new LinkedList();\n        this._resolvedUriTargets = new ResourceMap(uri => uri.with({ path: null, fragment: null, query: null }).toString());\n        this._externalOpeners = new LinkedList();\n        // Default external opener is going through window.open()\n        this._defaultExternalOpener = {\n            openExternal: (href) => __awaiter(this, void 0, void 0, function* () {\n                // ensure to open HTTP/HTTPS links into new windows\n                // to not trigger a navigation. Any other link is\n                // safe to be set as HREF to prevent a blank window\n                // from opening.\n                if (matchesSomeScheme(href, Schemas.http, Schemas.https)) {\n                    dom.windowOpenNoOpener(href);\n                }\n                else {\n                    window.location.href = href;\n                }\n                return true;\n            })\n        };\n        // Default opener: any external, maito, http(s), command, and catch-all-editors\n        this._openers.push({\n            open: (target, options) => __awaiter(this, void 0, void 0, function* () {\n                if ((options === null || options === void 0 ? void 0 : options.openExternal) || matchesSomeScheme(target, Schemas.mailto, Schemas.http, Schemas.https, Schemas.vsls)) {\n                    // open externally\n                    yield this._doOpenExternal(target, options);\n                    return true;\n                }\n                return false;\n            })\n        });\n        this._openers.push(new CommandOpener(commandService));\n        this._openers.push(new EditorOpener(editorService));\n    }\n    registerOpener(opener) {\n        const remove = this._openers.unshift(opener);\n        return { dispose: remove };\n    }\n    registerValidator(validator) {\n        const remove = this._validators.push(validator);\n        return { dispose: remove };\n    }\n    registerExternalUriResolver(resolver) {\n        const remove = this._resolvers.push(resolver);\n        return { dispose: remove };\n    }\n    setDefaultExternalOpener(externalOpener) {\n        this._defaultExternalOpener = externalOpener;\n    }\n    registerExternalOpener(opener) {\n        const remove = this._externalOpeners.push(opener);\n        return { dispose: remove };\n    }\n    open(target, options) {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            // check with contributed validators\n            const targetURI = typeof target === 'string' ? URI.parse(target) : target;\n            // validate against the original URI that this URI resolves to, if one exists\n            const validationTarget = (_a = this._resolvedUriTargets.get(targetURI)) !== null && _a !== void 0 ? _a : target;\n            for (const validator of this._validators) {\n                if (!(yield validator.shouldOpen(validationTarget))) {\n                    return false;\n                }\n            }\n            // check with contributed openers\n            for (const opener of this._openers) {\n                const handled = yield opener.open(target, options);\n                if (handled) {\n                    return true;\n                }\n            }\n            return false;\n        });\n    }\n    resolveExternalUri(resource, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            for (const resolver of this._resolvers) {\n                try {\n                    const result = yield resolver.resolveExternalUri(resource, options);\n                    if (result) {\n                        if (!this._resolvedUriTargets.has(result.resolved)) {\n                            this._resolvedUriTargets.set(result.resolved, resource);\n                        }\n                        return result;\n                    }\n                }\n                catch (_a) {\n                    // noop\n                }\n            }\n            throw new Error('Could not resolve external URI: ' + resource.toString());\n        });\n    }\n    _doOpenExternal(resource, options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            //todo@jrieken IExternalUriResolver should support `uri: URI | string`\n            const uri = typeof resource === 'string' ? URI.parse(resource) : resource;\n            let externalUri;\n            try {\n                externalUri = (yield this.resolveExternalUri(uri, options)).resolved;\n            }\n            catch (_a) {\n                externalUri = uri;\n            }\n            let href;\n            if (typeof resource === 'string' && uri.toString() === externalUri.toString()) {\n                // open the url-string AS IS\n                href = resource;\n            }\n            else {\n                // open URI using the toString(noEncode)+encodeURI-trick\n                href = encodeURI(externalUri.toString(true));\n            }\n            if (options === null || options === void 0 ? void 0 : options.allowContributedOpeners) {\n                const preferredOpenerId = typeof (options === null || options === void 0 ? void 0 : options.allowContributedOpeners) === 'string' ? options === null || options === void 0 ? void 0 : options.allowContributedOpeners : undefined;\n                for (const opener of this._externalOpeners) {\n                    const didOpen = yield opener.openExternal(href, {\n                        sourceUri: uri,\n                        preferredOpenerId,\n                    }, CancellationToken.None);\n                    if (didOpen) {\n                        return true;\n                    }\n                }\n            }\n            return this._defaultExternalOpener.openExternal(href, { sourceUri: uri }, CancellationToken.None);\n        });\n    }\n    dispose() {\n        this._validators.clear();\n    }\n};\nOpenerService = __decorate([\n    __param(0, ICodeEditorService),\n    __param(1, ICommandService)\n], OpenerService);\nexport { OpenerService };\n",
+      "start": 1711096856273,
+      "end": 1711096856344,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856344,
+      "end": 1711096856344,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856345,
+      "end": 1711096856345,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856345,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856346,
+      "end": 1711096856346,
+      "order": "normal"
+    }
+  ]
+}

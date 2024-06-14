@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/common/monarch/monarchLexer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as languages from '../../../common/languages.js';\nimport { NullState } from '../../../common/languages/nullTokenize.js';\nimport * as monarchCommon from './monarchCommon.js';\nconst CACHE_STACK_DEPTH = 5;\n/**\n * Reuse the same stack elements up to a certain depth.\n */\nclass MonarchStackElementFactory {\n    constructor(maxCacheDepth) {\n        this._maxCacheDepth = maxCacheDepth;\n        this._entries = Object.create(null);\n    }\n    static create(parent, state) {\n        return this._INSTANCE.create(parent, state);\n    }\n    create(parent, state) {\n        if (parent !== null && parent.depth >= this._maxCacheDepth) {\n            // no caching above a certain depth\n            return new MonarchStackElement(parent, state);\n        }\n        let stackElementId = MonarchStackElement.getStackElementId(parent);\n        if (stackElementId.length > 0) {\n            stackElementId += '|';\n        }\n        stackElementId += state;\n        let result = this._entries[stackElementId];\n        if (result) {\n            return result;\n        }\n        result = new MonarchStackElement(parent, state);\n        this._entries[stackElementId] = result;\n        return result;\n    }\n}\nMonarchStackElementFactory._INSTANCE = new MonarchStackElementFactory(CACHE_STACK_DEPTH);\nclass MonarchStackElement {\n    constructor(parent, state) {\n        this.parent = parent;\n        this.state = state;\n        this.depth = (this.parent ? this.parent.depth : 0) + 1;\n    }\n    static getStackElementId(element) {\n        let result = '';\n        while (element !== null) {\n            if (result.length > 0) {\n                result += '|';\n            }\n            result += element.state;\n            element = element.parent;\n        }\n        return result;\n    }\n    static _equals(a, b) {\n        while (a !== null && b !== null) {\n            if (a === b) {\n                return true;\n            }\n            if (a.state !== b.state) {\n                return false;\n            }\n            a = a.parent;\n            b = b.parent;\n        }\n        if (a === null && b === null) {\n            return true;\n        }\n        return false;\n    }\n    equals(other) {\n        return MonarchStackElement._equals(this, other);\n    }\n    push(state) {\n        return MonarchStackElementFactory.create(this, state);\n    }\n    pop() {\n        return this.parent;\n    }\n    popall() {\n        let result = this;\n        while (result.parent) {\n            result = result.parent;\n        }\n        return result;\n    }\n    switchTo(state) {\n        return MonarchStackElementFactory.create(this.parent, state);\n    }\n}\nclass EmbeddedLanguageData {\n    constructor(languageId, state) {\n        this.languageId = languageId;\n        this.state = state;\n    }\n    equals(other) {\n        return (this.languageId === other.languageId\n            && this.state.equals(other.state));\n    }\n    clone() {\n        const stateClone = this.state.clone();\n        // save an object\n        if (stateClone === this.state) {\n            return this;\n        }\n        return new EmbeddedLanguageData(this.languageId, this.state);\n    }\n}\n/**\n * Reuse the same line states up to a certain depth.\n */\nclass MonarchLineStateFactory {\n    constructor(maxCacheDepth) {\n        this._maxCacheDepth = maxCacheDepth;\n        this._entries = Object.create(null);\n    }\n    static create(stack, embeddedLanguageData) {\n        return this._INSTANCE.create(stack, embeddedLanguageData);\n    }\n    create(stack, embeddedLanguageData) {\n        if (embeddedLanguageData !== null) {\n            // no caching when embedding\n            return new MonarchLineState(stack, embeddedLanguageData);\n        }\n        if (stack !== null && stack.depth >= this._maxCacheDepth) {\n            // no caching above a certain depth\n            return new MonarchLineState(stack, embeddedLanguageData);\n        }\n        const stackElementId = MonarchStackElement.getStackElementId(stack);\n        let result = this._entries[stackElementId];\n        if (result) {\n            return result;\n        }\n        result = new MonarchLineState(stack, null);\n        this._entries[stackElementId] = result;\n        return result;\n    }\n}\nMonarchLineStateFactory._INSTANCE = new MonarchLineStateFactory(CACHE_STACK_DEPTH);\nclass MonarchLineState {\n    constructor(stack, embeddedLanguageData) {\n        this.stack = stack;\n        this.embeddedLanguageData = embeddedLanguageData;\n    }\n    clone() {\n        const embeddedlanguageDataClone = this.embeddedLanguageData ? this.embeddedLanguageData.clone() : null;\n        // save an object\n        if (embeddedlanguageDataClone === this.embeddedLanguageData) {\n            return this;\n        }\n        return MonarchLineStateFactory.create(this.stack, this.embeddedLanguageData);\n    }\n    equals(other) {\n        if (!(other instanceof MonarchLineState)) {\n            return false;\n        }\n        if (!this.stack.equals(other.stack)) {\n            return false;\n        }\n        if (this.embeddedLanguageData === null && other.embeddedLanguageData === null) {\n            return true;\n        }\n        if (this.embeddedLanguageData === null || other.embeddedLanguageData === null) {\n            return false;\n        }\n        return this.embeddedLanguageData.equals(other.embeddedLanguageData);\n    }\n}\nclass MonarchClassicTokensCollector {\n    constructor() {\n        this._tokens = [];\n        this._languageId = null;\n        this._lastTokenType = null;\n        this._lastTokenLanguage = null;\n    }\n    enterLanguage(languageId) {\n        this._languageId = languageId;\n    }\n    emit(startOffset, type) {\n        if (this._lastTokenType === type && this._lastTokenLanguage === this._languageId) {\n            return;\n        }\n        this._lastTokenType = type;\n        this._lastTokenLanguage = this._languageId;\n        this._tokens.push(new languages.Token(startOffset, type, this._languageId));\n    }\n    nestedLanguageTokenize(embeddedLanguageLine, hasEOL, embeddedLanguageData, offsetDelta) {\n        const nestedLanguageId = embeddedLanguageData.languageId;\n        const embeddedModeState = embeddedLanguageData.state;\n        const nestedLanguageTokenizationSupport = languages.TokenizationRegistry.get(nestedLanguageId);\n        if (!nestedLanguageTokenizationSupport) {\n            this.enterLanguage(nestedLanguageId);\n            this.emit(offsetDelta, '');\n            return embeddedModeState;\n        }\n        const nestedResult = nestedLanguageTokenizationSupport.tokenize(embeddedLanguageLine, hasEOL, embeddedModeState);\n        if (offsetDelta !== 0) {\n            for (const token of nestedResult.tokens) {\n                this._tokens.push(new languages.Token(token.offset + offsetDelta, token.type, token.language));\n            }\n        }\n        else {\n            this._tokens = this._tokens.concat(nestedResult.tokens);\n        }\n        this._lastTokenType = null;\n        this._lastTokenLanguage = null;\n        this._languageId = null;\n        return nestedResult.endState;\n    }\n    finalize(endState) {\n        return new languages.TokenizationResult(this._tokens, endState);\n    }\n}\nclass MonarchModernTokensCollector {\n    constructor(languageService, theme) {\n        this._languageService = languageService;\n        this._theme = theme;\n        this._prependTokens = null;\n        this._tokens = [];\n        this._currentLanguageId = 0 /* Null */;\n        this._lastTokenMetadata = 0;\n    }\n    enterLanguage(languageId) {\n        this._currentLanguageId = this._languageService.languageIdCodec.encodeLanguageId(languageId);\n    }\n    emit(startOffset, type) {\n        const metadata = this._theme.match(this._currentLanguageId, type);\n        if (this._lastTokenMetadata === metadata) {\n            return;\n        }\n        this._lastTokenMetadata = metadata;\n        this._tokens.push(startOffset);\n        this._tokens.push(metadata);\n    }\n    static _merge(a, b, c) {\n        const aLen = (a !== null ? a.length : 0);\n        const bLen = b.length;\n        const cLen = (c !== null ? c.length : 0);\n        if (aLen === 0 && bLen === 0 && cLen === 0) {\n            return new Uint32Array(0);\n        }\n        if (aLen === 0 && bLen === 0) {\n            return c;\n        }\n        if (bLen === 0 && cLen === 0) {\n            return a;\n        }\n        const result = new Uint32Array(aLen + bLen + cLen);\n        if (a !== null) {\n            result.set(a);\n        }\n        for (let i = 0; i < bLen; i++) {\n            result[aLen + i] = b[i];\n        }\n        if (c !== null) {\n            result.set(c, aLen + bLen);\n        }\n        return result;\n    }\n    nestedLanguageTokenize(embeddedLanguageLine, hasEOL, embeddedLanguageData, offsetDelta) {\n        const nestedLanguageId = embeddedLanguageData.languageId;\n        const embeddedModeState = embeddedLanguageData.state;\n        const nestedLanguageTokenizationSupport = languages.TokenizationRegistry.get(nestedLanguageId);\n        if (!nestedLanguageTokenizationSupport) {\n            this.enterLanguage(nestedLanguageId);\n            this.emit(offsetDelta, '');\n            return embeddedModeState;\n        }\n        const nestedResult = nestedLanguageTokenizationSupport.tokenizeEncoded(embeddedLanguageLine, hasEOL, embeddedModeState);\n        if (offsetDelta !== 0) {\n            for (let i = 0, len = nestedResult.tokens.length; i < len; i += 2) {\n                nestedResult.tokens[i] += offsetDelta;\n            }\n        }\n        this._prependTokens = MonarchModernTokensCollector._merge(this._prependTokens, this._tokens, nestedResult.tokens);\n        this._tokens = [];\n        this._currentLanguageId = 0;\n        this._lastTokenMetadata = 0;\n        return nestedResult.endState;\n    }\n    finalize(endState) {\n        return new languages.EncodedTokenizationResult(MonarchModernTokensCollector._merge(this._prependTokens, this._tokens, null), endState);\n    }\n}\nexport class MonarchTokenizer {\n    constructor(languageService, standaloneThemeService, languageId, lexer) {\n        this._languageService = languageService;\n        this._standaloneThemeService = standaloneThemeService;\n        this._languageId = languageId;\n        this._lexer = lexer;\n        this._embeddedLanguages = Object.create(null);\n        this.embeddedLoaded = Promise.resolve(undefined);\n        // Set up listening for embedded modes\n        let emitting = false;\n        this._tokenizationRegistryListener = languages.TokenizationRegistry.onDidChange((e) => {\n            if (emitting) {\n                return;\n            }\n            let isOneOfMyEmbeddedModes = false;\n            for (let i = 0, len = e.changedLanguages.length; i < len; i++) {\n                const language = e.changedLanguages[i];\n                if (this._embeddedLanguages[language]) {\n                    isOneOfMyEmbeddedModes = true;\n                    break;\n                }\n            }\n            if (isOneOfMyEmbeddedModes) {\n                emitting = true;\n                languages.TokenizationRegistry.fire([this._languageId]);\n                emitting = false;\n            }\n        });\n    }\n    dispose() {\n        this._tokenizationRegistryListener.dispose();\n    }\n    getLoadStatus() {\n        const promises = [];\n        for (let nestedLanguageId in this._embeddedLanguages) {\n            const tokenizationSupport = languages.TokenizationRegistry.get(nestedLanguageId);\n            if (tokenizationSupport) {\n                // The nested language is already loaded\n                if (tokenizationSupport instanceof MonarchTokenizer) {\n                    const nestedModeStatus = tokenizationSupport.getLoadStatus();\n                    if (nestedModeStatus.loaded === false) {\n                        promises.push(nestedModeStatus.promise);\n                    }\n                }\n                continue;\n            }\n            if (!languages.TokenizationRegistry.isResolved(nestedLanguageId)) {\n                // The nested language is in the process of being loaded\n                promises.push(languages.TokenizationRegistry.getOrCreate(nestedLanguageId));\n            }\n        }\n        if (promises.length === 0) {\n            return {\n                loaded: true\n            };\n        }\n        return {\n            loaded: false,\n            promise: Promise.all(promises).then(_ => undefined)\n        };\n    }\n    getInitialState() {\n        const rootState = MonarchStackElementFactory.create(null, this._lexer.start);\n        return MonarchLineStateFactory.create(rootState, null);\n    }\n    tokenize(line, hasEOL, lineState) {\n        const tokensCollector = new MonarchClassicTokensCollector();\n        const endLineState = this._tokenize(line, hasEOL, lineState, tokensCollector);\n        return tokensCollector.finalize(endLineState);\n    }\n    tokenizeEncoded(line, hasEOL, lineState) {\n        const tokensCollector = new MonarchModernTokensCollector(this._languageService, this._standaloneThemeService.getColorTheme().tokenTheme);\n        const endLineState = this._tokenize(line, hasEOL, lineState, tokensCollector);\n        return tokensCollector.finalize(endLineState);\n    }\n    _tokenize(line, hasEOL, lineState, collector) {\n        if (lineState.embeddedLanguageData) {\n            return this._nestedTokenize(line, hasEOL, lineState, 0, collector);\n        }\n        else {\n            return this._myTokenize(line, hasEOL, lineState, 0, collector);\n        }\n    }\n    _findLeavingNestedLanguageOffset(line, state) {\n        let rules = this._lexer.tokenizer[state.stack.state];\n        if (!rules) {\n            rules = monarchCommon.findRules(this._lexer, state.stack.state); // do parent matching\n            if (!rules) {\n                throw monarchCommon.createError(this._lexer, 'tokenizer state is not defined: ' + state.stack.state);\n            }\n        }\n        let popOffset = -1;\n        let hasEmbeddedPopRule = false;\n        for (const rule of rules) {\n            if (!monarchCommon.isIAction(rule.action) || rule.action.nextEmbedded !== '@pop') {\n                continue;\n            }\n            hasEmbeddedPopRule = true;\n            let regex = rule.regex;\n            const regexSource = rule.regex.source;\n            if (regexSource.substr(0, 4) === '^(?:' && regexSource.substr(regexSource.length - 1, 1) === ')') {\n                const flags = (regex.ignoreCase ? 'i' : '') + (regex.unicode ? 'u' : '');\n                regex = new RegExp(regexSource.substr(4, regexSource.length - 5), flags);\n            }\n            const result = line.search(regex);\n            if (result === -1 || (result !== 0 && rule.matchOnlyAtLineStart)) {\n                continue;\n            }\n            if (popOffset === -1 || result < popOffset) {\n                popOffset = result;\n            }\n        }\n        if (!hasEmbeddedPopRule) {\n            throw monarchCommon.createError(this._lexer, 'no rule containing nextEmbedded: \"@pop\" in tokenizer embedded state: ' + state.stack.state);\n        }\n        return popOffset;\n    }\n    _nestedTokenize(line, hasEOL, lineState, offsetDelta, tokensCollector) {\n        const popOffset = this._findLeavingNestedLanguageOffset(line, lineState);\n        if (popOffset === -1) {\n            // tokenization will not leave nested language\n            const nestedEndState = tokensCollector.nestedLanguageTokenize(line, hasEOL, lineState.embeddedLanguageData, offsetDelta);\n            return MonarchLineStateFactory.create(lineState.stack, new EmbeddedLanguageData(lineState.embeddedLanguageData.languageId, nestedEndState));\n        }\n        const nestedLanguageLine = line.substring(0, popOffset);\n        if (nestedLanguageLine.length > 0) {\n            // tokenize with the nested language\n            tokensCollector.nestedLanguageTokenize(nestedLanguageLine, false, lineState.embeddedLanguageData, offsetDelta);\n        }\n        const restOfTheLine = line.substring(popOffset);\n        return this._myTokenize(restOfTheLine, hasEOL, lineState, offsetDelta + popOffset, tokensCollector);\n    }\n    _safeRuleName(rule) {\n        if (rule) {\n            return rule.name;\n        }\n        return '(unknown)';\n    }\n    _myTokenize(lineWithoutLF, hasEOL, lineState, offsetDelta, tokensCollector) {\n        tokensCollector.enterLanguage(this._languageId);\n        const lineWithoutLFLength = lineWithoutLF.length;\n        const line = (hasEOL && this._lexer.includeLF ? lineWithoutLF + '\\n' : lineWithoutLF);\n        const lineLength = line.length;\n        let embeddedLanguageData = lineState.embeddedLanguageData;\n        let stack = lineState.stack;\n        let pos = 0;\n        let groupMatching = null;\n        // See https://github.com/microsoft/monaco-editor/issues/1235\n        // Evaluate rules at least once for an empty line\n        let forceEvaluation = true;\n        while (forceEvaluation || pos < lineLength) {\n            const pos0 = pos;\n            const stackLen0 = stack.depth;\n            const groupLen0 = groupMatching ? groupMatching.groups.length : 0;\n            const state = stack.state;\n            let matches = null;\n            let matched = null;\n            let action = null;\n            let rule = null;\n            let enteringEmbeddedLanguage = null;\n            // check if we need to process group matches first\n            if (groupMatching) {\n                matches = groupMatching.matches;\n                const groupEntry = groupMatching.groups.shift();\n                matched = groupEntry.matched;\n                action = groupEntry.action;\n                rule = groupMatching.rule;\n                // cleanup if necessary\n                if (groupMatching.groups.length === 0) {\n                    groupMatching = null;\n                }\n            }\n            else {\n                // otherwise we match on the token stream\n                if (!forceEvaluation && pos >= lineLength) {\n                    // nothing to do\n                    break;\n                }\n                forceEvaluation = false;\n                // get the rules for this state\n                let rules = this._lexer.tokenizer[state];\n                if (!rules) {\n                    rules = monarchCommon.findRules(this._lexer, state); // do parent matching\n                    if (!rules) {\n                        throw monarchCommon.createError(this._lexer, 'tokenizer state is not defined: ' + state);\n                    }\n                }\n                // try each rule until we match\n                let restOfLine = line.substr(pos);\n                for (const rule of rules) {\n                    if (pos === 0 || !rule.matchOnlyAtLineStart) {\n                        matches = restOfLine.match(rule.regex);\n                        if (matches) {\n                            matched = matches[0];\n                            action = rule.action;\n                            break;\n                        }\n                    }\n                }\n            }\n            // We matched 'rule' with 'matches' and 'action'\n            if (!matches) {\n                matches = [''];\n                matched = '';\n            }\n            if (!action) {\n                // bad: we didn't match anything, and there is no action to take\n                // we need to advance the stream or we get progress trouble\n                if (pos < lineLength) {\n                    matches = [line.charAt(pos)];\n                    matched = matches[0];\n                }\n                action = this._lexer.defaultToken;\n            }\n            if (matched === null) {\n                // should never happen, needed for strict null checking\n                break;\n            }\n            // advance stream\n            pos += matched.length;\n            // maybe call action function (used for 'cases')\n            while (monarchCommon.isFuzzyAction(action) && monarchCommon.isIAction(action) && action.test) {\n                action = action.test(matched, matches, state, pos === lineLength);\n            }\n            let result = null;\n            // set the result: either a string or an array of actions\n            if (typeof action === 'string' || Array.isArray(action)) {\n                result = action;\n            }\n            else if (action.group) {\n                result = action.group;\n            }\n            else if (action.token !== null && action.token !== undefined) {\n                // do $n replacements?\n                if (action.tokenSubst) {\n                    result = monarchCommon.substituteMatches(this._lexer, action.token, matched, matches, state);\n                }\n                else {\n                    result = action.token;\n                }\n                // enter embedded language?\n                if (action.nextEmbedded) {\n                    if (action.nextEmbedded === '@pop') {\n                        if (!embeddedLanguageData) {\n                            throw monarchCommon.createError(this._lexer, 'cannot pop embedded language if not inside one');\n                        }\n                        embeddedLanguageData = null;\n                    }\n                    else if (embeddedLanguageData) {\n                        throw monarchCommon.createError(this._lexer, 'cannot enter embedded language from within an embedded language');\n                    }\n                    else {\n                        enteringEmbeddedLanguage = monarchCommon.substituteMatches(this._lexer, action.nextEmbedded, matched, matches, state);\n                    }\n                }\n                // state transformations\n                if (action.goBack) { // back up the stream..\n                    pos = Math.max(0, pos - action.goBack);\n                }\n                if (action.switchTo && typeof action.switchTo === 'string') {\n                    let nextState = monarchCommon.substituteMatches(this._lexer, action.switchTo, matched, matches, state); // switch state without a push...\n                    if (nextState[0] === '@') {\n                        nextState = nextState.substr(1); // peel off starting '@'\n                    }\n                    if (!monarchCommon.findRules(this._lexer, nextState)) {\n                        throw monarchCommon.createError(this._lexer, 'trying to switch to a state \\'' + nextState + '\\' that is undefined in rule: ' + this._safeRuleName(rule));\n                    }\n                    else {\n                        stack = stack.switchTo(nextState);\n                    }\n                }\n                else if (action.transform && typeof action.transform === 'function') {\n                    throw monarchCommon.createError(this._lexer, 'action.transform not supported');\n                }\n                else if (action.next) {\n                    if (action.next === '@push') {\n                        if (stack.depth >= this._lexer.maxStack) {\n                            throw monarchCommon.createError(this._lexer, 'maximum tokenizer stack size reached: [' +\n                                stack.state + ',' + stack.parent.state + ',...]');\n                        }\n                        else {\n                            stack = stack.push(state);\n                        }\n                    }\n                    else if (action.next === '@pop') {\n                        if (stack.depth <= 1) {\n                            throw monarchCommon.createError(this._lexer, 'trying to pop an empty stack in rule: ' + this._safeRuleName(rule));\n                        }\n                        else {\n                            stack = stack.pop();\n                        }\n                    }\n                    else if (action.next === '@popall') {\n                        stack = stack.popall();\n                    }\n                    else {\n                        let nextState = monarchCommon.substituteMatches(this._lexer, action.next, matched, matches, state);\n                        if (nextState[0] === '@') {\n                            nextState = nextState.substr(1); // peel off starting '@'\n                        }\n                        if (!monarchCommon.findRules(this._lexer, nextState)) {\n                            throw monarchCommon.createError(this._lexer, 'trying to set a next state \\'' + nextState + '\\' that is undefined in rule: ' + this._safeRuleName(rule));\n                        }\n                        else {\n                            stack = stack.push(nextState);\n                        }\n                    }\n                }\n                if (action.log && typeof (action.log) === 'string') {\n                    monarchCommon.log(this._lexer, this._lexer.languageId + ': ' + monarchCommon.substituteMatches(this._lexer, action.log, matched, matches, state));\n                }\n            }\n            // check result\n            if (result === null) {\n                throw monarchCommon.createError(this._lexer, 'lexer rule has no well-defined action in rule: ' + this._safeRuleName(rule));\n            }\n            const computeNewStateForEmbeddedLanguage = (enteringEmbeddedLanguage) => {\n                // support language names, mime types, and language ids\n                const languageId = (this._languageService.getLanguageIdByLanguageName(enteringEmbeddedLanguage)\n                    || this._languageService.getLanguageIdByMimeType(enteringEmbeddedLanguage)\n                    || enteringEmbeddedLanguage);\n                const embeddedLanguageData = this._getNestedEmbeddedLanguageData(languageId);\n                if (pos < lineLength) {\n                    // there is content from the embedded language on this line\n                    const restOfLine = lineWithoutLF.substr(pos);\n                    return this._nestedTokenize(restOfLine, hasEOL, MonarchLineStateFactory.create(stack, embeddedLanguageData), offsetDelta + pos, tokensCollector);\n                }\n                else {\n                    return MonarchLineStateFactory.create(stack, embeddedLanguageData);\n                }\n            };\n            // is the result a group match?\n            if (Array.isArray(result)) {\n                if (groupMatching && groupMatching.groups.length > 0) {\n                    throw monarchCommon.createError(this._lexer, 'groups cannot be nested: ' + this._safeRuleName(rule));\n                }\n                if (matches.length !== result.length + 1) {\n                    throw monarchCommon.createError(this._lexer, 'matched number of groups does not match the number of actions in rule: ' + this._safeRuleName(rule));\n                }\n                let totalLen = 0;\n                for (let i = 1; i < matches.length; i++) {\n                    totalLen += matches[i].length;\n                }\n                if (totalLen !== matched.length) {\n                    throw monarchCommon.createError(this._lexer, 'with groups, all characters should be matched in consecutive groups in rule: ' + this._safeRuleName(rule));\n                }\n                groupMatching = {\n                    rule: rule,\n                    matches: matches,\n                    groups: []\n                };\n                for (let i = 0; i < result.length; i++) {\n                    groupMatching.groups[i] = {\n                        action: result[i],\n                        matched: matches[i + 1]\n                    };\n                }\n                pos -= matched.length;\n                // call recursively to initiate first result match\n                continue;\n            }\n            else {\n                // regular result\n                // check for '@rematch'\n                if (result === '@rematch') {\n                    pos -= matched.length;\n                    matched = ''; // better set the next state too..\n                    matches = null;\n                    result = '';\n                    // Even though `@rematch` was specified, if `nextEmbedded` also specified,\n                    // a state transition should occur.\n                    if (enteringEmbeddedLanguage !== null) {\n                        return computeNewStateForEmbeddedLanguage(enteringEmbeddedLanguage);\n                    }\n                }\n                // check progress\n                if (matched.length === 0) {\n                    if (lineLength === 0 || stackLen0 !== stack.depth || state !== stack.state || (!groupMatching ? 0 : groupMatching.groups.length) !== groupLen0) {\n                        continue;\n                    }\n                    else {\n                        throw monarchCommon.createError(this._lexer, 'no progress in tokenizer in rule: ' + this._safeRuleName(rule));\n                    }\n                }\n                // return the result (and check for brace matching)\n                // todo: for efficiency we could pre-sanitize tokenPostfix and substitutions\n                let tokenType = null;\n                if (monarchCommon.isString(result) && result.indexOf('@brackets') === 0) {\n                    const rest = result.substr('@brackets'.length);\n                    const bracket = findBracket(this._lexer, matched);\n                    if (!bracket) {\n                        throw monarchCommon.createError(this._lexer, '@brackets token returned but no bracket defined as: ' + matched);\n                    }\n                    tokenType = monarchCommon.sanitize(bracket.token + rest);\n                }\n                else {\n                    const token = (result === '' ? '' : result + this._lexer.tokenPostfix);\n                    tokenType = monarchCommon.sanitize(token);\n                }\n                if (pos0 < lineWithoutLFLength) {\n                    tokensCollector.emit(pos0 + offsetDelta, tokenType);\n                }\n            }\n            if (enteringEmbeddedLanguage !== null) {\n                return computeNewStateForEmbeddedLanguage(enteringEmbeddedLanguage);\n            }\n        }\n        return MonarchLineStateFactory.create(stack, embeddedLanguageData);\n    }\n    _getNestedEmbeddedLanguageData(languageId) {\n        if (!this._languageService.isRegisteredLanguageId(languageId)) {\n            return new EmbeddedLanguageData(languageId, NullState);\n        }\n        if (languageId !== this._languageId) {\n            // Fire language loading event\n            languages.TokenizationRegistry.getOrCreate(languageId);\n            this._embeddedLanguages[languageId] = true;\n        }\n        const tokenizationSupport = languages.TokenizationRegistry.get(languageId);\n        if (tokenizationSupport) {\n            return new EmbeddedLanguageData(languageId, tokenizationSupport.getInitialState());\n        }\n        return new EmbeddedLanguageData(languageId, NullState);\n    }\n}\n/**\n * Searches for a bracket in the 'brackets' attribute that matches the input.\n */\nfunction findBracket(lexer, matched) {\n    if (!matched) {\n        return null;\n    }\n    matched = monarchCommon.fixCase(lexer, matched);\n    const brackets = lexer.brackets;\n    for (const bracket of brackets) {\n        if (bracket.open === matched) {\n            return { token: bracket.token, bracketType: 1 /* Open */ };\n        }\n        else if (bracket.close === matched) {\n            return { token: bracket.token, bracketType: -1 /* Close */ };\n        }\n    }\n    return null;\n}\n",
+      "start": 1711096855227,
+      "end": 1711096855300,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855300,
+      "end": 1711096855300,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855301,
+      "end": 1711096855301,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855301,
+      "end": 1711096855303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855303,
+      "end": 1711096855303,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    }
+  ]
+}

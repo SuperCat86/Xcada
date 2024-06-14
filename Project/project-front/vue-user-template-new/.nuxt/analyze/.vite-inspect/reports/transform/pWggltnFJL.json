@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/types.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/**\n * @returns whether the provided parameter is a JavaScript Array or not.\n */\nexport function isArray(array) {\n    return Array.isArray(array);\n}\n/**\n * @returns whether the provided parameter is a JavaScript String or not.\n */\nexport function isString(str) {\n    return (typeof str === 'string');\n}\n/**\n *\n * @returns whether the provided parameter is of type `object` but **not**\n *\t`null`, an `array`, a `regexp`, nor a `date`.\n */\nexport function isObject(obj) {\n    // The method can't do a type cast since there are type (like strings) which\n    // are subclasses of any put not positvely matched by the function. Hence type\n    // narrowing results in wrong results.\n    return typeof obj === 'object'\n        && obj !== null\n        && !Array.isArray(obj)\n        && !(obj instanceof RegExp)\n        && !(obj instanceof Date);\n}\n/**\n * In **contrast** to just checking `typeof` this will return `false` for `NaN`.\n * @returns whether the provided parameter is a JavaScript Number or not.\n */\nexport function isNumber(obj) {\n    return (typeof obj === 'number' && !isNaN(obj));\n}\n/**\n * @returns whether the provided parameter is an Iterable, casting to the given generic\n */\nexport function isIterable(obj) {\n    return !!obj && typeof obj[Symbol.iterator] === 'function';\n}\n/**\n * @returns whether the provided parameter is a JavaScript Boolean or not.\n */\nexport function isBoolean(obj) {\n    return (obj === true || obj === false);\n}\n/**\n * @returns whether the provided parameter is undefined.\n */\nexport function isUndefined(obj) {\n    return (typeof obj === 'undefined');\n}\n/**\n * @returns whether the provided parameter is defined.\n */\nexport function isDefined(arg) {\n    return !isUndefinedOrNull(arg);\n}\n/**\n * @returns whether the provided parameter is undefined or null.\n */\nexport function isUndefinedOrNull(obj) {\n    return (isUndefined(obj) || obj === null);\n}\nexport function assertType(condition, type) {\n    if (!condition) {\n        throw new Error(type ? `Unexpected type, expected '${type}'` : 'Unexpected type');\n    }\n}\n/**\n * Asserts that the argument passed in is neither undefined nor null.\n */\nexport function assertIsDefined(arg) {\n    if (isUndefinedOrNull(arg)) {\n        throw new Error('Assertion Failed: argument is undefined or null');\n    }\n    return arg;\n}\n/**\n * @returns whether the provided parameter is a JavaScript Function or not.\n */\nexport function isFunction(obj) {\n    return (typeof obj === 'function');\n}\nexport function validateConstraints(args, constraints) {\n    const len = Math.min(args.length, constraints.length);\n    for (let i = 0; i < len; i++) {\n        validateConstraint(args[i], constraints[i]);\n    }\n}\nexport function validateConstraint(arg, constraint) {\n    if (isString(constraint)) {\n        if (typeof arg !== constraint) {\n            throw new Error(`argument does not match constraint: typeof ${constraint}`);\n        }\n    }\n    else if (isFunction(constraint)) {\n        try {\n            if (arg instanceof constraint) {\n                return;\n            }\n        }\n        catch (_a) {\n            // ignore\n        }\n        if (!isUndefinedOrNull(arg) && arg.constructor === constraint) {\n            return;\n        }\n        if (constraint.length === 1 && constraint.call(undefined, arg) === true) {\n            return;\n        }\n        throw new Error(`argument does not match one of these constraints: arg instanceof constraint, arg.constructor === constraint, nor constraint(arg) === true`);\n    }\n}\nexport function getAllPropertyNames(obj) {\n    let res = [];\n    let proto = Object.getPrototypeOf(obj);\n    while (Object.prototype !== proto) {\n        res = res.concat(Object.getOwnPropertyNames(proto));\n        proto = Object.getPrototypeOf(proto);\n    }\n    return res;\n}\nexport function getAllMethodNames(obj) {\n    const methods = [];\n    for (const prop of getAllPropertyNames(obj)) {\n        if (typeof obj[prop] === 'function') {\n            methods.push(prop);\n        }\n    }\n    return methods;\n}\nexport function createProxyObject(methodNames, invoke) {\n    const createProxyMethod = (method) => {\n        return function () {\n            const args = Array.prototype.slice.call(arguments, 0);\n            return invoke(method, args);\n        };\n    };\n    let result = {};\n    for (const methodName of methodNames) {\n        result[methodName] = createProxyMethod(methodName);\n    }\n    return result;\n}\n/**\n * Converts null to undefined, passes all other values through.\n */\nexport function withNullAsUndefined(x) {\n    return x === null ? undefined : x;\n}\nexport function assertNever(value, message = 'Unreachable') {\n    throw new Error(message);\n}\n",
+      "start": 1711096854920,
+      "end": 1711096855064,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855064,
+      "end": 1711096855064,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855065,
+      "end": 1711096855065,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/linkedEditing/browser/linkedEditing.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport * as arrays from '../../../../base/common/arrays.js';\nimport { createCancelablePromise, Delayer, first } from '../../../../base/common/async.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { Color } from '../../../../base/common/color.js';\nimport { isCancellationError, onUnexpectedError, onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { Event } from '../../../../base/common/event.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution, registerModelAndPositionCommand } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { ModelDecorationOptions } from '../../../common/model/textModel.js';\nimport { ILanguageConfigurationService } from '../../../common/languages/languageConfigurationRegistry.js';\nimport * as nls from '../../../../nls.js';\nimport { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { registerColor } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nimport { StopWatch } from '../../../../base/common/stopwatch.js';\nexport const CONTEXT_ONTYPE_RENAME_INPUT_VISIBLE = new RawContextKey('LinkedEditingInputVisible', false);\nconst DECORATION_CLASS_NAME = 'linked-editing-decoration';\nlet LinkedEditingContribution = class LinkedEditingContribution extends Disposable {\n    constructor(editor, contextKeyService, languageFeaturesService, languageConfigurationService, languageFeatureDebounceService) {\n        super();\n        this.languageConfigurationService = languageConfigurationService;\n        this._localToDispose = this._register(new DisposableStore());\n        this._editor = editor;\n        this._providers = languageFeaturesService.linkedEditingRangeProvider;\n        this._enabled = false;\n        this._visibleContextKey = CONTEXT_ONTYPE_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);\n        this._debounceInformation = languageFeatureDebounceService.for(this._providers, 'Linked Editing', { min: 200 });\n        this._currentDecorations = [];\n        this._languageWordPattern = null;\n        this._currentWordPattern = null;\n        this._ignoreChangeEvent = false;\n        this._localToDispose = this._register(new DisposableStore());\n        this._rangeUpdateTriggerPromise = null;\n        this._rangeSyncTriggerPromise = null;\n        this._currentRequest = null;\n        this._currentRequestPosition = null;\n        this._currentRequestModelVersion = null;\n        this._register(this._editor.onDidChangeModel(() => this.reinitialize(true)));\n        this._register(this._editor.onDidChangeConfiguration(e => {\n            if (e.hasChanged(62 /* linkedEditing */) || e.hasChanged(82 /* renameOnType */)) {\n                this.reinitialize(false);\n            }\n        }));\n        this._register(this._providers.onDidChange(() => this.reinitialize(false)));\n        this._register(this._editor.onDidChangeModelLanguage(() => this.reinitialize(true)));\n        this.reinitialize(true);\n    }\n    static get(editor) {\n        return editor.getContribution(LinkedEditingContribution.ID);\n    }\n    reinitialize(forceRefresh) {\n        const model = this._editor.getModel();\n        const isEnabled = model !== null && (this._editor.getOption(62 /* linkedEditing */) || this._editor.getOption(82 /* renameOnType */)) && this._providers.has(model);\n        if (isEnabled === this._enabled && !forceRefresh) {\n            return;\n        }\n        this._enabled = isEnabled;\n        this.clearRanges();\n        this._localToDispose.clear();\n        if (!isEnabled || model === null) {\n            return;\n        }\n        this._localToDispose.add(Event.runAndSubscribe(model.onDidChangeLanguageConfiguration, () => {\n            this._languageWordPattern = this.languageConfigurationService.getLanguageConfiguration(model.getLanguageId()).getWordDefinition();\n        }));\n        const rangeUpdateScheduler = new Delayer(this._debounceInformation.get(model));\n        const triggerRangeUpdate = () => {\n            var _a;\n            this._rangeUpdateTriggerPromise = rangeUpdateScheduler.trigger(() => this.updateRanges(), (_a = this._debounceDuration) !== null && _a !== void 0 ? _a : this._debounceInformation.get(model));\n        };\n        const rangeSyncScheduler = new Delayer(0);\n        const triggerRangeSync = (decorations) => {\n            this._rangeSyncTriggerPromise = rangeSyncScheduler.trigger(() => this._syncRanges(decorations));\n        };\n        this._localToDispose.add(this._editor.onDidChangeCursorPosition(() => {\n            triggerRangeUpdate();\n        }));\n        this._localToDispose.add(this._editor.onDidChangeModelContent((e) => {\n            if (!this._ignoreChangeEvent) {\n                if (this._currentDecorations.length > 0) {\n                    const referenceRange = model.getDecorationRange(this._currentDecorations[0]);\n                    if (referenceRange && e.changes.every(c => referenceRange.intersectRanges(c.range))) {\n                        triggerRangeSync(this._currentDecorations);\n                        return;\n                    }\n                }\n            }\n            triggerRangeUpdate();\n        }));\n        this._localToDispose.add({\n            dispose: () => {\n                rangeUpdateScheduler.dispose();\n                rangeSyncScheduler.dispose();\n            }\n        });\n        this.updateRanges();\n    }\n    _syncRanges(decorations) {\n        // dalayed invocation, make sure we're still on\n        if (!this._editor.hasModel() || decorations !== this._currentDecorations || decorations.length === 0) {\n            // nothing to do\n            return;\n        }\n        const model = this._editor.getModel();\n        const referenceRange = model.getDecorationRange(decorations[0]);\n        if (!referenceRange || referenceRange.startLineNumber !== referenceRange.endLineNumber) {\n            return this.clearRanges();\n        }\n        const referenceValue = model.getValueInRange(referenceRange);\n        if (this._currentWordPattern) {\n            const match = referenceValue.match(this._currentWordPattern);\n            const matchLength = match ? match[0].length : 0;\n            if (matchLength !== referenceValue.length) {\n                return this.clearRanges();\n            }\n        }\n        let edits = [];\n        for (let i = 1, len = decorations.length; i < len; i++) {\n            const mirrorRange = model.getDecorationRange(decorations[i]);\n            if (!mirrorRange) {\n                continue;\n            }\n            if (mirrorRange.startLineNumber !== mirrorRange.endLineNumber) {\n                edits.push({\n                    range: mirrorRange,\n                    text: referenceValue\n                });\n            }\n            else {\n                let oldValue = model.getValueInRange(mirrorRange);\n                let newValue = referenceValue;\n                let rangeStartColumn = mirrorRange.startColumn;\n                let rangeEndColumn = mirrorRange.endColumn;\n                const commonPrefixLength = strings.commonPrefixLength(oldValue, newValue);\n                rangeStartColumn += commonPrefixLength;\n                oldValue = oldValue.substr(commonPrefixLength);\n                newValue = newValue.substr(commonPrefixLength);\n                const commonSuffixLength = strings.commonSuffixLength(oldValue, newValue);\n                rangeEndColumn -= commonSuffixLength;\n                oldValue = oldValue.substr(0, oldValue.length - commonSuffixLength);\n                newValue = newValue.substr(0, newValue.length - commonSuffixLength);\n                if (rangeStartColumn !== rangeEndColumn || newValue.length !== 0) {\n                    edits.push({\n                        range: new Range(mirrorRange.startLineNumber, rangeStartColumn, mirrorRange.endLineNumber, rangeEndColumn),\n                        text: newValue\n                    });\n                }\n            }\n        }\n        if (edits.length === 0) {\n            return;\n        }\n        try {\n            this._editor.popUndoStop();\n            this._ignoreChangeEvent = true;\n            const prevEditOperationType = this._editor._getViewModel().getPrevEditOperationType();\n            this._editor.executeEdits('linkedEditing', edits);\n            this._editor._getViewModel().setPrevEditOperationType(prevEditOperationType);\n        }\n        finally {\n            this._ignoreChangeEvent = false;\n        }\n    }\n    dispose() {\n        this.clearRanges();\n        super.dispose();\n    }\n    clearRanges() {\n        this._visibleContextKey.set(false);\n        this._currentDecorations = this._editor.deltaDecorations(this._currentDecorations, []);\n        if (this._currentRequest) {\n            this._currentRequest.cancel();\n            this._currentRequest = null;\n            this._currentRequestPosition = null;\n        }\n    }\n    updateRanges(force = false) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (!this._editor.hasModel()) {\n                this.clearRanges();\n                return;\n            }\n            const position = this._editor.getPosition();\n            if (!this._enabled && !force || this._editor.getSelections().length > 1) {\n                // disabled or multicursor\n                this.clearRanges();\n                return;\n            }\n            const model = this._editor.getModel();\n            const modelVersionId = model.getVersionId();\n            if (this._currentRequestPosition && this._currentRequestModelVersion === modelVersionId) {\n                if (position.equals(this._currentRequestPosition)) {\n                    return; // same position\n                }\n                if (this._currentDecorations && this._currentDecorations.length > 0) {\n                    const range = model.getDecorationRange(this._currentDecorations[0]);\n                    if (range && range.containsPosition(position)) {\n                        return; // just moving inside the existing primary range\n                    }\n                }\n            }\n            this._currentRequestPosition = position;\n            this._currentRequestModelVersion = modelVersionId;\n            const request = createCancelablePromise((token) => __awaiter(this, void 0, void 0, function* () {\n                try {\n                    const sw = new StopWatch(false);\n                    const response = yield getLinkedEditingRanges(this._providers, model, position, token);\n                    this._debounceInformation.update(model, sw.elapsed());\n                    if (request !== this._currentRequest) {\n                        return;\n                    }\n                    this._currentRequest = null;\n                    if (modelVersionId !== model.getVersionId()) {\n                        return;\n                    }\n                    let ranges = [];\n                    if (response === null || response === void 0 ? void 0 : response.ranges) {\n                        ranges = response.ranges;\n                    }\n                    this._currentWordPattern = (response === null || response === void 0 ? void 0 : response.wordPattern) || this._languageWordPattern;\n                    let foundReferenceRange = false;\n                    for (let i = 0, len = ranges.length; i < len; i++) {\n                        if (Range.containsPosition(ranges[i], position)) {\n                            foundReferenceRange = true;\n                            if (i !== 0) {\n                                const referenceRange = ranges[i];\n                                ranges.splice(i, 1);\n                                ranges.unshift(referenceRange);\n                            }\n                            break;\n                        }\n                    }\n                    if (!foundReferenceRange) {\n                        // Cannot do linked editing if the ranges are not where the cursor is...\n                        this.clearRanges();\n                        return;\n                    }\n                    const decorations = ranges.map(range => ({ range: range, options: LinkedEditingContribution.DECORATION }));\n                    this._visibleContextKey.set(true);\n                    this._currentDecorations = this._editor.deltaDecorations(this._currentDecorations, decorations);\n                }\n                catch (err) {\n                    if (!isCancellationError(err)) {\n                        onUnexpectedError(err);\n                    }\n                    if (this._currentRequest === request || !this._currentRequest) {\n                        // stop if we are still the latest request\n                        this.clearRanges();\n                    }\n                }\n            }));\n            this._currentRequest = request;\n            return request;\n        });\n    }\n};\nLinkedEditingContribution.ID = 'editor.contrib.linkedEditing';\nLinkedEditingContribution.DECORATION = ModelDecorationOptions.register({\n    description: 'linked-editing',\n    stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */,\n    className: DECORATION_CLASS_NAME\n});\nLinkedEditingContribution = __decorate([\n    __param(1, IContextKeyService),\n    __param(2, ILanguageFeaturesService),\n    __param(3, ILanguageConfigurationService),\n    __param(4, ILanguageFeatureDebounceService)\n], LinkedEditingContribution);\nexport { LinkedEditingContribution };\nexport class LinkedEditingAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.linkedEditing',\n            label: nls.localize('linkedEditing.label', \"Start Linked Editing\"),\n            alias: 'Start Linked Editing',\n            precondition: ContextKeyExpr.and(EditorContextKeys.writable, EditorContextKeys.hasRenameProvider),\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 60 /* F2 */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    runCommand(accessor, args) {\n        const editorService = accessor.get(ICodeEditorService);\n        const [uri, pos] = Array.isArray(args) && args || [undefined, undefined];\n        if (URI.isUri(uri) && Position.isIPosition(pos)) {\n            return editorService.openCodeEditor({ resource: uri }, editorService.getActiveCodeEditor()).then(editor => {\n                if (!editor) {\n                    return;\n                }\n                editor.setPosition(pos);\n                editor.invokeWithinContext(accessor => {\n                    this.reportTelemetry(accessor, editor);\n                    return this.run(accessor, editor);\n                });\n            }, onUnexpectedError);\n        }\n        return super.runCommand(accessor, args);\n    }\n    run(_accessor, editor) {\n        const controller = LinkedEditingContribution.get(editor);\n        if (controller) {\n            return Promise.resolve(controller.updateRanges(true));\n        }\n        return Promise.resolve();\n    }\n}\nconst LinkedEditingCommand = EditorCommand.bindToContribution(LinkedEditingContribution.get);\nregisterEditorCommand(new LinkedEditingCommand({\n    id: 'cancelLinkedEditingInput',\n    precondition: CONTEXT_ONTYPE_RENAME_INPUT_VISIBLE,\n    handler: x => x.clearRanges(),\n    kbOpts: {\n        kbExpr: EditorContextKeys.editorTextFocus,\n        weight: 100 /* EditorContrib */ + 99,\n        primary: 9 /* Escape */,\n        secondary: [1024 /* Shift */ | 9 /* Escape */]\n    }\n}));\nfunction getLinkedEditingRanges(providers, model, position, token) {\n    const orderedByScore = providers.ordered(model);\n    // in order of score ask the linked editing range provider\n    // until someone response with a good result\n    // (good = not null)\n    return first(orderedByScore.map(provider => () => __awaiter(this, void 0, void 0, function* () {\n        try {\n            return yield provider.provideLinkedEditingRanges(model, position, token);\n        }\n        catch (e) {\n            onUnexpectedExternalError(e);\n            return undefined;\n        }\n    })), result => !!result && arrays.isNonEmptyArray(result === null || result === void 0 ? void 0 : result.ranges));\n}\nexport const editorLinkedEditingBackground = registerColor('editor.linkedEditingBackground', { dark: Color.fromHex('#f00').transparent(0.3), light: Color.fromHex('#f00').transparent(0.3), hc: Color.fromHex('#f00').transparent(0.3) }, nls.localize('editorLinkedEditingBackground', 'Background color when the editor auto renames on type.'));\nregisterThemingParticipant((theme, collector) => {\n    const editorLinkedEditingBackgroundColor = theme.getColor(editorLinkedEditingBackground);\n    if (editorLinkedEditingBackgroundColor) {\n        collector.addRule(`.monaco-editor .${DECORATION_CLASS_NAME} { background: ${editorLinkedEditingBackgroundColor}; border-left-color: ${editorLinkedEditingBackgroundColor}; }`);\n    }\n});\nregisterModelAndPositionCommand('_executeLinkedEditingProvider', (_accessor, model, position) => {\n    const { linkedEditingRangeProvider } = _accessor.get(ILanguageFeaturesService);\n    return getLinkedEditingRanges(linkedEditingRangeProvider, model, position, CancellationToken.None);\n});\nregisterEditorContribution(LinkedEditingContribution.ID, LinkedEditingContribution);\nregisterEditorAction(LinkedEditingAction);\n",
+      "start": 1711096854502,
+      "end": 1711096854644,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854644,
+      "end": 1711096854644,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854644,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854645,
+      "end": 1711096854645,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854645,
+      "end": 1711096854646,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854646,
+      "end": 1711096854646,
+      "order": "normal"
+    }
+  ]
+}

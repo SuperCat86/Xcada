@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { Registry } from '../../../../platform/registry/common/platform.js';\nimport { Extensions } from '../../../../platform/quickinput/common/quickAccess.js';\nimport { QuickCommandNLS } from '../../../common/standaloneStrings.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { AbstractEditorCommandsQuickAccessProvider } from '../../../contrib/quickAccess/browser/commandsQuickAccess.js';\nimport { withNullAsUndefined } from '../../../../base/common/types.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';\nimport { ICommandService } from '../../../../platform/commands/common/commands.js';\nimport { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';\nimport { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';\nimport { EditorAction, registerEditorAction } from '../../../browser/editorExtensions.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';\nlet StandaloneCommandsQuickAccessProvider = class StandaloneCommandsQuickAccessProvider extends AbstractEditorCommandsQuickAccessProvider {\n    constructor(instantiationService, codeEditorService, keybindingService, commandService, telemetryService, dialogService) {\n        super({ showAlias: false }, instantiationService, keybindingService, commandService, telemetryService, dialogService);\n        this.codeEditorService = codeEditorService;\n    }\n    get activeTextEditorControl() { return withNullAsUndefined(this.codeEditorService.getFocusedCodeEditor()); }\n    getCommandPicks() {\n        return __awaiter(this, void 0, void 0, function* () {\n            return this.getCodeEditorCommandPicks();\n        });\n    }\n};\nStandaloneCommandsQuickAccessProvider = __decorate([\n    __param(0, IInstantiationService),\n    __param(1, ICodeEditorService),\n    __param(2, IKeybindingService),\n    __param(3, ICommandService),\n    __param(4, ITelemetryService),\n    __param(5, IDialogService)\n], StandaloneCommandsQuickAccessProvider);\nexport { StandaloneCommandsQuickAccessProvider };\nRegistry.as(Extensions.Quickaccess).registerQuickAccessProvider({\n    ctor: StandaloneCommandsQuickAccessProvider,\n    prefix: StandaloneCommandsQuickAccessProvider.PREFIX,\n    helpEntries: [{ description: QuickCommandNLS.quickCommandHelp, needsEditor: true }]\n});\nexport class GotoLineAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.quickCommand',\n            label: QuickCommandNLS.quickCommandActionLabel,\n            alias: 'Command Palette',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 59 /* F1 */,\n                weight: 100 /* EditorContrib */\n            },\n            contextMenuOpts: {\n                group: 'z_commands',\n                order: 1\n            }\n        });\n    }\n    run(accessor) {\n        accessor.get(IQuickInputService).quickAccess.show(StandaloneCommandsQuickAccessProvider.PREFIX);\n    }\n}\nregisterEditorAction(GotoLineAction);\n",
+      "start": 1711096853953,
+      "end": 1711096854040,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854040,
+      "end": 1711096854040,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854041,
+      "end": 1711096854041,
+      "order": "normal"
+    }
+  ]
+}

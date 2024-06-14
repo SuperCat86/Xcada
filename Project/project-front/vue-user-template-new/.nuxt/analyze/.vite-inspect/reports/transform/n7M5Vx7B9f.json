@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/checkbox/checkbox.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-custom-checkbox {\n\tmargin-left: 2px;\n\tfloat: left;\n\tcursor: pointer;\n\toverflow: hidden;\n\twidth: 20px;\n\theight: 20px;\n\tborder-radius: 3px;\n\tborder: 1px solid transparent;\n\tpadding: 1px;\n\tbox-sizing:\tborder-box;\n\tuser-select: none;\n\t-webkit-user-select: none;\n\t-ms-user-select: none;\n}\n\n.monaco-custom-checkbox:hover {\n\tbackground-color: var(--vscode-inputOption-hoverBackground);\n}\n\n.hc-black .monaco-custom-checkbox:hover {\n\tborder: 1px dashed var(--vscode-focusBorder);\n}\n\n.hc-black .monaco-custom-checkbox {\n\tbackground: none;\n}\n\n.hc-black .monaco-custom-checkbox:hover {\n\tbackground: none;\n}\n\n.monaco-custom-checkbox.monaco-simple-checkbox {\n\theight: 18px;\n\twidth: 18px;\n\tborder: 1px solid transparent;\n\tborder-radius: 3px;\n\tmargin-right: 9px;\n\tmargin-left: 0px;\n\tpadding: 0px;\n\topacity: 1;\n\tbackground-size: 16px !important;\n}\n\n/* hide check when unchecked */\n.monaco-custom-checkbox.monaco-simple-checkbox:not(.checked)::before {\n\tvisibility: hidden;\n}\n",
+      "start": 1711096857320,
+      "end": 1711096857393,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857393,
+      "end": 1711096857393,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857393,
+      "end": 1711096857393,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857393,
+      "end": 1711096857393,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-custom-checkbox{border:1px solid transparent;border-radius:3px;box-sizing:border-box;cursor:pointer;float:left;height:20px;margin-left:2px;overflow:hidden;padding:1px;-moz-user-select:none;user-select:none;-webkit-user-select:none;-ms-user-select:none;width:20px}.monaco-custom-checkbox:hover{background-color:var(--vscode-inputOption-hoverBackground)}.hc-black .monaco-custom-checkbox:hover{border:1px dashed var(--vscode-focusBorder)}.hc-black .monaco-custom-checkbox,.hc-black .monaco-custom-checkbox:hover{background:none}.monaco-custom-checkbox.monaco-simple-checkbox{background-size:16px!important;border:1px solid transparent;border-radius:3px;height:18px;margin-left:0;margin-right:9px;opacity:1;padding:0;width:18px}.monaco-custom-checkbox.monaco-simple-checkbox:not(.checked):before{visibility:hidden}",
+      "start": 1711096857393,
+      "end": 1711096857400,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857400,
+      "end": 1711096857400,
+      "order": "normal"
+    }
+  ]
+}

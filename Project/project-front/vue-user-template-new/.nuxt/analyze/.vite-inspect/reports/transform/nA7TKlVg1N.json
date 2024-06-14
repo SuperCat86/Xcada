@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/markdownRenderer/browser/markdownRenderer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nvar _a;\nimport { renderMarkdown } from '../../../../base/browser/markdownRenderer.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { tokenizeToString } from '../../../common/languages/textToHtmlTokenizer.js';\nimport { Emitter } from '../../../../base/common/event.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { applyFontInfo } from '../../../browser/config/domFontInfo.js';\nimport { PLAINTEXT_LANGUAGE_ID } from '../../../common/languages/modesRegistry.js';\n/**\n * Markdown renderer that can render codeblocks with the editor mechanics. This\n * renderer should always be preferred.\n */\nlet MarkdownRenderer = class MarkdownRenderer {\n    constructor(_options, _languageService, _openerService) {\n        this._options = _options;\n        this._languageService = _languageService;\n        this._openerService = _openerService;\n        this._onDidRenderAsync = new Emitter();\n        this.onDidRenderAsync = this._onDidRenderAsync.event;\n    }\n    dispose() {\n        this._onDidRenderAsync.dispose();\n    }\n    render(markdown, options, markedOptions) {\n        if (!markdown) {\n            const element = document.createElement('span');\n            return { element, dispose: () => { } };\n        }\n        const disposables = new DisposableStore();\n        const rendered = disposables.add(renderMarkdown(markdown, Object.assign(Object.assign({}, this._getRenderOptions(markdown, disposables)), options), markedOptions));\n        return {\n            element: rendered.element,\n            dispose: () => disposables.dispose()\n        };\n    }\n    _getRenderOptions(markdown, disposeables) {\n        return {\n            codeBlockRenderer: (languageAlias, value) => __awaiter(this, void 0, void 0, function* () {\n                var _a, _b, _c;\n                // In markdown,\n                // it is possible that we stumble upon language aliases (e.g.js instead of javascript)\n                // it is possible no alias is given in which case we fall back to the current editor lang\n                let languageId;\n                if (languageAlias) {\n                    languageId = this._languageService.getLanguageIdByLanguageName(languageAlias);\n                }\n                else if (this._options.editor) {\n                    languageId = (_a = this._options.editor.getModel()) === null || _a === void 0 ? void 0 : _a.getLanguageId();\n                }\n                if (!languageId) {\n                    languageId = PLAINTEXT_LANGUAGE_ID;\n                }\n                const html = yield tokenizeToString(this._languageService, value, languageId);\n                const element = document.createElement('span');\n                element.innerHTML = ((_c = (_b = MarkdownRenderer._ttpTokenizer) === null || _b === void 0 ? void 0 : _b.createHTML(html)) !== null && _c !== void 0 ? _c : html);\n                // use \"good\" font\n                if (this._options.editor) {\n                    const fontInfo = this._options.editor.getOption(44 /* fontInfo */);\n                    applyFontInfo(element, fontInfo);\n                }\n                else if (this._options.codeBlockFontFamily) {\n                    element.style.fontFamily = this._options.codeBlockFontFamily;\n                }\n                return element;\n            }),\n            asyncRenderCallback: () => this._onDidRenderAsync.fire(),\n            actionHandler: {\n                callback: (content) => this._openerService.open(content, { fromUserGesture: true, allowContributedOpeners: true, allowCommands: markdown.isTrusted }).catch(onUnexpectedError),\n                disposables: disposeables\n            }\n        };\n    }\n};\nMarkdownRenderer._ttpTokenizer = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('tokenizeToString', {\n    createHTML(html) {\n        return html;\n    }\n});\nMarkdownRenderer = __decorate([\n    __param(1, ILanguageService),\n    __param(2, IOpenerService)\n], MarkdownRenderer);\nexport { MarkdownRenderer };\n",
+      "start": 1711096856705,
+      "end": 1711096856814,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856814,
+      "end": 1711096856814,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856814,
+      "end": 1711096856815,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856815,
+      "end": 1711096856815,
+      "order": "normal"
+    }
+  ]
+}

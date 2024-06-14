@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/services/languagesRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { coalesce } from '../../../base/common/arrays.js';\nimport { onUnexpectedError } from '../../../base/common/errors.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { regExpLeadsToEndlessLoop } from '../../../base/common/strings.js';\nimport { clearPlatformLanguageAssociations, getMimeTypes, registerPlatformLanguageAssociation } from './languagesAssociations.js';\nimport { ModesRegistry, PLAINTEXT_LANGUAGE_ID } from '../languages/modesRegistry.js';\nimport { Extensions } from '../../../platform/configuration/common/configurationRegistry.js';\nimport { Registry } from '../../../platform/registry/common/platform.js';\nimport { LanguageConfigurationRegistry } from '../languages/languageConfigurationRegistry.js';\nconst hasOwnProperty = Object.prototype.hasOwnProperty;\nconst NULL_LANGUAGE_ID = 'vs.editor.nullLanguage';\nLanguageConfigurationRegistry.register(NULL_LANGUAGE_ID, {});\nexport class LanguageIdCodec {\n    constructor() {\n        this._languageIdToLanguage = [];\n        this._languageToLanguageId = new Map();\n        this._register(NULL_LANGUAGE_ID, 0 /* Null */);\n        this._register(PLAINTEXT_LANGUAGE_ID, 1 /* PlainText */);\n        this._nextLanguageId = 2;\n    }\n    _register(language, languageId) {\n        this._languageIdToLanguage[languageId] = language;\n        this._languageToLanguageId.set(language, languageId);\n    }\n    register(language) {\n        if (this._languageToLanguageId.has(language)) {\n            return;\n        }\n        const languageId = this._nextLanguageId++;\n        this._register(language, languageId);\n    }\n    encodeLanguageId(languageId) {\n        return this._languageToLanguageId.get(languageId) || 0 /* Null */;\n    }\n    decodeLanguageId(languageId) {\n        return this._languageIdToLanguage[languageId] || NULL_LANGUAGE_ID;\n    }\n}\nexport class LanguagesRegistry extends Disposable {\n    constructor(useModesRegistry = true, warnOnOverwrite = false) {\n        super();\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        LanguagesRegistry.instanceCount++;\n        this._warnOnOverwrite = warnOnOverwrite;\n        this.languageIdCodec = new LanguageIdCodec();\n        this._dynamicLanguages = [];\n        this._languages = {};\n        this._mimeTypesMap = {};\n        this._nameMap = {};\n        this._lowercaseNameMap = {};\n        if (useModesRegistry) {\n            this._initializeFromRegistry();\n            this._register(ModesRegistry.onDidChangeLanguages((m) => {\n                this._initializeFromRegistry();\n            }));\n        }\n    }\n    dispose() {\n        LanguagesRegistry.instanceCount--;\n        super.dispose();\n    }\n    _initializeFromRegistry() {\n        this._languages = {};\n        this._mimeTypesMap = {};\n        this._nameMap = {};\n        this._lowercaseNameMap = {};\n        clearPlatformLanguageAssociations();\n        const desc = [].concat(ModesRegistry.getLanguages()).concat(this._dynamicLanguages);\n        this._registerLanguages(desc);\n    }\n    _registerLanguages(desc) {\n        for (const d of desc) {\n            this._registerLanguage(d);\n        }\n        // Rebuild fast path maps\n        this._mimeTypesMap = {};\n        this._nameMap = {};\n        this._lowercaseNameMap = {};\n        Object.keys(this._languages).forEach((langId) => {\n            const language = this._languages[langId];\n            if (language.name) {\n                this._nameMap[language.name] = language.identifier;\n            }\n            language.aliases.forEach((alias) => {\n                this._lowercaseNameMap[alias.toLowerCase()] = language.identifier;\n            });\n            language.mimetypes.forEach((mimetype) => {\n                this._mimeTypesMap[mimetype] = language.identifier;\n            });\n        });\n        Registry.as(Extensions.Configuration).registerOverrideIdentifiers(this.getRegisteredLanguageIds());\n        this._onDidChange.fire();\n    }\n    _registerLanguage(lang) {\n        const langId = lang.id;\n        let resolvedLanguage;\n        if (hasOwnProperty.call(this._languages, langId)) {\n            resolvedLanguage = this._languages[langId];\n        }\n        else {\n            this.languageIdCodec.register(langId);\n            resolvedLanguage = {\n                identifier: langId,\n                name: null,\n                mimetypes: [],\n                aliases: [],\n                extensions: [],\n                filenames: [],\n                configurationFiles: [],\n                icons: []\n            };\n            this._languages[langId] = resolvedLanguage;\n        }\n        this._mergeLanguage(resolvedLanguage, lang);\n    }\n    _mergeLanguage(resolvedLanguage, lang) {\n        const langId = lang.id;\n        let primaryMime = null;\n        if (Array.isArray(lang.mimetypes) && lang.mimetypes.length > 0) {\n            resolvedLanguage.mimetypes.push(...lang.mimetypes);\n            primaryMime = lang.mimetypes[0];\n        }\n        if (!primaryMime) {\n            primaryMime = `text/x-${langId}`;\n            resolvedLanguage.mimetypes.push(primaryMime);\n        }\n        if (Array.isArray(lang.extensions)) {\n            if (lang.configuration) {\n                // insert first as this appears to be the 'primary' language definition\n                resolvedLanguage.extensions = lang.extensions.concat(resolvedLanguage.extensions);\n            }\n            else {\n                resolvedLanguage.extensions = resolvedLanguage.extensions.concat(lang.extensions);\n            }\n            for (let extension of lang.extensions) {\n                registerPlatformLanguageAssociation({ id: langId, mime: primaryMime, extension: extension }, this._warnOnOverwrite);\n            }\n        }\n        if (Array.isArray(lang.filenames)) {\n            for (let filename of lang.filenames) {\n                registerPlatformLanguageAssociation({ id: langId, mime: primaryMime, filename: filename }, this._warnOnOverwrite);\n                resolvedLanguage.filenames.push(filename);\n            }\n        }\n        if (Array.isArray(lang.filenamePatterns)) {\n            for (let filenamePattern of lang.filenamePatterns) {\n                registerPlatformLanguageAssociation({ id: langId, mime: primaryMime, filepattern: filenamePattern }, this._warnOnOverwrite);\n            }\n        }\n        if (typeof lang.firstLine === 'string' && lang.firstLine.length > 0) {\n            let firstLineRegexStr = lang.firstLine;\n            if (firstLineRegexStr.charAt(0) !== '^') {\n                firstLineRegexStr = '^' + firstLineRegexStr;\n            }\n            try {\n                const firstLineRegex = new RegExp(firstLineRegexStr);\n                if (!regExpLeadsToEndlessLoop(firstLineRegex)) {\n                    registerPlatformLanguageAssociation({ id: langId, mime: primaryMime, firstline: firstLineRegex }, this._warnOnOverwrite);\n                }\n            }\n            catch (err) {\n                // Most likely, the regex was bad\n                onUnexpectedError(err);\n            }\n        }\n        resolvedLanguage.aliases.push(langId);\n        let langAliases = null;\n        if (typeof lang.aliases !== 'undefined' && Array.isArray(lang.aliases)) {\n            if (lang.aliases.length === 0) {\n                // signal that this language should not get a name\n                langAliases = [null];\n            }\n            else {\n                langAliases = lang.aliases;\n            }\n        }\n        if (langAliases !== null) {\n            for (const langAlias of langAliases) {\n                if (!langAlias || langAlias.length === 0) {\n                    continue;\n                }\n                resolvedLanguage.aliases.push(langAlias);\n            }\n        }\n        const containsAliases = (langAliases !== null && langAliases.length > 0);\n        if (containsAliases && langAliases[0] === null) {\n            // signal that this language should not get a name\n        }\n        else {\n            const bestName = (containsAliases ? langAliases[0] : null) || langId;\n            if (containsAliases || !resolvedLanguage.name) {\n                resolvedLanguage.name = bestName;\n            }\n        }\n        if (lang.configuration) {\n            resolvedLanguage.configurationFiles.push(lang.configuration);\n        }\n        if (lang.icon) {\n            resolvedLanguage.icons.push(lang.icon);\n        }\n    }\n    isRegisteredLanguageId(languageId) {\n        if (!languageId) {\n            return false;\n        }\n        return hasOwnProperty.call(this._languages, languageId);\n    }\n    getRegisteredLanguageIds() {\n        return Object.keys(this._languages);\n    }\n    getLanguageIdByLanguageName(languageName) {\n        const languageNameLower = languageName.toLowerCase();\n        if (!hasOwnProperty.call(this._lowercaseNameMap, languageNameLower)) {\n            return null;\n        }\n        return this._lowercaseNameMap[languageNameLower];\n    }\n    getLanguageIdByMimeType(mimeType) {\n        if (!mimeType) {\n            return null;\n        }\n        if (hasOwnProperty.call(this._mimeTypesMap, mimeType)) {\n            return this._mimeTypesMap[mimeType];\n        }\n        return null;\n    }\n    guessLanguageIdByFilepathOrFirstLine(resource, firstLine) {\n        if (!resource && !firstLine) {\n            return [];\n        }\n        const mimeTypes = getMimeTypes(resource, firstLine);\n        return coalesce(mimeTypes.map(mimeType => this.getLanguageIdByMimeType(mimeType)));\n    }\n}\nLanguagesRegistry.instanceCount = 0;\n",
+      "start": 1711096857060,
+      "end": 1711096857157,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857157,
+      "end": 1711096857157,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857158,
+      "end": 1711096857158,
+      "order": "normal"
+    }
+  ]
+}

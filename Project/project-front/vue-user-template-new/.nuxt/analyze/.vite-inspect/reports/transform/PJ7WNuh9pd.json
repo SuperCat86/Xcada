@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/keyboardEvent.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as browser from './browser.js';\nimport { EVENT_KEY_CODE_MAP, KeyCodeUtils } from '../common/keyCodes.js';\nimport { SimpleKeybinding } from '../common/keybindings.js';\nimport * as platform from '../common/platform.js';\nfunction extractKeyCode(e) {\n    if (e.charCode) {\n        // \"keypress\" events mostly\n        let char = String.fromCharCode(e.charCode).toUpperCase();\n        return KeyCodeUtils.fromString(char);\n    }\n    const keyCode = e.keyCode;\n    // browser quirks\n    if (keyCode === 3) {\n        return 7 /* PauseBreak */;\n    }\n    else if (browser.isFirefox) {\n        if (keyCode === 59) {\n            return 80 /* Semicolon */;\n        }\n        else if (keyCode === 107) {\n            return 81 /* Equal */;\n        }\n        else if (keyCode === 109) {\n            return 83 /* Minus */;\n        }\n        else if (platform.isMacintosh && keyCode === 224) {\n            return 57 /* Meta */;\n        }\n    }\n    else if (browser.isWebKit) {\n        if (keyCode === 91) {\n            return 57 /* Meta */;\n        }\n        else if (platform.isMacintosh && keyCode === 93) {\n            // the two meta keys in the Mac have different key codes (91 and 93)\n            return 57 /* Meta */;\n        }\n        else if (!platform.isMacintosh && keyCode === 92) {\n            return 57 /* Meta */;\n        }\n    }\n    // cross browser keycodes:\n    return EVENT_KEY_CODE_MAP[keyCode] || 0 /* Unknown */;\n}\nconst ctrlKeyMod = (platform.isMacintosh ? 256 /* WinCtrl */ : 2048 /* CtrlCmd */);\nconst altKeyMod = 512 /* Alt */;\nconst shiftKeyMod = 1024 /* Shift */;\nconst metaKeyMod = (platform.isMacintosh ? 2048 /* CtrlCmd */ : 256 /* WinCtrl */);\nexport class StandardKeyboardEvent {\n    constructor(source) {\n        this._standardKeyboardEventBrand = true;\n        let e = source;\n        this.browserEvent = e;\n        this.target = e.target;\n        this.ctrlKey = e.ctrlKey;\n        this.shiftKey = e.shiftKey;\n        this.altKey = e.altKey;\n        this.metaKey = e.metaKey;\n        this.keyCode = extractKeyCode(e);\n        this.code = e.code;\n        // console.info(e.type + \": keyCode: \" + e.keyCode + \", which: \" + e.which + \", charCode: \" + e.charCode + \", detail: \" + e.detail + \" ====> \" + this.keyCode + ' -- ' + KeyCode[this.keyCode]);\n        this.ctrlKey = this.ctrlKey || this.keyCode === 5 /* Ctrl */;\n        this.altKey = this.altKey || this.keyCode === 6 /* Alt */;\n        this.shiftKey = this.shiftKey || this.keyCode === 4 /* Shift */;\n        this.metaKey = this.metaKey || this.keyCode === 57 /* Meta */;\n        this._asKeybinding = this._computeKeybinding();\n        this._asRuntimeKeybinding = this._computeRuntimeKeybinding();\n        // console.log(`code: ${e.code}, keyCode: ${e.keyCode}, key: ${e.key}`);\n    }\n    preventDefault() {\n        if (this.browserEvent && this.browserEvent.preventDefault) {\n            this.browserEvent.preventDefault();\n        }\n    }\n    stopPropagation() {\n        if (this.browserEvent && this.browserEvent.stopPropagation) {\n            this.browserEvent.stopPropagation();\n        }\n    }\n    toKeybinding() {\n        return this._asRuntimeKeybinding;\n    }\n    equals(other) {\n        return this._asKeybinding === other;\n    }\n    _computeKeybinding() {\n        let key = 0 /* Unknown */;\n        if (this.keyCode !== 5 /* Ctrl */ && this.keyCode !== 4 /* Shift */ && this.keyCode !== 6 /* Alt */ && this.keyCode !== 57 /* Meta */) {\n            key = this.keyCode;\n        }\n        let result = 0;\n        if (this.ctrlKey) {\n            result |= ctrlKeyMod;\n        }\n        if (this.altKey) {\n            result |= altKeyMod;\n        }\n        if (this.shiftKey) {\n            result |= shiftKeyMod;\n        }\n        if (this.metaKey) {\n            result |= metaKeyMod;\n        }\n        result |= key;\n        return result;\n    }\n    _computeRuntimeKeybinding() {\n        let key = 0 /* Unknown */;\n        if (this.keyCode !== 5 /* Ctrl */ && this.keyCode !== 4 /* Shift */ && this.keyCode !== 6 /* Alt */ && this.keyCode !== 57 /* Meta */) {\n            key = this.keyCode;\n        }\n        return new SimpleKeybinding(this.ctrlKey, this.shiftKey, this.altKey, this.metaKey, key);\n    }\n}\n",
+      "start": 1711096856021,
+      "end": 1711096856133,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856133,
+      "end": 1711096856133,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856133,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856134,
+      "end": 1711096856134,
+      "order": "normal"
+    }
+  ]
+}

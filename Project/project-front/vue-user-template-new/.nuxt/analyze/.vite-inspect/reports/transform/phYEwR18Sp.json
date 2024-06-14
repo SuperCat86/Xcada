@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/hover/browser/markerHoverParticipant.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport { isNonEmptyArray } from '../../../../base/common/arrays.js';\nimport { createCancelablePromise, disposableTimeout } from '../../../../base/common/async.js';\nimport { onUnexpectedError } from '../../../../base/common/errors.js';\nimport { Disposable, DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';\nimport { basename } from '../../../../base/common/resources.js';\nimport { Range } from '../../../common/core/range.js';\nimport { IMarkerDecorationsService } from '../../../common/services/markerDecorations.js';\nimport { getCodeActions } from '../../codeAction/browser/codeAction.js';\nimport { QuickFixAction, QuickFixController } from '../../codeAction/browser/codeActionCommands.js';\nimport { CodeActionKind } from '../../codeAction/browser/types.js';\nimport { MarkerController, NextMarkerAction } from '../../gotoError/browser/gotoError.js';\nimport * as nls from '../../../../nls.js';\nimport { IMarkerData, MarkerSeverity } from '../../../../platform/markers/common/markers.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { Progress } from '../../../../platform/progress/common/progress.js';\nimport { textLinkActiveForeground, textLinkForeground } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nconst $ = dom.$;\nexport class MarkerHover {\n    constructor(owner, range, marker) {\n        this.owner = owner;\n        this.range = range;\n        this.marker = marker;\n    }\n    isValidForHoverAnchor(anchor) {\n        return (anchor.type === 1 /* Range */\n            && this.range.startColumn <= anchor.range.startColumn\n            && this.range.endColumn >= anchor.range.endColumn);\n    }\n}\nconst markerCodeActionTrigger = {\n    type: 1 /* Invoke */,\n    filter: { include: CodeActionKind.QuickFix }\n};\nlet MarkerHoverParticipant = class MarkerHoverParticipant {\n    constructor(_editor, _markerDecorationsService, _openerService, _languageFeaturesService) {\n        this._editor = _editor;\n        this._markerDecorationsService = _markerDecorationsService;\n        this._openerService = _openerService;\n        this._languageFeaturesService = _languageFeaturesService;\n        this.hoverOrdinal = 5;\n        this.recentMarkerCodeActionsInfo = undefined;\n    }\n    computeSync(anchor, lineDecorations) {\n        if (!this._editor.hasModel() || anchor.type !== 1 /* Range */) {\n            return [];\n        }\n        const model = this._editor.getModel();\n        const lineNumber = anchor.range.startLineNumber;\n        const maxColumn = model.getLineMaxColumn(lineNumber);\n        const result = [];\n        for (const d of lineDecorations) {\n            const startColumn = (d.range.startLineNumber === lineNumber) ? d.range.startColumn : 1;\n            const endColumn = (d.range.endLineNumber === lineNumber) ? d.range.endColumn : maxColumn;\n            const marker = this._markerDecorationsService.getMarker(model.uri, d);\n            if (!marker) {\n                continue;\n            }\n            const range = new Range(anchor.range.startLineNumber, startColumn, anchor.range.startLineNumber, endColumn);\n            result.push(new MarkerHover(this, range, marker));\n        }\n        return result;\n    }\n    renderHoverParts(context, hoverParts) {\n        if (!hoverParts.length) {\n            return Disposable.None;\n        }\n        const disposables = new DisposableStore();\n        hoverParts.forEach(msg => context.fragment.appendChild(this.renderMarkerHover(msg, disposables)));\n        const markerHoverForStatusbar = hoverParts.length === 1 ? hoverParts[0] : hoverParts.sort((a, b) => MarkerSeverity.compare(a.marker.severity, b.marker.severity))[0];\n        this.renderMarkerStatusbar(context, markerHoverForStatusbar, disposables);\n        return disposables;\n    }\n    renderMarkerHover(markerHover, disposables) {\n        const hoverElement = $('div.hover-row');\n        const markerElement = dom.append(hoverElement, $('div.marker.hover-contents'));\n        const { source, message, code, relatedInformation } = markerHover.marker;\n        this._editor.applyFontInfo(markerElement);\n        const messageElement = dom.append(markerElement, $('span'));\n        messageElement.style.whiteSpace = 'pre-wrap';\n        messageElement.innerText = message;\n        if (source || code) {\n            // Code has link\n            if (code && typeof code !== 'string') {\n                const sourceAndCodeElement = $('span');\n                if (source) {\n                    const sourceElement = dom.append(sourceAndCodeElement, $('span'));\n                    sourceElement.innerText = source;\n                }\n                const codeLink = dom.append(sourceAndCodeElement, $('a.code-link'));\n                codeLink.setAttribute('href', code.target.toString());\n                disposables.add(dom.addDisposableListener(codeLink, 'click', (e) => {\n                    this._openerService.open(code.target, { allowCommands: true });\n                    e.preventDefault();\n                    e.stopPropagation();\n                }));\n                const codeElement = dom.append(codeLink, $('span'));\n                codeElement.innerText = code.value;\n                const detailsElement = dom.append(markerElement, sourceAndCodeElement);\n                detailsElement.style.opacity = '0.6';\n                detailsElement.style.paddingLeft = '6px';\n            }\n            else {\n                const detailsElement = dom.append(markerElement, $('span'));\n                detailsElement.style.opacity = '0.6';\n                detailsElement.style.paddingLeft = '6px';\n                detailsElement.innerText = source && code ? `${source}(${code})` : source ? source : `(${code})`;\n            }\n        }\n        if (isNonEmptyArray(relatedInformation)) {\n            for (const { message, resource, startLineNumber, startColumn } of relatedInformation) {\n                const relatedInfoContainer = dom.append(markerElement, $('div'));\n                relatedInfoContainer.style.marginTop = '8px';\n                const a = dom.append(relatedInfoContainer, $('a'));\n                a.innerText = `${basename(resource)}(${startLineNumber}, ${startColumn}): `;\n                a.style.cursor = 'pointer';\n                disposables.add(dom.addDisposableListener(a, 'click', (e) => {\n                    e.stopPropagation();\n                    e.preventDefault();\n                    if (this._openerService) {\n                        this._openerService.open(resource, {\n                            fromUserGesture: true,\n                            editorOptions: { selection: { startLineNumber, startColumn } }\n                        }).catch(onUnexpectedError);\n                    }\n                }));\n                const messageElement = dom.append(relatedInfoContainer, $('span'));\n                messageElement.innerText = message;\n                this._editor.applyFontInfo(messageElement);\n            }\n        }\n        return hoverElement;\n    }\n    renderMarkerStatusbar(context, markerHover, disposables) {\n        if (markerHover.marker.severity === MarkerSeverity.Error || markerHover.marker.severity === MarkerSeverity.Warning || markerHover.marker.severity === MarkerSeverity.Info) {\n            context.statusBar.addAction({\n                label: nls.localize('view problem', \"View Problem\"),\n                commandId: NextMarkerAction.ID,\n                run: () => {\n                    var _a;\n                    context.hide();\n                    (_a = MarkerController.get(this._editor)) === null || _a === void 0 ? void 0 : _a.showAtMarker(markerHover.marker);\n                    this._editor.focus();\n                }\n            });\n        }\n        if (!this._editor.getOption(81 /* readOnly */)) {\n            const quickfixPlaceholderElement = context.statusBar.append($('div'));\n            if (this.recentMarkerCodeActionsInfo) {\n                if (IMarkerData.makeKey(this.recentMarkerCodeActionsInfo.marker) === IMarkerData.makeKey(markerHover.marker)) {\n                    if (!this.recentMarkerCodeActionsInfo.hasCodeActions) {\n                        quickfixPlaceholderElement.textContent = nls.localize('noQuickFixes', \"No quick fixes available\");\n                    }\n                }\n                else {\n                    this.recentMarkerCodeActionsInfo = undefined;\n                }\n            }\n            const updatePlaceholderDisposable = this.recentMarkerCodeActionsInfo && !this.recentMarkerCodeActionsInfo.hasCodeActions ? Disposable.None : disposables.add(disposableTimeout(() => quickfixPlaceholderElement.textContent = nls.localize('checkingForQuickFixes', \"Checking for quick fixes...\"), 200));\n            if (!quickfixPlaceholderElement.textContent) {\n                // Have some content in here to avoid flickering\n                quickfixPlaceholderElement.textContent = String.fromCharCode(0xA0); // &nbsp;\n            }\n            const codeActionsPromise = this.getCodeActions(markerHover.marker);\n            disposables.add(toDisposable(() => codeActionsPromise.cancel()));\n            codeActionsPromise.then(actions => {\n                updatePlaceholderDisposable.dispose();\n                this.recentMarkerCodeActionsInfo = { marker: markerHover.marker, hasCodeActions: actions.validActions.length > 0 };\n                if (!this.recentMarkerCodeActionsInfo.hasCodeActions) {\n                    actions.dispose();\n                    quickfixPlaceholderElement.textContent = nls.localize('noQuickFixes', \"No quick fixes available\");\n                    return;\n                }\n                quickfixPlaceholderElement.style.display = 'none';\n                let showing = false;\n                disposables.add(toDisposable(() => {\n                    if (!showing) {\n                        actions.dispose();\n                    }\n                }));\n                context.statusBar.addAction({\n                    label: nls.localize('quick fixes', \"Quick Fix...\"),\n                    commandId: QuickFixAction.Id,\n                    run: (target) => {\n                        showing = true;\n                        const controller = QuickFixController.get(this._editor);\n                        const elementPosition = dom.getDomNodePagePosition(target);\n                        // Hide the hover pre-emptively, otherwise the editor can close the code actions\n                        // context menu as well when using keyboard navigation\n                        context.hide();\n                        controller === null || controller === void 0 ? void 0 : controller.showCodeActions(markerCodeActionTrigger, actions, {\n                            x: elementPosition.left + 6,\n                            y: elementPosition.top + elementPosition.height + 6\n                        });\n                    }\n                });\n            }, onUnexpectedError);\n        }\n    }\n    getCodeActions(marker) {\n        return createCancelablePromise(cancellationToken => {\n            return getCodeActions(this._languageFeaturesService.codeActionProvider, this._editor.getModel(), new Range(marker.startLineNumber, marker.startColumn, marker.endLineNumber, marker.endColumn), markerCodeActionTrigger, Progress.None, cancellationToken);\n        });\n    }\n};\nMarkerHoverParticipant = __decorate([\n    __param(1, IMarkerDecorationsService),\n    __param(2, IOpenerService),\n    __param(3, ILanguageFeaturesService)\n], MarkerHoverParticipant);\nexport { MarkerHoverParticipant };\nregisterThemingParticipant((theme, collector) => {\n    const linkFg = theme.getColor(textLinkForeground);\n    if (linkFg) {\n        collector.addRule(`.monaco-hover .hover-contents a.code-link span { color: ${linkFg}; }`);\n    }\n    const activeLinkFg = theme.getColor(textLinkActiveForeground);\n    if (activeLinkFg) {\n        collector.addRule(`.monaco-hover .hover-contents a.code-link span:hover { color: ${activeLinkFg}; }`);\n    }\n});\n",
+      "start": 1711096855772,
+      "end": 1711096855891,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855891,
+      "end": 1711096855891,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855891,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855892,
+      "end": 1711096855892,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855892,
+      "end": 1711096855893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855893,
+      "end": 1711096855893,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855893,
+      "end": 1711096855894,
+      "order": "normal"
+    }
+  ]
+}

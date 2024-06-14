@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/contextkey/common/contextkeys.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { isIOS, isLinux, isMacintosh, isWeb, isWindows } from '../../../base/common/platform.js';\nimport { localize } from '../../../nls.js';\nimport { RawContextKey } from './contextkey.js';\nexport const IsMacContext = new RawContextKey('isMac', isMacintosh, localize('isMac', \"Whether the operating system is macOS\"));\nexport const IsLinuxContext = new RawContextKey('isLinux', isLinux, localize('isLinux', \"Whether the operating system is Linux\"));\nexport const IsWindowsContext = new RawContextKey('isWindows', isWindows, localize('isWindows', \"Whether the operating system is Windows\"));\nexport const IsWebContext = new RawContextKey('isWeb', isWeb, localize('isWeb', \"Whether the platform is a web browser\"));\nexport const IsMacNativeContext = new RawContextKey('isMacNative', isMacintosh && !isWeb, localize('isMacNative', \"Whether the operating system is macOS on a non-browser platform\"));\nexport const IsIOSContext = new RawContextKey('isIOS', isIOS, localize('isIOS', \"Whether the operating system is iOS\"));\nexport const IsDevelopmentContext = new RawContextKey('isDevelopment', false, true);\nexport const InputFocusedContextKey = 'inputFocus';\nexport const InputFocusedContext = new RawContextKey(InputFocusedContextKey, false, localize('inputFocus', \"Whether keyboard focus is inside an input box\"));\n",
+      "start": 1711096856013,
+      "end": 1711096856117,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856117,
+      "end": 1711096856117,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856118,
+      "end": 1711096856118,
+      "order": "normal"
+    }
+  ]
+}

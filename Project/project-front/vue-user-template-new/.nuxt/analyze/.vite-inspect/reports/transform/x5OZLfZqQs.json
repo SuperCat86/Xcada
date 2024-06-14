@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/inlineCompletions/browser/inlineCompletionToGhostText.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { LcsDiff } from '../../../../base/common/diff/diff.js';\nimport * as strings from '../../../../base/common/strings.js';\nimport { Range } from '../../../common/core/range.js';\nimport { GhostText, GhostTextPart } from './ghostText.js';\nexport function normalizedInlineCompletionsEquals(a, b) {\n    if (a === b) {\n        return true;\n    }\n    if (!a || !b) {\n        return false;\n    }\n    return a.range.equalsRange(b.range) && a.text === b.text && a.command === b.command;\n}\n/**\n * @param previewSuffixLength Sets where to split `inlineCompletion.text`.\n * \tIf the text is `hello` and the suffix length is 2, the non-preview part is `hel` and the preview-part is `lo`.\n*/\nexport function inlineCompletionToGhostText(inlineCompletion, textModel, mode, cursorPosition, previewSuffixLength = 0) {\n    if (inlineCompletion.range.startLineNumber !== inlineCompletion.range.endLineNumber) {\n        // Only single line replacements are supported.\n        return undefined;\n    }\n    const sourceLine = textModel.getLineContent(inlineCompletion.range.startLineNumber);\n    const sourceIndentationLength = strings.getLeadingWhitespace(sourceLine).length;\n    const suggestionTouchesIndentation = inlineCompletion.range.startColumn - 1 <= sourceIndentationLength;\n    if (suggestionTouchesIndentation) {\n        // source:      ··········[······abc]\n        //                         ^^^^^^^^^ inlineCompletion.range\n        //              ^^^^^^^^^^ ^^^^^^ sourceIndentationLength\n        //                         ^^^^^^ replacedIndentation.length\n        //                               ^^^ rangeThatDoesNotReplaceIndentation\n        // inlineCompletion.text: '··foo'\n        //                         ^^ suggestionAddedIndentationLength\n        const suggestionAddedIndentationLength = strings.getLeadingWhitespace(inlineCompletion.text).length;\n        const replacedIndentation = sourceLine.substring(inlineCompletion.range.startColumn - 1, sourceIndentationLength);\n        const rangeThatDoesNotReplaceIndentation = Range.fromPositions(inlineCompletion.range.getStartPosition().delta(0, replacedIndentation.length), inlineCompletion.range.getEndPosition());\n        const suggestionWithoutIndentationChange = inlineCompletion.text.startsWith(replacedIndentation)\n            // Adds more indentation without changing existing indentation: We can add ghost text for this\n            ? inlineCompletion.text.substring(replacedIndentation.length)\n            // Changes or removes existing indentation. Only add ghost text for the non-indentation part.\n            : inlineCompletion.text.substring(suggestionAddedIndentationLength);\n        inlineCompletion = {\n            range: rangeThatDoesNotReplaceIndentation,\n            text: suggestionWithoutIndentationChange,\n            command: inlineCompletion.command\n        };\n    }\n    // This is a single line string\n    const valueToBeReplaced = textModel.getValueInRange(inlineCompletion.range);\n    const changes = cachingDiff(valueToBeReplaced, inlineCompletion.text);\n    if (!changes) {\n        // No ghost text in case the diff would be too slow to compute\n        return undefined;\n    }\n    const lineNumber = inlineCompletion.range.startLineNumber;\n    const parts = new Array();\n    if (mode === 'prefix') {\n        const filteredChanges = changes.filter(c => c.originalLength === 0);\n        if (filteredChanges.length > 1 || filteredChanges.length === 1 && filteredChanges[0].originalStart !== valueToBeReplaced.length) {\n            // Prefixes only have a single change.\n            return undefined;\n        }\n    }\n    const previewStartInCompletionText = inlineCompletion.text.length - previewSuffixLength;\n    for (const c of changes) {\n        const insertColumn = inlineCompletion.range.startColumn + c.originalStart + c.originalLength;\n        if (mode === 'subwordSmart' && cursorPosition && cursorPosition.lineNumber === inlineCompletion.range.startLineNumber && insertColumn < cursorPosition.column) {\n            // No ghost text before cursor\n            return undefined;\n        }\n        if (c.originalLength > 0) {\n            return undefined;\n        }\n        if (c.modifiedLength === 0) {\n            continue;\n        }\n        const modifiedEnd = c.modifiedStart + c.modifiedLength;\n        const nonPreviewTextEnd = Math.max(c.modifiedStart, Math.min(modifiedEnd, previewStartInCompletionText));\n        const nonPreviewText = inlineCompletion.text.substring(c.modifiedStart, nonPreviewTextEnd);\n        const italicText = inlineCompletion.text.substring(nonPreviewTextEnd, Math.max(c.modifiedStart, modifiedEnd));\n        if (nonPreviewText.length > 0) {\n            const lines = strings.splitLines(nonPreviewText);\n            parts.push(new GhostTextPart(insertColumn, lines, false));\n        }\n        if (italicText.length > 0) {\n            const lines = strings.splitLines(italicText);\n            parts.push(new GhostTextPart(insertColumn, lines, true));\n        }\n    }\n    return new GhostText(lineNumber, parts, 0);\n}\nlet lastRequest = undefined;\nfunction cachingDiff(originalValue, newValue) {\n    if ((lastRequest === null || lastRequest === void 0 ? void 0 : lastRequest.originalValue) === originalValue && (lastRequest === null || lastRequest === void 0 ? void 0 : lastRequest.newValue) === newValue) {\n        return lastRequest === null || lastRequest === void 0 ? void 0 : lastRequest.changes;\n    }\n    else {\n        const changes = smartDiff(originalValue, newValue);\n        lastRequest = {\n            originalValue,\n            newValue,\n            changes\n        };\n        return changes;\n    }\n}\n/**\n * When matching `if ()` with `if (f() = 1) { g(); }`,\n * align it like this:        `if (       )`\n * Not like this:\t\t\t  `if (  )`\n * Also not like this:\t\t  `if (             )`.\n *\n * The parenthesis are preprocessed to ensure that they match correctly.\n */\nfunction smartDiff(originalValue, newValue) {\n    if (originalValue.length > 5000 || newValue.length > 5000) {\n        // We don't want to work on strings that are too big\n        return undefined;\n    }\n    function getMaxCharCode(val) {\n        let maxCharCode = 0;\n        for (let i = 0, len = val.length; i < len; i++) {\n            const charCode = val.charCodeAt(i);\n            if (charCode > maxCharCode) {\n                maxCharCode = charCode;\n            }\n        }\n        return maxCharCode;\n    }\n    const maxCharCode = Math.max(getMaxCharCode(originalValue), getMaxCharCode(newValue));\n    function getUniqueCharCode(id) {\n        if (id < 0) {\n            throw new Error('unexpected');\n        }\n        return maxCharCode + id + 1;\n    }\n    function getElements(source) {\n        let level = 0;\n        let group = 0;\n        const characters = new Int32Array(source.length);\n        for (let i = 0, len = source.length; i < len; i++) {\n            const id = group * 100 + level;\n            // TODO support more brackets\n            if (source[i] === '(') {\n                characters[i] = getUniqueCharCode(2 * id);\n                level++;\n            }\n            else if (source[i] === ')') {\n                characters[i] = getUniqueCharCode(2 * id + 1);\n                if (level === 1) {\n                    group++;\n                }\n                level = Math.max(level - 1, 0);\n            }\n            else {\n                characters[i] = source.charCodeAt(i);\n            }\n        }\n        return characters;\n    }\n    const elements1 = getElements(originalValue);\n    const elements2 = getElements(newValue);\n    return new LcsDiff({ getElements: () => elements1 }, { getElements: () => elements2 }).ComputeDiff(false).changes;\n}\n",
+      "start": 1711096857657,
+      "end": 1711096857728,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857728,
+      "end": 1711096857728,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857728,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    }
+  ]
+}

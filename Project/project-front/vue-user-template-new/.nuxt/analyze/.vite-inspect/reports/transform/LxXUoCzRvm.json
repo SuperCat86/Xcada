@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/progressbar/progressbar.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { show } from '../../dom.js';\nimport { RunOnceScheduler } from '../../../common/async.js';\nimport { Color } from '../../../common/color.js';\nimport { Disposable } from '../../../common/lifecycle.js';\nimport { mixin } from '../../../common/objects.js';\nimport './progressbar.css';\nconst CSS_DONE = 'done';\nconst CSS_ACTIVE = 'active';\nconst CSS_INFINITE = 'infinite';\nconst CSS_INFINITE_LONG_RUNNING = 'infinite-long-running';\nconst CSS_DISCRETE = 'discrete';\nconst defaultOpts = {\n    progressBarBackground: Color.fromHex('#0E70C0')\n};\n/**\n * A progress bar with support for infinite or discrete progress.\n */\nexport class ProgressBar extends Disposable {\n    constructor(container, options) {\n        super();\n        this.options = options || Object.create(null);\n        mixin(this.options, defaultOpts, false);\n        this.workedVal = 0;\n        this.progressBarBackground = this.options.progressBarBackground;\n        this.showDelayedScheduler = this._register(new RunOnceScheduler(() => show(this.element), 0));\n        this.longRunningScheduler = this._register(new RunOnceScheduler(() => this.infiniteLongRunning(), ProgressBar.LONG_RUNNING_INFINITE_THRESHOLD));\n        this.create(container);\n    }\n    create(container) {\n        this.element = document.createElement('div');\n        this.element.classList.add('monaco-progress-container');\n        this.element.setAttribute('role', 'progressbar');\n        this.element.setAttribute('aria-valuemin', '0');\n        container.appendChild(this.element);\n        this.bit = document.createElement('div');\n        this.bit.classList.add('progress-bit');\n        this.element.appendChild(this.bit);\n        this.applyStyles();\n    }\n    off() {\n        this.bit.style.width = 'inherit';\n        this.bit.style.opacity = '1';\n        this.element.classList.remove(CSS_ACTIVE, CSS_INFINITE, CSS_INFINITE_LONG_RUNNING, CSS_DISCRETE);\n        this.workedVal = 0;\n        this.totalWork = undefined;\n        this.longRunningScheduler.cancel();\n    }\n    /**\n     * Stops the progressbar from showing any progress instantly without fading out.\n     */\n    stop() {\n        return this.doDone(false);\n    }\n    doDone(delayed) {\n        this.element.classList.add(CSS_DONE);\n        // discrete: let it grow to 100% width and hide afterwards\n        if (!this.element.classList.contains(CSS_INFINITE)) {\n            this.bit.style.width = 'inherit';\n            if (delayed) {\n                setTimeout(() => this.off(), 200);\n            }\n            else {\n                this.off();\n            }\n        }\n        // infinite: let it fade out and hide afterwards\n        else {\n            this.bit.style.opacity = '0';\n            if (delayed) {\n                setTimeout(() => this.off(), 200);\n            }\n            else {\n                this.off();\n            }\n        }\n        return this;\n    }\n    /**\n     * Use this mode to indicate progress that has no total number of work units.\n     */\n    infinite() {\n        this.bit.style.width = '2%';\n        this.bit.style.opacity = '1';\n        this.element.classList.remove(CSS_DISCRETE, CSS_DONE, CSS_INFINITE_LONG_RUNNING);\n        this.element.classList.add(CSS_ACTIVE, CSS_INFINITE);\n        this.longRunningScheduler.schedule();\n        return this;\n    }\n    infiniteLongRunning() {\n        this.element.classList.add(CSS_INFINITE_LONG_RUNNING);\n    }\n    getContainer() {\n        return this.element;\n    }\n    style(styles) {\n        this.progressBarBackground = styles.progressBarBackground;\n        this.applyStyles();\n    }\n    applyStyles() {\n        if (this.bit) {\n            const background = this.progressBarBackground ? this.progressBarBackground.toString() : '';\n            this.bit.style.backgroundColor = background;\n        }\n    }\n}\n/**\n * After a certain time of showing the progress bar, switch\n * to long-running mode and throttle animations to reduce\n * the pressure on the GPU process.\n *\n * https://github.com/microsoft/vscode/issues/97900\n * https://github.com/microsoft/vscode/issues/138396\n */\nProgressBar.LONG_RUNNING_INFINITE_THRESHOLD = 10000;\n",
+      "start": 1711096857694,
+      "end": 1711096857808,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857808,
+      "end": 1711096857808,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/browser.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../common/event.js';\nimport { Disposable } from '../common/lifecycle.js';\nclass WindowManager {\n    constructor() {\n        // --- Zoom Factor\n        this._zoomFactor = 1;\n    }\n    getZoomFactor() {\n        return this._zoomFactor;\n    }\n}\nWindowManager.INSTANCE = new WindowManager();\n/**\n * See https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio#monitoring_screen_resolution_or_zoom_level_changes\n */\nclass DevicePixelRatioMonitor extends Disposable {\n    constructor() {\n        super();\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        this._listener = () => this._handleChange(true);\n        this._mediaQueryList = null;\n        this._handleChange(false);\n    }\n    _handleChange(fireEvent) {\n        if (this._mediaQueryList) {\n            this._mediaQueryList.removeEventListener('change', this._listener);\n        }\n        this._mediaQueryList = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);\n        this._mediaQueryList.addEventListener('change', this._listener);\n        if (fireEvent) {\n            this._onDidChange.fire();\n        }\n    }\n}\nclass PixelRatioImpl extends Disposable {\n    constructor() {\n        super();\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        this._value = this._getPixelRatio();\n        const dprMonitor = this._register(new DevicePixelRatioMonitor());\n        this._register(dprMonitor.onDidChange(() => {\n            this._value = this._getPixelRatio();\n            this._onDidChange.fire(this._value);\n        }));\n    }\n    get value() {\n        return this._value;\n    }\n    _getPixelRatio() {\n        const ctx = document.createElement('canvas').getContext('2d');\n        const dpr = window.devicePixelRatio || 1;\n        const bsr = ctx.webkitBackingStorePixelRatio ||\n            ctx.mozBackingStorePixelRatio ||\n            ctx.msBackingStorePixelRatio ||\n            ctx.oBackingStorePixelRatio ||\n            ctx.backingStorePixelRatio || 1;\n        return dpr / bsr;\n    }\n}\nclass PixelRatioFacade {\n    constructor() {\n        this._pixelRatioMonitor = null;\n    }\n    _getOrCreatePixelRatioMonitor() {\n        if (!this._pixelRatioMonitor) {\n            this._pixelRatioMonitor = new PixelRatioImpl();\n        }\n        return this._pixelRatioMonitor;\n    }\n    /**\n     * Get the current value.\n     */\n    get value() {\n        return this._getOrCreatePixelRatioMonitor().value;\n    }\n    /**\n     * Listen for changes.\n     */\n    get onDidChange() {\n        return this._getOrCreatePixelRatioMonitor().onDidChange;\n    }\n}\n/**\n * Returns the pixel ratio.\n *\n * This is useful for rendering <canvas> elements at native screen resolution or for being used as\n * a cache key when storing font measurements. Fonts might render differently depending on resolution\n * and any measurements need to be discarded for example when a window is moved from a monitor to another.\n */\nexport const PixelRatio = new PixelRatioFacade();\n/** The zoom scale for an index, e.g. 1, 1.2, 1.4 */\nexport function getZoomFactor() {\n    return WindowManager.INSTANCE.getZoomFactor();\n}\nconst userAgent = navigator.userAgent;\nexport const isFirefox = (userAgent.indexOf('Firefox') >= 0);\nexport const isWebKit = (userAgent.indexOf('AppleWebKit') >= 0);\nexport const isChrome = (userAgent.indexOf('Chrome') >= 0);\nexport const isSafari = (!isChrome && (userAgent.indexOf('Safari') >= 0));\nexport const isWebkitWebView = (!isChrome && !isSafari && isWebKit);\nexport const isElectron = (userAgent.indexOf('Electron/') >= 0);\nexport const isAndroid = (userAgent.indexOf('Android') >= 0);\nexport const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);\n",
+      "start": 1711096855228,
+      "end": 1711096855304,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855304,
+      "end": 1711096855304,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855305,
+      "end": 1711096855305,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/format/browser/format.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { alert } from '../../../../base/browser/ui/aria/aria.js';\nimport { asArray, isNonEmptyArray } from '../../../../base/common/arrays.js';\nimport { CancellationToken } from '../../../../base/common/cancellation.js';\nimport { onUnexpectedExternalError } from '../../../../base/common/errors.js';\nimport { Iterable } from '../../../../base/common/iterator.js';\nimport { LinkedList } from '../../../../base/common/linkedList.js';\nimport { assertType } from '../../../../base/common/types.js';\nimport { URI } from '../../../../base/common/uri.js';\nimport { EditorStateCancellationTokenSource, TextModelCancellationTokenSource } from '../../editorState/browser/editorState.js';\nimport { isCodeEditor } from '../../../browser/editorBrowser.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { Selection } from '../../../common/core/selection.js';\nimport { IEditorWorkerService } from '../../../common/services/editorWorker.js';\nimport { ITextModelService } from '../../../common/services/resolverService.js';\nimport { FormattingEdit } from './formattingEdit.js';\nimport * as nls from '../../../../nls.js';\nimport { CommandsRegistry } from '../../../../platform/commands/common/commands.js';\nimport { ExtensionIdentifier } from '../../../../platform/extensions/common/extensions.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nexport function alertFormattingEdits(edits) {\n    edits = edits.filter(edit => edit.range);\n    if (!edits.length) {\n        return;\n    }\n    let { range } = edits[0];\n    for (let i = 1; i < edits.length; i++) {\n        range = Range.plusRange(range, edits[i].range);\n    }\n    const { startLineNumber, endLineNumber } = range;\n    if (startLineNumber === endLineNumber) {\n        if (edits.length === 1) {\n            alert(nls.localize('hint11', \"Made 1 formatting edit on line {0}\", startLineNumber));\n        }\n        else {\n            alert(nls.localize('hintn1', \"Made {0} formatting edits on line {1}\", edits.length, startLineNumber));\n        }\n    }\n    else {\n        if (edits.length === 1) {\n            alert(nls.localize('hint1n', \"Made 1 formatting edit between lines {0} and {1}\", startLineNumber, endLineNumber));\n        }\n        else {\n            alert(nls.localize('hintnn', \"Made {0} formatting edits between lines {1} and {2}\", edits.length, startLineNumber, endLineNumber));\n        }\n    }\n}\nexport function getRealAndSyntheticDocumentFormattersOrdered(documentFormattingEditProvider, documentRangeFormattingEditProvider, model) {\n    const result = [];\n    const seen = new Set();\n    // (1) add all document formatter\n    const docFormatter = documentFormattingEditProvider.ordered(model);\n    for (const formatter of docFormatter) {\n        result.push(formatter);\n        if (formatter.extensionId) {\n            seen.add(ExtensionIdentifier.toKey(formatter.extensionId));\n        }\n    }\n    // (2) add all range formatter as document formatter (unless the same extension already did that)\n    const rangeFormatter = documentRangeFormattingEditProvider.ordered(model);\n    for (const formatter of rangeFormatter) {\n        if (formatter.extensionId) {\n            if (seen.has(ExtensionIdentifier.toKey(formatter.extensionId))) {\n                continue;\n            }\n            seen.add(ExtensionIdentifier.toKey(formatter.extensionId));\n        }\n        result.push({\n            displayName: formatter.displayName,\n            extensionId: formatter.extensionId,\n            provideDocumentFormattingEdits(model, options, token) {\n                return formatter.provideDocumentRangeFormattingEdits(model, model.getFullModelRange(), options, token);\n            }\n        });\n    }\n    return result;\n}\nexport class FormattingConflicts {\n    static setFormatterSelector(selector) {\n        const remove = FormattingConflicts._selectors.unshift(selector);\n        return { dispose: remove };\n    }\n    static select(formatter, document, mode) {\n        return __awaiter(this, void 0, void 0, function* () {\n            if (formatter.length === 0) {\n                return undefined;\n            }\n            const selector = Iterable.first(FormattingConflicts._selectors);\n            if (selector) {\n                return yield selector(formatter, document, mode);\n            }\n            return undefined;\n        });\n    }\n}\nFormattingConflicts._selectors = new LinkedList();\nexport function formatDocumentRangesWithSelectedProvider(accessor, editorOrModel, rangeOrRanges, mode, progress, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const instaService = accessor.get(IInstantiationService);\n        const { documentRangeFormattingEditProvider: documentRangeFormattingEditProviderRegistry } = accessor.get(ILanguageFeaturesService);\n        const model = isCodeEditor(editorOrModel) ? editorOrModel.getModel() : editorOrModel;\n        const provider = documentRangeFormattingEditProviderRegistry.ordered(model);\n        const selected = yield FormattingConflicts.select(provider, model, mode);\n        if (selected) {\n            progress.report(selected);\n            yield instaService.invokeFunction(formatDocumentRangesWithProvider, selected, editorOrModel, rangeOrRanges, token);\n        }\n    });\n}\nexport function formatDocumentRangesWithProvider(accessor, provider, editorOrModel, rangeOrRanges, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const workerService = accessor.get(IEditorWorkerService);\n        let model;\n        let cts;\n        if (isCodeEditor(editorOrModel)) {\n            model = editorOrModel.getModel();\n            cts = new EditorStateCancellationTokenSource(editorOrModel, 1 /* Value */ | 4 /* Position */, undefined, token);\n        }\n        else {\n            model = editorOrModel;\n            cts = new TextModelCancellationTokenSource(editorOrModel, token);\n        }\n        // make sure that ranges don't overlap nor touch each other\n        let ranges = [];\n        let len = 0;\n        for (let range of asArray(rangeOrRanges).sort(Range.compareRangesUsingStarts)) {\n            if (len > 0 && Range.areIntersectingOrTouching(ranges[len - 1], range)) {\n                ranges[len - 1] = Range.fromPositions(ranges[len - 1].getStartPosition(), range.getEndPosition());\n            }\n            else {\n                len = ranges.push(range);\n            }\n        }\n        const computeEdits = (range) => __awaiter(this, void 0, void 0, function* () {\n            return (yield provider.provideDocumentRangeFormattingEdits(model, range, model.getFormattingOptions(), cts.token)) || [];\n        });\n        const hasIntersectingEdit = (a, b) => {\n            if (!a.length || !b.length) {\n                return false;\n            }\n            // quick exit if the list of ranges are completely unrelated [O(n)]\n            const mergedA = a.reduce((acc, val) => { return Range.plusRange(acc, val.range); }, a[0].range);\n            if (!b.some(x => { return Range.intersectRanges(mergedA, x.range); })) {\n                return false;\n            }\n            // fallback to a complete check [O(n^2)]\n            for (let edit of a) {\n                for (let otherEdit of b) {\n                    if (Range.intersectRanges(edit.range, otherEdit.range)) {\n                        return true;\n                    }\n                }\n            }\n            return false;\n        };\n        const allEdits = [];\n        const rawEditsList = [];\n        try {\n            for (let range of ranges) {\n                if (cts.token.isCancellationRequested) {\n                    return true;\n                }\n                rawEditsList.push(yield computeEdits(range));\n            }\n            for (let i = 0; i < ranges.length; ++i) {\n                for (let j = i + 1; j < ranges.length; ++j) {\n                    if (cts.token.isCancellationRequested) {\n                        return true;\n                    }\n                    if (hasIntersectingEdit(rawEditsList[i], rawEditsList[j])) {\n                        // Merge ranges i and j into a single range, recompute the associated edits\n                        const mergedRange = Range.plusRange(ranges[i], ranges[j]);\n                        const edits = yield computeEdits(mergedRange);\n                        ranges.splice(j, 1);\n                        ranges.splice(i, 1);\n                        ranges.push(mergedRange);\n                        rawEditsList.splice(j, 1);\n                        rawEditsList.splice(i, 1);\n                        rawEditsList.push(edits);\n                        // Restart scanning\n                        i = 0;\n                        j = 0;\n                    }\n                }\n            }\n            for (let rawEdits of rawEditsList) {\n                if (cts.token.isCancellationRequested) {\n                    return true;\n                }\n                const minimalEdits = yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);\n                if (minimalEdits) {\n                    allEdits.push(...minimalEdits);\n                }\n            }\n        }\n        finally {\n            cts.dispose();\n        }\n        if (allEdits.length === 0) {\n            return false;\n        }\n        if (isCodeEditor(editorOrModel)) {\n            // use editor to apply edits\n            FormattingEdit.execute(editorOrModel, allEdits, true);\n            alertFormattingEdits(allEdits);\n            editorOrModel.revealPositionInCenterIfOutsideViewport(editorOrModel.getPosition(), 1 /* Immediate */);\n        }\n        else {\n            // use model to apply edits\n            const [{ range }] = allEdits;\n            const initialSelection = new Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);\n            model.pushEditOperations([initialSelection], allEdits.map(edit => {\n                return {\n                    text: edit.text,\n                    range: Range.lift(edit.range),\n                    forceMoveMarkers: true\n                };\n            }), undoEdits => {\n                for (const { range } of undoEdits) {\n                    if (Range.areIntersectingOrTouching(range, initialSelection)) {\n                        return [new Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn)];\n                    }\n                }\n                return null;\n            });\n        }\n        return true;\n    });\n}\nexport function formatDocumentWithSelectedProvider(accessor, editorOrModel, mode, progress, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const instaService = accessor.get(IInstantiationService);\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const model = isCodeEditor(editorOrModel) ? editorOrModel.getModel() : editorOrModel;\n        const provider = getRealAndSyntheticDocumentFormattersOrdered(languageFeaturesService.documentFormattingEditProvider, languageFeaturesService.documentRangeFormattingEditProvider, model);\n        const selected = yield FormattingConflicts.select(provider, model, mode);\n        if (selected) {\n            progress.report(selected);\n            yield instaService.invokeFunction(formatDocumentWithProvider, selected, editorOrModel, mode, token);\n        }\n    });\n}\nexport function formatDocumentWithProvider(accessor, provider, editorOrModel, mode, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const workerService = accessor.get(IEditorWorkerService);\n        let model;\n        let cts;\n        if (isCodeEditor(editorOrModel)) {\n            model = editorOrModel.getModel();\n            cts = new EditorStateCancellationTokenSource(editorOrModel, 1 /* Value */ | 4 /* Position */, undefined, token);\n        }\n        else {\n            model = editorOrModel;\n            cts = new TextModelCancellationTokenSource(editorOrModel, token);\n        }\n        let edits;\n        try {\n            const rawEdits = yield provider.provideDocumentFormattingEdits(model, model.getFormattingOptions(), cts.token);\n            edits = yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);\n            if (cts.token.isCancellationRequested) {\n                return true;\n            }\n        }\n        finally {\n            cts.dispose();\n        }\n        if (!edits || edits.length === 0) {\n            return false;\n        }\n        if (isCodeEditor(editorOrModel)) {\n            // use editor to apply edits\n            FormattingEdit.execute(editorOrModel, edits, mode !== 2 /* Silent */);\n            if (mode !== 2 /* Silent */) {\n                alertFormattingEdits(edits);\n                editorOrModel.revealPositionInCenterIfOutsideViewport(editorOrModel.getPosition(), 1 /* Immediate */);\n            }\n        }\n        else {\n            // use model to apply edits\n            const [{ range }] = edits;\n            const initialSelection = new Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);\n            model.pushEditOperations([initialSelection], edits.map(edit => {\n                return {\n                    text: edit.text,\n                    range: Range.lift(edit.range),\n                    forceMoveMarkers: true\n                };\n            }), undoEdits => {\n                for (const { range } of undoEdits) {\n                    if (Range.areIntersectingOrTouching(range, initialSelection)) {\n                        return [new Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn)];\n                    }\n                }\n                return null;\n            });\n        }\n        return true;\n    });\n}\nexport function getDocumentRangeFormattingEditsUntilResult(workerService, languageFeaturesService, model, range, options, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const providers = languageFeaturesService.documentRangeFormattingEditProvider.ordered(model);\n        for (const provider of providers) {\n            let rawEdits = yield Promise.resolve(provider.provideDocumentRangeFormattingEdits(model, range, options, token)).catch(onUnexpectedExternalError);\n            if (isNonEmptyArray(rawEdits)) {\n                return yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);\n            }\n        }\n        return undefined;\n    });\n}\nexport function getDocumentFormattingEditsUntilResult(workerService, languageFeaturesService, model, options, token) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const providers = getRealAndSyntheticDocumentFormattersOrdered(languageFeaturesService.documentFormattingEditProvider, languageFeaturesService.documentRangeFormattingEditProvider, model);\n        for (const provider of providers) {\n            let rawEdits = yield Promise.resolve(provider.provideDocumentFormattingEdits(model, options, token)).catch(onUnexpectedExternalError);\n            if (isNonEmptyArray(rawEdits)) {\n                return yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);\n            }\n        }\n        return undefined;\n    });\n}\nexport function getOnTypeFormattingEdits(workerService, languageFeaturesService, model, position, ch, options, token) {\n    const providers = languageFeaturesService.onTypeFormattingEditProvider.ordered(model);\n    if (providers.length === 0) {\n        return Promise.resolve(undefined);\n    }\n    if (providers[0].autoFormatTriggerCharacters.indexOf(ch) < 0) {\n        return Promise.resolve(undefined);\n    }\n    return Promise.resolve(providers[0].provideOnTypeFormattingEdits(model, position, ch, options, token)).catch(onUnexpectedExternalError).then(edits => {\n        return workerService.computeMoreMinimalEdits(model.uri, edits);\n    });\n}\nCommandsRegistry.registerCommand('_executeFormatRangeProvider', function (accessor, ...args) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const [resource, range, options] = args;\n        assertType(URI.isUri(resource));\n        assertType(Range.isIRange(range));\n        const resolverService = accessor.get(ITextModelService);\n        const workerService = accessor.get(IEditorWorkerService);\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const reference = yield resolverService.createModelReference(resource);\n        try {\n            return getDocumentRangeFormattingEditsUntilResult(workerService, languageFeaturesService, reference.object.textEditorModel, Range.lift(range), options, CancellationToken.None);\n        }\n        finally {\n            reference.dispose();\n        }\n    });\n});\nCommandsRegistry.registerCommand('_executeFormatDocumentProvider', function (accessor, ...args) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const [resource, options] = args;\n        assertType(URI.isUri(resource));\n        const resolverService = accessor.get(ITextModelService);\n        const workerService = accessor.get(IEditorWorkerService);\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const reference = yield resolverService.createModelReference(resource);\n        try {\n            return getDocumentFormattingEditsUntilResult(workerService, languageFeaturesService, reference.object.textEditorModel, options, CancellationToken.None);\n        }\n        finally {\n            reference.dispose();\n        }\n    });\n});\nCommandsRegistry.registerCommand('_executeFormatOnTypeProvider', function (accessor, ...args) {\n    return __awaiter(this, void 0, void 0, function* () {\n        const [resource, position, ch, options] = args;\n        assertType(URI.isUri(resource));\n        assertType(Position.isIPosition(position));\n        assertType(typeof ch === 'string');\n        const resolverService = accessor.get(ITextModelService);\n        const workerService = accessor.get(IEditorWorkerService);\n        const languageFeaturesService = accessor.get(ILanguageFeaturesService);\n        const reference = yield resolverService.createModelReference(resource);\n        try {\n            return getOnTypeFormattingEdits(workerService, languageFeaturesService, reference.object.textEditorModel, Position.lift(position), ch, options, CancellationToken.None);\n        }\n        finally {\n            reference.dispose();\n        }\n    });\n});\n",
+      "start": 1711096853985,
+      "end": 1711096854159,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854160,
+      "end": 1711096854160,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854160,
+      "end": 1711096854161,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854161,
+      "end": 1711096854161,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854161,
+      "end": 1711096854161,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854161,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854162,
+      "end": 1711096854162,
+      "order": "normal"
+    }
+  ]
+}

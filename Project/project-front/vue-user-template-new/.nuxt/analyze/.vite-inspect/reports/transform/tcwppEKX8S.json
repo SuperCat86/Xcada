@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/browser/parameterHintsWidget.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport * as dom from '../../../../base/browser/dom.js';\nimport * as aria from '../../../../base/browser/ui/aria/aria.js';\nimport { DomScrollableElement } from '../../../../base/browser/ui/scrollbar/scrollableElement.js';\nimport { Codicon } from '../../../../base/common/codicons.js';\nimport { Event } from '../../../../base/common/event.js';\nimport { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { escapeRegExpCharacters } from '../../../../base/common/strings.js';\nimport { assertIsDefined } from '../../../../base/common/types.js';\nimport './parameterHints.css';\nimport { MarkdownRenderer } from '../../markdownRenderer/browser/markdownRenderer.js';\nimport { ILanguageService } from '../../../common/languages/language.js';\nimport { ParameterHintsModel } from './parameterHintsModel.js';\nimport { Context } from './provideSignatureHelp.js';\nimport * as nls from '../../../../nls.js';\nimport { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IOpenerService } from '../../../../platform/opener/common/opener.js';\nimport { editorHoverBackground, editorHoverBorder, editorHoverForeground, registerColor, textCodeBlockBackground, textLinkActiveForeground, textLinkForeground, listHighlightForeground } from '../../../../platform/theme/common/colorRegistry.js';\nimport { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';\nimport { ColorScheme } from '../../../../platform/theme/common/theme.js';\nimport { registerThemingParticipant, ThemeIcon } from '../../../../platform/theme/common/themeService.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nconst $ = dom.$;\nconst parameterHintsNextIcon = registerIcon('parameter-hints-next', Codicon.chevronDown, nls.localize('parameterHintsNextIcon', 'Icon for show next parameter hint.'));\nconst parameterHintsPreviousIcon = registerIcon('parameter-hints-previous', Codicon.chevronUp, nls.localize('parameterHintsPreviousIcon', 'Icon for show previous parameter hint.'));\nlet ParameterHintsWidget = class ParameterHintsWidget extends Disposable {\n    constructor(editor, contextKeyService, openerService, languageService, languageFeaturesService) {\n        super();\n        this.editor = editor;\n        this.renderDisposeables = this._register(new DisposableStore());\n        this.visible = false;\n        this.announcedLabel = null;\n        // Editor.IContentWidget.allowEditorOverflow\n        this.allowEditorOverflow = true;\n        this.markdownRenderer = this._register(new MarkdownRenderer({ editor }, languageService, openerService));\n        this.model = this._register(new ParameterHintsModel(editor, languageFeaturesService.signatureHelpProvider));\n        this.keyVisible = Context.Visible.bindTo(contextKeyService);\n        this.keyMultipleSignatures = Context.MultipleSignatures.bindTo(contextKeyService);\n        this._register(this.model.onChangedHints(newParameterHints => {\n            if (newParameterHints) {\n                this.show();\n                this.render(newParameterHints);\n            }\n            else {\n                this.hide();\n            }\n        }));\n    }\n    createParameterHintDOMNodes() {\n        const element = $('.editor-widget.parameter-hints-widget');\n        const wrapper = dom.append(element, $('.phwrapper'));\n        wrapper.tabIndex = -1;\n        const controls = dom.append(wrapper, $('.controls'));\n        const previous = dom.append(controls, $('.button' + ThemeIcon.asCSSSelector(parameterHintsPreviousIcon)));\n        const overloads = dom.append(controls, $('.overloads'));\n        const next = dom.append(controls, $('.button' + ThemeIcon.asCSSSelector(parameterHintsNextIcon)));\n        this._register(dom.addDisposableListener(previous, 'click', e => {\n            dom.EventHelper.stop(e);\n            this.previous();\n        }));\n        this._register(dom.addDisposableListener(next, 'click', e => {\n            dom.EventHelper.stop(e);\n            this.next();\n        }));\n        const body = $('.body');\n        const scrollbar = new DomScrollableElement(body, {});\n        this._register(scrollbar);\n        wrapper.appendChild(scrollbar.getDomNode());\n        const signature = dom.append(body, $('.signature'));\n        const docs = dom.append(body, $('.docs'));\n        element.style.userSelect = 'text';\n        this.domNodes = {\n            element,\n            signature,\n            overloads,\n            docs,\n            scrollbar,\n        };\n        this.editor.addContentWidget(this);\n        this.hide();\n        this._register(this.editor.onDidChangeCursorSelection(e => {\n            if (this.visible) {\n                this.editor.layoutContentWidget(this);\n            }\n        }));\n        const updateFont = () => {\n            if (!this.domNodes) {\n                return;\n            }\n            const fontInfo = this.editor.getOption(44 /* fontInfo */);\n            this.domNodes.element.style.fontSize = `${fontInfo.fontSize}px`;\n            this.domNodes.element.style.lineHeight = `${fontInfo.lineHeight / fontInfo.fontSize}`;\n        };\n        updateFont();\n        this._register(Event.chain(this.editor.onDidChangeConfiguration.bind(this.editor))\n            .filter(e => e.hasChanged(44 /* fontInfo */))\n            .on(updateFont, null));\n        this._register(this.editor.onDidLayoutChange(e => this.updateMaxHeight()));\n        this.updateMaxHeight();\n    }\n    show() {\n        if (this.visible) {\n            return;\n        }\n        if (!this.domNodes) {\n            this.createParameterHintDOMNodes();\n        }\n        this.keyVisible.set(true);\n        this.visible = true;\n        setTimeout(() => {\n            if (this.domNodes) {\n                this.domNodes.element.classList.add('visible');\n            }\n        }, 100);\n        this.editor.layoutContentWidget(this);\n    }\n    hide() {\n        this.renderDisposeables.clear();\n        if (!this.visible) {\n            return;\n        }\n        this.keyVisible.reset();\n        this.visible = false;\n        this.announcedLabel = null;\n        if (this.domNodes) {\n            this.domNodes.element.classList.remove('visible');\n        }\n        this.editor.layoutContentWidget(this);\n    }\n    getPosition() {\n        if (this.visible) {\n            return {\n                position: this.editor.getPosition(),\n                preference: [1 /* ABOVE */, 2 /* BELOW */]\n            };\n        }\n        return null;\n    }\n    render(hints) {\n        var _a;\n        this.renderDisposeables.clear();\n        if (!this.domNodes) {\n            return;\n        }\n        const multiple = hints.signatures.length > 1;\n        this.domNodes.element.classList.toggle('multiple', multiple);\n        this.keyMultipleSignatures.set(multiple);\n        this.domNodes.signature.innerText = '';\n        this.domNodes.docs.innerText = '';\n        const signature = hints.signatures[hints.activeSignature];\n        if (!signature) {\n            return;\n        }\n        const code = dom.append(this.domNodes.signature, $('.code'));\n        const fontInfo = this.editor.getOption(44 /* fontInfo */);\n        code.style.fontSize = `${fontInfo.fontSize}px`;\n        code.style.fontFamily = fontInfo.fontFamily;\n        const hasParameters = signature.parameters.length > 0;\n        const activeParameterIndex = (_a = signature.activeParameter) !== null && _a !== void 0 ? _a : hints.activeParameter;\n        if (!hasParameters) {\n            const label = dom.append(code, $('span'));\n            label.textContent = signature.label;\n        }\n        else {\n            this.renderParameters(code, signature, activeParameterIndex);\n        }\n        const activeParameter = signature.parameters[activeParameterIndex];\n        if (activeParameter === null || activeParameter === void 0 ? void 0 : activeParameter.documentation) {\n            const documentation = $('span.documentation');\n            if (typeof activeParameter.documentation === 'string') {\n                documentation.textContent = activeParameter.documentation;\n            }\n            else {\n                const renderedContents = this.renderMarkdownDocs(activeParameter.documentation);\n                documentation.appendChild(renderedContents.element);\n            }\n            dom.append(this.domNodes.docs, $('p', {}, documentation));\n        }\n        if (signature.documentation === undefined) {\n            /** no op */\n        }\n        else if (typeof signature.documentation === 'string') {\n            dom.append(this.domNodes.docs, $('p', {}, signature.documentation));\n        }\n        else {\n            const renderedContents = this.renderMarkdownDocs(signature.documentation);\n            dom.append(this.domNodes.docs, renderedContents.element);\n        }\n        const hasDocs = this.hasDocs(signature, activeParameter);\n        this.domNodes.signature.classList.toggle('has-docs', hasDocs);\n        this.domNodes.docs.classList.toggle('empty', !hasDocs);\n        this.domNodes.overloads.textContent =\n            String(hints.activeSignature + 1).padStart(hints.signatures.length.toString().length, '0') + '/' + hints.signatures.length;\n        if (activeParameter) {\n            let labelToAnnounce = '';\n            const param = signature.parameters[activeParameterIndex];\n            if (Array.isArray(param.label)) {\n                labelToAnnounce = signature.label.substring(param.label[0], param.label[1]);\n            }\n            else {\n                labelToAnnounce = param.label;\n            }\n            if (param.documentation) {\n                labelToAnnounce += typeof param.documentation === 'string' ? `, ${param.documentation}` : `, ${param.documentation.value}`;\n            }\n            if (signature.documentation) {\n                labelToAnnounce += typeof signature.documentation === 'string' ? `, ${signature.documentation}` : `, ${signature.documentation.value}`;\n            }\n            // Select method gets called on every user type while parameter hints are visible.\n            // We do not want to spam the user with same announcements, so we only announce if the current parameter changed.\n            if (this.announcedLabel !== labelToAnnounce) {\n                aria.alert(nls.localize('hint', \"{0}, hint\", labelToAnnounce));\n                this.announcedLabel = labelToAnnounce;\n            }\n        }\n        this.editor.layoutContentWidget(this);\n        this.domNodes.scrollbar.scanDomNode();\n    }\n    renderMarkdownDocs(markdown) {\n        const renderedContents = this.renderDisposeables.add(this.markdownRenderer.render(markdown, {\n            asyncRenderCallback: () => {\n                var _a;\n                (_a = this.domNodes) === null || _a === void 0 ? void 0 : _a.scrollbar.scanDomNode();\n            }\n        }));\n        renderedContents.element.classList.add('markdown-docs');\n        return renderedContents;\n    }\n    hasDocs(signature, activeParameter) {\n        if (activeParameter && typeof activeParameter.documentation === 'string' && assertIsDefined(activeParameter.documentation).length > 0) {\n            return true;\n        }\n        if (activeParameter && typeof activeParameter.documentation === 'object' && assertIsDefined(activeParameter.documentation).value.length > 0) {\n            return true;\n        }\n        if (signature.documentation && typeof signature.documentation === 'string' && assertIsDefined(signature.documentation).length > 0) {\n            return true;\n        }\n        if (signature.documentation && typeof signature.documentation === 'object' && assertIsDefined(signature.documentation.value).length > 0) {\n            return true;\n        }\n        return false;\n    }\n    renderParameters(parent, signature, activeParameterIndex) {\n        const [start, end] = this.getParameterLabelOffsets(signature, activeParameterIndex);\n        const beforeSpan = document.createElement('span');\n        beforeSpan.textContent = signature.label.substring(0, start);\n        const paramSpan = document.createElement('span');\n        paramSpan.textContent = signature.label.substring(start, end);\n        paramSpan.className = 'parameter active';\n        const afterSpan = document.createElement('span');\n        afterSpan.textContent = signature.label.substring(end);\n        dom.append(parent, beforeSpan, paramSpan, afterSpan);\n    }\n    getParameterLabelOffsets(signature, paramIdx) {\n        const param = signature.parameters[paramIdx];\n        if (!param) {\n            return [0, 0];\n        }\n        else if (Array.isArray(param.label)) {\n            return param.label;\n        }\n        else if (!param.label.length) {\n            return [0, 0];\n        }\n        else {\n            const regex = new RegExp(`(\\\\W|^)${escapeRegExpCharacters(param.label)}(?=\\\\W|$)`, 'g');\n            regex.test(signature.label);\n            const idx = regex.lastIndex - param.label.length;\n            return idx >= 0\n                ? [idx, regex.lastIndex]\n                : [0, 0];\n        }\n    }\n    next() {\n        this.editor.focus();\n        this.model.next();\n    }\n    previous() {\n        this.editor.focus();\n        this.model.previous();\n    }\n    cancel() {\n        this.model.cancel();\n    }\n    getDomNode() {\n        if (!this.domNodes) {\n            this.createParameterHintDOMNodes();\n        }\n        return this.domNodes.element;\n    }\n    getId() {\n        return ParameterHintsWidget.ID;\n    }\n    trigger(context) {\n        this.model.trigger(context, 0);\n    }\n    updateMaxHeight() {\n        if (!this.domNodes) {\n            return;\n        }\n        const height = Math.max(this.editor.getLayoutInfo().height / 4, 250);\n        const maxHeight = `${height}px`;\n        this.domNodes.element.style.maxHeight = maxHeight;\n        const wrapper = this.domNodes.element.getElementsByClassName('phwrapper');\n        if (wrapper.length) {\n            wrapper[0].style.maxHeight = maxHeight;\n        }\n    }\n};\nParameterHintsWidget.ID = 'editor.widget.parameterHintsWidget';\nParameterHintsWidget = __decorate([\n    __param(1, IContextKeyService),\n    __param(2, IOpenerService),\n    __param(3, ILanguageService),\n    __param(4, ILanguageFeaturesService)\n], ParameterHintsWidget);\nexport { ParameterHintsWidget };\nexport const editorHoverWidgetHighlightForeground = registerColor('editorHoverWidget.highlightForeground', { dark: listHighlightForeground, light: listHighlightForeground, hc: listHighlightForeground }, nls.localize('editorHoverWidgetHighlightForeground', 'Foreground color of the active item in the parameter hint.'));\nregisterThemingParticipant((theme, collector) => {\n    const border = theme.getColor(editorHoverBorder);\n    if (border) {\n        const borderWidth = theme.type === ColorScheme.HIGH_CONTRAST ? 2 : 1;\n        collector.addRule(`.monaco-editor .parameter-hints-widget { border: ${borderWidth}px solid ${border}; }`);\n        collector.addRule(`.monaco-editor .parameter-hints-widget.multiple .body { border-left: 1px solid ${border.transparent(0.5)}; }`);\n        collector.addRule(`.monaco-editor .parameter-hints-widget .signature.has-docs { border-bottom: 1px solid ${border.transparent(0.5)}; }`);\n    }\n    const background = theme.getColor(editorHoverBackground);\n    if (background) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget { background-color: ${background}; }`);\n    }\n    const link = theme.getColor(textLinkForeground);\n    if (link) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget a { color: ${link}; }`);\n    }\n    const linkHover = theme.getColor(textLinkActiveForeground);\n    if (linkHover) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget a:hover { color: ${linkHover}; }`);\n    }\n    const foreground = theme.getColor(editorHoverForeground);\n    if (foreground) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget { color: ${foreground}; }`);\n    }\n    const codeBackground = theme.getColor(textCodeBlockBackground);\n    if (codeBackground) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget code { background-color: ${codeBackground}; }`);\n    }\n    const parameterHighlightColor = theme.getColor(editorHoverWidgetHighlightForeground);\n    if (parameterHighlightColor) {\n        collector.addRule(`.monaco-editor .parameter-hints-widget .parameter.active { color: ${parameterHighlightColor}}`);\n    }\n});\n",
+      "start": 1711096855852,
+      "end": 1711096855987,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855987,
+      "end": 1711096855987,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855987,
+      "end": 1711096855989,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855989,
+      "end": 1711096855989,
+      "order": "normal"
+    }
+  ]
+}

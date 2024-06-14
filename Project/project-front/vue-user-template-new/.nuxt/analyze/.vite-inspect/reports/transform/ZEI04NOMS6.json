@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/standalone/browser/standaloneServices.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport '../../common/languages/languageConfigurationRegistry.js';\nimport './standaloneCodeEditorService.js';\nimport './standaloneLayoutService.js';\nimport '../../../platform/undoRedo/common/undoRedoService.js';\nimport '../../common/services/languageFeatureDebounce.js';\nimport * as strings from '../../../base/common/strings.js';\nimport * as dom from '../../../base/browser/dom.js';\nimport { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { SimpleKeybinding, createKeybinding } from '../../../base/common/keybindings.js';\nimport { ImmortalReference, toDisposable, DisposableStore, Disposable } from '../../../base/common/lifecycle.js';\nimport { OS, isLinux, isMacintosh } from '../../../base/common/platform.js';\nimport Severity from '../../../base/common/severity.js';\nimport { URI } from '../../../base/common/uri.js';\nimport { IBulkEditService, ResourceTextEdit } from '../../browser/services/bulkEditService.js';\nimport { isDiffEditorConfigurationKey, isEditorConfigurationKey } from '../../common/config/editorConfigurationSchema.js';\nimport { EditOperation } from '../../common/core/editOperation.js';\nimport { Position as Pos } from '../../common/core/position.js';\nimport { Range } from '../../common/core/range.js';\nimport { IModelService } from '../../common/services/model.js';\nimport { ITextModelService } from '../../common/services/resolverService.js';\nimport { ITextResourceConfigurationService, ITextResourcePropertiesService } from '../../common/services/textResourceConfiguration.js';\nimport { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';\nimport { IConfigurationService } from '../../../platform/configuration/common/configuration.js';\nimport { Configuration, ConfigurationModel, DefaultConfigurationModel, ConfigurationChangeEvent } from '../../../platform/configuration/common/configurationModels.js';\nimport { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';\nimport { IDialogService } from '../../../platform/dialogs/common/dialogs.js';\nimport { createDecorator, IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';\nimport { AbstractKeybindingService } from '../../../platform/keybinding/common/abstractKeybindingService.js';\nimport { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';\nimport { KeybindingResolver } from '../../../platform/keybinding/common/keybindingResolver.js';\nimport { KeybindingsRegistry } from '../../../platform/keybinding/common/keybindingsRegistry.js';\nimport { ResolvedKeybindingItem } from '../../../platform/keybinding/common/resolvedKeybindingItem.js';\nimport { USLayoutResolvedKeybinding } from '../../../platform/keybinding/common/usLayoutResolvedKeybinding.js';\nimport { ILabelService } from '../../../platform/label/common/label.js';\nimport { INotificationService, NoOpNotification } from '../../../platform/notification/common/notification.js';\nimport { IEditorProgressService } from '../../../platform/progress/common/progress.js';\nimport { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';\nimport { IWorkspaceContextService, WorkspaceFolder } from '../../../platform/workspace/common/workspace.js';\nimport { ILayoutService } from '../../../platform/layout/browser/layoutService.js';\nimport { StandaloneServicesNLS } from '../../common/standaloneStrings.js';\nimport { ICodeEditorService } from '../../browser/services/codeEditorService.js';\nimport { ConsoleLogger, ILogService, LogService } from '../../../platform/log/common/log.js';\nimport { IWorkspaceTrustManagementService } from '../../../platform/workspace/common/workspaceTrust.js';\nimport { IContextMenuService, IContextViewService } from '../../../platform/contextview/browser/contextView.js';\nimport { ContextViewService } from '../../../platform/contextview/browser/contextViewService.js';\nimport { LanguageService } from '../../common/services/languageService.js';\nimport { ContextMenuService } from '../../../platform/contextview/browser/contextMenuService.js';\nimport { IThemeService } from '../../../platform/theme/common/themeService.js';\nimport { getSingletonServiceDescriptors, registerSingleton } from '../../../platform/instantiation/common/extensions.js';\nimport { OpenerService } from '../../browser/services/openerService.js';\nimport { IEditorWorkerService } from '../../common/services/editorWorker.js';\nimport { EditorWorkerService } from '../../browser/services/editorWorkerService.js';\nimport { ILanguageService } from '../../common/languages/language.js';\nimport { MarkerDecorationsService } from '../../common/services/markerDecorationsService.js';\nimport { IMarkerDecorationsService } from '../../common/services/markerDecorations.js';\nimport { ModelService } from '../../common/services/modelService.js';\nimport { StandaloneQuickInputService } from './quickInput/standaloneQuickInputService.js';\nimport { StandaloneThemeService } from './standaloneThemeService.js';\nimport { IStandaloneThemeService } from '../common/standaloneTheme.js';\nimport { AccessibilityService } from '../../../platform/accessibility/browser/accessibilityService.js';\nimport { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';\nimport { IMenuService } from '../../../platform/actions/common/actions.js';\nimport { MenuService } from '../../../platform/actions/common/menuService.js';\nimport { BrowserClipboardService } from '../../../platform/clipboard/browser/clipboardService.js';\nimport { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';\nimport { ContextKeyService } from '../../../platform/contextkey/browser/contextKeyService.js';\nimport { SyncDescriptor } from '../../../platform/instantiation/common/descriptors.js';\nimport { InstantiationService } from '../../../platform/instantiation/common/instantiationService.js';\nimport { ServiceCollection } from '../../../platform/instantiation/common/serviceCollection.js';\nimport { IListService, ListService } from '../../../platform/list/browser/listService.js';\nimport { IMarkerService } from '../../../platform/markers/common/markers.js';\nimport { MarkerService } from '../../../platform/markers/common/markerService.js';\nimport { IOpenerService } from '../../../platform/opener/common/opener.js';\nimport { IQuickInputService } from '../../../platform/quickinput/common/quickInput.js';\nimport { IStorageService, InMemoryStorageService } from '../../../platform/storage/common/storage.js';\nimport '../../common/services/languageFeaturesService.js';\nclass SimpleModel {\n    constructor(model) {\n        this.disposed = false;\n        this.model = model;\n        this._onWillDispose = new Emitter();\n    }\n    get textEditorModel() {\n        return this.model;\n    }\n    dispose() {\n        this.disposed = true;\n        this._onWillDispose.fire();\n    }\n}\nlet StandaloneTextModelService = class StandaloneTextModelService {\n    constructor(modelService) {\n        this.modelService = modelService;\n    }\n    createModelReference(resource) {\n        const model = this.modelService.getModel(resource);\n        if (!model) {\n            return Promise.reject(new Error(`Model not found`));\n        }\n        return Promise.resolve(new ImmortalReference(new SimpleModel(model)));\n    }\n};\nStandaloneTextModelService = __decorate([\n    __param(0, IModelService)\n], StandaloneTextModelService);\nclass StandaloneEditorProgressService {\n    show() {\n        return StandaloneEditorProgressService.NULL_PROGRESS_RUNNER;\n    }\n    showWhile(promise, delay) {\n        return __awaiter(this, void 0, void 0, function* () {\n            yield promise;\n        });\n    }\n}\nStandaloneEditorProgressService.NULL_PROGRESS_RUNNER = {\n    done: () => { },\n    total: () => { },\n    worked: () => { }\n};\nclass StandaloneDialogService {\n    confirm(confirmation) {\n        return this.doConfirm(confirmation).then(confirmed => {\n            return {\n                confirmed,\n                checkboxChecked: false // unsupported\n            };\n        });\n    }\n    doConfirm(confirmation) {\n        let messageText = confirmation.message;\n        if (confirmation.detail) {\n            messageText = messageText + '\\n\\n' + confirmation.detail;\n        }\n        return Promise.resolve(window.confirm(messageText));\n    }\n    show(severity, message, buttons, options) {\n        return Promise.resolve({ choice: 0 });\n    }\n}\nexport class StandaloneNotificationService {\n    info(message) {\n        return this.notify({ severity: Severity.Info, message });\n    }\n    warn(message) {\n        return this.notify({ severity: Severity.Warning, message });\n    }\n    error(error) {\n        return this.notify({ severity: Severity.Error, message: error });\n    }\n    notify(notification) {\n        switch (notification.severity) {\n            case Severity.Error:\n                console.error(notification.message);\n                break;\n            case Severity.Warning:\n                console.warn(notification.message);\n                break;\n            default:\n                console.log(notification.message);\n                break;\n        }\n        return StandaloneNotificationService.NO_OP;\n    }\n    status(message, options) {\n        return Disposable.None;\n    }\n}\nStandaloneNotificationService.NO_OP = new NoOpNotification();\nlet StandaloneCommandService = class StandaloneCommandService {\n    constructor(instantiationService) {\n        this._onWillExecuteCommand = new Emitter();\n        this._onDidExecuteCommand = new Emitter();\n        this.onWillExecuteCommand = this._onWillExecuteCommand.event;\n        this.onDidExecuteCommand = this._onDidExecuteCommand.event;\n        this._instantiationService = instantiationService;\n    }\n    executeCommand(id, ...args) {\n        const command = CommandsRegistry.getCommand(id);\n        if (!command) {\n            return Promise.reject(new Error(`command '${id}' not found`));\n        }\n        try {\n            this._onWillExecuteCommand.fire({ commandId: id, args });\n            const result = this._instantiationService.invokeFunction.apply(this._instantiationService, [command.handler, ...args]);\n            this._onDidExecuteCommand.fire({ commandId: id, args });\n            return Promise.resolve(result);\n        }\n        catch (err) {\n            return Promise.reject(err);\n        }\n    }\n};\nStandaloneCommandService = __decorate([\n    __param(0, IInstantiationService)\n], StandaloneCommandService);\nexport { StandaloneCommandService };\nlet StandaloneKeybindingService = class StandaloneKeybindingService extends AbstractKeybindingService {\n    constructor(contextKeyService, commandService, telemetryService, notificationService, logService, codeEditorService) {\n        super(contextKeyService, commandService, telemetryService, notificationService, logService);\n        this._cachedResolver = null;\n        this._dynamicKeybindings = [];\n        this._domNodeListeners = [];\n        const addContainer = (domNode) => {\n            const disposables = new DisposableStore();\n            // for standard keybindings\n            disposables.add(dom.addDisposableListener(domNode, dom.EventType.KEY_DOWN, (e) => {\n                const keyEvent = new StandardKeyboardEvent(e);\n                const shouldPreventDefault = this._dispatch(keyEvent, keyEvent.target);\n                if (shouldPreventDefault) {\n                    keyEvent.preventDefault();\n                    keyEvent.stopPropagation();\n                }\n            }));\n            // for single modifier chord keybindings (e.g. shift shift)\n            disposables.add(dom.addDisposableListener(domNode, dom.EventType.KEY_UP, (e) => {\n                const keyEvent = new StandardKeyboardEvent(e);\n                const shouldPreventDefault = this._singleModifierDispatch(keyEvent, keyEvent.target);\n                if (shouldPreventDefault) {\n                    keyEvent.preventDefault();\n                }\n            }));\n            this._domNodeListeners.push(new DomNodeListeners(domNode, disposables));\n        };\n        const removeContainer = (domNode) => {\n            for (let i = 0; i < this._domNodeListeners.length; i++) {\n                const domNodeListeners = this._domNodeListeners[i];\n                if (domNodeListeners.domNode === domNode) {\n                    this._domNodeListeners.splice(i, 1);\n                    domNodeListeners.dispose();\n                }\n            }\n        };\n        const addCodeEditor = (codeEditor) => {\n            if (codeEditor.getOption(54 /* inDiffEditor */)) {\n                return;\n            }\n            addContainer(codeEditor.getContainerDomNode());\n        };\n        const removeCodeEditor = (codeEditor) => {\n            if (codeEditor.getOption(54 /* inDiffEditor */)) {\n                return;\n            }\n            removeContainer(codeEditor.getContainerDomNode());\n        };\n        this._register(codeEditorService.onCodeEditorAdd(addCodeEditor));\n        this._register(codeEditorService.onCodeEditorRemove(removeCodeEditor));\n        codeEditorService.listCodeEditors().forEach(addCodeEditor);\n        const addDiffEditor = (diffEditor) => {\n            addContainer(diffEditor.getContainerDomNode());\n        };\n        const removeDiffEditor = (diffEditor) => {\n            removeContainer(diffEditor.getContainerDomNode());\n        };\n        this._register(codeEditorService.onDiffEditorAdd(addDiffEditor));\n        this._register(codeEditorService.onDiffEditorRemove(removeDiffEditor));\n        codeEditorService.listDiffEditors().forEach(addDiffEditor);\n    }\n    addDynamicKeybinding(commandId, _keybinding, handler, when) {\n        const keybinding = createKeybinding(_keybinding, OS);\n        const toDispose = new DisposableStore();\n        if (keybinding) {\n            this._dynamicKeybindings.push({\n                keybinding: keybinding.parts,\n                command: commandId,\n                when: when,\n                weight1: 1000,\n                weight2: 0,\n                extensionId: null,\n                isBuiltinExtension: false\n            });\n            toDispose.add(toDisposable(() => {\n                for (let i = 0; i < this._dynamicKeybindings.length; i++) {\n                    const kb = this._dynamicKeybindings[i];\n                    if (kb.command === commandId) {\n                        this._dynamicKeybindings.splice(i, 1);\n                        this.updateResolver({ source: 1 /* Default */ });\n                        return;\n                    }\n                }\n            }));\n        }\n        toDispose.add(CommandsRegistry.registerCommand(commandId, handler));\n        this.updateResolver({ source: 1 /* Default */ });\n        return toDispose;\n    }\n    updateResolver(event) {\n        this._cachedResolver = null;\n        this._onDidUpdateKeybindings.fire(event);\n    }\n    _getResolver() {\n        if (!this._cachedResolver) {\n            const defaults = this._toNormalizedKeybindingItems(KeybindingsRegistry.getDefaultKeybindings(), true);\n            const overrides = this._toNormalizedKeybindingItems(this._dynamicKeybindings, false);\n            this._cachedResolver = new KeybindingResolver(defaults, overrides, (str) => this._log(str));\n        }\n        return this._cachedResolver;\n    }\n    _documentHasFocus() {\n        return document.hasFocus();\n    }\n    _toNormalizedKeybindingItems(items, isDefault) {\n        const result = [];\n        let resultLen = 0;\n        for (const item of items) {\n            const when = item.when || undefined;\n            const keybinding = item.keybinding;\n            if (!keybinding) {\n                // This might be a removal keybinding item in user settings => accept it\n                result[resultLen++] = new ResolvedKeybindingItem(undefined, item.command, item.commandArgs, when, isDefault, null, false);\n            }\n            else {\n                const resolvedKeybindings = USLayoutResolvedKeybinding.resolveUserBinding(keybinding, OS);\n                for (const resolvedKeybinding of resolvedKeybindings) {\n                    result[resultLen++] = new ResolvedKeybindingItem(resolvedKeybinding, item.command, item.commandArgs, when, isDefault, null, false);\n                }\n            }\n        }\n        return result;\n    }\n    resolveKeyboardEvent(keyboardEvent) {\n        const keybinding = new SimpleKeybinding(keyboardEvent.ctrlKey, keyboardEvent.shiftKey, keyboardEvent.altKey, keyboardEvent.metaKey, keyboardEvent.keyCode).toChord();\n        return new USLayoutResolvedKeybinding(keybinding, OS);\n    }\n};\nStandaloneKeybindingService = __decorate([\n    __param(0, IContextKeyService),\n    __param(1, ICommandService),\n    __param(2, ITelemetryService),\n    __param(3, INotificationService),\n    __param(4, ILogService),\n    __param(5, ICodeEditorService)\n], StandaloneKeybindingService);\nexport { StandaloneKeybindingService };\nclass DomNodeListeners extends Disposable {\n    constructor(domNode, disposables) {\n        super();\n        this.domNode = domNode;\n        this._register(disposables);\n    }\n}\nfunction isConfigurationOverrides(thing) {\n    return thing\n        && typeof thing === 'object'\n        && (!thing.overrideIdentifier || typeof thing.overrideIdentifier === 'string')\n        && (!thing.resource || thing.resource instanceof URI);\n}\nexport class StandaloneConfigurationService {\n    constructor() {\n        this._onDidChangeConfiguration = new Emitter();\n        this.onDidChangeConfiguration = this._onDidChangeConfiguration.event;\n        this._configuration = new Configuration(new DefaultConfigurationModel(), new ConfigurationModel());\n    }\n    getValue(arg1, arg2) {\n        const section = typeof arg1 === 'string' ? arg1 : undefined;\n        const overrides = isConfigurationOverrides(arg1) ? arg1 : isConfigurationOverrides(arg2) ? arg2 : {};\n        return this._configuration.getValue(section, overrides, undefined);\n    }\n    updateValues(values) {\n        const previous = { data: this._configuration.toData() };\n        const changedKeys = [];\n        for (const entry of values) {\n            const [key, value] = entry;\n            if (this.getValue(key) === value) {\n                continue;\n            }\n            this._configuration.updateValue(key, value);\n            changedKeys.push(key);\n        }\n        if (changedKeys.length > 0) {\n            const configurationChangeEvent = new ConfigurationChangeEvent({ keys: changedKeys, overrides: [] }, previous, this._configuration);\n            configurationChangeEvent.source = 7 /* MEMORY */;\n            configurationChangeEvent.sourceConfig = null;\n            this._onDidChangeConfiguration.fire(configurationChangeEvent);\n        }\n        return Promise.resolve();\n    }\n    updateValue(key, value, arg3, arg4) {\n        return this.updateValues([[key, value]]);\n    }\n    inspect(key, options = {}) {\n        return this._configuration.inspect(key, options, undefined);\n    }\n}\nlet StandaloneResourceConfigurationService = class StandaloneResourceConfigurationService {\n    constructor(configurationService) {\n        this.configurationService = configurationService;\n        this._onDidChangeConfiguration = new Emitter();\n        this.configurationService.onDidChangeConfiguration((e) => {\n            this._onDidChangeConfiguration.fire({ affectedKeys: e.affectedKeys, affectsConfiguration: (resource, configuration) => e.affectsConfiguration(configuration) });\n        });\n    }\n    getValue(resource, arg2, arg3) {\n        const position = Pos.isIPosition(arg2) ? arg2 : null;\n        const section = position ? (typeof arg3 === 'string' ? arg3 : undefined) : (typeof arg2 === 'string' ? arg2 : undefined);\n        if (typeof section === 'undefined') {\n            return this.configurationService.getValue();\n        }\n        return this.configurationService.getValue(section);\n    }\n};\nStandaloneResourceConfigurationService = __decorate([\n    __param(0, IConfigurationService)\n], StandaloneResourceConfigurationService);\nlet StandaloneResourcePropertiesService = class StandaloneResourcePropertiesService {\n    constructor(configurationService) {\n        this.configurationService = configurationService;\n    }\n    getEOL(resource, language) {\n        const eol = this.configurationService.getValue('files.eol', { overrideIdentifier: language, resource });\n        if (eol && typeof eol === 'string' && eol !== 'auto') {\n            return eol;\n        }\n        return (isLinux || isMacintosh) ? '\\n' : '\\r\\n';\n    }\n};\nStandaloneResourcePropertiesService = __decorate([\n    __param(0, IConfigurationService)\n], StandaloneResourcePropertiesService);\nclass StandaloneTelemetryService {\n    publicLog(eventName, data) {\n        return Promise.resolve(undefined);\n    }\n    publicLog2(eventName, data) {\n        return this.publicLog(eventName, data);\n    }\n}\nclass StandaloneWorkspaceContextService {\n    constructor() {\n        const resource = URI.from({ scheme: StandaloneWorkspaceContextService.SCHEME, authority: 'model', path: '/' });\n        this.workspace = { id: '4064f6ec-cb38-4ad0-af64-ee6467e63c82', folders: [new WorkspaceFolder({ uri: resource, name: '', index: 0 })] };\n    }\n    getWorkspace() {\n        return this.workspace;\n    }\n}\nStandaloneWorkspaceContextService.SCHEME = 'inmemory';\nexport function updateConfigurationService(configurationService, source, isDiffEditor) {\n    if (!source) {\n        return;\n    }\n    if (!(configurationService instanceof StandaloneConfigurationService)) {\n        return;\n    }\n    const toUpdate = [];\n    Object.keys(source).forEach((key) => {\n        if (isEditorConfigurationKey(key)) {\n            toUpdate.push([`editor.${key}`, source[key]]);\n        }\n        if (isDiffEditor && isDiffEditorConfigurationKey(key)) {\n            toUpdate.push([`diffEditor.${key}`, source[key]]);\n        }\n    });\n    if (toUpdate.length > 0) {\n        configurationService.updateValues(toUpdate);\n    }\n}\nlet StandaloneBulkEditService = class StandaloneBulkEditService {\n    constructor(_modelService) {\n        this._modelService = _modelService;\n        //\n    }\n    hasPreviewHandler() {\n        return false;\n    }\n    apply(edits, _options) {\n        return __awaiter(this, void 0, void 0, function* () {\n            const textEdits = new Map();\n            for (let edit of edits) {\n                if (!(edit instanceof ResourceTextEdit)) {\n                    throw new Error('bad edit - only text edits are supported');\n                }\n                const model = this._modelService.getModel(edit.resource);\n                if (!model) {\n                    throw new Error('bad edit - model not found');\n                }\n                if (typeof edit.versionId === 'number' && model.getVersionId() !== edit.versionId) {\n                    throw new Error('bad state - model changed in the meantime');\n                }\n                let array = textEdits.get(model);\n                if (!array) {\n                    array = [];\n                    textEdits.set(model, array);\n                }\n                array.push(EditOperation.replaceMove(Range.lift(edit.textEdit.range), edit.textEdit.text));\n            }\n            let totalEdits = 0;\n            let totalFiles = 0;\n            for (const [model, edits] of textEdits) {\n                model.pushStackElement();\n                model.pushEditOperations([], edits, () => []);\n                model.pushStackElement();\n                totalFiles += 1;\n                totalEdits += edits.length;\n            }\n            return {\n                ariaSummary: strings.format(StandaloneServicesNLS.bulkEditServiceSummary, totalEdits, totalFiles)\n            };\n        });\n    }\n};\nStandaloneBulkEditService = __decorate([\n    __param(0, IModelService)\n], StandaloneBulkEditService);\nclass StandaloneUriLabelService {\n    getUriLabel(resource, options) {\n        if (resource.scheme === 'file') {\n            return resource.fsPath;\n        }\n        return resource.path;\n    }\n}\nlet StandaloneContextViewService = class StandaloneContextViewService extends ContextViewService {\n    constructor(layoutService, _codeEditorService) {\n        super(layoutService);\n        this._codeEditorService = _codeEditorService;\n    }\n    showContextView(delegate, container, shadowRoot) {\n        if (!container) {\n            const codeEditor = this._codeEditorService.getFocusedCodeEditor() || this._codeEditorService.getActiveCodeEditor();\n            if (codeEditor) {\n                container = codeEditor.getContainerDomNode();\n            }\n        }\n        return super.showContextView(delegate, container, shadowRoot);\n    }\n};\nStandaloneContextViewService = __decorate([\n    __param(0, ILayoutService),\n    __param(1, ICodeEditorService)\n], StandaloneContextViewService);\nclass StandaloneWorkspaceTrustManagementService {\n    constructor() {\n        this._neverEmitter = new Emitter();\n        this.onDidChangeTrust = this._neverEmitter.event;\n    }\n    isWorkspaceTrusted() {\n        return true;\n    }\n}\nclass StandaloneLanguageService extends LanguageService {\n    constructor() {\n        super();\n    }\n}\nclass StandaloneLogService extends LogService {\n    constructor() {\n        super(new ConsoleLogger());\n    }\n}\nlet StandaloneContextMenuService = class StandaloneContextMenuService extends ContextMenuService {\n    constructor(telemetryService, notificationService, contextViewService, keybindingService, themeService) {\n        super(telemetryService, notificationService, contextViewService, keybindingService, themeService);\n        this.configure({ blockMouse: false }); // we do not want that in the standalone editor\n    }\n};\nStandaloneContextMenuService = __decorate([\n    __param(0, ITelemetryService),\n    __param(1, INotificationService),\n    __param(2, IContextViewService),\n    __param(3, IKeybindingService),\n    __param(4, IThemeService)\n], StandaloneContextMenuService);\nregisterSingleton(IConfigurationService, StandaloneConfigurationService);\nregisterSingleton(ITextResourceConfigurationService, StandaloneResourceConfigurationService);\nregisterSingleton(ITextResourcePropertiesService, StandaloneResourcePropertiesService);\nregisterSingleton(IWorkspaceContextService, StandaloneWorkspaceContextService);\nregisterSingleton(ILabelService, StandaloneUriLabelService);\nregisterSingleton(ITelemetryService, StandaloneTelemetryService);\nregisterSingleton(IDialogService, StandaloneDialogService);\nregisterSingleton(INotificationService, StandaloneNotificationService);\nregisterSingleton(IMarkerService, MarkerService);\nregisterSingleton(ILanguageService, StandaloneLanguageService);\nregisterSingleton(IStandaloneThemeService, StandaloneThemeService);\nregisterSingleton(ILogService, StandaloneLogService);\nregisterSingleton(IModelService, ModelService);\nregisterSingleton(IMarkerDecorationsService, MarkerDecorationsService);\nregisterSingleton(IContextKeyService, ContextKeyService);\nregisterSingleton(IEditorProgressService, StandaloneEditorProgressService);\nregisterSingleton(IStorageService, InMemoryStorageService);\nregisterSingleton(IEditorWorkerService, EditorWorkerService);\nregisterSingleton(IBulkEditService, StandaloneBulkEditService);\nregisterSingleton(IWorkspaceTrustManagementService, StandaloneWorkspaceTrustManagementService);\nregisterSingleton(ITextModelService, StandaloneTextModelService);\nregisterSingleton(IAccessibilityService, AccessibilityService);\nregisterSingleton(IListService, ListService);\nregisterSingleton(ICommandService, StandaloneCommandService);\nregisterSingleton(IKeybindingService, StandaloneKeybindingService);\nregisterSingleton(IQuickInputService, StandaloneQuickInputService);\nregisterSingleton(IContextViewService, StandaloneContextViewService);\nregisterSingleton(IOpenerService, OpenerService);\nregisterSingleton(IClipboardService, BrowserClipboardService);\nregisterSingleton(IContextMenuService, StandaloneContextMenuService);\nregisterSingleton(IMenuService, MenuService);\n/**\n * We don't want to eagerly instantiate services because embedders get a one time chance\n * to override services when they create the first editor.\n */\nexport var StandaloneServices;\n(function (StandaloneServices) {\n    const serviceCollection = new ServiceCollection();\n    for (const [id, descriptor] of getSingletonServiceDescriptors()) {\n        serviceCollection.set(id, descriptor);\n    }\n    const instantiationService = new InstantiationService(serviceCollection, true);\n    serviceCollection.set(IInstantiationService, instantiationService);\n    function get(serviceId) {\n        const r = serviceCollection.get(serviceId);\n        if (!r) {\n            throw new Error('Missing service ' + serviceId);\n        }\n        if (r instanceof SyncDescriptor) {\n            return instantiationService.invokeFunction((accessor) => accessor.get(serviceId));\n        }\n        else {\n            return r;\n        }\n    }\n    StandaloneServices.get = get;\n    let initialized = false;\n    function initialize(overrides) {\n        if (initialized) {\n            return instantiationService;\n        }\n        initialized = true;\n        // Add singletons that were registered after this module loaded\n        for (const [id, descriptor] of getSingletonServiceDescriptors()) {\n            if (!serviceCollection.get(id)) {\n                serviceCollection.set(id, descriptor);\n            }\n        }\n        // Initialize the service collection with the overrides, but only if the\n        // service was not instantiated in the meantime.\n        for (const serviceId in overrides) {\n            if (overrides.hasOwnProperty(serviceId)) {\n                const serviceIdentifier = createDecorator(serviceId);\n                const r = serviceCollection.get(serviceIdentifier);\n                if (r instanceof SyncDescriptor) {\n                    serviceCollection.set(serviceIdentifier, overrides[serviceId]);\n                }\n            }\n        }\n        return instantiationService;\n    }\n    StandaloneServices.initialize = initialize;\n})(StandaloneServices || (StandaloneServices = {}));\n",
+      "start": 1711096855082,
+      "end": 1711096855169,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855169,
+      "end": 1711096855169,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855169,
+      "end": 1711096855169,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855169,
+      "end": 1711096855169,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855170,
+      "end": 1711096855170,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855170,
+      "end": 1711096855171,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855171,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855173,
+      "end": 1711096855173,
+      "order": "normal"
+    }
+  ]
+}

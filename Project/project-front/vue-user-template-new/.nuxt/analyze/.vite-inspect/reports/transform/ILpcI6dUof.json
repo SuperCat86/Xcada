@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/actions/common/actions.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { Separator, SubmenuAction } from '../../../base/common/actions.js';\nimport { CSSIcon } from '../../../base/common/codicons.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { Iterable } from '../../../base/common/iterator.js';\nimport { toDisposable } from '../../../base/common/lifecycle.js';\nimport { LinkedList } from '../../../base/common/linkedList.js';\nimport { ICommandService } from '../../commands/common/commands.js';\nimport { IContextKeyService } from '../../contextkey/common/contextkey.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nimport { ThemeIcon } from '../../theme/common/themeService.js';\nexport function isIMenuItem(item) {\n    return item.command !== undefined;\n}\nexport class MenuId {\n    constructor(debugName) {\n        this.id = MenuId._idPool++;\n        this._debugName = debugName;\n    }\n}\nMenuId._idPool = 0;\nMenuId.CommandPalette = new MenuId('CommandPalette');\nMenuId.DebugBreakpointsContext = new MenuId('DebugBreakpointsContext');\nMenuId.DebugCallStackContext = new MenuId('DebugCallStackContext');\nMenuId.DebugConsoleContext = new MenuId('DebugConsoleContext');\nMenuId.DebugVariablesContext = new MenuId('DebugVariablesContext');\nMenuId.DebugWatchContext = new MenuId('DebugWatchContext');\nMenuId.DebugToolBar = new MenuId('DebugToolBar');\nMenuId.EditorContext = new MenuId('EditorContext');\nMenuId.SimpleEditorContext = new MenuId('SimpleEditorContext');\nMenuId.EditorContextCopy = new MenuId('EditorContextCopy');\nMenuId.EditorContextPeek = new MenuId('EditorContextPeek');\nMenuId.EditorTitle = new MenuId('EditorTitle');\nMenuId.EditorTitleRun = new MenuId('EditorTitleRun');\nMenuId.EditorTitleContext = new MenuId('EditorTitleContext');\nMenuId.EmptyEditorGroup = new MenuId('EmptyEditorGroup');\nMenuId.EmptyEditorGroupContext = new MenuId('EmptyEditorGroupContext');\nMenuId.ExplorerContext = new MenuId('ExplorerContext');\nMenuId.ExtensionContext = new MenuId('ExtensionContext');\nMenuId.GlobalActivity = new MenuId('GlobalActivity');\nMenuId.LayoutControlMenuSubmenu = new MenuId('LayoutControlMenuSubmenu');\nMenuId.LayoutControlMenu = new MenuId('LayoutControlMenu');\nMenuId.MenubarMainMenu = new MenuId('MenubarMainMenu');\nMenuId.MenubarAppearanceMenu = new MenuId('MenubarAppearanceMenu');\nMenuId.MenubarDebugMenu = new MenuId('MenubarDebugMenu');\nMenuId.MenubarEditMenu = new MenuId('MenubarEditMenu');\nMenuId.MenubarCopy = new MenuId('MenubarCopy');\nMenuId.MenubarFileMenu = new MenuId('MenubarFileMenu');\nMenuId.MenubarGoMenu = new MenuId('MenubarGoMenu');\nMenuId.MenubarHelpMenu = new MenuId('MenubarHelpMenu');\nMenuId.MenubarLayoutMenu = new MenuId('MenubarLayoutMenu');\nMenuId.MenubarNewBreakpointMenu = new MenuId('MenubarNewBreakpointMenu');\nMenuId.MenubarPanelAlignmentMenu = new MenuId('MenubarPanelAlignmentMenu');\nMenuId.MenubarPanelPositionMenu = new MenuId('MenubarPanelPositionMenu');\nMenuId.MenubarPreferencesMenu = new MenuId('MenubarPreferencesMenu');\nMenuId.MenubarRecentMenu = new MenuId('MenubarRecentMenu');\nMenuId.MenubarSelectionMenu = new MenuId('MenubarSelectionMenu');\nMenuId.MenubarSwitchEditorMenu = new MenuId('MenubarSwitchEditorMenu');\nMenuId.MenubarSwitchGroupMenu = new MenuId('MenubarSwitchGroupMenu');\nMenuId.MenubarTerminalMenu = new MenuId('MenubarTerminalMenu');\nMenuId.MenubarViewMenu = new MenuId('MenubarViewMenu');\nMenuId.MenubarHomeMenu = new MenuId('MenubarHomeMenu');\nMenuId.OpenEditorsContext = new MenuId('OpenEditorsContext');\nMenuId.ProblemsPanelContext = new MenuId('ProblemsPanelContext');\nMenuId.SCMChangeContext = new MenuId('SCMChangeContext');\nMenuId.SCMResourceContext = new MenuId('SCMResourceContext');\nMenuId.SCMResourceFolderContext = new MenuId('SCMResourceFolderContext');\nMenuId.SCMResourceGroupContext = new MenuId('SCMResourceGroupContext');\nMenuId.SCMSourceControl = new MenuId('SCMSourceControl');\nMenuId.SCMTitle = new MenuId('SCMTitle');\nMenuId.SearchContext = new MenuId('SearchContext');\nMenuId.StatusBarWindowIndicatorMenu = new MenuId('StatusBarWindowIndicatorMenu');\nMenuId.StatusBarRemoteIndicatorMenu = new MenuId('StatusBarRemoteIndicatorMenu');\nMenuId.TestItem = new MenuId('TestItem');\nMenuId.TestItemGutter = new MenuId('TestItemGutter');\nMenuId.TestPeekElement = new MenuId('TestPeekElement');\nMenuId.TestPeekTitle = new MenuId('TestPeekTitle');\nMenuId.TouchBarContext = new MenuId('TouchBarContext');\nMenuId.TitleBarContext = new MenuId('TitleBarContext');\nMenuId.TunnelContext = new MenuId('TunnelContext');\nMenuId.TunnelPrivacy = new MenuId('TunnelPrivacy');\nMenuId.TunnelProtocol = new MenuId('TunnelProtocol');\nMenuId.TunnelPortInline = new MenuId('TunnelInline');\nMenuId.TunnelTitle = new MenuId('TunnelTitle');\nMenuId.TunnelLocalAddressInline = new MenuId('TunnelLocalAddressInline');\nMenuId.TunnelOriginInline = new MenuId('TunnelOriginInline');\nMenuId.ViewItemContext = new MenuId('ViewItemContext');\nMenuId.ViewContainerTitle = new MenuId('ViewContainerTitle');\nMenuId.ViewContainerTitleContext = new MenuId('ViewContainerTitleContext');\nMenuId.ViewTitle = new MenuId('ViewTitle');\nMenuId.ViewTitleContext = new MenuId('ViewTitleContext');\nMenuId.CommentThreadTitle = new MenuId('CommentThreadTitle');\nMenuId.CommentThreadActions = new MenuId('CommentThreadActions');\nMenuId.CommentTitle = new MenuId('CommentTitle');\nMenuId.CommentActions = new MenuId('CommentActions');\nMenuId.InteractiveToolbar = new MenuId('InteractiveToolbar');\nMenuId.InteractiveCellTitle = new MenuId('InteractiveCellTitle');\nMenuId.InteractiveCellExecute = new MenuId('InteractiveCellExecute');\nMenuId.InteractiveInputExecute = new MenuId('InteractiveInputExecute');\nMenuId.NotebookToolbar = new MenuId('NotebookToolbar');\nMenuId.NotebookCellTitle = new MenuId('NotebookCellTitle');\nMenuId.NotebookCellInsert = new MenuId('NotebookCellInsert');\nMenuId.NotebookCellBetween = new MenuId('NotebookCellBetween');\nMenuId.NotebookCellListTop = new MenuId('NotebookCellTop');\nMenuId.NotebookCellExecute = new MenuId('NotebookCellExecute');\nMenuId.NotebookCellExecutePrimary = new MenuId('NotebookCellExecutePrimary');\nMenuId.NotebookDiffCellInputTitle = new MenuId('NotebookDiffCellInputTitle');\nMenuId.NotebookDiffCellMetadataTitle = new MenuId('NotebookDiffCellMetadataTitle');\nMenuId.NotebookDiffCellOutputsTitle = new MenuId('NotebookDiffCellOutputsTitle');\nMenuId.NotebookOutputToolbar = new MenuId('NotebookOutputToolbar');\nMenuId.NotebookEditorLayoutConfigure = new MenuId('NotebookEditorLayoutConfigure');\nMenuId.BulkEditTitle = new MenuId('BulkEditTitle');\nMenuId.BulkEditContext = new MenuId('BulkEditContext');\nMenuId.TimelineItemContext = new MenuId('TimelineItemContext');\nMenuId.TimelineTitle = new MenuId('TimelineTitle');\nMenuId.TimelineTitleContext = new MenuId('TimelineTitleContext');\nMenuId.AccountsContext = new MenuId('AccountsContext');\nMenuId.PanelTitle = new MenuId('PanelTitle');\nMenuId.AuxiliaryBarTitle = new MenuId('AuxiliaryBarTitle');\nMenuId.TerminalInstanceContext = new MenuId('TerminalInstanceContext');\nMenuId.TerminalEditorInstanceContext = new MenuId('TerminalEditorInstanceContext');\nMenuId.TerminalNewDropdownContext = new MenuId('TerminalNewDropdownContext');\nMenuId.TerminalTabContext = new MenuId('TerminalTabContext');\nMenuId.TerminalTabEmptyAreaContext = new MenuId('TerminalTabEmptyAreaContext');\nMenuId.TerminalInlineTabContext = new MenuId('TerminalInlineTabContext');\nMenuId.WebviewContext = new MenuId('WebviewContext');\nMenuId.InlineCompletionsActions = new MenuId('InlineCompletionsActions');\nMenuId.NewFile = new MenuId('NewFile');\nexport const IMenuService = createDecorator('menuService');\nexport const MenuRegistry = new class {\n    constructor() {\n        this._commands = new Map();\n        this._menuItems = new Map();\n        this._onDidChangeMenu = new Emitter();\n        this.onDidChangeMenu = this._onDidChangeMenu.event;\n        this._commandPaletteChangeEvent = {\n            has: id => id === MenuId.CommandPalette\n        };\n    }\n    addCommand(command) {\n        return this.addCommands(Iterable.single(command));\n    }\n    addCommands(commands) {\n        for (const command of commands) {\n            this._commands.set(command.id, command);\n        }\n        this._onDidChangeMenu.fire(this._commandPaletteChangeEvent);\n        return toDisposable(() => {\n            let didChange = false;\n            for (const command of commands) {\n                didChange = this._commands.delete(command.id) || didChange;\n            }\n            if (didChange) {\n                this._onDidChangeMenu.fire(this._commandPaletteChangeEvent);\n            }\n        });\n    }\n    getCommand(id) {\n        return this._commands.get(id);\n    }\n    getCommands() {\n        const map = new Map();\n        this._commands.forEach((value, key) => map.set(key, value));\n        return map;\n    }\n    appendMenuItem(id, item) {\n        return this.appendMenuItems(Iterable.single({ id, item }));\n    }\n    appendMenuItems(items) {\n        const changedIds = new Set();\n        const toRemove = new LinkedList();\n        for (const { id, item } of items) {\n            let list = this._menuItems.get(id);\n            if (!list) {\n                list = new LinkedList();\n                this._menuItems.set(id, list);\n            }\n            toRemove.push(list.push(item));\n            changedIds.add(id);\n        }\n        this._onDidChangeMenu.fire(changedIds);\n        return toDisposable(() => {\n            if (toRemove.size > 0) {\n                for (let fn of toRemove) {\n                    fn();\n                }\n                this._onDidChangeMenu.fire(changedIds);\n                toRemove.clear();\n            }\n        });\n    }\n    getMenuItems(id) {\n        let result;\n        if (this._menuItems.has(id)) {\n            result = [...this._menuItems.get(id)];\n        }\n        else {\n            result = [];\n        }\n        if (id === MenuId.CommandPalette) {\n            // CommandPalette is special because it shows\n            // all commands by default\n            this._appendImplicitItems(result);\n        }\n        return result;\n    }\n    _appendImplicitItems(result) {\n        const set = new Set();\n        for (const item of result) {\n            if (isIMenuItem(item)) {\n                set.add(item.command.id);\n                if (item.alt) {\n                    set.add(item.alt.id);\n                }\n            }\n        }\n        this._commands.forEach((command, id) => {\n            if (!set.has(id)) {\n                result.push({ command });\n            }\n        });\n    }\n};\nexport class SubmenuItemAction extends SubmenuAction {\n    constructor(item, _menuService, _contextKeyService, _options) {\n        super(`submenuitem.${item.submenu.id}`, typeof item.title === 'string' ? item.title : item.title.value, [], 'submenu');\n        this.item = item;\n        this._menuService = _menuService;\n        this._contextKeyService = _contextKeyService;\n        this._options = _options;\n    }\n    get actions() {\n        const result = [];\n        const menu = this._menuService.createMenu(this.item.submenu, this._contextKeyService);\n        const groups = menu.getActions(this._options);\n        menu.dispose();\n        for (const [, actions] of groups) {\n            if (actions.length > 0) {\n                result.push(...actions);\n                result.push(new Separator());\n            }\n        }\n        if (result.length) {\n            result.pop(); // remove last separator\n        }\n        return result;\n    }\n}\n// implements IAction, does NOT extend Action, so that no one\n// subscribes to events of Action or modified properties\nlet MenuItemAction = class MenuItemAction {\n    constructor(item, alt, options, contextKeyService, _commandService) {\n        var _a, _b;\n        this._commandService = _commandService;\n        this.id = item.id;\n        this.label = (options === null || options === void 0 ? void 0 : options.renderShortTitle) && item.shortTitle\n            ? (typeof item.shortTitle === 'string' ? item.shortTitle : item.shortTitle.value)\n            : (typeof item.title === 'string' ? item.title : item.title.value);\n        this.tooltip = (_b = (typeof item.tooltip === 'string' ? item.tooltip : (_a = item.tooltip) === null || _a === void 0 ? void 0 : _a.value)) !== null && _b !== void 0 ? _b : '';\n        this.enabled = !item.precondition || contextKeyService.contextMatchesRules(item.precondition);\n        this.checked = undefined;\n        if (item.toggled) {\n            const toggled = (item.toggled.condition ? item.toggled : { condition: item.toggled });\n            this.checked = contextKeyService.contextMatchesRules(toggled.condition);\n            if (this.checked && toggled.tooltip) {\n                this.tooltip = typeof toggled.tooltip === 'string' ? toggled.tooltip : toggled.tooltip.value;\n            }\n            if (toggled.title) {\n                this.label = typeof toggled.title === 'string' ? toggled.title : toggled.title.value;\n            }\n        }\n        this.item = item;\n        this.alt = alt ? new MenuItemAction(alt, undefined, options, contextKeyService, _commandService) : undefined;\n        this._options = options;\n        if (ThemeIcon.isThemeIcon(item.icon)) {\n            this.class = CSSIcon.asClassName(item.icon);\n        }\n    }\n    dispose() {\n        // there is NOTHING to dispose and the MenuItemAction should\n        // never have anything to dispose as it is a convenience type\n        // to bridge into the rendering world.\n    }\n    run(...args) {\n        var _a, _b;\n        let runArgs = [];\n        if ((_a = this._options) === null || _a === void 0 ? void 0 : _a.arg) {\n            runArgs = [...runArgs, this._options.arg];\n        }\n        if ((_b = this._options) === null || _b === void 0 ? void 0 : _b.shouldForwardArgs) {\n            runArgs = [...runArgs, ...args];\n        }\n        return this._commandService.executeCommand(this.id, ...runArgs);\n    }\n};\nMenuItemAction = __decorate([\n    __param(3, IContextKeyService),\n    __param(4, ICommandService)\n], MenuItemAction);\nexport { MenuItemAction };\n//#endregion\n",
+      "start": 1711096855447,
+      "end": 1711096855593,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855593,
+      "end": 1711096855593,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855594,
+      "end": 1711096855594,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855594,
+      "end": 1711096855595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855595,
+      "end": 1711096855595,
+      "order": "normal"
+    }
+  ]
+}

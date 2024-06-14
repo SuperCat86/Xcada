@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/common/buffer.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "const hasBuffer = (typeof Buffer !== 'undefined');\nlet textDecoder;\nexport class VSBuffer {\n    constructor(buffer) {\n        this.buffer = buffer;\n        this.byteLength = this.buffer.byteLength;\n    }\n    /**\n     * When running in a nodejs context, if `actual` is not a nodejs Buffer, the backing store for\n     * the returned `VSBuffer` instance might use a nodejs Buffer allocated from node's Buffer pool,\n     * which is not transferrable.\n     */\n    static wrap(actual) {\n        if (hasBuffer && !(Buffer.isBuffer(actual))) {\n            // https://nodejs.org/dist/latest-v10.x/docs/api/buffer.html#buffer_class_method_buffer_from_arraybuffer_byteoffset_length\n            // Create a zero-copy Buffer wrapper around the ArrayBuffer pointed to by the Uint8Array\n            actual = Buffer.from(actual.buffer, actual.byteOffset, actual.byteLength);\n        }\n        return new VSBuffer(actual);\n    }\n    toString() {\n        if (hasBuffer) {\n            return this.buffer.toString();\n        }\n        else {\n            if (!textDecoder) {\n                textDecoder = new TextDecoder();\n            }\n            return textDecoder.decode(this.buffer);\n        }\n    }\n}\nexport function readUInt16LE(source, offset) {\n    return (((source[offset + 0] << 0) >>> 0) |\n        ((source[offset + 1] << 8) >>> 0));\n}\nexport function writeUInt16LE(destination, value, offset) {\n    destination[offset + 0] = (value & 0b11111111);\n    value = value >>> 8;\n    destination[offset + 1] = (value & 0b11111111);\n}\nexport function readUInt32BE(source, offset) {\n    return (source[offset] * Math.pow(2, 24)\n        + source[offset + 1] * Math.pow(2, 16)\n        + source[offset + 2] * Math.pow(2, 8)\n        + source[offset + 3]);\n}\nexport function writeUInt32BE(destination, value, offset) {\n    destination[offset + 3] = value;\n    value = value >>> 8;\n    destination[offset + 2] = value;\n    value = value >>> 8;\n    destination[offset + 1] = value;\n    value = value >>> 8;\n    destination[offset] = value;\n}\nexport function readUInt8(source, offset) {\n    return source[offset];\n}\nexport function writeUInt8(destination, value, offset) {\n    destination[offset] = value;\n}\n",
+      "start": 1711096856519,
+      "end": 1711096856610,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856610,
+      "end": 1711096856610,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856610,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856611,
+      "end": 1711096856611,
+      "order": "normal"
+    }
+  ]
+}

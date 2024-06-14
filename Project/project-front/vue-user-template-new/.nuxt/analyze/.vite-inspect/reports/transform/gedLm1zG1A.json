@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/contextview/browser/contextViewService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { ContextView } from '../../../base/browser/ui/contextview/contextview.js';\nimport { Disposable, toDisposable } from '../../../base/common/lifecycle.js';\nimport { ILayoutService } from '../../layout/browser/layoutService.js';\nlet ContextViewService = class ContextViewService extends Disposable {\n    constructor(layoutService) {\n        super();\n        this.layoutService = layoutService;\n        this.currentViewDisposable = Disposable.None;\n        this.container = layoutService.hasContainer ? layoutService.container : null;\n        this.contextView = this._register(new ContextView(this.container, 1 /* ABSOLUTE */));\n        this.layout();\n        this._register(layoutService.onDidLayout(() => this.layout()));\n    }\n    // ContextView\n    setContainer(container, domPosition) {\n        this.contextView.setContainer(container, domPosition || 1 /* ABSOLUTE */);\n    }\n    showContextView(delegate, container, shadowRoot) {\n        if (container) {\n            if (container !== this.container) {\n                this.container = container;\n                this.setContainer(container, shadowRoot ? 3 /* FIXED_SHADOW */ : 2 /* FIXED */);\n            }\n        }\n        else {\n            if (this.layoutService.hasContainer && this.container !== this.layoutService.container) {\n                this.container = this.layoutService.container;\n                this.setContainer(this.container, 1 /* ABSOLUTE */);\n            }\n        }\n        this.contextView.show(delegate);\n        const disposable = toDisposable(() => {\n            if (this.currentViewDisposable === disposable) {\n                this.hideContextView();\n            }\n        });\n        this.currentViewDisposable = disposable;\n        return disposable;\n    }\n    getContextViewElement() {\n        return this.contextView.getViewElement();\n    }\n    layout() {\n        this.contextView.layout();\n    }\n    hideContextView(data) {\n        this.contextView.hide(data);\n    }\n};\nContextViewService = __decorate([\n    __param(0, ILayoutService)\n], ContextViewService);\nexport { ContextViewService };\n",
+      "start": 1711096856269,
+      "end": 1711096856341,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856341,
+      "end": 1711096856341,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856341,
+      "end": 1711096856342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856342,
+      "end": 1711096856342,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856342,
+      "end": 1711096856343,
+      "order": "normal"
+    }
+  ]
+}

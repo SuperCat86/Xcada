@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/opener/browser/link.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { $, append, EventHelper } from '../../../base/browser/dom.js';\nimport { DomEmitter } from '../../../base/browser/event.js';\nimport { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';\nimport { EventType as TouchEventType, Gesture } from '../../../base/browser/touch.js';\nimport { Event } from '../../../base/common/event.js';\nimport { Disposable } from '../../../base/common/lifecycle.js';\nimport { IOpenerService } from '../common/opener.js';\nimport { textLinkActiveForeground, textLinkForeground } from '../../theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../theme/common/themeService.js';\nlet Link = class Link extends Disposable {\n    constructor(container, _link, options = {}, openerService) {\n        var _a;\n        super();\n        this._link = _link;\n        this._enabled = true;\n        this.el = append(container, $('a.monaco-link', {\n            tabIndex: (_a = _link.tabIndex) !== null && _a !== void 0 ? _a : 0,\n            href: _link.href,\n            title: _link.title\n        }, _link.label));\n        this.el.setAttribute('role', 'button');\n        const onClickEmitter = this._register(new DomEmitter(this.el, 'click'));\n        const onKeyPress = this._register(new DomEmitter(this.el, 'keypress'));\n        const onEnterPress = Event.chain(onKeyPress.event)\n            .map(e => new StandardKeyboardEvent(e))\n            .filter(e => e.keyCode === 3 /* Enter */)\n            .event;\n        const onTap = this._register(new DomEmitter(this.el, TouchEventType.Tap)).event;\n        this._register(Gesture.addTarget(this.el));\n        const onOpen = Event.any(onClickEmitter.event, onEnterPress, onTap);\n        this._register(onOpen(e => {\n            if (!this.enabled) {\n                return;\n            }\n            EventHelper.stop(e, true);\n            if (options === null || options === void 0 ? void 0 : options.opener) {\n                options.opener(this._link.href);\n            }\n            else {\n                openerService.open(this._link.href, { allowCommands: true });\n            }\n        }));\n        this.enabled = true;\n    }\n    get enabled() {\n        return this._enabled;\n    }\n    set enabled(enabled) {\n        if (enabled) {\n            this.el.setAttribute('aria-disabled', 'false');\n            this.el.tabIndex = 0;\n            this.el.style.pointerEvents = 'auto';\n            this.el.style.opacity = '1';\n            this.el.style.cursor = 'pointer';\n            this._enabled = false;\n        }\n        else {\n            this.el.setAttribute('aria-disabled', 'true');\n            this.el.tabIndex = -1;\n            this.el.style.pointerEvents = 'none';\n            this.el.style.opacity = '0.4';\n            this.el.style.cursor = 'default';\n            this._enabled = true;\n        }\n        this._enabled = enabled;\n    }\n};\nLink = __decorate([\n    __param(3, IOpenerService)\n], Link);\nexport { Link };\nregisterThemingParticipant((theme, collector) => {\n    const textLinkForegroundColor = theme.getColor(textLinkForeground);\n    if (textLinkForegroundColor) {\n        collector.addRule(`.monaco-link { color: ${textLinkForegroundColor}; }`);\n    }\n    const textLinkActiveForegroundColor = theme.getColor(textLinkActiveForeground);\n    if (textLinkActiveForegroundColor) {\n        collector.addRule(`.monaco-link:hover { color: ${textLinkActiveForegroundColor}; }`);\n    }\n});\n",
+      "start": 1711096856889,
+      "end": 1711096857046,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857046,
+      "end": 1711096857046,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857046,
+      "end": 1711096857047,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857047,
+      "end": 1711096857047,
+      "order": "normal"
+    }
+  ]
+}

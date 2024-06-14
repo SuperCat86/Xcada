@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/quickinput/browser/pickerQuickAccess.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { timeout } from '../../../base/common/async.js';\nimport { CancellationTokenSource } from '../../../base/common/cancellation.js';\nimport { Disposable, DisposableStore, MutableDisposable } from '../../../base/common/lifecycle.js';\nexport var TriggerAction;\n(function (TriggerAction) {\n    /**\n     * Do nothing after the button was clicked.\n     */\n    TriggerAction[TriggerAction[\"NO_ACTION\"] = 0] = \"NO_ACTION\";\n    /**\n     * Close the picker.\n     */\n    TriggerAction[TriggerAction[\"CLOSE_PICKER\"] = 1] = \"CLOSE_PICKER\";\n    /**\n     * Update the results of the picker.\n     */\n    TriggerAction[TriggerAction[\"REFRESH_PICKER\"] = 2] = \"REFRESH_PICKER\";\n    /**\n     * Remove the item from the picker.\n     */\n    TriggerAction[TriggerAction[\"REMOVE_ITEM\"] = 3] = \"REMOVE_ITEM\";\n})(TriggerAction || (TriggerAction = {}));\nfunction isPicksWithActive(obj) {\n    const candidate = obj;\n    return Array.isArray(candidate.items);\n}\nfunction isFastAndSlowPicks(obj) {\n    const candidate = obj;\n    return !!candidate.picks && candidate.additionalPicks instanceof Promise;\n}\nexport class PickerQuickAccessProvider extends Disposable {\n    constructor(prefix, options) {\n        super();\n        this.prefix = prefix;\n        this.options = options;\n    }\n    provide(picker, token) {\n        var _a;\n        const disposables = new DisposableStore();\n        // Apply options if any\n        picker.canAcceptInBackground = !!((_a = this.options) === null || _a === void 0 ? void 0 : _a.canAcceptInBackground);\n        // Disable filtering & sorting, we control the results\n        picker.matchOnLabel = picker.matchOnDescription = picker.matchOnDetail = picker.sortByLabel = false;\n        // Set initial picks and update on type\n        let picksCts = undefined;\n        const picksDisposable = disposables.add(new MutableDisposable());\n        const updatePickerItems = () => __awaiter(this, void 0, void 0, function* () {\n            const picksDisposables = picksDisposable.value = new DisposableStore();\n            // Cancel any previous ask for picks and busy\n            picksCts === null || picksCts === void 0 ? void 0 : picksCts.dispose(true);\n            picker.busy = false;\n            // Create new cancellation source for this run\n            picksCts = new CancellationTokenSource(token);\n            // Collect picks and support both long running and short or combined\n            const picksToken = picksCts.token;\n            const picksFilter = picker.value.substr(this.prefix.length).trim();\n            const providedPicks = this._getPicks(picksFilter, picksDisposables, picksToken);\n            const applyPicks = (picks, skipEmpty) => {\n                var _a;\n                let items;\n                let activeItem = undefined;\n                if (isPicksWithActive(picks)) {\n                    items = picks.items;\n                    activeItem = picks.active;\n                }\n                else {\n                    items = picks;\n                }\n                if (items.length === 0) {\n                    if (skipEmpty) {\n                        return false;\n                    }\n                    if (picksFilter.length > 0 && ((_a = this.options) === null || _a === void 0 ? void 0 : _a.noResultsPick)) {\n                        items = [this.options.noResultsPick];\n                    }\n                }\n                picker.items = items;\n                if (activeItem) {\n                    picker.activeItems = [activeItem];\n                }\n                return true;\n            };\n            // No Picks\n            if (providedPicks === null) {\n                // Ignore\n            }\n            // Fast and Slow Picks\n            else if (isFastAndSlowPicks(providedPicks)) {\n                let fastPicksApplied = false;\n                let slowPicksApplied = false;\n                yield Promise.all([\n                    // Fast Picks: to reduce amount of flicker, we race against\n                    // the slow picks over 500ms and then set the fast picks.\n                    // If the slow picks are faster, we reduce the flicker by\n                    // only setting the items once.\n                    (() => __awaiter(this, void 0, void 0, function* () {\n                        yield timeout(PickerQuickAccessProvider.FAST_PICKS_RACE_DELAY);\n                        if (picksToken.isCancellationRequested) {\n                            return;\n                        }\n                        if (!slowPicksApplied) {\n                            fastPicksApplied = applyPicks(providedPicks.picks, true /* skip over empty to reduce flicker */);\n                        }\n                    }))(),\n                    // Slow Picks: we await the slow picks and then set them at\n                    // once together with the fast picks, but only if we actually\n                    // have additional results.\n                    (() => __awaiter(this, void 0, void 0, function* () {\n                        picker.busy = true;\n                        try {\n                            const awaitedAdditionalPicks = yield providedPicks.additionalPicks;\n                            if (picksToken.isCancellationRequested) {\n                                return;\n                            }\n                            let picks;\n                            let activePick = undefined;\n                            if (isPicksWithActive(providedPicks.picks)) {\n                                picks = providedPicks.picks.items;\n                                activePick = providedPicks.picks.active;\n                            }\n                            else {\n                                picks = providedPicks.picks;\n                            }\n                            let additionalPicks;\n                            let additionalActivePick = undefined;\n                            if (isPicksWithActive(awaitedAdditionalPicks)) {\n                                additionalPicks = awaitedAdditionalPicks.items;\n                                additionalActivePick = awaitedAdditionalPicks.active;\n                            }\n                            else {\n                                additionalPicks = awaitedAdditionalPicks;\n                            }\n                            if (additionalPicks.length > 0 || !fastPicksApplied) {\n                                // If we do not have any activePick or additionalActivePick\n                                // we try to preserve the currently active pick from the\n                                // fast results. This fixes an issue where the user might\n                                // have made a pick active before the additional results\n                                // kick in.\n                                // See https://github.com/microsoft/vscode/issues/102480\n                                let fallbackActivePick = undefined;\n                                if (!activePick && !additionalActivePick) {\n                                    const fallbackActivePickCandidate = picker.activeItems[0];\n                                    if (fallbackActivePickCandidate && picks.indexOf(fallbackActivePickCandidate) !== -1) {\n                                        fallbackActivePick = fallbackActivePickCandidate;\n                                    }\n                                }\n                                applyPicks({\n                                    items: [...picks, ...additionalPicks],\n                                    active: activePick || additionalActivePick || fallbackActivePick\n                                });\n                            }\n                        }\n                        finally {\n                            if (!picksToken.isCancellationRequested) {\n                                picker.busy = false;\n                            }\n                            slowPicksApplied = true;\n                        }\n                    }))()\n                ]);\n            }\n            // Fast Picks\n            else if (!(providedPicks instanceof Promise)) {\n                applyPicks(providedPicks);\n            }\n            // Slow Picks\n            else {\n                picker.busy = true;\n                try {\n                    const awaitedPicks = yield providedPicks;\n                    if (picksToken.isCancellationRequested) {\n                        return;\n                    }\n                    applyPicks(awaitedPicks);\n                }\n                finally {\n                    if (!picksToken.isCancellationRequested) {\n                        picker.busy = false;\n                    }\n                }\n            }\n        });\n        disposables.add(picker.onDidChangeValue(() => updatePickerItems()));\n        updatePickerItems();\n        // Accept the pick on accept and hide picker\n        disposables.add(picker.onDidAccept(event => {\n            const [item] = picker.selectedItems;\n            if (typeof (item === null || item === void 0 ? void 0 : item.accept) === 'function') {\n                if (!event.inBackground) {\n                    picker.hide(); // hide picker unless we accept in background\n                }\n                item.accept(picker.keyMods, event);\n            }\n        }));\n        // Trigger the pick with button index if button triggered\n        disposables.add(picker.onDidTriggerItemButton(({ button, item }) => __awaiter(this, void 0, void 0, function* () {\n            var _b, _c;\n            if (typeof item.trigger === 'function') {\n                const buttonIndex = (_c = (_b = item.buttons) === null || _b === void 0 ? void 0 : _b.indexOf(button)) !== null && _c !== void 0 ? _c : -1;\n                if (buttonIndex >= 0) {\n                    const result = item.trigger(buttonIndex, picker.keyMods);\n                    const action = (typeof result === 'number') ? result : yield result;\n                    if (token.isCancellationRequested) {\n                        return;\n                    }\n                    switch (action) {\n                        case TriggerAction.NO_ACTION:\n                            break;\n                        case TriggerAction.CLOSE_PICKER:\n                            picker.hide();\n                            break;\n                        case TriggerAction.REFRESH_PICKER:\n                            updatePickerItems();\n                            break;\n                        case TriggerAction.REMOVE_ITEM: {\n                            const index = picker.items.indexOf(item);\n                            if (index !== -1) {\n                                const items = picker.items.slice();\n                                const removed = items.splice(index, 1);\n                                const activeItems = picker.activeItems.filter(activeItem => activeItem !== removed[0]);\n                                const keepScrollPositionBefore = picker.keepScrollPosition;\n                                picker.keepScrollPosition = true;\n                                picker.items = items;\n                                if (activeItems) {\n                                    picker.activeItems = activeItems;\n                                }\n                                picker.keepScrollPosition = keepScrollPositionBefore;\n                            }\n                            break;\n                        }\n                    }\n                }\n            }\n        })));\n        return disposables;\n    }\n}\nPickerQuickAccessProvider.FAST_PICKS_RACE_DELAY = 200; // timeout before we accept fast results before slow results are present\n",
+      "start": 1711096856949,
+      "end": 1711096857100,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857100,
+      "end": 1711096857100,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857100,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857101,
+      "end": 1711096857101,
+      "order": "normal"
+    }
+  ]
+}

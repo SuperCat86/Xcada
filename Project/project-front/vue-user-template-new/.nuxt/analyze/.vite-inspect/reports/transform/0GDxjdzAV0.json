@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/tokens/sparseMultilineTokens.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Position } from '../core/position.js';\nimport { Range } from '../core/range.js';\nimport { countEOL } from '../core/eolCounter.js';\n/**\n * Represents sparse tokens over a contiguous range of lines.\n */\nexport class SparseMultilineTokens {\n    constructor(startLineNumber, tokens) {\n        this._startLineNumber = startLineNumber;\n        this._tokens = tokens;\n        this._endLineNumber = this._startLineNumber + this._tokens.getMaxDeltaLine();\n    }\n    static create(startLineNumber, tokens) {\n        return new SparseMultilineTokens(startLineNumber, new SparseMultilineTokensStorage(tokens));\n    }\n    /**\n     * (Inclusive) start line number for these tokens.\n     */\n    get startLineNumber() {\n        return this._startLineNumber;\n    }\n    /**\n     * (Inclusive) end line number for these tokens.\n     */\n    get endLineNumber() {\n        return this._endLineNumber;\n    }\n    toString() {\n        return this._tokens.toString(this._startLineNumber);\n    }\n    _updateEndLineNumber() {\n        this._endLineNumber = this._startLineNumber + this._tokens.getMaxDeltaLine();\n    }\n    isEmpty() {\n        return this._tokens.isEmpty();\n    }\n    getLineTokens(lineNumber) {\n        if (this._startLineNumber <= lineNumber && lineNumber <= this._endLineNumber) {\n            return this._tokens.getLineTokens(lineNumber - this._startLineNumber);\n        }\n        return null;\n    }\n    getRange() {\n        const deltaRange = this._tokens.getRange();\n        if (!deltaRange) {\n            return deltaRange;\n        }\n        return new Range(this._startLineNumber + deltaRange.startLineNumber, deltaRange.startColumn, this._startLineNumber + deltaRange.endLineNumber, deltaRange.endColumn);\n    }\n    removeTokens(range) {\n        const startLineIndex = range.startLineNumber - this._startLineNumber;\n        const endLineIndex = range.endLineNumber - this._startLineNumber;\n        this._startLineNumber += this._tokens.removeTokens(startLineIndex, range.startColumn - 1, endLineIndex, range.endColumn - 1);\n        this._updateEndLineNumber();\n    }\n    split(range) {\n        // split tokens to two:\n        // a) all the tokens before `range`\n        // b) all the tokens after `range`\n        const startLineIndex = range.startLineNumber - this._startLineNumber;\n        const endLineIndex = range.endLineNumber - this._startLineNumber;\n        const [a, b, bDeltaLine] = this._tokens.split(startLineIndex, range.startColumn - 1, endLineIndex, range.endColumn - 1);\n        return [new SparseMultilineTokens(this._startLineNumber, a), new SparseMultilineTokens(this._startLineNumber + bDeltaLine, b)];\n    }\n    applyEdit(range, text) {\n        const [eolCount, firstLineLength, lastLineLength] = countEOL(text);\n        this.acceptEdit(range, eolCount, firstLineLength, lastLineLength, text.length > 0 ? text.charCodeAt(0) : 0 /* Null */);\n    }\n    acceptEdit(range, eolCount, firstLineLength, lastLineLength, firstCharCode) {\n        this._acceptDeleteRange(range);\n        this._acceptInsertText(new Position(range.startLineNumber, range.startColumn), eolCount, firstLineLength, lastLineLength, firstCharCode);\n        this._updateEndLineNumber();\n    }\n    _acceptDeleteRange(range) {\n        if (range.startLineNumber === range.endLineNumber && range.startColumn === range.endColumn) {\n            // Nothing to delete\n            return;\n        }\n        const firstLineIndex = range.startLineNumber - this._startLineNumber;\n        const lastLineIndex = range.endLineNumber - this._startLineNumber;\n        if (lastLineIndex < 0) {\n            // this deletion occurs entirely before this block, so we only need to adjust line numbers\n            const deletedLinesCount = lastLineIndex - firstLineIndex;\n            this._startLineNumber -= deletedLinesCount;\n            return;\n        }\n        const tokenMaxDeltaLine = this._tokens.getMaxDeltaLine();\n        if (firstLineIndex >= tokenMaxDeltaLine + 1) {\n            // this deletion occurs entirely after this block, so there is nothing to do\n            return;\n        }\n        if (firstLineIndex < 0 && lastLineIndex >= tokenMaxDeltaLine + 1) {\n            // this deletion completely encompasses this block\n            this._startLineNumber = 0;\n            this._tokens.clear();\n            return;\n        }\n        if (firstLineIndex < 0) {\n            const deletedBefore = -firstLineIndex;\n            this._startLineNumber -= deletedBefore;\n            this._tokens.acceptDeleteRange(range.startColumn - 1, 0, 0, lastLineIndex, range.endColumn - 1);\n        }\n        else {\n            this._tokens.acceptDeleteRange(0, firstLineIndex, range.startColumn - 1, lastLineIndex, range.endColumn - 1);\n        }\n    }\n    _acceptInsertText(position, eolCount, firstLineLength, lastLineLength, firstCharCode) {\n        if (eolCount === 0 && firstLineLength === 0) {\n            // Nothing to insert\n            return;\n        }\n        const lineIndex = position.lineNumber - this._startLineNumber;\n        if (lineIndex < 0) {\n            // this insertion occurs before this block, so we only need to adjust line numbers\n            this._startLineNumber += eolCount;\n            return;\n        }\n        const tokenMaxDeltaLine = this._tokens.getMaxDeltaLine();\n        if (lineIndex >= tokenMaxDeltaLine + 1) {\n            // this insertion occurs after this block, so there is nothing to do\n            return;\n        }\n        this._tokens.acceptInsertText(lineIndex, position.column - 1, eolCount, firstLineLength, lastLineLength, firstCharCode);\n    }\n}\nclass SparseMultilineTokensStorage {\n    constructor(tokens) {\n        this._tokens = tokens;\n        this._tokenCount = tokens.length / 4;\n    }\n    toString(startLineNumber) {\n        const pieces = [];\n        for (let i = 0; i < this._tokenCount; i++) {\n            pieces.push(`(${this._getDeltaLine(i) + startLineNumber},${this._getStartCharacter(i)}-${this._getEndCharacter(i)})`);\n        }\n        return `[${pieces.join(',')}]`;\n    }\n    getMaxDeltaLine() {\n        const tokenCount = this._getTokenCount();\n        if (tokenCount === 0) {\n            return -1;\n        }\n        return this._getDeltaLine(tokenCount - 1);\n    }\n    getRange() {\n        const tokenCount = this._getTokenCount();\n        if (tokenCount === 0) {\n            return null;\n        }\n        const startChar = this._getStartCharacter(0);\n        const maxDeltaLine = this._getDeltaLine(tokenCount - 1);\n        const endChar = this._getEndCharacter(tokenCount - 1);\n        return new Range(0, startChar + 1, maxDeltaLine, endChar + 1);\n    }\n    _getTokenCount() {\n        return this._tokenCount;\n    }\n    _getDeltaLine(tokenIndex) {\n        return this._tokens[4 * tokenIndex];\n    }\n    _getStartCharacter(tokenIndex) {\n        return this._tokens[4 * tokenIndex + 1];\n    }\n    _getEndCharacter(tokenIndex) {\n        return this._tokens[4 * tokenIndex + 2];\n    }\n    isEmpty() {\n        return (this._getTokenCount() === 0);\n    }\n    getLineTokens(deltaLine) {\n        let low = 0;\n        let high = this._getTokenCount() - 1;\n        while (low < high) {\n            const mid = low + Math.floor((high - low) / 2);\n            const midDeltaLine = this._getDeltaLine(mid);\n            if (midDeltaLine < deltaLine) {\n                low = mid + 1;\n            }\n            else if (midDeltaLine > deltaLine) {\n                high = mid - 1;\n            }\n            else {\n                let min = mid;\n                while (min > low && this._getDeltaLine(min - 1) === deltaLine) {\n                    min--;\n                }\n                let max = mid;\n                while (max < high && this._getDeltaLine(max + 1) === deltaLine) {\n                    max++;\n                }\n                return new SparseLineTokens(this._tokens.subarray(4 * min, 4 * max + 4));\n            }\n        }\n        if (this._getDeltaLine(low) === deltaLine) {\n            return new SparseLineTokens(this._tokens.subarray(4 * low, 4 * low + 4));\n        }\n        return null;\n    }\n    clear() {\n        this._tokenCount = 0;\n    }\n    removeTokens(startDeltaLine, startChar, endDeltaLine, endChar) {\n        const tokens = this._tokens;\n        const tokenCount = this._tokenCount;\n        let newTokenCount = 0;\n        let hasDeletedTokens = false;\n        let firstDeltaLine = 0;\n        for (let i = 0; i < tokenCount; i++) {\n            const srcOffset = 4 * i;\n            const tokenDeltaLine = tokens[srcOffset];\n            const tokenStartCharacter = tokens[srcOffset + 1];\n            const tokenEndCharacter = tokens[srcOffset + 2];\n            const tokenMetadata = tokens[srcOffset + 3];\n            if ((tokenDeltaLine > startDeltaLine || (tokenDeltaLine === startDeltaLine && tokenEndCharacter >= startChar))\n                && (tokenDeltaLine < endDeltaLine || (tokenDeltaLine === endDeltaLine && tokenStartCharacter <= endChar))) {\n                hasDeletedTokens = true;\n            }\n            else {\n                if (newTokenCount === 0) {\n                    firstDeltaLine = tokenDeltaLine;\n                }\n                if (hasDeletedTokens) {\n                    // must move the token to the left\n                    const destOffset = 4 * newTokenCount;\n                    tokens[destOffset] = tokenDeltaLine - firstDeltaLine;\n                    tokens[destOffset + 1] = tokenStartCharacter;\n                    tokens[destOffset + 2] = tokenEndCharacter;\n                    tokens[destOffset + 3] = tokenMetadata;\n                }\n                newTokenCount++;\n            }\n        }\n        this._tokenCount = newTokenCount;\n        return firstDeltaLine;\n    }\n    split(startDeltaLine, startChar, endDeltaLine, endChar) {\n        const tokens = this._tokens;\n        const tokenCount = this._tokenCount;\n        const aTokens = [];\n        const bTokens = [];\n        let destTokens = aTokens;\n        let destOffset = 0;\n        let destFirstDeltaLine = 0;\n        for (let i = 0; i < tokenCount; i++) {\n            const srcOffset = 4 * i;\n            const tokenDeltaLine = tokens[srcOffset];\n            const tokenStartCharacter = tokens[srcOffset + 1];\n            const tokenEndCharacter = tokens[srcOffset + 2];\n            const tokenMetadata = tokens[srcOffset + 3];\n            if ((tokenDeltaLine > startDeltaLine || (tokenDeltaLine === startDeltaLine && tokenEndCharacter >= startChar))) {\n                if ((tokenDeltaLine < endDeltaLine || (tokenDeltaLine === endDeltaLine && tokenStartCharacter <= endChar))) {\n                    // this token is touching the range\n                    continue;\n                }\n                else {\n                    // this token is after the range\n                    if (destTokens !== bTokens) {\n                        // this token is the first token after the range\n                        destTokens = bTokens;\n                        destOffset = 0;\n                        destFirstDeltaLine = tokenDeltaLine;\n                    }\n                }\n            }\n            destTokens[destOffset++] = tokenDeltaLine - destFirstDeltaLine;\n            destTokens[destOffset++] = tokenStartCharacter;\n            destTokens[destOffset++] = tokenEndCharacter;\n            destTokens[destOffset++] = tokenMetadata;\n        }\n        return [new SparseMultilineTokensStorage(new Uint32Array(aTokens)), new SparseMultilineTokensStorage(new Uint32Array(bTokens)), destFirstDeltaLine];\n    }\n    acceptDeleteRange(horizontalShiftForFirstLineTokens, startDeltaLine, startCharacter, endDeltaLine, endCharacter) {\n        // This is a bit complex, here are the cases I used to think about this:\n        //\n        // 1. The token starts before the deletion range\n        // 1a. The token is completely before the deletion range\n        //               -----------\n        //                          xxxxxxxxxxx\n        // 1b. The token starts before, the deletion range ends after the token\n        //               -----------\n        //                      xxxxxxxxxxx\n        // 1c. The token starts before, the deletion range ends precisely with the token\n        //               ---------------\n        //                      xxxxxxxx\n        // 1d. The token starts before, the deletion range is inside the token\n        //               ---------------\n        //                    xxxxx\n        //\n        // 2. The token starts at the same position with the deletion range\n        // 2a. The token starts at the same position, and ends inside the deletion range\n        //               -------\n        //               xxxxxxxxxxx\n        // 2b. The token starts at the same position, and ends at the same position as the deletion range\n        //               ----------\n        //               xxxxxxxxxx\n        // 2c. The token starts at the same position, and ends after the deletion range\n        //               -------------\n        //               xxxxxxx\n        //\n        // 3. The token starts inside the deletion range\n        // 3a. The token is inside the deletion range\n        //                -------\n        //             xxxxxxxxxxxxx\n        // 3b. The token starts inside the deletion range, and ends at the same position as the deletion range\n        //                ----------\n        //             xxxxxxxxxxxxx\n        // 3c. The token starts inside the deletion range, and ends after the deletion range\n        //                ------------\n        //             xxxxxxxxxxx\n        //\n        // 4. The token starts after the deletion range\n        //                  -----------\n        //          xxxxxxxx\n        //\n        const tokens = this._tokens;\n        const tokenCount = this._tokenCount;\n        const deletedLineCount = (endDeltaLine - startDeltaLine);\n        let newTokenCount = 0;\n        let hasDeletedTokens = false;\n        for (let i = 0; i < tokenCount; i++) {\n            const srcOffset = 4 * i;\n            let tokenDeltaLine = tokens[srcOffset];\n            let tokenStartCharacter = tokens[srcOffset + 1];\n            let tokenEndCharacter = tokens[srcOffset + 2];\n            const tokenMetadata = tokens[srcOffset + 3];\n            if (tokenDeltaLine < startDeltaLine || (tokenDeltaLine === startDeltaLine && tokenEndCharacter <= startCharacter)) {\n                // 1a. The token is completely before the deletion range\n                // => nothing to do\n                newTokenCount++;\n                continue;\n            }\n            else if (tokenDeltaLine === startDeltaLine && tokenStartCharacter < startCharacter) {\n                // 1b, 1c, 1d\n                // => the token survives, but it needs to shrink\n                if (tokenDeltaLine === endDeltaLine && tokenEndCharacter > endCharacter) {\n                    // 1d. The token starts before, the deletion range is inside the token\n                    // => the token shrinks by the deletion character count\n                    tokenEndCharacter -= (endCharacter - startCharacter);\n                }\n                else {\n                    // 1b. The token starts before, the deletion range ends after the token\n                    // 1c. The token starts before, the deletion range ends precisely with the token\n                    // => the token shrinks its ending to the deletion start\n                    tokenEndCharacter = startCharacter;\n                }\n            }\n            else if (tokenDeltaLine === startDeltaLine && tokenStartCharacter === startCharacter) {\n                // 2a, 2b, 2c\n                if (tokenDeltaLine === endDeltaLine && tokenEndCharacter > endCharacter) {\n                    // 2c. The token starts at the same position, and ends after the deletion range\n                    // => the token shrinks by the deletion character count\n                    tokenEndCharacter -= (endCharacter - startCharacter);\n                }\n                else {\n                    // 2a. The token starts at the same position, and ends inside the deletion range\n                    // 2b. The token starts at the same position, and ends at the same position as the deletion range\n                    // => the token is deleted\n                    hasDeletedTokens = true;\n                    continue;\n                }\n            }\n            else if (tokenDeltaLine < endDeltaLine || (tokenDeltaLine === endDeltaLine && tokenStartCharacter < endCharacter)) {\n                // 3a, 3b, 3c\n                if (tokenDeltaLine === endDeltaLine && tokenEndCharacter > endCharacter) {\n                    // 3c. The token starts inside the deletion range, and ends after the deletion range\n                    // => the token moves left and shrinks\n                    if (tokenDeltaLine === startDeltaLine) {\n                        // the deletion started on the same line as the token\n                        // => the token moves left and shrinks\n                        tokenStartCharacter = startCharacter;\n                        tokenEndCharacter = tokenStartCharacter + (tokenEndCharacter - endCharacter);\n                    }\n                    else {\n                        // the deletion started on a line above the token\n                        // => the token moves to the beginning of the line\n                        tokenStartCharacter = 0;\n                        tokenEndCharacter = tokenStartCharacter + (tokenEndCharacter - endCharacter);\n                    }\n                }\n                else {\n                    // 3a. The token is inside the deletion range\n                    // 3b. The token starts inside the deletion range, and ends at the same position as the deletion range\n                    // => the token is deleted\n                    hasDeletedTokens = true;\n                    continue;\n                }\n            }\n            else if (tokenDeltaLine > endDeltaLine) {\n                // 4. (partial) The token starts after the deletion range, on a line below...\n                if (deletedLineCount === 0 && !hasDeletedTokens) {\n                    // early stop, there is no need to walk all the tokens and do nothing...\n                    newTokenCount = tokenCount;\n                    break;\n                }\n                tokenDeltaLine -= deletedLineCount;\n            }\n            else if (tokenDeltaLine === endDeltaLine && tokenStartCharacter >= endCharacter) {\n                // 4. (continued) The token starts after the deletion range, on the last line where a deletion occurs\n                if (horizontalShiftForFirstLineTokens && tokenDeltaLine === 0) {\n                    tokenStartCharacter += horizontalShiftForFirstLineTokens;\n                    tokenEndCharacter += horizontalShiftForFirstLineTokens;\n                }\n                tokenDeltaLine -= deletedLineCount;\n                tokenStartCharacter -= (endCharacter - startCharacter);\n                tokenEndCharacter -= (endCharacter - startCharacter);\n            }\n            else {\n                throw new Error(`Not possible!`);\n            }\n            const destOffset = 4 * newTokenCount;\n            tokens[destOffset] = tokenDeltaLine;\n            tokens[destOffset + 1] = tokenStartCharacter;\n            tokens[destOffset + 2] = tokenEndCharacter;\n            tokens[destOffset + 3] = tokenMetadata;\n            newTokenCount++;\n        }\n        this._tokenCount = newTokenCount;\n    }\n    acceptInsertText(deltaLine, character, eolCount, firstLineLength, lastLineLength, firstCharCode) {\n        // Here are the cases I used to think about this:\n        //\n        // 1. The token is completely before the insertion point\n        //            -----------   |\n        // 2. The token ends precisely at the insertion point\n        //            -----------|\n        // 3. The token contains the insertion point\n        //            -----|------\n        // 4. The token starts precisely at the insertion point\n        //            |-----------\n        // 5. The token is completely after the insertion point\n        //            |   -----------\n        //\n        const isInsertingPreciselyOneWordCharacter = (eolCount === 0\n            && firstLineLength === 1\n            && ((firstCharCode >= 48 /* Digit0 */ && firstCharCode <= 57 /* Digit9 */)\n                || (firstCharCode >= 65 /* A */ && firstCharCode <= 90 /* Z */)\n                || (firstCharCode >= 97 /* a */ && firstCharCode <= 122 /* z */)));\n        const tokens = this._tokens;\n        const tokenCount = this._tokenCount;\n        for (let i = 0; i < tokenCount; i++) {\n            const offset = 4 * i;\n            let tokenDeltaLine = tokens[offset];\n            let tokenStartCharacter = tokens[offset + 1];\n            let tokenEndCharacter = tokens[offset + 2];\n            if (tokenDeltaLine < deltaLine || (tokenDeltaLine === deltaLine && tokenEndCharacter < character)) {\n                // 1. The token is completely before the insertion point\n                // => nothing to do\n                continue;\n            }\n            else if (tokenDeltaLine === deltaLine && tokenEndCharacter === character) {\n                // 2. The token ends precisely at the insertion point\n                // => expand the end character only if inserting precisely one character that is a word character\n                if (isInsertingPreciselyOneWordCharacter) {\n                    tokenEndCharacter += 1;\n                }\n                else {\n                    continue;\n                }\n            }\n            else if (tokenDeltaLine === deltaLine && tokenStartCharacter < character && character < tokenEndCharacter) {\n                // 3. The token contains the insertion point\n                if (eolCount === 0) {\n                    // => just expand the end character\n                    tokenEndCharacter += firstLineLength;\n                }\n                else {\n                    // => cut off the token\n                    tokenEndCharacter = character;\n                }\n            }\n            else {\n                // 4. or 5.\n                if (tokenDeltaLine === deltaLine && tokenStartCharacter === character) {\n                    // 4. The token starts precisely at the insertion point\n                    // => grow the token (by keeping its start constant) only if inserting precisely one character that is a word character\n                    // => otherwise behave as in case 5.\n                    if (isInsertingPreciselyOneWordCharacter) {\n                        continue;\n                    }\n                }\n                // => the token must move and keep its size constant\n                if (tokenDeltaLine === deltaLine) {\n                    tokenDeltaLine += eolCount;\n                    // this token is on the line where the insertion is taking place\n                    if (eolCount === 0) {\n                        tokenStartCharacter += firstLineLength;\n                        tokenEndCharacter += firstLineLength;\n                    }\n                    else {\n                        const tokenLength = tokenEndCharacter - tokenStartCharacter;\n                        tokenStartCharacter = lastLineLength + (tokenStartCharacter - character);\n                        tokenEndCharacter = tokenStartCharacter + tokenLength;\n                    }\n                }\n                else {\n                    tokenDeltaLine += eolCount;\n                }\n            }\n            tokens[offset] = tokenDeltaLine;\n            tokens[offset + 1] = tokenStartCharacter;\n            tokens[offset + 2] = tokenEndCharacter;\n        }\n    }\n}\nexport class SparseLineTokens {\n    constructor(tokens) {\n        this._tokens = tokens;\n    }\n    getCount() {\n        return this._tokens.length / 4;\n    }\n    getStartCharacter(tokenIndex) {\n        return this._tokens[4 * tokenIndex + 1];\n    }\n    getEndCharacter(tokenIndex) {\n        return this._tokens[4 * tokenIndex + 2];\n    }\n    getMetadata(tokenIndex) {\n        return this._tokens[4 * tokenIndex + 3];\n    }\n}\n",
+      "start": 1711096856893,
+      "end": 1711096857060,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857060,
+      "end": 1711096857060,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857060,
+      "end": 1711096857061,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857061,
+      "end": 1711096857061,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857061,
+      "end": 1711096857061,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857061,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857062,
+      "end": 1711096857062,
+      "order": "normal"
+    }
+  ]
+}

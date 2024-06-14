@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoError/browser/gotoError.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\n    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }\n    return new (P || (P = Promise))(function (resolve, reject) {\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\n        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\n    });\n};\nimport { Codicon } from '../../../../base/common/codicons.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { ICodeEditorService } from '../../../browser/services/codeEditorService.js';\nimport { Position } from '../../../common/core/position.js';\nimport { Range } from '../../../common/core/range.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport { IMarkerNavigationService } from './markerNavigationService.js';\nimport * as nls from '../../../../nls.js';\nimport { MenuId } from '../../../../platform/actions/common/actions.js';\nimport { IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';\nimport { MarkerNavigationWidget } from './gotoErrorWidget.js';\nlet MarkerController = class MarkerController {\n    constructor(editor, _markerNavigationService, _contextKeyService, _editorService, _instantiationService) {\n        this._markerNavigationService = _markerNavigationService;\n        this._contextKeyService = _contextKeyService;\n        this._editorService = _editorService;\n        this._instantiationService = _instantiationService;\n        this._sessionDispoables = new DisposableStore();\n        this._editor = editor;\n        this._widgetVisible = CONTEXT_MARKERS_NAVIGATION_VISIBLE.bindTo(this._contextKeyService);\n    }\n    static get(editor) {\n        return editor.getContribution(MarkerController.ID);\n    }\n    dispose() {\n        this._cleanUp();\n        this._sessionDispoables.dispose();\n    }\n    _cleanUp() {\n        this._widgetVisible.reset();\n        this._sessionDispoables.clear();\n        this._widget = undefined;\n        this._model = undefined;\n    }\n    _getOrCreateModel(uri) {\n        if (this._model && this._model.matches(uri)) {\n            return this._model;\n        }\n        let reusePosition = false;\n        if (this._model) {\n            reusePosition = true;\n            this._cleanUp();\n        }\n        this._model = this._markerNavigationService.getMarkerList(uri);\n        if (reusePosition) {\n            this._model.move(true, this._editor.getModel(), this._editor.getPosition());\n        }\n        this._widget = this._instantiationService.createInstance(MarkerNavigationWidget, this._editor);\n        this._widget.onDidClose(() => this.close(), this, this._sessionDispoables);\n        this._widgetVisible.set(true);\n        this._sessionDispoables.add(this._model);\n        this._sessionDispoables.add(this._widget);\n        // follow cursor\n        this._sessionDispoables.add(this._editor.onDidChangeCursorPosition(e => {\n            var _a, _b, _c;\n            if (!((_a = this._model) === null || _a === void 0 ? void 0 : _a.selected) || !Range.containsPosition((_b = this._model) === null || _b === void 0 ? void 0 : _b.selected.marker, e.position)) {\n                (_c = this._model) === null || _c === void 0 ? void 0 : _c.resetIndex();\n            }\n        }));\n        // update markers\n        this._sessionDispoables.add(this._model.onDidChange(() => {\n            if (!this._widget || !this._widget.position || !this._model) {\n                return;\n            }\n            const info = this._model.find(this._editor.getModel().uri, this._widget.position);\n            if (info) {\n                this._widget.updateMarker(info.marker);\n            }\n            else {\n                this._widget.showStale();\n            }\n        }));\n        // open related\n        this._sessionDispoables.add(this._widget.onDidSelectRelatedInformation(related => {\n            this._editorService.openCodeEditor({\n                resource: related.resource,\n                options: { pinned: true, revealIfOpened: true, selection: Range.lift(related).collapseToStart() }\n            }, this._editor);\n            this.close(false);\n        }));\n        this._sessionDispoables.add(this._editor.onDidChangeModel(() => this._cleanUp()));\n        return this._model;\n    }\n    close(focusEditor = true) {\n        this._cleanUp();\n        if (focusEditor) {\n            this._editor.focus();\n        }\n    }\n    showAtMarker(marker) {\n        if (this._editor.hasModel()) {\n            const model = this._getOrCreateModel(this._editor.getModel().uri);\n            model.resetIndex();\n            model.move(true, this._editor.getModel(), new Position(marker.startLineNumber, marker.startColumn));\n            if (model.selected) {\n                this._widget.showAtMarker(model.selected.marker, model.selected.index, model.selected.total);\n            }\n        }\n    }\n    nagivate(next, multiFile) {\n        var _a, _b;\n        return __awaiter(this, void 0, void 0, function* () {\n            if (this._editor.hasModel()) {\n                const model = this._getOrCreateModel(multiFile ? undefined : this._editor.getModel().uri);\n                model.move(next, this._editor.getModel(), this._editor.getPosition());\n                if (!model.selected) {\n                    return;\n                }\n                if (model.selected.marker.resource.toString() !== this._editor.getModel().uri.toString()) {\n                    // show in different editor\n                    this._cleanUp();\n                    const otherEditor = yield this._editorService.openCodeEditor({\n                        resource: model.selected.marker.resource,\n                        options: { pinned: false, revealIfOpened: true, selectionRevealType: 2 /* NearTop */, selection: model.selected.marker }\n                    }, this._editor);\n                    if (otherEditor) {\n                        (_a = MarkerController.get(otherEditor)) === null || _a === void 0 ? void 0 : _a.close();\n                        (_b = MarkerController.get(otherEditor)) === null || _b === void 0 ? void 0 : _b.nagivate(next, multiFile);\n                    }\n                }\n                else {\n                    // show in this editor\n                    this._widget.showAtMarker(model.selected.marker, model.selected.index, model.selected.total);\n                }\n            }\n        });\n    }\n};\nMarkerController.ID = 'editor.contrib.markerController';\nMarkerController = __decorate([\n    __param(1, IMarkerNavigationService),\n    __param(2, IContextKeyService),\n    __param(3, ICodeEditorService),\n    __param(4, IInstantiationService)\n], MarkerController);\nexport { MarkerController };\nclass MarkerNavigationAction extends EditorAction {\n    constructor(_next, _multiFile, opts) {\n        super(opts);\n        this._next = _next;\n        this._multiFile = _multiFile;\n    }\n    run(_accessor, editor) {\n        var _a;\n        return __awaiter(this, void 0, void 0, function* () {\n            if (editor.hasModel()) {\n                (_a = MarkerController.get(editor)) === null || _a === void 0 ? void 0 : _a.nagivate(this._next, this._multiFile);\n            }\n        });\n    }\n}\nexport class NextMarkerAction extends MarkerNavigationAction {\n    constructor() {\n        super(true, false, {\n            id: NextMarkerAction.ID,\n            label: NextMarkerAction.LABEL,\n            alias: 'Go to Next Problem (Error, Warning, Info)',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 512 /* Alt */ | 66 /* F8 */,\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MarkerNavigationWidget.TitleMenu,\n                title: NextMarkerAction.LABEL,\n                icon: registerIcon('marker-navigation-next', Codicon.arrowDown, nls.localize('nextMarkerIcon', 'Icon for goto next marker.')),\n                group: 'navigation',\n                order: 1\n            }\n        });\n    }\n}\nNextMarkerAction.ID = 'editor.action.marker.next';\nNextMarkerAction.LABEL = nls.localize('markerAction.next.label', \"Go to Next Problem (Error, Warning, Info)\");\nclass PrevMarkerAction extends MarkerNavigationAction {\n    constructor() {\n        super(false, false, {\n            id: PrevMarkerAction.ID,\n            label: PrevMarkerAction.LABEL,\n            alias: 'Go to Previous Problem (Error, Warning, Info)',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 1024 /* Shift */ | 512 /* Alt */ | 66 /* F8 */,\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MarkerNavigationWidget.TitleMenu,\n                title: PrevMarkerAction.LABEL,\n                icon: registerIcon('marker-navigation-previous', Codicon.arrowUp, nls.localize('previousMarkerIcon', 'Icon for goto previous marker.')),\n                group: 'navigation',\n                order: 2\n            }\n        });\n    }\n}\nPrevMarkerAction.ID = 'editor.action.marker.prev';\nPrevMarkerAction.LABEL = nls.localize('markerAction.previous.label', \"Go to Previous Problem (Error, Warning, Info)\");\nclass NextMarkerInFilesAction extends MarkerNavigationAction {\n    constructor() {\n        super(true, true, {\n            id: 'editor.action.marker.nextInFiles',\n            label: nls.localize('markerAction.nextInFiles.label', \"Go to Next Problem in Files (Error, Warning, Info)\"),\n            alias: 'Go to Next Problem in Files (Error, Warning, Info)',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 66 /* F8 */,\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarGoMenu,\n                title: nls.localize({ key: 'miGotoNextProblem', comment: ['&& denotes a mnemonic'] }, \"Next &&Problem\"),\n                group: '6_problem_nav',\n                order: 1\n            }\n        });\n    }\n}\nclass PrevMarkerInFilesAction extends MarkerNavigationAction {\n    constructor() {\n        super(false, true, {\n            id: 'editor.action.marker.prevInFiles',\n            label: nls.localize('markerAction.previousInFiles.label', \"Go to Previous Problem in Files (Error, Warning, Info)\"),\n            alias: 'Go to Previous Problem in Files (Error, Warning, Info)',\n            precondition: undefined,\n            kbOpts: {\n                kbExpr: EditorContextKeys.focus,\n                primary: 1024 /* Shift */ | 66 /* F8 */,\n                weight: 100 /* EditorContrib */\n            },\n            menuOpts: {\n                menuId: MenuId.MenubarGoMenu,\n                title: nls.localize({ key: 'miGotoPreviousProblem', comment: ['&& denotes a mnemonic'] }, \"Previous &&Problem\"),\n                group: '6_problem_nav',\n                order: 2\n            }\n        });\n    }\n}\nregisterEditorContribution(MarkerController.ID, MarkerController);\nregisterEditorAction(NextMarkerAction);\nregisterEditorAction(PrevMarkerAction);\nregisterEditorAction(NextMarkerInFilesAction);\nregisterEditorAction(PrevMarkerInFilesAction);\nconst CONTEXT_MARKERS_NAVIGATION_VISIBLE = new RawContextKey('markersNavigationVisible', false);\nconst MarkerCommand = EditorCommand.bindToContribution(MarkerController.get);\nregisterEditorCommand(new MarkerCommand({\n    id: 'closeMarkersNavigation',\n    precondition: CONTEXT_MARKERS_NAVIGATION_VISIBLE,\n    handler: x => x.close(),\n    kbOpts: {\n        weight: 100 /* EditorContrib */ + 50,\n        kbExpr: EditorContextKeys.focus,\n        primary: 9 /* Escape */,\n        secondary: [1024 /* Shift */ | 9 /* Escape */]\n    }\n}));\n",
+      "start": 1711096854471,
+      "end": 1711096854631,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854631,
+      "end": 1711096854631,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854631,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854632,
+      "end": 1711096854632,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854632,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854633,
+      "end": 1711096854633,
+      "order": "normal"
+    }
+  ]
+}

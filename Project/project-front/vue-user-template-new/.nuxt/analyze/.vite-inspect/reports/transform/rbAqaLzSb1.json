@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/bracketPairsTree/brackets.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { escapeRegExpCharacters } from '../../../../../base/common/strings.js';\nimport { BracketAstNode } from './ast.js';\nimport { toLength } from './length.js';\nimport { identityKeyProvider, SmallImmutableSet } from './smallImmutableSet.js';\nimport { Token } from './tokenizer.js';\nexport class BracketTokens {\n    constructor(map) {\n        this.map = map;\n        this.hasRegExp = false;\n        this._regExpGlobal = null;\n    }\n    static createFromLanguage(configuration, denseKeyProvider) {\n        function getId(languageId, openingText) {\n            return denseKeyProvider.getKey(`${languageId}:::${openingText}`);\n        }\n        const brackets = configuration.characterPair.getColorizedBrackets();\n        const closingBrackets = new Map();\n        const openingBrackets = new Set();\n        for (const [openingText, closingText] of brackets) {\n            openingBrackets.add(openingText);\n            let info = closingBrackets.get(closingText);\n            const openingTextId = getId(configuration.languageId, openingText);\n            if (!info) {\n                info = { openingBrackets: SmallImmutableSet.getEmpty(), first: openingTextId };\n                closingBrackets.set(closingText, info);\n            }\n            info.openingBrackets = info.openingBrackets.add(openingTextId, identityKeyProvider);\n        }\n        const map = new Map();\n        for (const [closingText, info] of closingBrackets) {\n            const length = toLength(0, closingText.length);\n            map.set(closingText, new Token(length, 2 /* ClosingBracket */, info.first, info.openingBrackets, BracketAstNode.create(length, configuration.languageId, info.openingBrackets)));\n        }\n        for (const openingText of openingBrackets) {\n            const length = toLength(0, openingText.length);\n            const openingTextId = getId(configuration.languageId, openingText);\n            const bracketIds = SmallImmutableSet.getEmpty().add(openingTextId, identityKeyProvider);\n            map.set(openingText, new Token(length, 1 /* OpeningBracket */, openingTextId, bracketIds, BracketAstNode.create(length, configuration.languageId, bracketIds)));\n        }\n        return new BracketTokens(map);\n    }\n    getRegExpStr() {\n        if (this.isEmpty) {\n            return null;\n        }\n        else {\n            const keys = [...this.map.keys()];\n            keys.sort();\n            keys.reverse();\n            return keys.map(k => prepareBracketForRegExp(k)).join('|');\n        }\n    }\n    /**\n     * Returns null if there is no such regexp (because there are no brackets).\n    */\n    get regExpGlobal() {\n        if (!this.hasRegExp) {\n            const regExpStr = this.getRegExpStr();\n            this._regExpGlobal = regExpStr ? new RegExp(regExpStr, 'g') : null;\n            this.hasRegExp = true;\n        }\n        return this._regExpGlobal;\n    }\n    getToken(value) {\n        return this.map.get(value);\n    }\n    findClosingTokenText(openingBracketIds) {\n        for (const [closingText, info] of this.map) {\n            if (info.bracketIds.intersects(openingBracketIds)) {\n                return closingText;\n            }\n        }\n        return undefined;\n    }\n    get isEmpty() {\n        return this.map.size === 0;\n    }\n}\nfunction prepareBracketForRegExp(str) {\n    const escaped = escapeRegExpCharacters(str);\n    // This bracket pair uses letters like e.g. \"begin\" - \"end\" (see https://github.com/microsoft/vscode/issues/132162)\n    const needsWordBoundaries = (/^[\\w ]+$/.test(str));\n    return (needsWordBoundaries ? `\\\\b${escaped}\\\\b` : escaped);\n}\nexport class LanguageAgnosticBracketTokens {\n    constructor(denseKeyProvider, getLanguageConfiguration) {\n        this.denseKeyProvider = denseKeyProvider;\n        this.getLanguageConfiguration = getLanguageConfiguration;\n        this.languageIdToBracketTokens = new Map();\n    }\n    didLanguageChange(languageId) {\n        const existing = this.languageIdToBracketTokens.get(languageId);\n        if (!existing) {\n            return false;\n        }\n        const newRegExpStr = BracketTokens.createFromLanguage(this.getLanguageConfiguration(languageId), this.denseKeyProvider).getRegExpStr();\n        return existing.getRegExpStr() !== newRegExpStr;\n    }\n    getSingleLanguageBracketTokens(languageId) {\n        let singleLanguageBracketTokens = this.languageIdToBracketTokens.get(languageId);\n        if (!singleLanguageBracketTokens) {\n            singleLanguageBracketTokens = BracketTokens.createFromLanguage(this.getLanguageConfiguration(languageId), this.denseKeyProvider);\n            this.languageIdToBracketTokens.set(languageId, singleLanguageBracketTokens);\n        }\n        return singleLanguageBracketTokens;\n    }\n}\n",
+      "start": 1711096857591,
+      "end": 1711096857679,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857680,
+      "end": 1711096857680,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857680,
+      "end": 1711096857681,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857681,
+      "end": 1711096857681,
+      "order": "normal"
+    }
+  ]
+}

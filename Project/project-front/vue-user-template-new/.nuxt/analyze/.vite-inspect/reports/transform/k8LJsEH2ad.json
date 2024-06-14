@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/globalMouseMoveMonitor.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from './dom.js';\nimport { IframeUtils } from './iframe.js';\nimport { StandardMouseEvent } from './mouseEvent.js';\nimport { DisposableStore } from '../common/lifecycle.js';\nimport { isIOS } from '../common/platform.js';\nexport function standardMouseMoveMerger(lastEvent, currentEvent) {\n    let ev = new StandardMouseEvent(currentEvent);\n    ev.preventDefault();\n    return {\n        leftButton: ev.leftButton,\n        buttons: ev.buttons,\n        posx: ev.posx,\n        posy: ev.posy\n    };\n}\nexport class GlobalMouseMoveMonitor {\n    constructor() {\n        this._hooks = new DisposableStore();\n        this._mouseMoveEventMerger = null;\n        this._mouseMoveCallback = null;\n        this._onStopCallback = null;\n    }\n    dispose() {\n        this.stopMonitoring(false);\n        this._hooks.dispose();\n    }\n    stopMonitoring(invokeStopCallback, browserEvent) {\n        if (!this.isMonitoring()) {\n            // Not monitoring\n            return;\n        }\n        // Unhook\n        this._hooks.clear();\n        this._mouseMoveEventMerger = null;\n        this._mouseMoveCallback = null;\n        const onStopCallback = this._onStopCallback;\n        this._onStopCallback = null;\n        if (invokeStopCallback && onStopCallback) {\n            onStopCallback(browserEvent);\n        }\n    }\n    isMonitoring() {\n        return !!this._mouseMoveEventMerger;\n    }\n    startMonitoring(initialElement, initialButtons, mouseMoveEventMerger, mouseMoveCallback, onStopCallback) {\n        if (this.isMonitoring()) {\n            // I am already hooked\n            return;\n        }\n        this._mouseMoveEventMerger = mouseMoveEventMerger;\n        this._mouseMoveCallback = mouseMoveCallback;\n        this._onStopCallback = onStopCallback;\n        const windowChain = IframeUtils.getSameOriginWindowChain();\n        const mouseMove = isIOS ? 'pointermove' : 'mousemove'; // Safari sends wrong event, workaround for #122653\n        const mouseUp = 'mouseup';\n        const listenTo = windowChain.map(element => element.window.document);\n        const shadowRoot = dom.getShadowRoot(initialElement);\n        if (shadowRoot) {\n            listenTo.unshift(shadowRoot);\n        }\n        for (const element of listenTo) {\n            this._hooks.add(dom.addDisposableThrottledListener(element, mouseMove, (data) => {\n                if (data.buttons !== initialButtons) {\n                    // Buttons state has changed in the meantime\n                    this.stopMonitoring(true);\n                    return;\n                }\n                this._mouseMoveCallback(data);\n            }, (lastEvent, currentEvent) => this._mouseMoveEventMerger(lastEvent, currentEvent)));\n            this._hooks.add(dom.addDisposableListener(element, mouseUp, (e) => this.stopMonitoring(true)));\n        }\n        if (IframeUtils.hasDifferentOriginAncestor()) {\n            let lastSameOriginAncestor = windowChain[windowChain.length - 1];\n            // We might miss a mouse up if it happens outside the iframe\n            // This one is for Chrome\n            this._hooks.add(dom.addDisposableListener(lastSameOriginAncestor.window.document, 'mouseout', (browserEvent) => {\n                let e = new StandardMouseEvent(browserEvent);\n                if (e.target.tagName.toLowerCase() === 'html') {\n                    this.stopMonitoring(true);\n                }\n            }));\n            // This one is for FF\n            this._hooks.add(dom.addDisposableListener(lastSameOriginAncestor.window.document, 'mouseover', (browserEvent) => {\n                let e = new StandardMouseEvent(browserEvent);\n                if (e.target.tagName.toLowerCase() === 'html') {\n                    this.stopMonitoring(true);\n                }\n            }));\n            // This one is for IE\n            this._hooks.add(dom.addDisposableListener(lastSameOriginAncestor.window.document.body, 'mouseleave', (browserEvent) => {\n                this.stopMonitoring(true);\n            }));\n        }\n    }\n}\n",
+      "start": 1711096857178,
+      "end": 1711096857283,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857283,
+      "end": 1711096857283,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857283,
+      "end": 1711096857284,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857284,
+      "end": 1711096857284,
+      "order": "normal"
+    }
+  ]
+}

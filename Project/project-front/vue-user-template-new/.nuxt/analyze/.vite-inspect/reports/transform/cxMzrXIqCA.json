@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/editorState/browser/editorState.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as strings from '../../../../base/common/strings.js';\nimport { Range } from '../../../common/core/range.js';\nimport { CancellationTokenSource } from '../../../../base/common/cancellation.js';\nimport { DisposableStore } from '../../../../base/common/lifecycle.js';\nimport { EditorKeybindingCancellationTokenSource } from './keybindingCancellation.js';\nexport class EditorState {\n    constructor(editor, flags) {\n        this.flags = flags;\n        if ((this.flags & 1 /* Value */) !== 0) {\n            const model = editor.getModel();\n            this.modelVersionId = model ? strings.format('{0}#{1}', model.uri.toString(), model.getVersionId()) : null;\n        }\n        else {\n            this.modelVersionId = null;\n        }\n        if ((this.flags & 4 /* Position */) !== 0) {\n            this.position = editor.getPosition();\n        }\n        else {\n            this.position = null;\n        }\n        if ((this.flags & 2 /* Selection */) !== 0) {\n            this.selection = editor.getSelection();\n        }\n        else {\n            this.selection = null;\n        }\n        if ((this.flags & 8 /* Scroll */) !== 0) {\n            this.scrollLeft = editor.getScrollLeft();\n            this.scrollTop = editor.getScrollTop();\n        }\n        else {\n            this.scrollLeft = -1;\n            this.scrollTop = -1;\n        }\n    }\n    _equals(other) {\n        if (!(other instanceof EditorState)) {\n            return false;\n        }\n        const state = other;\n        if (this.modelVersionId !== state.modelVersionId) {\n            return false;\n        }\n        if (this.scrollLeft !== state.scrollLeft || this.scrollTop !== state.scrollTop) {\n            return false;\n        }\n        if (!this.position && state.position || this.position && !state.position || this.position && state.position && !this.position.equals(state.position)) {\n            return false;\n        }\n        if (!this.selection && state.selection || this.selection && !state.selection || this.selection && state.selection && !this.selection.equalsRange(state.selection)) {\n            return false;\n        }\n        return true;\n    }\n    validate(editor) {\n        return this._equals(new EditorState(editor, this.flags));\n    }\n}\n/**\n * A cancellation token source that cancels when the editor changes as expressed\n * by the provided flags\n * @param range If provided, changes in position and selection within this range will not trigger cancellation\n */\nexport class EditorStateCancellationTokenSource extends EditorKeybindingCancellationTokenSource {\n    constructor(editor, flags, range, parent) {\n        super(editor, parent);\n        this._listener = new DisposableStore();\n        if (flags & 4 /* Position */) {\n            this._listener.add(editor.onDidChangeCursorPosition(e => {\n                if (!range || !Range.containsPosition(range, e.position)) {\n                    this.cancel();\n                }\n            }));\n        }\n        if (flags & 2 /* Selection */) {\n            this._listener.add(editor.onDidChangeCursorSelection(e => {\n                if (!range || !Range.containsRange(range, e.selection)) {\n                    this.cancel();\n                }\n            }));\n        }\n        if (flags & 8 /* Scroll */) {\n            this._listener.add(editor.onDidScrollChange(_ => this.cancel()));\n        }\n        if (flags & 1 /* Value */) {\n            this._listener.add(editor.onDidChangeModel(_ => this.cancel()));\n            this._listener.add(editor.onDidChangeModelContent(_ => this.cancel()));\n        }\n    }\n    dispose() {\n        this._listener.dispose();\n        super.dispose();\n    }\n}\n/**\n * A cancellation token source that cancels when the provided model changes\n */\nexport class TextModelCancellationTokenSource extends CancellationTokenSource {\n    constructor(model, parent) {\n        super(parent);\n        this._listener = model.onDidChangeContent(() => this.cancel());\n    }\n    dispose() {\n        this._listener.dispose();\n        super.dispose();\n    }\n}\n",
+      "start": 1711096855105,
+      "end": 1711096855239,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855239,
+      "end": 1711096855239,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855239,
+      "end": 1711096855240,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855240,
+      "end": 1711096855240,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855240,
+      "end": 1711096855240,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855240,
+      "end": 1711096855240,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855240,
+      "end": 1711096855240,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855240,
+      "end": 1711096855240,
+      "order": "normal"
+    }
+  ]
+}

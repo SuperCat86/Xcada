@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/basic-languages/xml/xml.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\nvar __defProp = Object.defineProperty;\nvar __getOwnPropDesc = Object.getOwnPropertyDescriptor;\nvar __getOwnPropNames = Object.getOwnPropertyNames;\nvar __hasOwnProp = Object.prototype.hasOwnProperty;\nvar __reExport = (target, module, copyDefault, desc) => {\n  if (module && typeof module === \"object\" || typeof module === \"function\") {\n    for (let key of __getOwnPropNames(module))\n      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== \"default\"))\n        __defProp(target, key, { get: () => module[key], enumerable: !(desc = __getOwnPropDesc(module, key)) || desc.enumerable });\n  }\n  return target;\n};\n\n// src/fillers/monaco-editor-core.ts\nvar monaco_editor_core_exports = {};\n__reExport(monaco_editor_core_exports, monaco_editor_core_star);\nimport * as monaco_editor_core_star from \"../../editor/editor.api.js\";\n\n// src/basic-languages/xml/xml.ts\nvar conf = {\n  comments: {\n    blockComment: [\"<!--\", \"-->\"]\n  },\n  brackets: [[\"<\", \">\"]],\n  autoClosingPairs: [\n    { open: \"<\", close: \">\" },\n    { open: \"'\", close: \"'\" },\n    { open: '\"', close: '\"' }\n  ],\n  surroundingPairs: [\n    { open: \"<\", close: \">\" },\n    { open: \"'\", close: \"'\" },\n    { open: '\"', close: '\"' }\n  ],\n  onEnterRules: [\n    {\n      beforeText: new RegExp(`<([_:\\\\w][_:\\\\w-.\\\\d]*)([^/>]*(?!/)>)[^<]*$`, \"i\"),\n      afterText: /^<\\/([_:\\w][_:\\w-.\\d]*)\\s*>$/i,\n      action: {\n        indentAction: monaco_editor_core_exports.languages.IndentAction.IndentOutdent\n      }\n    },\n    {\n      beforeText: new RegExp(`<(\\\\w[\\\\w\\\\d]*)([^/>]*(?!/)>)[^<]*$`, \"i\"),\n      action: { indentAction: monaco_editor_core_exports.languages.IndentAction.Indent }\n    }\n  ]\n};\nvar language = {\n  defaultToken: \"\",\n  tokenPostfix: \".xml\",\n  ignoreCase: true,\n  qualifiedName: /(?:[\\w\\.\\-]+:)?[\\w\\.\\-]+/,\n  tokenizer: {\n    root: [\n      [/[^<&]+/, \"\"],\n      { include: \"@whitespace\" },\n      [/(<)(@qualifiedName)/, [{ token: \"delimiter\" }, { token: \"tag\", next: \"@tag\" }]],\n      [\n        /(<\\/)(@qualifiedName)(\\s*)(>)/,\n        [{ token: \"delimiter\" }, { token: \"tag\" }, \"\", { token: \"delimiter\" }]\n      ],\n      [/(<\\?)(@qualifiedName)/, [{ token: \"delimiter\" }, { token: \"metatag\", next: \"@tag\" }]],\n      [/(<\\!)(@qualifiedName)/, [{ token: \"delimiter\" }, { token: \"metatag\", next: \"@tag\" }]],\n      [/<\\!\\[CDATA\\[/, { token: \"delimiter.cdata\", next: \"@cdata\" }],\n      [/&\\w+;/, \"string.escape\"]\n    ],\n    cdata: [\n      [/[^\\]]+/, \"\"],\n      [/\\]\\]>/, { token: \"delimiter.cdata\", next: \"@pop\" }],\n      [/\\]/, \"\"]\n    ],\n    tag: [\n      [/[ \\t\\r\\n]+/, \"\"],\n      [/(@qualifiedName)(\\s*=\\s*)(\"[^\"]*\"|'[^']*')/, [\"attribute.name\", \"\", \"attribute.value\"]],\n      [\n        /(@qualifiedName)(\\s*=\\s*)(\"[^\">?\\/]*|'[^'>?\\/]*)(?=[\\?\\/]\\>)/,\n        [\"attribute.name\", \"\", \"attribute.value\"]\n      ],\n      [/(@qualifiedName)(\\s*=\\s*)(\"[^\">]*|'[^'>]*)/, [\"attribute.name\", \"\", \"attribute.value\"]],\n      [/@qualifiedName/, \"attribute.name\"],\n      [/\\?>/, { token: \"delimiter\", next: \"@pop\" }],\n      [/(\\/)(>)/, [{ token: \"tag\" }, { token: \"delimiter\", next: \"@pop\" }]],\n      [/>/, { token: \"delimiter\", next: \"@pop\" }]\n    ],\n    whitespace: [\n      [/[ \\t\\r\\n]+/, \"\"],\n      [/<!--/, { token: \"comment\", next: \"@comment\" }]\n    ],\n    comment: [\n      [/[^<\\-]+/, \"comment.content\"],\n      [/-->/, { token: \"comment\", next: \"@pop\" }],\n      [/<!--/, \"comment.content.invalid\"],\n      [/[<\\-]/, \"comment.content\"]\n    ]\n  }\n};\nexport {\n  conf,\n  language\n};\n",
+      "start": 1711096854378,
+      "end": 1711096854420,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854420,
+      "end": 1711096854420,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854421,
+      "end": 1711096854421,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854422,
+      "end": 1711096854422,
+      "order": "normal"
+    }
+  ]
+}

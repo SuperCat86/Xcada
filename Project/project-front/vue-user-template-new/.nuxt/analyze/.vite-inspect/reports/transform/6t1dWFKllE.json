@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/browser/parameterHints.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-editor .parameter-hints-widget {\n\t/* Must be higher than the sash's z-index and terminal canvases but lower than the suggest widget */\n\tz-index: 39;\n\tdisplay: flex;\n\tflex-direction: column;\n\tline-height: 1.5em;\n}\n\n.monaco-editor .parameter-hints-widget > .phwrapper {\n\tmax-width: 440px;\n\tdisplay: flex;\n\tflex-direction: row;\n}\n\n.monaco-editor .parameter-hints-widget.multiple {\n\tmin-height: 3.3em;\n\tpadding: 0;\n}\n\n.monaco-editor .parameter-hints-widget.visible {\n\ttransition: left .05s ease-in-out;\n}\n\n.monaco-editor .parameter-hints-widget p,\n.monaco-editor .parameter-hints-widget ul {\n\tmargin: 8px 0;\n}\n\n.monaco-editor .parameter-hints-widget .monaco-scrollable-element,\n.monaco-editor .parameter-hints-widget .body {\n\tdisplay: flex;\n\tflex: 1;\n\tflex-direction: column;\n\tmin-height: 100%;\n}\n\n.monaco-editor .parameter-hints-widget .signature {\n\tpadding: 4px 5px;\n}\n\n.monaco-editor .parameter-hints-widget .docs {\n\tpadding: 0 10px 0 5px;\n\twhite-space: pre-wrap;\n}\n\n.monaco-editor .parameter-hints-widget .docs.empty {\n\tdisplay: none;\n}\n\n.monaco-editor .parameter-hints-widget .docs .markdown-docs {\n\twhite-space: initial;\n}\n\n.monaco-editor .parameter-hints-widget .docs .markdown-docs code {\n\tfont-family: var(--monaco-monospace-font);\n}\n\n.monaco-editor .parameter-hints-widget .docs  .monaco-tokenized-source,\n.monaco-editor .parameter-hints-widget .docs .code {\n\twhite-space: pre-wrap;\n}\n\n.monaco-editor .parameter-hints-widget .docs code {\n\tborder-radius: 3px;\n\tpadding: 0 0.4em;\n}\n\n.monaco-editor .parameter-hints-widget .controls {\n\tdisplay: none;\n\tflex-direction: column;\n\talign-items: center;\n\tmin-width: 22px;\n\tjustify-content: flex-end;\n}\n\n.monaco-editor .parameter-hints-widget.multiple .controls {\n\tdisplay: flex;\n\tpadding: 0 2px;\n}\n\n.monaco-editor .parameter-hints-widget.multiple .button {\n\twidth: 16px;\n\theight: 16px;\n\tbackground-repeat: no-repeat;\n\tcursor: pointer;\n}\n\n.monaco-editor .parameter-hints-widget .button.previous {\n\tbottom: 24px;\n}\n\n.monaco-editor .parameter-hints-widget .overloads {\n\ttext-align: center;\n\theight: 12px;\n\tline-height: 12px;\n\tfont-family: var(--monaco-monospace-font);\n}\n\n.monaco-editor .parameter-hints-widget .signature .parameter.active {\n\tfont-weight: bold;\n}\n\n.monaco-editor .parameter-hints-widget .documentation-parameter > .parameter {\n\tfont-weight: bold;\n\tmargin-right: 0.5em;\n}\n",
+      "start": 1711096856809,
+      "end": 1711096856910,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856910,
+      "end": 1711096856910,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856910,
+      "end": 1711096856910,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856910,
+      "end": 1711096856910,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .parameter-hints-widget{display:flex;flex-direction:column;line-height:1.5em;z-index:39}.monaco-editor .parameter-hints-widget>.phwrapper{display:flex;flex-direction:row;max-width:440px}.monaco-editor .parameter-hints-widget.multiple{min-height:3.3em;padding:0}.monaco-editor .parameter-hints-widget.visible{transition:left .05s ease-in-out}.monaco-editor .parameter-hints-widget p,.monaco-editor .parameter-hints-widget ul{margin:8px 0}.monaco-editor .parameter-hints-widget .body,.monaco-editor .parameter-hints-widget .monaco-scrollable-element{display:flex;flex:1;flex-direction:column;min-height:100%}.monaco-editor .parameter-hints-widget .signature{padding:4px 5px}.monaco-editor .parameter-hints-widget .docs{padding:0 10px 0 5px;white-space:pre-wrap}.monaco-editor .parameter-hints-widget .docs.empty{display:none}.monaco-editor .parameter-hints-widget .docs .markdown-docs{white-space:normal}.monaco-editor .parameter-hints-widget .docs .markdown-docs code{font-family:var(--monaco-monospace-font)}.monaco-editor .parameter-hints-widget .docs .code,.monaco-editor .parameter-hints-widget .docs .monaco-tokenized-source{white-space:pre-wrap}.monaco-editor .parameter-hints-widget .docs code{border-radius:3px;padding:0 .4em}.monaco-editor .parameter-hints-widget .controls{align-items:center;display:none;flex-direction:column;justify-content:flex-end;min-width:22px}.monaco-editor .parameter-hints-widget.multiple .controls{display:flex;padding:0 2px}.monaco-editor .parameter-hints-widget.multiple .button{background-repeat:no-repeat;cursor:pointer;height:16px;width:16px}.monaco-editor .parameter-hints-widget .button.previous{bottom:24px}.monaco-editor .parameter-hints-widget .overloads{font-family:var(--monaco-monospace-font);height:12px;line-height:12px;text-align:center}.monaco-editor .parameter-hints-widget .signature .parameter.active{font-weight:700}.monaco-editor .parameter-hints-widget .documentation-parameter>.parameter{font-weight:700;margin-right:.5em}",
+      "start": 1711096856910,
+      "end": 1711096856920,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856920,
+      "end": 1711096856920,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856921,
+      "end": 1711096856921,
+      "order": "normal"
+    }
+  ]
+}

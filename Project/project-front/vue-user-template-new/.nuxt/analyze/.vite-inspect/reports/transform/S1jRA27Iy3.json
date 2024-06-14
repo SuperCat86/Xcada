@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/link/goToDefinitionAtPosition.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { createCancelablePromise } from '../../../../../base/common/async.js';\nimport { onUnexpectedError } from '../../../../../base/common/errors.js';\nimport { MarkdownString } from '../../../../../base/common/htmlContent.js';\nimport { DisposableStore } from '../../../../../base/common/lifecycle.js';\nimport { withNullAsUndefined } from '../../../../../base/common/types.js';\nimport './goToDefinitionAtPosition.css';\nimport { EditorState } from '../../../editorState/browser/editorState.js';\nimport { registerEditorContribution } from '../../../../browser/editorExtensions.js';\nimport { Position } from '../../../../common/core/position.js';\nimport { Range } from '../../../../common/core/range.js';\nimport { ILanguageService } from '../../../../common/languages/language.js';\nimport { ITextModelService } from '../../../../common/services/resolverService.js';\nimport { ClickLinkGesture } from './clickLinkGesture.js';\nimport { PeekContext } from '../../../peekView/browser/peekView.js';\nimport * as nls from '../../../../../nls.js';\nimport { IContextKeyService } from '../../../../../platform/contextkey/common/contextkey.js';\nimport { editorActiveLinkForeground } from '../../../../../platform/theme/common/colorRegistry.js';\nimport { registerThemingParticipant } from '../../../../../platform/theme/common/themeService.js';\nimport { DefinitionAction } from '../goToCommands.js';\nimport { getDefinitionsAtPosition } from '../goToSymbol.js';\nimport { ILanguageFeaturesService } from '../../../../common/services/languageFeatures.js';\nlet GotoDefinitionAtPositionEditorContribution = class GotoDefinitionAtPositionEditorContribution {\n    constructor(editor, textModelResolverService, languageService, languageFeaturesService) {\n        this.textModelResolverService = textModelResolverService;\n        this.languageService = languageService;\n        this.languageFeaturesService = languageFeaturesService;\n        this.toUnhook = new DisposableStore();\n        this.toUnhookForKeyboard = new DisposableStore();\n        this.linkDecorations = [];\n        this.currentWordAtPosition = null;\n        this.previousPromise = null;\n        this.editor = editor;\n        let linkGesture = new ClickLinkGesture(editor);\n        this.toUnhook.add(linkGesture);\n        this.toUnhook.add(linkGesture.onMouseMoveOrRelevantKeyDown(([mouseEvent, keyboardEvent]) => {\n            this.startFindDefinitionFromMouse(mouseEvent, withNullAsUndefined(keyboardEvent));\n        }));\n        this.toUnhook.add(linkGesture.onExecute((mouseEvent) => {\n            if (this.isEnabled(mouseEvent)) {\n                this.gotoDefinition(mouseEvent.target.position, mouseEvent.hasSideBySideModifier).then(() => {\n                    this.removeLinkDecorations();\n                }, (error) => {\n                    this.removeLinkDecorations();\n                    onUnexpectedError(error);\n                });\n            }\n        }));\n        this.toUnhook.add(linkGesture.onCancel(() => {\n            this.removeLinkDecorations();\n            this.currentWordAtPosition = null;\n        }));\n    }\n    static get(editor) {\n        return editor.getContribution(GotoDefinitionAtPositionEditorContribution.ID);\n    }\n    startFindDefinitionFromCursor(position) {\n        // For issue: https://github.com/microsoft/vscode/issues/46257\n        // equivalent to mouse move with meta/ctrl key\n        // First find the definition and add decorations\n        // to the editor to be shown with the content hover widget\n        return this.startFindDefinition(position).then(() => {\n            // Add listeners for editor cursor move and key down events\n            // Dismiss the \"extended\" editor decorations when the user hides\n            // the hover widget. There is no event for the widget itself so these\n            // serve as a best effort. After removing the link decorations, the hover\n            // widget is clean and will only show declarations per next request.\n            this.toUnhookForKeyboard.add(this.editor.onDidChangeCursorPosition(() => {\n                this.currentWordAtPosition = null;\n                this.removeLinkDecorations();\n                this.toUnhookForKeyboard.clear();\n            }));\n            this.toUnhookForKeyboard.add(this.editor.onKeyDown((e) => {\n                if (e) {\n                    this.currentWordAtPosition = null;\n                    this.removeLinkDecorations();\n                    this.toUnhookForKeyboard.clear();\n                }\n            }));\n        });\n    }\n    startFindDefinitionFromMouse(mouseEvent, withKey) {\n        // check if we are active and on a content widget\n        if (mouseEvent.target.type === 9 /* CONTENT_WIDGET */ && this.linkDecorations.length > 0) {\n            return;\n        }\n        if (!this.editor.hasModel() || !this.isEnabled(mouseEvent, withKey)) {\n            this.currentWordAtPosition = null;\n            this.removeLinkDecorations();\n            return;\n        }\n        const position = mouseEvent.target.position;\n        this.startFindDefinition(position);\n    }\n    startFindDefinition(position) {\n        var _a;\n        // Dispose listeners for updating decorations when using keyboard to show definition hover\n        this.toUnhookForKeyboard.clear();\n        // Find word at mouse position\n        const word = position ? (_a = this.editor.getModel()) === null || _a === void 0 ? void 0 : _a.getWordAtPosition(position) : null;\n        if (!word) {\n            this.currentWordAtPosition = null;\n            this.removeLinkDecorations();\n            return Promise.resolve(0);\n        }\n        // Return early if word at position is still the same\n        if (this.currentWordAtPosition && this.currentWordAtPosition.startColumn === word.startColumn && this.currentWordAtPosition.endColumn === word.endColumn && this.currentWordAtPosition.word === word.word) {\n            return Promise.resolve(0);\n        }\n        this.currentWordAtPosition = word;\n        // Find definition and decorate word if found\n        let state = new EditorState(this.editor, 4 /* Position */ | 1 /* Value */ | 2 /* Selection */ | 8 /* Scroll */);\n        if (this.previousPromise) {\n            this.previousPromise.cancel();\n            this.previousPromise = null;\n        }\n        this.previousPromise = createCancelablePromise(token => this.findDefinition(position, token));\n        return this.previousPromise.then(results => {\n            if (!results || !results.length || !state.validate(this.editor)) {\n                this.removeLinkDecorations();\n                return;\n            }\n            // Multiple results\n            if (results.length > 1) {\n                this.addDecoration(new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn), new MarkdownString().appendText(nls.localize('multipleResults', \"Click to show {0} definitions.\", results.length)));\n            }\n            // Single result\n            else {\n                let result = results[0];\n                if (!result.uri) {\n                    return;\n                }\n                this.textModelResolverService.createModelReference(result.uri).then(ref => {\n                    if (!ref.object || !ref.object.textEditorModel) {\n                        ref.dispose();\n                        return;\n                    }\n                    const { object: { textEditorModel } } = ref;\n                    const { startLineNumber } = result.range;\n                    if (startLineNumber < 1 || startLineNumber > textEditorModel.getLineCount()) {\n                        // invalid range\n                        ref.dispose();\n                        return;\n                    }\n                    const previewValue = this.getPreviewValue(textEditorModel, startLineNumber, result);\n                    let wordRange;\n                    if (result.originSelectionRange) {\n                        wordRange = Range.lift(result.originSelectionRange);\n                    }\n                    else {\n                        wordRange = new Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);\n                    }\n                    const languageId = this.languageService.guessLanguageIdByFilepathOrFirstLine(textEditorModel.uri);\n                    this.addDecoration(wordRange, new MarkdownString().appendCodeblock(languageId ? languageId : '', previewValue));\n                    ref.dispose();\n                });\n            }\n        }).then(undefined, onUnexpectedError);\n    }\n    getPreviewValue(textEditorModel, startLineNumber, result) {\n        let rangeToUse = result.targetSelectionRange ? result.range : this.getPreviewRangeBasedOnBrackets(textEditorModel, startLineNumber);\n        const numberOfLinesInRange = rangeToUse.endLineNumber - rangeToUse.startLineNumber;\n        if (numberOfLinesInRange >= GotoDefinitionAtPositionEditorContribution.MAX_SOURCE_PREVIEW_LINES) {\n            rangeToUse = this.getPreviewRangeBasedOnIndentation(textEditorModel, startLineNumber);\n        }\n        const previewValue = this.stripIndentationFromPreviewRange(textEditorModel, startLineNumber, rangeToUse);\n        return previewValue;\n    }\n    stripIndentationFromPreviewRange(textEditorModel, startLineNumber, previewRange) {\n        const startIndent = textEditorModel.getLineFirstNonWhitespaceColumn(startLineNumber);\n        let minIndent = startIndent;\n        for (let endLineNumber = startLineNumber + 1; endLineNumber < previewRange.endLineNumber; endLineNumber++) {\n            const endIndent = textEditorModel.getLineFirstNonWhitespaceColumn(endLineNumber);\n            minIndent = Math.min(minIndent, endIndent);\n        }\n        const previewValue = textEditorModel.getValueInRange(previewRange).replace(new RegExp(`^\\\\s{${minIndent - 1}}`, 'gm'), '').trim();\n        return previewValue;\n    }\n    getPreviewRangeBasedOnIndentation(textEditorModel, startLineNumber) {\n        const startIndent = textEditorModel.getLineFirstNonWhitespaceColumn(startLineNumber);\n        const maxLineNumber = Math.min(textEditorModel.getLineCount(), startLineNumber + GotoDefinitionAtPositionEditorContribution.MAX_SOURCE_PREVIEW_LINES);\n        let endLineNumber = startLineNumber + 1;\n        for (; endLineNumber < maxLineNumber; endLineNumber++) {\n            let endIndent = textEditorModel.getLineFirstNonWhitespaceColumn(endLineNumber);\n            if (startIndent === endIndent) {\n                break;\n            }\n        }\n        return new Range(startLineNumber, 1, endLineNumber + 1, 1);\n    }\n    getPreviewRangeBasedOnBrackets(textEditorModel, startLineNumber) {\n        const maxLineNumber = Math.min(textEditorModel.getLineCount(), startLineNumber + GotoDefinitionAtPositionEditorContribution.MAX_SOURCE_PREVIEW_LINES);\n        const brackets = [];\n        let ignoreFirstEmpty = true;\n        let currentBracket = textEditorModel.bracketPairs.findNextBracket(new Position(startLineNumber, 1));\n        while (currentBracket !== null) {\n            if (brackets.length === 0) {\n                brackets.push(currentBracket);\n            }\n            else {\n                const lastBracket = brackets[brackets.length - 1];\n                if (lastBracket.open[0] === currentBracket.open[0] && lastBracket.isOpen && !currentBracket.isOpen) {\n                    brackets.pop();\n                }\n                else {\n                    brackets.push(currentBracket);\n                }\n                if (brackets.length === 0) {\n                    if (ignoreFirstEmpty) {\n                        ignoreFirstEmpty = false;\n                    }\n                    else {\n                        return new Range(startLineNumber, 1, currentBracket.range.endLineNumber + 1, 1);\n                    }\n                }\n            }\n            const maxColumn = textEditorModel.getLineMaxColumn(startLineNumber);\n            let nextLineNumber = currentBracket.range.endLineNumber;\n            let nextColumn = currentBracket.range.endColumn;\n            if (maxColumn === currentBracket.range.endColumn) {\n                nextLineNumber++;\n                nextColumn = 1;\n            }\n            if (nextLineNumber > maxLineNumber) {\n                return new Range(startLineNumber, 1, maxLineNumber + 1, 1);\n            }\n            currentBracket = textEditorModel.bracketPairs.findNextBracket(new Position(nextLineNumber, nextColumn));\n        }\n        return new Range(startLineNumber, 1, maxLineNumber + 1, 1);\n    }\n    addDecoration(range, hoverMessage) {\n        const newDecorations = {\n            range: range,\n            options: {\n                description: 'goto-definition-link',\n                inlineClassName: 'goto-definition-link',\n                hoverMessage\n            }\n        };\n        this.linkDecorations = this.editor.deltaDecorations(this.linkDecorations, [newDecorations]);\n    }\n    removeLinkDecorations() {\n        if (this.linkDecorations.length > 0) {\n            this.linkDecorations = this.editor.deltaDecorations(this.linkDecorations, []);\n        }\n    }\n    isEnabled(mouseEvent, withKey) {\n        return this.editor.hasModel() &&\n            mouseEvent.isNoneOrSingleMouseDown &&\n            (mouseEvent.target.type === 6 /* CONTENT_TEXT */) &&\n            (mouseEvent.hasTriggerModifier || (withKey ? withKey.keyCodeIsTriggerKey : false)) &&\n            this.languageFeaturesService.definitionProvider.has(this.editor.getModel());\n    }\n    findDefinition(position, token) {\n        const model = this.editor.getModel();\n        if (!model) {\n            return Promise.resolve(null);\n        }\n        return getDefinitionsAtPosition(this.languageFeaturesService.definitionProvider, model, position, token);\n    }\n    gotoDefinition(position, openToSide) {\n        this.editor.setPosition(position);\n        return this.editor.invokeWithinContext((accessor) => {\n            const canPeek = !openToSide && this.editor.getOption(78 /* definitionLinkOpensInPeek */) && !this.isInPeekEditor(accessor);\n            const action = new DefinitionAction({ openToSide, openInPeek: canPeek, muteMessage: true }, { alias: '', label: '', id: '', precondition: undefined });\n            return action.run(accessor, this.editor);\n        });\n    }\n    isInPeekEditor(accessor) {\n        const contextKeyService = accessor.get(IContextKeyService);\n        return PeekContext.inPeekEditor.getValue(contextKeyService);\n    }\n    dispose() {\n        this.toUnhook.dispose();\n    }\n};\nGotoDefinitionAtPositionEditorContribution.ID = 'editor.contrib.gotodefinitionatposition';\nGotoDefinitionAtPositionEditorContribution.MAX_SOURCE_PREVIEW_LINES = 8;\nGotoDefinitionAtPositionEditorContribution = __decorate([\n    __param(1, ITextModelService),\n    __param(2, ILanguageService),\n    __param(3, ILanguageFeaturesService)\n], GotoDefinitionAtPositionEditorContribution);\nexport { GotoDefinitionAtPositionEditorContribution };\nregisterEditorContribution(GotoDefinitionAtPositionEditorContribution.ID, GotoDefinitionAtPositionEditorContribution);\nregisterThemingParticipant((theme, collector) => {\n    const activeLinkForeground = theme.getColor(editorActiveLinkForeground);\n    if (activeLinkForeground) {\n        collector.addRule(`.monaco-editor .goto-definition-link { color: ${activeLinkForeground} !important; }`);\n    }\n});\n",
+      "start": 1711096854468,
+      "end": 1711096854635,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854635,
+      "end": 1711096854635,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854635,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854636,
+      "end": 1711096854636,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854636,
+      "end": 1711096854637,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854637,
+      "end": 1711096854637,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854637,
+      "end": 1711096854637,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854637,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854638,
+      "end": 1711096854638,
+      "order": "normal"
+    }
+  ]
+}

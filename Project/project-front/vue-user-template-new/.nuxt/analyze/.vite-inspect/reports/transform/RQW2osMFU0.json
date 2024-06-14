@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/basic-languages/bicep/bicep.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*!-----------------------------------------------------------------------------\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)\n * Released under the MIT license\n * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt\n *-----------------------------------------------------------------------------*/\n\n// src/basic-languages/bicep/bicep.ts\nvar bounded = (text) => `\\\\b${text}\\\\b`;\nvar identifierStart = \"[_a-zA-Z]\";\nvar identifierContinue = \"[_a-zA-Z0-9]\";\nvar identifier = bounded(`${identifierStart}${identifierContinue}*`);\nvar keywords = [\n  \"targetScope\",\n  \"resource\",\n  \"module\",\n  \"param\",\n  \"var\",\n  \"output\",\n  \"for\",\n  \"in\",\n  \"if\",\n  \"existing\"\n];\nvar namedLiterals = [\"true\", \"false\", \"null\"];\nvar nonCommentWs = `[ \\\\t\\\\r\\\\n]`;\nvar numericLiteral = `[0-9]+`;\nvar conf = {\n  comments: {\n    lineComment: \"//\",\n    blockComment: [\"/*\", \"*/\"]\n  },\n  brackets: [\n    [\"{\", \"}\"],\n    [\"[\", \"]\"],\n    [\"(\", \")\"]\n  ],\n  surroundingPairs: [\n    { open: \"{\", close: \"}\" },\n    { open: \"[\", close: \"]\" },\n    { open: \"(\", close: \")\" },\n    { open: \"'\", close: \"'\" },\n    { open: \"'''\", close: \"'''\" }\n  ],\n  autoClosingPairs: [\n    { open: \"{\", close: \"}\" },\n    { open: \"[\", close: \"]\" },\n    { open: \"(\", close: \")\" },\n    { open: \"'\", close: \"'\", notIn: [\"string\", \"comment\"] },\n    { open: \"'''\", close: \"'''\", notIn: [\"string\", \"comment\"] }\n  ],\n  autoCloseBefore: \":.,=}])' \\n\t\",\n  indentationRules: {\n    increaseIndentPattern: new RegExp(\"^((?!\\\\/\\\\/).)*(\\\\{[^}\\\"'`]*|\\\\([^)\\\"'`]*|\\\\[[^\\\\]\\\"'`]*)$\"),\n    decreaseIndentPattern: new RegExp(\"^((?!.*?\\\\/\\\\*).*\\\\*/)?\\\\s*[\\\\}\\\\]].*$\")\n  }\n};\nvar language = {\n  defaultToken: \"\",\n  tokenPostfix: \".bicep\",\n  brackets: [\n    { open: \"{\", close: \"}\", token: \"delimiter.curly\" },\n    { open: \"[\", close: \"]\", token: \"delimiter.square\" },\n    { open: \"(\", close: \")\", token: \"delimiter.parenthesis\" }\n  ],\n  symbols: /[=><!~?:&|+\\-*/^%]+/,\n  keywords,\n  namedLiterals,\n  escapes: `\\\\\\\\(u{[0-9A-Fa-f]+}|n|r|t|\\\\\\\\|'|\\\\\\${)`,\n  tokenizer: {\n    root: [{ include: \"@expression\" }, { include: \"@whitespace\" }],\n    stringVerbatim: [\n      { regex: `(|'|'')[^']`, action: { token: \"string\" } },\n      { regex: `'''`, action: { token: \"string.quote\", next: \"@pop\" } }\n    ],\n    stringLiteral: [\n      { regex: `\\\\\\${`, action: { token: \"delimiter.bracket\", next: \"@bracketCounting\" } },\n      { regex: `[^\\\\\\\\'$]+`, action: { token: \"string\" } },\n      { regex: \"@escapes\", action: { token: \"string.escape\" } },\n      { regex: `\\\\\\\\.`, action: { token: \"string.escape.invalid\" } },\n      { regex: `'`, action: { token: \"string\", next: \"@pop\" } }\n    ],\n    bracketCounting: [\n      { regex: `{`, action: { token: \"delimiter.bracket\", next: \"@bracketCounting\" } },\n      { regex: `}`, action: { token: \"delimiter.bracket\", next: \"@pop\" } },\n      { include: \"expression\" }\n    ],\n    comment: [\n      { regex: `[^\\\\*]+`, action: { token: \"comment\" } },\n      { regex: `\\\\*\\\\/`, action: { token: \"comment\", next: \"@pop\" } },\n      { regex: `[\\\\/*]`, action: { token: \"comment\" } }\n    ],\n    whitespace: [\n      { regex: nonCommentWs },\n      { regex: `\\\\/\\\\*`, action: { token: \"comment\", next: \"@comment\" } },\n      { regex: `\\\\/\\\\/.*$`, action: { token: \"comment\" } }\n    ],\n    expression: [\n      { regex: `'''`, action: { token: \"string.quote\", next: \"@stringVerbatim\" } },\n      { regex: `'`, action: { token: \"string.quote\", next: \"@stringLiteral\" } },\n      { regex: numericLiteral, action: { token: \"number\" } },\n      {\n        regex: identifier,\n        action: {\n          cases: {\n            \"@keywords\": { token: \"keyword\" },\n            \"@namedLiterals\": { token: \"keyword\" },\n            \"@default\": { token: \"identifier\" }\n          }\n        }\n      }\n    ]\n  }\n};\nexport {\n  conf,\n  language\n};\n",
+      "start": 1711096854032,
+      "end": 1711096854250,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854250,
+      "end": 1711096854250,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854250,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854251,
+      "end": 1711096854251,
+      "order": "normal"
+    }
+  ]
+}

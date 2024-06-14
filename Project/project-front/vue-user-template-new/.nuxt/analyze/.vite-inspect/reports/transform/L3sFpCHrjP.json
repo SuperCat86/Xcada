@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/contextkey/browser/contextKeyService.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { PauseableEmitter } from '../../../base/common/event.js';\nimport { Iterable } from '../../../base/common/iterator.js';\nimport { DisposableStore, MutableDisposable } from '../../../base/common/lifecycle.js';\nimport { TernarySearchTree } from '../../../base/common/map.js';\nimport { localize } from '../../../nls.js';\nimport { CommandsRegistry } from '../../commands/common/commands.js';\nimport { IConfigurationService } from '../../configuration/common/configuration.js';\nimport { IContextKeyService, RawContextKey, SET_CONTEXT_COMMAND_ID } from '../common/contextkey.js';\nconst KEYBINDING_CONTEXT_ATTR = 'data-keybinding-context';\nexport class Context {\n    constructor(id, parent) {\n        this._id = id;\n        this._parent = parent;\n        this._value = Object.create(null);\n        this._value['_contextId'] = id;\n    }\n    setValue(key, value) {\n        // console.log('SET ' + key + ' = ' + value + ' ON ' + this._id);\n        if (this._value[key] !== value) {\n            this._value[key] = value;\n            return true;\n        }\n        return false;\n    }\n    removeValue(key) {\n        // console.log('REMOVE ' + key + ' FROM ' + this._id);\n        if (key in this._value) {\n            delete this._value[key];\n            return true;\n        }\n        return false;\n    }\n    getValue(key) {\n        const ret = this._value[key];\n        if (typeof ret === 'undefined' && this._parent) {\n            return this._parent.getValue(key);\n        }\n        return ret;\n    }\n}\nclass NullContext extends Context {\n    constructor() {\n        super(-1, null);\n    }\n    setValue(key, value) {\n        return false;\n    }\n    removeValue(key) {\n        return false;\n    }\n    getValue(key) {\n        return undefined;\n    }\n}\nNullContext.INSTANCE = new NullContext();\nclass ConfigAwareContextValuesContainer extends Context {\n    constructor(id, _configurationService, emitter) {\n        super(id, null);\n        this._configurationService = _configurationService;\n        this._values = TernarySearchTree.forConfigKeys();\n        this._listener = this._configurationService.onDidChangeConfiguration(event => {\n            if (event.source === 6 /* DEFAULT */) {\n                // new setting, reset everything\n                const allKeys = Array.from(Iterable.map(this._values, ([k]) => k));\n                this._values.clear();\n                emitter.fire(new ArrayContextKeyChangeEvent(allKeys));\n            }\n            else {\n                const changedKeys = [];\n                for (const configKey of event.affectedKeys) {\n                    const contextKey = `config.${configKey}`;\n                    const cachedItems = this._values.findSuperstr(contextKey);\n                    if (cachedItems !== undefined) {\n                        changedKeys.push(...Iterable.map(cachedItems, ([key]) => key));\n                        this._values.deleteSuperstr(contextKey);\n                    }\n                    if (this._values.has(contextKey)) {\n                        changedKeys.push(contextKey);\n                        this._values.delete(contextKey);\n                    }\n                }\n                emitter.fire(new ArrayContextKeyChangeEvent(changedKeys));\n            }\n        });\n    }\n    dispose() {\n        this._listener.dispose();\n    }\n    getValue(key) {\n        if (key.indexOf(ConfigAwareContextValuesContainer._keyPrefix) !== 0) {\n            return super.getValue(key);\n        }\n        if (this._values.has(key)) {\n            return this._values.get(key);\n        }\n        const configKey = key.substr(ConfigAwareContextValuesContainer._keyPrefix.length);\n        const configValue = this._configurationService.getValue(configKey);\n        let value = undefined;\n        switch (typeof configValue) {\n            case 'number':\n            case 'boolean':\n            case 'string':\n                value = configValue;\n                break;\n            default:\n                if (Array.isArray(configValue)) {\n                    value = JSON.stringify(configValue);\n                }\n                else {\n                    value = configValue;\n                }\n        }\n        this._values.set(key, value);\n        return value;\n    }\n    setValue(key, value) {\n        return super.setValue(key, value);\n    }\n    removeValue(key) {\n        return super.removeValue(key);\n    }\n}\nConfigAwareContextValuesContainer._keyPrefix = 'config.';\nclass ContextKey {\n    constructor(service, key, defaultValue) {\n        this._service = service;\n        this._key = key;\n        this._defaultValue = defaultValue;\n        this.reset();\n    }\n    set(value) {\n        this._service.setContext(this._key, value);\n    }\n    reset() {\n        if (typeof this._defaultValue === 'undefined') {\n            this._service.removeContext(this._key);\n        }\n        else {\n            this._service.setContext(this._key, this._defaultValue);\n        }\n    }\n    get() {\n        return this._service.getContextKeyValue(this._key);\n    }\n}\nclass SimpleContextKeyChangeEvent {\n    constructor(key) {\n        this.key = key;\n    }\n    affectsSome(keys) {\n        return keys.has(this.key);\n    }\n}\nclass ArrayContextKeyChangeEvent {\n    constructor(keys) {\n        this.keys = keys;\n    }\n    affectsSome(keys) {\n        for (const key of this.keys) {\n            if (keys.has(key)) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\nclass CompositeContextKeyChangeEvent {\n    constructor(events) {\n        this.events = events;\n    }\n    affectsSome(keys) {\n        for (const e of this.events) {\n            if (e.affectsSome(keys)) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\nexport class AbstractContextKeyService {\n    constructor(myContextId) {\n        this._onDidChangeContext = new PauseableEmitter({ merge: input => new CompositeContextKeyChangeEvent(input) });\n        this.onDidChangeContext = this._onDidChangeContext.event;\n        this._isDisposed = false;\n        this._myContextId = myContextId;\n    }\n    createKey(key, defaultValue) {\n        if (this._isDisposed) {\n            throw new Error(`AbstractContextKeyService has been disposed`);\n        }\n        return new ContextKey(this, key, defaultValue);\n    }\n    bufferChangeEvents(callback) {\n        this._onDidChangeContext.pause();\n        try {\n            callback();\n        }\n        finally {\n            this._onDidChangeContext.resume();\n        }\n    }\n    createScoped(domNode) {\n        if (this._isDisposed) {\n            throw new Error(`AbstractContextKeyService has been disposed`);\n        }\n        return new ScopedContextKeyService(this, domNode);\n    }\n    contextMatchesRules(rules) {\n        if (this._isDisposed) {\n            throw new Error(`AbstractContextKeyService has been disposed`);\n        }\n        const context = this.getContextValuesContainer(this._myContextId);\n        const result = (rules ? rules.evaluate(context) : true);\n        // console.group(rules.serialize() + ' -> ' + result);\n        // rules.keys().forEach(key => { console.log(key, ctx[key]); });\n        // console.groupEnd();\n        return result;\n    }\n    getContextKeyValue(key) {\n        if (this._isDisposed) {\n            return undefined;\n        }\n        return this.getContextValuesContainer(this._myContextId).getValue(key);\n    }\n    setContext(key, value) {\n        if (this._isDisposed) {\n            return;\n        }\n        const myContext = this.getContextValuesContainer(this._myContextId);\n        if (!myContext) {\n            return;\n        }\n        if (myContext.setValue(key, value)) {\n            this._onDidChangeContext.fire(new SimpleContextKeyChangeEvent(key));\n        }\n    }\n    removeContext(key) {\n        if (this._isDisposed) {\n            return;\n        }\n        if (this.getContextValuesContainer(this._myContextId).removeValue(key)) {\n            this._onDidChangeContext.fire(new SimpleContextKeyChangeEvent(key));\n        }\n    }\n    getContext(target) {\n        if (this._isDisposed) {\n            return NullContext.INSTANCE;\n        }\n        return this.getContextValuesContainer(findContextAttr(target));\n    }\n}\nlet ContextKeyService = class ContextKeyService extends AbstractContextKeyService {\n    constructor(configurationService) {\n        super(0);\n        this._contexts = new Map();\n        this._toDispose = new DisposableStore();\n        this._lastContextId = 0;\n        const myContext = new ConfigAwareContextValuesContainer(this._myContextId, configurationService, this._onDidChangeContext);\n        this._contexts.set(this._myContextId, myContext);\n        this._toDispose.add(myContext);\n        // Uncomment this to see the contexts continuously logged\n        // let lastLoggedValue: string | null = null;\n        // setInterval(() => {\n        // \tlet values = Object.keys(this._contexts).map((key) => this._contexts[key]);\n        // \tlet logValue = values.map(v => JSON.stringify(v._value, null, '\\t')).join('\\n');\n        // \tif (lastLoggedValue !== logValue) {\n        // \t\tlastLoggedValue = logValue;\n        // \t\tconsole.log(lastLoggedValue);\n        // \t}\n        // }, 2000);\n    }\n    dispose() {\n        this._onDidChangeContext.dispose();\n        this._isDisposed = true;\n        this._toDispose.dispose();\n    }\n    getContextValuesContainer(contextId) {\n        if (this._isDisposed) {\n            return NullContext.INSTANCE;\n        }\n        return this._contexts.get(contextId) || NullContext.INSTANCE;\n    }\n    createChildContext(parentContextId = this._myContextId) {\n        if (this._isDisposed) {\n            throw new Error(`ContextKeyService has been disposed`);\n        }\n        let id = (++this._lastContextId);\n        this._contexts.set(id, new Context(id, this.getContextValuesContainer(parentContextId)));\n        return id;\n    }\n    disposeContext(contextId) {\n        if (!this._isDisposed) {\n            this._contexts.delete(contextId);\n        }\n    }\n};\nContextKeyService = __decorate([\n    __param(0, IConfigurationService)\n], ContextKeyService);\nexport { ContextKeyService };\nclass ScopedContextKeyService extends AbstractContextKeyService {\n    constructor(parent, domNode) {\n        super(parent.createChildContext());\n        this._parentChangeListener = new MutableDisposable();\n        this._parent = parent;\n        this._updateParentChangeListener();\n        this._domNode = domNode;\n        if (this._domNode.hasAttribute(KEYBINDING_CONTEXT_ATTR)) {\n            let extraInfo = '';\n            if (this._domNode.classList) {\n                extraInfo = Array.from(this._domNode.classList.values()).join(', ');\n            }\n            console.error(`Element already has context attribute${extraInfo ? ': ' + extraInfo : ''}`);\n        }\n        this._domNode.setAttribute(KEYBINDING_CONTEXT_ATTR, String(this._myContextId));\n    }\n    _updateParentChangeListener() {\n        // Forward parent events to this listener. Parent will change.\n        this._parentChangeListener.value = this._parent.onDidChangeContext(this._onDidChangeContext.fire, this._onDidChangeContext);\n    }\n    dispose() {\n        if (this._isDisposed) {\n            return;\n        }\n        this._onDidChangeContext.dispose();\n        this._parent.disposeContext(this._myContextId);\n        this._parentChangeListener.dispose();\n        this._domNode.removeAttribute(KEYBINDING_CONTEXT_ATTR);\n        this._isDisposed = true;\n    }\n    getContextValuesContainer(contextId) {\n        if (this._isDisposed) {\n            return NullContext.INSTANCE;\n        }\n        return this._parent.getContextValuesContainer(contextId);\n    }\n    createChildContext(parentContextId = this._myContextId) {\n        if (this._isDisposed) {\n            throw new Error(`ScopedContextKeyService has been disposed`);\n        }\n        return this._parent.createChildContext(parentContextId);\n    }\n    disposeContext(contextId) {\n        if (this._isDisposed) {\n            return;\n        }\n        this._parent.disposeContext(contextId);\n    }\n}\nfunction findContextAttr(domNode) {\n    while (domNode) {\n        if (domNode.hasAttribute(KEYBINDING_CONTEXT_ATTR)) {\n            const attr = domNode.getAttribute(KEYBINDING_CONTEXT_ATTR);\n            if (attr) {\n                return parseInt(attr, 10);\n            }\n            return NaN;\n        }\n        domNode = domNode.parentElement;\n    }\n    return 0;\n}\nCommandsRegistry.registerCommand(SET_CONTEXT_COMMAND_ID, function (accessor, contextKey, contextValue) {\n    accessor.get(IContextKeyService).createKey(String(contextKey), contextValue);\n});\nCommandsRegistry.registerCommand({\n    id: 'getContextKeyInfo',\n    handler() {\n        return [...RawContextKey.all()].sort((a, b) => a.key.localeCompare(b.key));\n    },\n    description: {\n        description: localize('getContextKeyInfo', \"A command that returns information about context keys\"),\n        args: []\n    }\n});\nCommandsRegistry.registerCommand('_generateContextKeyInfo', function () {\n    const result = [];\n    const seen = new Set();\n    for (let info of RawContextKey.all()) {\n        if (!seen.has(info.key)) {\n            seen.add(info.key);\n            result.push(info);\n        }\n    }\n    result.sort((a, b) => a.key.localeCompare(b.key));\n    console.log(JSON.stringify(result, undefined, 2));\n});\n",
+      "start": 1711096856289,
+      "end": 1711096856372,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856372,
+      "end": 1711096856372,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856373,
+      "end": 1711096856373,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856373,
+      "end": 1711096856374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856374,
+      "end": 1711096856374,
+      "order": "normal"
+    }
+  ]
+}

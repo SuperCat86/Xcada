@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/bracketPairsTree/bracketPairsTree.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { Emitter } from '../../../../../base/common/event.js';\nimport { Disposable } from '../../../../../base/common/lifecycle.js';\nimport { Range } from '../../../core/range.js';\nimport { BracketInfo, BracketPairWithMinIndentationInfo } from '../../../textModelBracketPairs.js';\nimport { TextEditInfo } from './beforeEditPositionMapper.js';\nimport { LanguageAgnosticBracketTokens } from './brackets.js';\nimport { lengthAdd, lengthGreaterThanEqual, lengthLessThanEqual, lengthOfString, lengthsToRange, lengthZero, positionToLength, toLength } from './length.js';\nimport { parseDocument } from './parser.js';\nimport { DenseKeyProvider } from './smallImmutableSet.js';\nimport { FastTokenizer, TextBufferTokenizer } from './tokenizer.js';\nexport class BracketPairsTree extends Disposable {\n    constructor(textModel, getLanguageConfiguration) {\n        super();\n        this.textModel = textModel;\n        this.getLanguageConfiguration = getLanguageConfiguration;\n        this.didChangeEmitter = new Emitter();\n        this.denseKeyProvider = new DenseKeyProvider();\n        this.brackets = new LanguageAgnosticBracketTokens(this.denseKeyProvider, this.getLanguageConfiguration);\n        this.onDidChange = this.didChangeEmitter.event;\n        if (textModel.backgroundTokenizationState === 0 /* Uninitialized */) {\n            // There are no token information yet\n            const brackets = this.brackets.getSingleLanguageBracketTokens(this.textModel.getLanguageId());\n            const tokenizer = new FastTokenizer(this.textModel.getValue(), brackets);\n            this.initialAstWithoutTokens = parseDocument(tokenizer, [], undefined, true);\n            this.astWithTokens = this.initialAstWithoutTokens;\n        }\n        else if (textModel.backgroundTokenizationState === 2 /* Completed */) {\n            // Skip the initial ast, as there is no flickering.\n            // Directly create the tree with token information.\n            this.initialAstWithoutTokens = undefined;\n            this.astWithTokens = this.parseDocumentFromTextBuffer([], undefined, false);\n        }\n        else if (textModel.backgroundTokenizationState === 1 /* InProgress */) {\n            this.initialAstWithoutTokens = this.parseDocumentFromTextBuffer([], undefined, true);\n            this.astWithTokens = this.initialAstWithoutTokens;\n        }\n    }\n    didLanguageChange(languageId) {\n        return this.brackets.didLanguageChange(languageId);\n    }\n    //#region TextModel events\n    handleDidChangeBackgroundTokenizationState() {\n        if (this.textModel.backgroundTokenizationState === 2 /* Completed */) {\n            const wasUndefined = this.initialAstWithoutTokens === undefined;\n            // Clear the initial tree as we can use the tree with token information now.\n            this.initialAstWithoutTokens = undefined;\n            if (!wasUndefined) {\n                this.didChangeEmitter.fire();\n            }\n        }\n    }\n    handleDidChangeTokens({ ranges }) {\n        const edits = ranges.map(r => new TextEditInfo(toLength(r.fromLineNumber - 1, 0), toLength(r.toLineNumber, 0), toLength(r.toLineNumber - r.fromLineNumber + 1, 0)));\n        this.astWithTokens = this.parseDocumentFromTextBuffer(edits, this.astWithTokens, false);\n        if (!this.initialAstWithoutTokens) {\n            this.didChangeEmitter.fire();\n        }\n    }\n    handleContentChanged(change) {\n        const edits = change.changes.map(c => {\n            const range = Range.lift(c.range);\n            return new TextEditInfo(positionToLength(range.getStartPosition()), positionToLength(range.getEndPosition()), lengthOfString(c.text));\n        }).reverse();\n        this.astWithTokens = this.parseDocumentFromTextBuffer(edits, this.astWithTokens, false);\n        if (this.initialAstWithoutTokens) {\n            this.initialAstWithoutTokens = this.parseDocumentFromTextBuffer(edits, this.initialAstWithoutTokens, false);\n        }\n    }\n    //#endregion\n    /**\n     * @pure (only if isPure = true)\n    */\n    parseDocumentFromTextBuffer(edits, previousAst, immutable) {\n        // Is much faster if `isPure = false`.\n        const isPure = false;\n        const previousAstClone = isPure ? previousAst === null || previousAst === void 0 ? void 0 : previousAst.deepClone() : previousAst;\n        const tokenizer = new TextBufferTokenizer(this.textModel, this.brackets);\n        const result = parseDocument(tokenizer, edits, previousAstClone, immutable);\n        return result;\n    }\n    getBracketsInRange(range) {\n        const startOffset = toLength(range.startLineNumber - 1, range.startColumn - 1);\n        const endOffset = toLength(range.endLineNumber - 1, range.endColumn - 1);\n        const result = new Array();\n        const node = this.initialAstWithoutTokens || this.astWithTokens;\n        collectBrackets(node, lengthZero, node.length, startOffset, endOffset, result);\n        return result;\n    }\n    getBracketPairsInRange(range, includeMinIndentation) {\n        const result = new Array();\n        const startLength = positionToLength(range.getStartPosition());\n        const endLength = positionToLength(range.getEndPosition());\n        const node = this.initialAstWithoutTokens || this.astWithTokens;\n        const context = new CollectBracketPairsContext(result, includeMinIndentation, this.textModel);\n        collectBracketPairs(node, lengthZero, node.length, startLength, endLength, context);\n        return result;\n    }\n}\nfunction collectBrackets(node, nodeOffsetStart, nodeOffsetEnd, startOffset, endOffset, result, level = 0) {\n    if (node.kind === 4 /* List */) {\n        for (const child of node.children) {\n            nodeOffsetEnd = lengthAdd(nodeOffsetStart, child.length);\n            if (lengthLessThanEqual(nodeOffsetStart, endOffset) && lengthGreaterThanEqual(nodeOffsetEnd, startOffset)) {\n                collectBrackets(child, nodeOffsetStart, nodeOffsetEnd, startOffset, endOffset, result, level);\n            }\n            nodeOffsetStart = nodeOffsetEnd;\n        }\n    }\n    else if (node.kind === 2 /* Pair */) {\n        // Don't use node.children here to improve performance\n        level++;\n        {\n            const child = node.openingBracket;\n            nodeOffsetEnd = lengthAdd(nodeOffsetStart, child.length);\n            if (lengthLessThanEqual(nodeOffsetStart, endOffset) && lengthGreaterThanEqual(nodeOffsetEnd, startOffset)) {\n                const range = lengthsToRange(nodeOffsetStart, nodeOffsetEnd);\n                result.push(new BracketInfo(range, level - 1, !node.closingBracket));\n            }\n            nodeOffsetStart = nodeOffsetEnd;\n        }\n        if (node.child) {\n            const child = node.child;\n            nodeOffsetEnd = lengthAdd(nodeOffsetStart, child.length);\n            if (lengthLessThanEqual(nodeOffsetStart, endOffset) && lengthGreaterThanEqual(nodeOffsetEnd, startOffset)) {\n                collectBrackets(child, nodeOffsetStart, nodeOffsetEnd, startOffset, endOffset, result, level);\n            }\n            nodeOffsetStart = nodeOffsetEnd;\n        }\n        if (node.closingBracket) {\n            const child = node.closingBracket;\n            nodeOffsetEnd = lengthAdd(nodeOffsetStart, child.length);\n            if (lengthLessThanEqual(nodeOffsetStart, endOffset) && lengthGreaterThanEqual(nodeOffsetEnd, startOffset)) {\n                const range = lengthsToRange(nodeOffsetStart, nodeOffsetEnd);\n                result.push(new BracketInfo(range, level - 1, false));\n            }\n            nodeOffsetStart = nodeOffsetEnd;\n        }\n    }\n    else if (node.kind === 3 /* UnexpectedClosingBracket */) {\n        const range = lengthsToRange(nodeOffsetStart, nodeOffsetEnd);\n        result.push(new BracketInfo(range, level - 1, true));\n    }\n    else if (node.kind === 1 /* Bracket */) {\n        const range = lengthsToRange(nodeOffsetStart, nodeOffsetEnd);\n        result.push(new BracketInfo(range, level - 1, false));\n    }\n}\nclass CollectBracketPairsContext {\n    constructor(result, includeMinIndentation, textModel) {\n        this.result = result;\n        this.includeMinIndentation = includeMinIndentation;\n        this.textModel = textModel;\n    }\n}\nfunction collectBracketPairs(node, nodeOffset, nodeOffsetEnd, startOffset, endOffset, context, level = 0) {\n    var _a;\n    if (node.kind === 2 /* Pair */) {\n        const openingBracketEnd = lengthAdd(nodeOffset, node.openingBracket.length);\n        let minIndentation = -1;\n        if (context.includeMinIndentation) {\n            minIndentation = node.computeMinIndentation(nodeOffset, context.textModel);\n        }\n        context.result.push(new BracketPairWithMinIndentationInfo(lengthsToRange(nodeOffset, nodeOffsetEnd), lengthsToRange(nodeOffset, openingBracketEnd), node.closingBracket\n            ? lengthsToRange(lengthAdd(openingBracketEnd, ((_a = node.child) === null || _a === void 0 ? void 0 : _a.length) || lengthZero), nodeOffsetEnd)\n            : undefined, level, minIndentation));\n        level++;\n    }\n    let curOffset = nodeOffset;\n    for (const child of node.children) {\n        const childOffset = curOffset;\n        curOffset = lengthAdd(curOffset, child.length);\n        if (lengthLessThanEqual(childOffset, endOffset) && lengthLessThanEqual(startOffset, curOffset)) {\n            collectBracketPairs(child, childOffset, curOffset, startOffset, endOffset, context, level);\n        }\n    }\n}\n",
+      "start": 1711096857277,
+      "end": 1711096857359,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857359,
+      "end": 1711096857359,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857359,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857360,
+      "end": 1711096857360,
+      "order": "normal"
+    }
+  ]
+}

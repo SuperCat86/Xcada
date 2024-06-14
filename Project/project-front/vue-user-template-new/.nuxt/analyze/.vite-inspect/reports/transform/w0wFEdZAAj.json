@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/pages/about/index.vue",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "<template>\r\n  <div class=\"about\">\r\n    <div class=\"Code\" ref=\"code\"></div>\r\n    <div class=\"title1\">123</div>\r\n  </div>\r\n</template>\r\n\r\n<script setup>\r\nimport \"~/assets/css/about.css\";\r\nimport { ref, onMounted } from 'vue';\r\nimport { language as javaLanguage } from 'monaco-editor/esm/vs/basic-languages/java/java.js';\r\n\r\nlet editor = null;\r\n\r\nconst code = ref(null);\r\nconst value = ref('hello');\r\n\r\nconst initEditor = async () => {\r\n  if (process.client) {\r\n    const monaco = await import('monaco-editor');\r\n\r\n    if (!code.value) {\r\n      throw new Error('Ref \"code\" is not yet available');\r\n    }\r\n\r\n    editor = monaco.editor.create(code.value, {\r\n      theme: 'vs-dark',\r\n      value: value.value,\r\n      language: 'java',\r\n      fontSize: 16,\r\n    });\r\n\r\n    monaco.languages.registerCompletionItemProvider('java', {\r\n      provideCompletionItems: () => {\r\n        let suggestions = [];\r\n        javaLanguage.keywords.forEach(item => {\r\n          suggestions.push({\r\n            label: item,\r\n            kind: monaco.languages.CompletionItemKind.Keyword,\r\n            insertText: item\r\n          });\r\n        });\r\n        return { suggestions };\r\n      },\r\n    });\r\n  }\r\n};\r\n\r\nonMounted(async () => {\r\n  await initEditor();\r\n});\r\n</script>\r\n",
+      "start": 1711096853009,
+      "end": 1711096853201,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "result": "import { createElementVNode as _createElementVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\"\n\nconst _hoisted_1 = { class: \"about\" }\nconst _hoisted_2 = /*#__PURE__*/_createElementVNode(\"div\", { class: \"title1\" }, \"123\", -1)\n\nimport \"~/assets/css/about.css\";\r\nimport { ref, onMounted } from 'vue';\r\nimport { language as javaLanguage } from 'monaco-editor/esm/vs/basic-languages/java/java.js';\r\n\r\n\nconst _sfc_main = {\n  __name: 'index',\n  setup(__props) {\n\r\nlet editor = null;\r\n\r\nconst code = ref(null);\r\nconst value = ref('hello');\r\n\r\nconst initEditor = async () => {\r\n  if (process.client) {\r\n    const monaco = await import('monaco-editor');\r\n\r\n    if (!code.value) {\r\n      throw new Error('Ref \"code\" is not yet available');\r\n    }\r\n\r\n    editor = monaco.editor.create(code.value, {\r\n      theme: 'vs-dark',\r\n      value: value.value,\r\n      language: 'java',\r\n      fontSize: 16,\r\n    });\r\n\r\n    monaco.languages.registerCompletionItemProvider('java', {\r\n      provideCompletionItems: () => {\r\n        let suggestions = [];\r\n        javaLanguage.keywords.forEach(item => {\r\n          suggestions.push({\r\n            label: item,\r\n            kind: monaco.languages.CompletionItemKind.Keyword,\r\n            insertText: item\r\n          });\r\n        });\r\n        return { suggestions };\r\n      },\r\n    });\r\n  }\r\n};\r\n\r\nonMounted(async () => {\r\n  await initEditor();\r\n});\r\n\nreturn (_ctx, _cache) => {\n  return (_openBlock(), _createElementBlock(\"div\", _hoisted_1, [\n    _createElementVNode(\"div\", {\n      class: \"Code\",\n      ref_key: \"code\",\n      ref: code\n    }, null, 512),\n    _hoisted_2\n  ]))\n}\n}\n\n}\n\n\n\nexport default _sfc_main",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853201,
+      "end": 1711096853201,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853201,
+      "end": 1711096853202,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853202,
+      "end": 1711096853202,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853202,
+      "end": 1711096853202,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "result": "import { createElementVNode as _createElementVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\";\nconst _hoisted_1 = { class: \"about\" };\nconst _hoisted_2 = /* @__PURE__ */ _createElementVNode(\"div\", { class: \"title1\" }, \"123\", -1);\nimport \"~/assets/css/about.css\";\nimport { ref, onMounted } from \"vue\";\nimport { language as javaLanguage } from \"monaco-editor/esm/vs/basic-languages/java/java.js\";\nconst _sfc_main = {\n  __name: \"index\",\n  setup(__props) {\n    let editor = null;\n    const code = ref(null);\n    const value = ref(\"hello\");\n    const initEditor = async () => {\n      if (true) {\n        const monaco = await import(\"monaco-editor\");\n        if (!code.value) {\n          throw new Error('Ref \"code\" is not yet available');\n        }\n        editor = monaco.editor.create(code.value, {\n          theme: \"vs-dark\",\n          value: value.value,\n          language: \"java\",\n          fontSize: 16\n        });\n        monaco.languages.registerCompletionItemProvider(\"java\", {\n          provideCompletionItems: () => {\n            let suggestions = [];\n            javaLanguage.keywords.forEach((item) => {\n              suggestions.push({\n                label: item,\n                kind: monaco.languages.CompletionItemKind.Keyword,\n                insertText: item\n              });\n            });\n            return { suggestions };\n          }\n        });\n      }\n    };\n    onMounted(async () => {\n      await initEditor();\n    });\n    return (_ctx, _cache) => {\n      return _openBlock(), _createElementBlock(\"div\", _hoisted_1, [\n        _createElementVNode(\"div\", {\n          class: \"Code\",\n          ref_key: \"code\",\n          ref: code\n        }, null, 512),\n        _hoisted_2\n      ]);\n    };\n  }\n};\nexport default _sfc_main;\n",
+      "start": 1711096853202,
+      "end": 1711096853261,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853261,
+      "end": 1711096853261,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853261,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "result": "import { __vitePreload } from \"\u0000vite/preload-helper.js\";import { createElementVNode as _createElementVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\";\nconst _hoisted_1 = { class: \"about\" };\nconst _hoisted_2 = /* @__PURE__ */ _createElementVNode(\"div\", { class: \"title1\" }, \"123\", -1);\nimport \"~/assets/css/about.css\";\nimport { ref, onMounted } from \"vue\";\nimport { language as javaLanguage } from \"monaco-editor/esm/vs/basic-languages/java/java.js\";\nconst _sfc_main = {\n  __name: \"index\",\n  setup(__props) {\n    let editor = null;\n    const code = ref(null);\n    const value = ref(\"hello\");\n    const initEditor = async () => {\n      if (true) {\n        const monaco = await __vitePreload(() => import(\"monaco-editor\"),__VITE_IS_MODERN__?\"__VITE_PRELOAD__\":void 0,import.meta.url);\n        if (!code.value) {\n          throw new Error('Ref \"code\" is not yet available');\n        }\n        editor = monaco.editor.create(code.value, {\n          theme: \"vs-dark\",\n          value: value.value,\n          language: \"java\",\n          fontSize: 16\n        });\n        monaco.languages.registerCompletionItemProvider(\"java\", {\n          provideCompletionItems: () => {\n            let suggestions = [];\n            javaLanguage.keywords.forEach((item) => {\n              suggestions.push({\n                label: item,\n                kind: monaco.languages.CompletionItemKind.Keyword,\n                insertText: item\n              });\n            });\n            return { suggestions };\n          }\n        });\n      }\n    };\n    onMounted(async () => {\n      await initEditor();\n    });\n    return (_ctx, _cache) => {\n      return _openBlock(), _createElementBlock(\"div\", _hoisted_1, [\n        _createElementVNode(\"div\", {\n          class: \"Code\",\n          ref_key: \"code\",\n          ref: code\n        }, null, 512),\n        _hoisted_2\n      ]);\n    };\n  }\n};\nexport default _sfc_main;\n",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "normal",
+      "sourcemaps": null
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853262,
+      "end": 1711096853262,
+      "order": "normal"
+    }
+  ]
+}

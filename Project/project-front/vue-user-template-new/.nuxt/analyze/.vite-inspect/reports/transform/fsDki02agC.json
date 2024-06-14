@@ -1,0 +1,218 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/peekView/browser/media/peekViewWidget.css",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\n\n.monaco-editor .peekview-widget .head {\n\tbox-sizing: border-box;\n\tdisplay: flex;\n\tjustify-content: space-between;\n\tflex-wrap: nowrap;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title {\n\tdisplay: flex;\n\talign-items: center;\n\tfont-size: 13px;\n\tmargin-left: 20px;\n\tmin-width: 0;\n\ttext-overflow: ellipsis;\n\toverflow: hidden;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title.clickable {\n\tcursor: pointer;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .dirname:not(:empty) {\n\tfont-size: 0.9em;\n\tmargin-left: 0.5em;\n\ttext-overflow: ellipsis;\n\toverflow: hidden;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .meta {\n\twhite-space: nowrap;\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .dirname {\n\twhite-space: nowrap;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .filename {\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n\twhite-space: nowrap;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .meta:not(:empty)::before {\n\tcontent: '-';\n\tpadding: 0 0.3em;\n}\n\n.monaco-editor .peekview-widget .head .peekview-actions {\n\tflex: 1;\n\ttext-align: right;\n\tpadding-right: 2px;\n}\n\n.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar {\n\tdisplay: inline-block;\n}\n\n.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar,\n.monaco-editor .peekview-widget .head .peekview-actions > .monaco-action-bar > .actions-container {\n\theight: 100%;\n}\n\n.monaco-editor .peekview-widget > .body {\n\tborder-top: 1px solid;\n\tposition: relative;\n}\n\n.monaco-editor .peekview-widget .head .peekview-title .codicon {\n\tmargin-right: 4px;\n}\n\n.monaco-editor .peekview-widget .monaco-list .monaco-list-row.focused .codicon {\n\tcolor: inherit !important;\n}\n",
+      "start": 1711096856736,
+      "end": 1711096856830,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856830,
+      "end": 1711096856830,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856830,
+      "end": 1711096856830,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856830,
+      "end": 1711096856830,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "result": ".monaco-editor .peekview-widget .head{box-sizing:border-box;display:flex;flex-wrap:nowrap;justify-content:space-between}.monaco-editor .peekview-widget .head .peekview-title{align-items:center;display:flex;font-size:13px;margin-left:20px;min-width:0;overflow:hidden;text-overflow:ellipsis}.monaco-editor .peekview-widget .head .peekview-title.clickable{cursor:pointer}.monaco-editor .peekview-widget .head .peekview-title .dirname:not(:empty){font-size:.9em;margin-left:.5em;overflow:hidden;text-overflow:ellipsis}.monaco-editor .peekview-widget .head .peekview-title .meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.monaco-editor .peekview-widget .head .peekview-title .dirname{white-space:nowrap}.monaco-editor .peekview-widget .head .peekview-title .filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.monaco-editor .peekview-widget .head .peekview-title .meta:not(:empty):before{content:\"-\";padding:0 .3em}.monaco-editor .peekview-widget .head .peekview-actions{flex:1;padding-right:2px;text-align:right}.monaco-editor .peekview-widget .head .peekview-actions>.monaco-action-bar{display:inline-block}.monaco-editor .peekview-widget .head .peekview-actions>.monaco-action-bar,.monaco-editor .peekview-widget .head .peekview-actions>.monaco-action-bar>.actions-container{height:100%}.monaco-editor .peekview-widget>.body{border-top:1px solid;position:relative}.monaco-editor .peekview-widget .head .peekview-title .codicon{margin-right:4px}.monaco-editor .peekview-widget .monaco-list .monaco-list-row.focused .codicon{color:inherit!important}",
+      "start": 1711096856830,
+      "end": 1711096856840,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "result": "",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856840,
+      "end": 1711096856840,
+      "order": "normal"
+    }
+  ]
+}

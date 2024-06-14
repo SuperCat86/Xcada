@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/parameterHints/browser/parameterHints.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { EditorContextKeys } from '../../../common/editorContextKeys.js';\nimport * as languages from '../../../common/languages.js';\nimport { Context } from './provideSignatureHelp.js';\nimport * as nls from '../../../../nls.js';\nimport { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';\nimport { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';\nimport { ParameterHintsWidget } from './parameterHintsWidget.js';\nlet ParameterHintsController = class ParameterHintsController extends Disposable {\n    constructor(editor, instantiationService) {\n        super();\n        this.editor = editor;\n        this.widget = this._register(instantiationService.createInstance(ParameterHintsWidget, this.editor));\n    }\n    static get(editor) {\n        return editor.getContribution(ParameterHintsController.ID);\n    }\n    cancel() {\n        this.widget.cancel();\n    }\n    previous() {\n        this.widget.previous();\n    }\n    next() {\n        this.widget.next();\n    }\n    trigger(context) {\n        this.widget.trigger(context);\n    }\n};\nParameterHintsController.ID = 'editor.controller.parameterHints';\nParameterHintsController = __decorate([\n    __param(1, IInstantiationService)\n], ParameterHintsController);\nexport class TriggerParameterHintsAction extends EditorAction {\n    constructor() {\n        super({\n            id: 'editor.action.triggerParameterHints',\n            label: nls.localize('parameterHints.trigger.label', \"Trigger Parameter Hints\"),\n            alias: 'Trigger Parameter Hints',\n            precondition: EditorContextKeys.hasSignatureHelpProvider,\n            kbOpts: {\n                kbExpr: EditorContextKeys.editorTextFocus,\n                primary: 2048 /* CtrlCmd */ | 1024 /* Shift */ | 10 /* Space */,\n                weight: 100 /* EditorContrib */\n            }\n        });\n    }\n    run(accessor, editor) {\n        const controller = ParameterHintsController.get(editor);\n        if (controller) {\n            controller.trigger({\n                triggerKind: languages.SignatureHelpTriggerKind.Invoke\n            });\n        }\n    }\n}\nregisterEditorContribution(ParameterHintsController.ID, ParameterHintsController);\nregisterEditorAction(TriggerParameterHintsAction);\nconst weight = 100 /* EditorContrib */ + 75;\nconst ParameterHintsCommand = EditorCommand.bindToContribution(ParameterHintsController.get);\nregisterEditorCommand(new ParameterHintsCommand({\n    id: 'closeParameterHints',\n    precondition: Context.Visible,\n    handler: x => x.cancel(),\n    kbOpts: {\n        weight: weight,\n        kbExpr: EditorContextKeys.focus,\n        primary: 9 /* Escape */,\n        secondary: [1024 /* Shift */ | 9 /* Escape */]\n    }\n}));\nregisterEditorCommand(new ParameterHintsCommand({\n    id: 'showPrevParameterHint',\n    precondition: ContextKeyExpr.and(Context.Visible, Context.MultipleSignatures),\n    handler: x => x.previous(),\n    kbOpts: {\n        weight: weight,\n        kbExpr: EditorContextKeys.focus,\n        primary: 16 /* UpArrow */,\n        secondary: [512 /* Alt */ | 16 /* UpArrow */],\n        mac: { primary: 16 /* UpArrow */, secondary: [512 /* Alt */ | 16 /* UpArrow */, 256 /* WinCtrl */ | 46 /* KeyP */] }\n    }\n}));\nregisterEditorCommand(new ParameterHintsCommand({\n    id: 'showNextParameterHint',\n    precondition: ContextKeyExpr.and(Context.Visible, Context.MultipleSignatures),\n    handler: x => x.next(),\n    kbOpts: {\n        weight: weight,\n        kbExpr: EditorContextKeys.focus,\n        primary: 18 /* DownArrow */,\n        secondary: [512 /* Alt */ | 18 /* DownArrow */],\n        mac: { primary: 18 /* DownArrow */, secondary: [512 /* Alt */ | 18 /* DownArrow */, 256 /* WinCtrl */ | 44 /* KeyN */] }\n    }\n}));\n",
+      "start": 1711096854506,
+      "end": 1711096854653,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854653,
+      "end": 1711096854653,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854654,
+      "end": 1711096854654,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854654,
+      "end": 1711096854655,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854655,
+      "end": 1711096854655,
+      "order": "normal"
+    }
+  ]
+}

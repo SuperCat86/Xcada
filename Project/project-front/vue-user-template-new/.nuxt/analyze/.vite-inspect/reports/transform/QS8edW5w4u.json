@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/viewModel/modelLineProjection.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { LineTokens } from '../tokens/lineTokens.js';\nimport { Position } from '../core/position.js';\nimport { LineInjectedText } from '../textModelEvents.js';\nimport { SingleLineInlineDecoration, ViewLineData } from '../viewModel.js';\nexport function createModelLineProjection(lineBreakData, isVisible) {\n    if (lineBreakData === null) {\n        // No mapping needed\n        if (isVisible) {\n            return IdentityModelLineProjection.INSTANCE;\n        }\n        return HiddenModelLineProjection.INSTANCE;\n    }\n    else {\n        return new ModelLineProjection(lineBreakData, isVisible);\n    }\n}\n/**\n * This projection is used to\n * * wrap model lines\n * * inject text\n */\nclass ModelLineProjection {\n    constructor(lineBreakData, isVisible) {\n        this._projectionData = lineBreakData;\n        this._isVisible = isVisible;\n    }\n    isVisible() {\n        return this._isVisible;\n    }\n    setVisible(isVisible) {\n        this._isVisible = isVisible;\n        return this;\n    }\n    getProjectionData() {\n        return this._projectionData;\n    }\n    getViewLineCount() {\n        if (!this._isVisible) {\n            return 0;\n        }\n        return this._projectionData.getOutputLineCount();\n    }\n    getViewLineContent(model, modelLineNumber, outputLineIndex) {\n        this._assertVisible();\n        const startOffsetInInputWithInjections = outputLineIndex > 0 ? this._projectionData.breakOffsets[outputLineIndex - 1] : 0;\n        const endOffsetInInputWithInjections = this._projectionData.breakOffsets[outputLineIndex];\n        let r;\n        if (this._projectionData.injectionOffsets !== null) {\n            const injectedTexts = this._projectionData.injectionOffsets.map((offset, idx) => new LineInjectedText(0, 0, offset + 1, this._projectionData.injectionOptions[idx], 0));\n            const lineWithInjections = LineInjectedText.applyInjectedText(model.getLineContent(modelLineNumber), injectedTexts);\n            r = lineWithInjections.substring(startOffsetInInputWithInjections, endOffsetInInputWithInjections);\n        }\n        else {\n            r = model.getValueInRange({\n                startLineNumber: modelLineNumber,\n                startColumn: startOffsetInInputWithInjections + 1,\n                endLineNumber: modelLineNumber,\n                endColumn: endOffsetInInputWithInjections + 1\n            });\n        }\n        if (outputLineIndex > 0) {\n            r = spaces(this._projectionData.wrappedTextIndentLength) + r;\n        }\n        return r;\n    }\n    getViewLineLength(model, modelLineNumber, outputLineIndex) {\n        this._assertVisible();\n        return this._projectionData.getLineLength(outputLineIndex);\n    }\n    getViewLineMinColumn(_model, _modelLineNumber, outputLineIndex) {\n        this._assertVisible();\n        return this._projectionData.getMinOutputOffset(outputLineIndex) + 1;\n    }\n    getViewLineMaxColumn(model, modelLineNumber, outputLineIndex) {\n        this._assertVisible();\n        return this._projectionData.getMaxOutputOffset(outputLineIndex) + 1;\n    }\n    /**\n     * Try using {@link getViewLinesData} instead.\n    */\n    getViewLineData(model, modelLineNumber, outputLineIndex) {\n        const arr = new Array();\n        this.getViewLinesData(model, modelLineNumber, outputLineIndex, 1, 0, [true], arr);\n        return arr[0];\n    }\n    getViewLinesData(model, modelLineNumber, outputLineIdx, lineCount, globalStartIndex, needed, result) {\n        this._assertVisible();\n        const lineBreakData = this._projectionData;\n        const injectionOffsets = lineBreakData.injectionOffsets;\n        const injectionOptions = lineBreakData.injectionOptions;\n        let inlineDecorationsPerOutputLine = null;\n        if (injectionOffsets) {\n            inlineDecorationsPerOutputLine = [];\n            let totalInjectedTextLengthBefore = 0;\n            let currentInjectedOffset = 0;\n            for (let outputLineIndex = 0; outputLineIndex < lineBreakData.getOutputLineCount(); outputLineIndex++) {\n                const inlineDecorations = new Array();\n                inlineDecorationsPerOutputLine[outputLineIndex] = inlineDecorations;\n                const lineStartOffsetInInputWithInjections = outputLineIndex > 0 ? lineBreakData.breakOffsets[outputLineIndex - 1] : 0;\n                const lineEndOffsetInInputWithInjections = lineBreakData.breakOffsets[outputLineIndex];\n                while (currentInjectedOffset < injectionOffsets.length) {\n                    const length = injectionOptions[currentInjectedOffset].content.length;\n                    const injectedTextStartOffsetInInputWithInjections = injectionOffsets[currentInjectedOffset] + totalInjectedTextLengthBefore;\n                    const injectedTextEndOffsetInInputWithInjections = injectedTextStartOffsetInInputWithInjections + length;\n                    if (injectedTextStartOffsetInInputWithInjections > lineEndOffsetInInputWithInjections) {\n                        // Injected text only starts in later wrapped lines.\n                        break;\n                    }\n                    if (lineStartOffsetInInputWithInjections < injectedTextEndOffsetInInputWithInjections) {\n                        // Injected text ends after or in this line (but also starts in or before this line).\n                        const options = injectionOptions[currentInjectedOffset];\n                        if (options.inlineClassName) {\n                            const offset = (outputLineIndex > 0 ? lineBreakData.wrappedTextIndentLength : 0);\n                            const start = offset + Math.max(injectedTextStartOffsetInInputWithInjections - lineStartOffsetInInputWithInjections, 0);\n                            const end = offset + Math.min(injectedTextEndOffsetInInputWithInjections - lineStartOffsetInInputWithInjections, lineEndOffsetInInputWithInjections);\n                            if (start !== end) {\n                                inlineDecorations.push(new SingleLineInlineDecoration(start, end, options.inlineClassName, options.inlineClassNameAffectsLetterSpacing));\n                            }\n                        }\n                    }\n                    if (injectedTextEndOffsetInInputWithInjections <= lineEndOffsetInInputWithInjections) {\n                        totalInjectedTextLengthBefore += length;\n                        currentInjectedOffset++;\n                    }\n                    else {\n                        // injected text breaks into next line, process it again\n                        break;\n                    }\n                }\n            }\n        }\n        let lineWithInjections;\n        if (injectionOffsets) {\n            lineWithInjections = model.getLineTokens(modelLineNumber).withInserted(injectionOffsets.map((offset, idx) => ({\n                offset,\n                text: injectionOptions[idx].content,\n                tokenMetadata: LineTokens.defaultTokenMetadata\n            })));\n        }\n        else {\n            lineWithInjections = model.getLineTokens(modelLineNumber);\n        }\n        for (let outputLineIndex = outputLineIdx; outputLineIndex < outputLineIdx + lineCount; outputLineIndex++) {\n            const globalIndex = globalStartIndex + outputLineIndex - outputLineIdx;\n            if (!needed[globalIndex]) {\n                result[globalIndex] = null;\n                continue;\n            }\n            result[globalIndex] = this._getViewLineData(lineWithInjections, inlineDecorationsPerOutputLine ? inlineDecorationsPerOutputLine[outputLineIndex] : null, outputLineIndex);\n        }\n    }\n    _getViewLineData(lineWithInjections, inlineDecorations, outputLineIndex) {\n        this._assertVisible();\n        const lineBreakData = this._projectionData;\n        const deltaStartIndex = (outputLineIndex > 0 ? lineBreakData.wrappedTextIndentLength : 0);\n        const lineStartOffsetInInputWithInjections = outputLineIndex > 0 ? lineBreakData.breakOffsets[outputLineIndex - 1] : 0;\n        const lineEndOffsetInInputWithInjections = lineBreakData.breakOffsets[outputLineIndex];\n        const tokens = lineWithInjections.sliceAndInflate(lineStartOffsetInInputWithInjections, lineEndOffsetInInputWithInjections, deltaStartIndex);\n        let lineContent = tokens.getLineContent();\n        if (outputLineIndex > 0) {\n            lineContent = spaces(lineBreakData.wrappedTextIndentLength) + lineContent;\n        }\n        const minColumn = this._projectionData.getMinOutputOffset(outputLineIndex) + 1;\n        const maxColumn = lineContent.length + 1;\n        const continuesWithWrappedLine = (outputLineIndex + 1 < this.getViewLineCount());\n        const startVisibleColumn = (outputLineIndex === 0 ? 0 : lineBreakData.breakOffsetsVisibleColumn[outputLineIndex - 1]);\n        return new ViewLineData(lineContent, continuesWithWrappedLine, minColumn, maxColumn, startVisibleColumn, tokens, inlineDecorations);\n    }\n    getModelColumnOfViewPosition(outputLineIndex, outputColumn) {\n        this._assertVisible();\n        return this._projectionData.translateToInputOffset(outputLineIndex, outputColumn - 1) + 1;\n    }\n    getViewPositionOfModelPosition(deltaLineNumber, inputColumn, affinity = 2 /* None */) {\n        this._assertVisible();\n        const r = this._projectionData.translateToOutputPosition(inputColumn - 1, affinity);\n        return r.toPosition(deltaLineNumber);\n    }\n    getViewLineNumberOfModelPosition(deltaLineNumber, inputColumn) {\n        this._assertVisible();\n        const r = this._projectionData.translateToOutputPosition(inputColumn - 1);\n        return deltaLineNumber + r.outputLineIndex;\n    }\n    normalizePosition(outputLineIndex, outputPosition, affinity) {\n        const baseViewLineNumber = outputPosition.lineNumber - outputLineIndex;\n        const normalizedOutputPosition = this._projectionData.normalizeOutputPosition(outputLineIndex, outputPosition.column - 1, affinity);\n        const result = normalizedOutputPosition.toPosition(baseViewLineNumber);\n        return result;\n    }\n    getInjectedTextAt(outputLineIndex, outputColumn) {\n        return this._projectionData.getInjectedText(outputLineIndex, outputColumn - 1);\n    }\n    _assertVisible() {\n        if (!this._isVisible) {\n            throw new Error('Not supported');\n        }\n    }\n}\n/**\n * This projection does not change the model line.\n*/\nclass IdentityModelLineProjection {\n    constructor() { }\n    isVisible() {\n        return true;\n    }\n    setVisible(isVisible) {\n        if (isVisible) {\n            return this;\n        }\n        return HiddenModelLineProjection.INSTANCE;\n    }\n    getProjectionData() {\n        return null;\n    }\n    getViewLineCount() {\n        return 1;\n    }\n    getViewLineContent(model, modelLineNumber, _outputLineIndex) {\n        return model.getLineContent(modelLineNumber);\n    }\n    getViewLineLength(model, modelLineNumber, _outputLineIndex) {\n        return model.getLineLength(modelLineNumber);\n    }\n    getViewLineMinColumn(model, modelLineNumber, _outputLineIndex) {\n        return model.getLineMinColumn(modelLineNumber);\n    }\n    getViewLineMaxColumn(model, modelLineNumber, _outputLineIndex) {\n        return model.getLineMaxColumn(modelLineNumber);\n    }\n    getViewLineData(model, modelLineNumber, _outputLineIndex) {\n        const lineTokens = model.getLineTokens(modelLineNumber);\n        const lineContent = lineTokens.getLineContent();\n        return new ViewLineData(lineContent, false, 1, lineContent.length + 1, 0, lineTokens.inflate(), null);\n    }\n    getViewLinesData(model, modelLineNumber, _fromOuputLineIndex, _toOutputLineIndex, globalStartIndex, needed, result) {\n        if (!needed[globalStartIndex]) {\n            result[globalStartIndex] = null;\n            return;\n        }\n        result[globalStartIndex] = this.getViewLineData(model, modelLineNumber, 0);\n    }\n    getModelColumnOfViewPosition(_outputLineIndex, outputColumn) {\n        return outputColumn;\n    }\n    getViewPositionOfModelPosition(deltaLineNumber, inputColumn) {\n        return new Position(deltaLineNumber, inputColumn);\n    }\n    getViewLineNumberOfModelPosition(deltaLineNumber, _inputColumn) {\n        return deltaLineNumber;\n    }\n    normalizePosition(outputLineIndex, outputPosition, affinity) {\n        return outputPosition;\n    }\n    getInjectedTextAt(_outputLineIndex, _outputColumn) {\n        return null;\n    }\n}\nIdentityModelLineProjection.INSTANCE = new IdentityModelLineProjection();\n/**\n * This projection hides the model line.\n */\nclass HiddenModelLineProjection {\n    constructor() { }\n    isVisible() {\n        return false;\n    }\n    setVisible(isVisible) {\n        if (!isVisible) {\n            return this;\n        }\n        return IdentityModelLineProjection.INSTANCE;\n    }\n    getProjectionData() {\n        return null;\n    }\n    getViewLineCount() {\n        return 0;\n    }\n    getViewLineContent(_model, _modelLineNumber, _outputLineIndex) {\n        throw new Error('Not supported');\n    }\n    getViewLineLength(_model, _modelLineNumber, _outputLineIndex) {\n        throw new Error('Not supported');\n    }\n    getViewLineMinColumn(_model, _modelLineNumber, _outputLineIndex) {\n        throw new Error('Not supported');\n    }\n    getViewLineMaxColumn(_model, _modelLineNumber, _outputLineIndex) {\n        throw new Error('Not supported');\n    }\n    getViewLineData(_model, _modelLineNumber, _outputLineIndex) {\n        throw new Error('Not supported');\n    }\n    getViewLinesData(_model, _modelLineNumber, _fromOuputLineIndex, _toOutputLineIndex, _globalStartIndex, _needed, _result) {\n        throw new Error('Not supported');\n    }\n    getModelColumnOfViewPosition(_outputLineIndex, _outputColumn) {\n        throw new Error('Not supported');\n    }\n    getViewPositionOfModelPosition(_deltaLineNumber, _inputColumn) {\n        throw new Error('Not supported');\n    }\n    getViewLineNumberOfModelPosition(_deltaLineNumber, _inputColumn) {\n        throw new Error('Not supported');\n    }\n    normalizePosition(outputLineIndex, outputPosition, affinity) {\n        throw new Error('Not supported');\n    }\n    getInjectedTextAt(_outputLineIndex, _outputColumn) {\n        throw new Error('Not supported');\n    }\n}\nHiddenModelLineProjection.INSTANCE = new HiddenModelLineProjection();\nlet _spaces = [''];\nfunction spaces(count) {\n    if (count >= _spaces.length) {\n        for (let i = 1; i <= count; i++) {\n            _spaces[i] = _makeSpaces(i);\n        }\n    }\n    return _spaces[count];\n}\nfunction _makeSpaces(count) {\n    return new Array(count + 1).join(' ');\n}\n",
+      "start": 1711096857257,
+      "end": 1711096857333,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857333,
+      "end": 1711096857333,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857333,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857334,
+      "end": 1711096857334,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857335,
+      "end": 1711096857335,
+      "order": "normal"
+    }
+  ]
+}

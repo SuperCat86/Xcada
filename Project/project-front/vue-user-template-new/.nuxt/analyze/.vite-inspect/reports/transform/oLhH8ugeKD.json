@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/base/browser/ui/inputbox/inputBox.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as dom from '../../dom.js';\nimport { DomEmitter } from '../../event.js';\nimport { renderFormattedText, renderText } from '../../formattedTextRenderer.js';\nimport { ActionBar } from '../actionbar/actionbar.js';\nimport * as aria from '../aria/aria.js';\nimport { ScrollableElement } from '../scrollbar/scrollableElement.js';\nimport { Widget } from '../widget.js';\nimport { Color } from '../../../common/color.js';\nimport { Emitter, Event } from '../../../common/event.js';\nimport { HistoryNavigator } from '../../../common/history.js';\nimport { mixin } from '../../../common/objects.js';\nimport './inputBox.css';\nimport * as nls from '../../../../nls.js';\nconst $ = dom.$;\nconst defaultOpts = {\n    inputBackground: Color.fromHex('#3C3C3C'),\n    inputForeground: Color.fromHex('#CCCCCC'),\n    inputValidationInfoBorder: Color.fromHex('#55AAFF'),\n    inputValidationInfoBackground: Color.fromHex('#063B49'),\n    inputValidationWarningBorder: Color.fromHex('#B89500'),\n    inputValidationWarningBackground: Color.fromHex('#352A05'),\n    inputValidationErrorBorder: Color.fromHex('#BE1100'),\n    inputValidationErrorBackground: Color.fromHex('#5A1D1D')\n};\nexport class InputBox extends Widget {\n    constructor(container, contextViewProvider, options) {\n        var _a;\n        super();\n        this.state = 'idle';\n        this.maxHeight = Number.POSITIVE_INFINITY;\n        this._onDidChange = this._register(new Emitter());\n        this.onDidChange = this._onDidChange.event;\n        this._onDidHeightChange = this._register(new Emitter());\n        this.onDidHeightChange = this._onDidHeightChange.event;\n        this.contextViewProvider = contextViewProvider;\n        this.options = options || Object.create(null);\n        mixin(this.options, defaultOpts, false);\n        this.message = null;\n        this.placeholder = this.options.placeholder || '';\n        this.tooltip = (_a = this.options.tooltip) !== null && _a !== void 0 ? _a : (this.placeholder || '');\n        this.ariaLabel = this.options.ariaLabel || '';\n        this.inputBackground = this.options.inputBackground;\n        this.inputForeground = this.options.inputForeground;\n        this.inputBorder = this.options.inputBorder;\n        this.inputValidationInfoBorder = this.options.inputValidationInfoBorder;\n        this.inputValidationInfoBackground = this.options.inputValidationInfoBackground;\n        this.inputValidationInfoForeground = this.options.inputValidationInfoForeground;\n        this.inputValidationWarningBorder = this.options.inputValidationWarningBorder;\n        this.inputValidationWarningBackground = this.options.inputValidationWarningBackground;\n        this.inputValidationWarningForeground = this.options.inputValidationWarningForeground;\n        this.inputValidationErrorBorder = this.options.inputValidationErrorBorder;\n        this.inputValidationErrorBackground = this.options.inputValidationErrorBackground;\n        this.inputValidationErrorForeground = this.options.inputValidationErrorForeground;\n        if (this.options.validationOptions) {\n            this.validation = this.options.validationOptions.validation;\n        }\n        this.element = dom.append(container, $('.monaco-inputbox.idle'));\n        let tagName = this.options.flexibleHeight ? 'textarea' : 'input';\n        let wrapper = dom.append(this.element, $('.ibwrapper'));\n        this.input = dom.append(wrapper, $(tagName + '.input.empty'));\n        this.input.setAttribute('autocorrect', 'off');\n        this.input.setAttribute('autocapitalize', 'off');\n        this.input.setAttribute('spellcheck', 'false');\n        this.onfocus(this.input, () => this.element.classList.add('synthetic-focus'));\n        this.onblur(this.input, () => this.element.classList.remove('synthetic-focus'));\n        if (this.options.flexibleHeight) {\n            this.maxHeight = typeof this.options.flexibleMaxHeight === 'number' ? this.options.flexibleMaxHeight : Number.POSITIVE_INFINITY;\n            this.mirror = dom.append(wrapper, $('div.mirror'));\n            this.mirror.innerText = '\\u00a0';\n            this.scrollableElement = new ScrollableElement(this.element, { vertical: 1 /* Auto */ });\n            if (this.options.flexibleWidth) {\n                this.input.setAttribute('wrap', 'off');\n                this.mirror.style.whiteSpace = 'pre';\n                this.mirror.style.wordWrap = 'initial';\n            }\n            dom.append(container, this.scrollableElement.getDomNode());\n            this._register(this.scrollableElement);\n            // from ScrollableElement to DOM\n            this._register(this.scrollableElement.onScroll(e => this.input.scrollTop = e.scrollTop));\n            const onSelectionChange = this._register(new DomEmitter(document, 'selectionchange'));\n            const onAnchoredSelectionChange = Event.filter(onSelectionChange.event, () => {\n                const selection = document.getSelection();\n                return (selection === null || selection === void 0 ? void 0 : selection.anchorNode) === wrapper;\n            });\n            // from DOM to ScrollableElement\n            this._register(onAnchoredSelectionChange(this.updateScrollDimensions, this));\n            this._register(this.onDidHeightChange(this.updateScrollDimensions, this));\n        }\n        else {\n            this.input.type = this.options.type || 'text';\n            this.input.setAttribute('wrap', 'off');\n        }\n        if (this.ariaLabel) {\n            this.input.setAttribute('aria-label', this.ariaLabel);\n        }\n        if (this.placeholder && !this.options.showPlaceholderOnFocus) {\n            this.setPlaceHolder(this.placeholder);\n        }\n        if (this.tooltip) {\n            this.setTooltip(this.tooltip);\n        }\n        this.oninput(this.input, () => this.onValueChange());\n        this.onblur(this.input, () => this.onBlur());\n        this.onfocus(this.input, () => this.onFocus());\n        this.ignoreGesture(this.input);\n        setTimeout(() => this.updateMirror(), 0);\n        // Support actions\n        if (this.options.actions) {\n            this.actionbar = this._register(new ActionBar(this.element));\n            this.actionbar.push(this.options.actions, { icon: true, label: false });\n        }\n        this.applyStyles();\n    }\n    onBlur() {\n        this._hideMessage();\n        if (this.options.showPlaceholderOnFocus) {\n            this.input.setAttribute('placeholder', '');\n        }\n    }\n    onFocus() {\n        this._showMessage();\n        if (this.options.showPlaceholderOnFocus) {\n            this.input.setAttribute('placeholder', this.placeholder || '');\n        }\n    }\n    setPlaceHolder(placeHolder) {\n        this.placeholder = placeHolder;\n        this.input.setAttribute('placeholder', placeHolder);\n    }\n    setTooltip(tooltip) {\n        this.tooltip = tooltip;\n        this.input.title = tooltip;\n    }\n    setAriaLabel(label) {\n        this.ariaLabel = label;\n        if (label) {\n            this.input.setAttribute('aria-label', this.ariaLabel);\n        }\n        else {\n            this.input.removeAttribute('aria-label');\n        }\n    }\n    getAriaLabel() {\n        return this.ariaLabel;\n    }\n    get inputElement() {\n        return this.input;\n    }\n    get value() {\n        return this.input.value;\n    }\n    set value(newValue) {\n        if (this.input.value !== newValue) {\n            this.input.value = newValue;\n            this.onValueChange();\n        }\n    }\n    get height() {\n        return typeof this.cachedHeight === 'number' ? this.cachedHeight : dom.getTotalHeight(this.element);\n    }\n    focus() {\n        this.input.focus();\n    }\n    blur() {\n        this.input.blur();\n    }\n    hasFocus() {\n        return document.activeElement === this.input;\n    }\n    select(range = null) {\n        this.input.select();\n        if (range) {\n            this.input.setSelectionRange(range.start, range.end);\n            if (range.end === this.input.value.length) {\n                this.input.scrollLeft = this.input.scrollWidth;\n            }\n        }\n    }\n    isSelectionAtEnd() {\n        return this.input.selectionEnd === this.input.value.length && this.input.selectionStart === this.input.selectionEnd;\n    }\n    enable() {\n        this.input.removeAttribute('disabled');\n    }\n    disable() {\n        this.blur();\n        this.input.disabled = true;\n        this._hideMessage();\n    }\n    get width() {\n        return dom.getTotalWidth(this.input);\n    }\n    set width(width) {\n        if (this.options.flexibleHeight && this.options.flexibleWidth) {\n            // textarea with horizontal scrolling\n            let horizontalPadding = 0;\n            if (this.mirror) {\n                const paddingLeft = parseFloat(this.mirror.style.paddingLeft || '') || 0;\n                const paddingRight = parseFloat(this.mirror.style.paddingRight || '') || 0;\n                horizontalPadding = paddingLeft + paddingRight;\n            }\n            this.input.style.width = (width - horizontalPadding) + 'px';\n        }\n        else {\n            this.input.style.width = width + 'px';\n        }\n        if (this.mirror) {\n            this.mirror.style.width = width + 'px';\n        }\n    }\n    set paddingRight(paddingRight) {\n        // Set width to avoid hint text overlapping buttons\n        this.input.style.width = `calc(100% - ${paddingRight}px)`;\n        if (this.mirror) {\n            this.mirror.style.paddingRight = paddingRight + 'px';\n        }\n    }\n    updateScrollDimensions() {\n        if (typeof this.cachedContentHeight !== 'number' || typeof this.cachedHeight !== 'number' || !this.scrollableElement) {\n            return;\n        }\n        const scrollHeight = this.cachedContentHeight;\n        const height = this.cachedHeight;\n        const scrollTop = this.input.scrollTop;\n        this.scrollableElement.setScrollDimensions({ scrollHeight, height });\n        this.scrollableElement.setScrollPosition({ scrollTop });\n    }\n    showMessage(message, force) {\n        this.message = message;\n        this.element.classList.remove('idle');\n        this.element.classList.remove('info');\n        this.element.classList.remove('warning');\n        this.element.classList.remove('error');\n        this.element.classList.add(this.classForType(message.type));\n        const styles = this.stylesForType(this.message.type);\n        this.element.style.border = styles.border ? `1px solid ${styles.border}` : '';\n        if (this.hasFocus() || force) {\n            this._showMessage();\n        }\n    }\n    hideMessage() {\n        this.message = null;\n        this.element.classList.remove('info');\n        this.element.classList.remove('warning');\n        this.element.classList.remove('error');\n        this.element.classList.add('idle');\n        this._hideMessage();\n        this.applyStyles();\n    }\n    validate() {\n        let errorMsg = null;\n        if (this.validation) {\n            errorMsg = this.validation(this.value);\n            if (errorMsg) {\n                this.inputElement.setAttribute('aria-invalid', 'true');\n                this.showMessage(errorMsg);\n            }\n            else if (this.inputElement.hasAttribute('aria-invalid')) {\n                this.inputElement.removeAttribute('aria-invalid');\n                this.hideMessage();\n            }\n        }\n        return errorMsg === null || errorMsg === void 0 ? void 0 : errorMsg.type;\n    }\n    stylesForType(type) {\n        switch (type) {\n            case 1 /* INFO */: return { border: this.inputValidationInfoBorder, background: this.inputValidationInfoBackground, foreground: this.inputValidationInfoForeground };\n            case 2 /* WARNING */: return { border: this.inputValidationWarningBorder, background: this.inputValidationWarningBackground, foreground: this.inputValidationWarningForeground };\n            default: return { border: this.inputValidationErrorBorder, background: this.inputValidationErrorBackground, foreground: this.inputValidationErrorForeground };\n        }\n    }\n    classForType(type) {\n        switch (type) {\n            case 1 /* INFO */: return 'info';\n            case 2 /* WARNING */: return 'warning';\n            default: return 'error';\n        }\n    }\n    _showMessage() {\n        if (!this.contextViewProvider || !this.message) {\n            return;\n        }\n        let div;\n        let layout = () => div.style.width = dom.getTotalWidth(this.element) + 'px';\n        this.contextViewProvider.showContextView({\n            getAnchor: () => this.element,\n            anchorAlignment: 1 /* RIGHT */,\n            render: (container) => {\n                if (!this.message) {\n                    return null;\n                }\n                div = dom.append(container, $('.monaco-inputbox-container'));\n                layout();\n                const renderOptions = {\n                    inline: true,\n                    className: 'monaco-inputbox-message'\n                };\n                const spanElement = (this.message.formatContent\n                    ? renderFormattedText(this.message.content, renderOptions)\n                    : renderText(this.message.content, renderOptions));\n                spanElement.classList.add(this.classForType(this.message.type));\n                const styles = this.stylesForType(this.message.type);\n                spanElement.style.backgroundColor = styles.background ? styles.background.toString() : '';\n                spanElement.style.color = styles.foreground ? styles.foreground.toString() : '';\n                spanElement.style.border = styles.border ? `1px solid ${styles.border}` : '';\n                dom.append(div, spanElement);\n                return null;\n            },\n            onHide: () => {\n                this.state = 'closed';\n            },\n            layout: layout\n        });\n        // ARIA Support\n        let alertText;\n        if (this.message.type === 3 /* ERROR */) {\n            alertText = nls.localize('alertErrorMessage', \"Error: {0}\", this.message.content);\n        }\n        else if (this.message.type === 2 /* WARNING */) {\n            alertText = nls.localize('alertWarningMessage', \"Warning: {0}\", this.message.content);\n        }\n        else {\n            alertText = nls.localize('alertInfoMessage', \"Info: {0}\", this.message.content);\n        }\n        aria.alert(alertText);\n        this.state = 'open';\n    }\n    _hideMessage() {\n        if (!this.contextViewProvider) {\n            return;\n        }\n        if (this.state === 'open') {\n            this.contextViewProvider.hideContextView();\n        }\n        this.state = 'idle';\n    }\n    onValueChange() {\n        this._onDidChange.fire(this.value);\n        this.validate();\n        this.updateMirror();\n        this.input.classList.toggle('empty', !this.value);\n        if (this.state === 'open' && this.contextViewProvider) {\n            this.contextViewProvider.layout();\n        }\n    }\n    updateMirror() {\n        if (!this.mirror) {\n            return;\n        }\n        const value = this.value;\n        const lastCharCode = value.charCodeAt(value.length - 1);\n        const suffix = lastCharCode === 10 ? ' ' : '';\n        const mirrorTextContent = (value + suffix)\n            .replace(/\\u000c/g, ''); // Don't measure with the form feed character, which messes up sizing\n        if (mirrorTextContent) {\n            this.mirror.textContent = value + suffix;\n        }\n        else {\n            this.mirror.innerText = '\\u00a0';\n        }\n        this.layout();\n    }\n    style(styles) {\n        this.inputBackground = styles.inputBackground;\n        this.inputForeground = styles.inputForeground;\n        this.inputBorder = styles.inputBorder;\n        this.inputValidationInfoBackground = styles.inputValidationInfoBackground;\n        this.inputValidationInfoForeground = styles.inputValidationInfoForeground;\n        this.inputValidationInfoBorder = styles.inputValidationInfoBorder;\n        this.inputValidationWarningBackground = styles.inputValidationWarningBackground;\n        this.inputValidationWarningForeground = styles.inputValidationWarningForeground;\n        this.inputValidationWarningBorder = styles.inputValidationWarningBorder;\n        this.inputValidationErrorBackground = styles.inputValidationErrorBackground;\n        this.inputValidationErrorForeground = styles.inputValidationErrorForeground;\n        this.inputValidationErrorBorder = styles.inputValidationErrorBorder;\n        this.applyStyles();\n    }\n    applyStyles() {\n        const background = this.inputBackground ? this.inputBackground.toString() : '';\n        const foreground = this.inputForeground ? this.inputForeground.toString() : '';\n        const border = this.inputBorder ? this.inputBorder.toString() : '';\n        this.element.style.backgroundColor = background;\n        this.element.style.color = foreground;\n        this.input.style.backgroundColor = 'inherit';\n        this.input.style.color = foreground;\n        this.element.style.borderWidth = border ? '1px' : '';\n        this.element.style.borderStyle = border ? 'solid' : '';\n        this.element.style.borderColor = border;\n    }\n    layout() {\n        if (!this.mirror) {\n            return;\n        }\n        const previousHeight = this.cachedContentHeight;\n        this.cachedContentHeight = dom.getTotalHeight(this.mirror);\n        if (previousHeight !== this.cachedContentHeight) {\n            this.cachedHeight = Math.min(this.cachedContentHeight, this.maxHeight);\n            this.input.style.height = this.cachedHeight + 'px';\n            this._onDidHeightChange.fire(this.cachedContentHeight);\n        }\n    }\n    insertAtCursor(text) {\n        const inputElement = this.inputElement;\n        const start = inputElement.selectionStart;\n        const end = inputElement.selectionEnd;\n        const content = inputElement.value;\n        if (start !== null && end !== null) {\n            this.value = content.substr(0, start) + text + content.substr(end);\n            inputElement.setSelectionRange(start + 1, start + 1);\n            this.layout();\n        }\n    }\n    dispose() {\n        this._hideMessage();\n        this.message = null;\n        if (this.actionbar) {\n            this.actionbar.dispose();\n        }\n        super.dispose();\n    }\n}\nexport class HistoryInputBox extends InputBox {\n    constructor(container, contextViewProvider, options) {\n        const NLS_PLACEHOLDER_HISTORY_HINT = nls.localize({ key: 'history.inputbox.hint', comment: ['Text will be prefixed with \\u21C5 plus a single space, then used as a hint where input field keeps history'] }, \"for history\");\n        const NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX = ` or \\u21C5 ${NLS_PLACEHOLDER_HISTORY_HINT}`;\n        const NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX_IN_PARENS = ` (\\u21C5 ${NLS_PLACEHOLDER_HISTORY_HINT})`;\n        super(container, contextViewProvider, options);\n        this.history = new HistoryNavigator(options.history, 100);\n        // Function to append the history suffix to the placeholder if necessary\n        const addSuffix = () => {\n            if (options.showHistoryHint && options.showHistoryHint() && !this.placeholder.endsWith(NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX) && !this.placeholder.endsWith(NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX_IN_PARENS) && this.history.getHistory().length) {\n                const suffix = this.placeholder.endsWith(')') ? NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX : NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX_IN_PARENS;\n                const suffixedPlaceholder = this.placeholder + suffix;\n                if (options.showPlaceholderOnFocus && document.activeElement !== this.input) {\n                    this.placeholder = suffixedPlaceholder;\n                }\n                else {\n                    this.setPlaceHolder(suffixedPlaceholder);\n                }\n            }\n        };\n        // Spot the change to the textarea class attribute which occurs when it changes between non-empty and empty,\n        // and add the history suffix to the placeholder if not yet present\n        this.observer = new MutationObserver((mutationList, observer) => {\n            mutationList.forEach((mutation) => {\n                if (!mutation.target.textContent) {\n                    addSuffix();\n                }\n            });\n        });\n        this.observer.observe(this.input, { attributeFilter: ['class'] });\n        this.onfocus(this.input, () => addSuffix());\n        this.onblur(this.input, () => {\n            const resetPlaceholder = (historyHint) => {\n                if (!this.placeholder.endsWith(historyHint)) {\n                    return false;\n                }\n                else {\n                    const revertedPlaceholder = this.placeholder.slice(0, this.placeholder.length - historyHint.length);\n                    if (options.showPlaceholderOnFocus) {\n                        this.placeholder = revertedPlaceholder;\n                    }\n                    else {\n                        this.setPlaceHolder(revertedPlaceholder);\n                    }\n                    return true;\n                }\n            };\n            if (!resetPlaceholder(NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX_IN_PARENS)) {\n                resetPlaceholder(NLS_PLACEHOLDER_HISTORY_HINT_SUFFIX);\n            }\n        });\n    }\n    dispose() {\n        super.dispose();\n        if (this.observer) {\n            this.observer.disconnect();\n            this.observer = undefined;\n        }\n    }\n    addToHistory() {\n        if (this.value && this.value !== this.getCurrentValue()) {\n            this.history.add(this.value);\n        }\n    }\n    showNextValue() {\n        if (!this.history.has(this.value)) {\n            this.addToHistory();\n        }\n        let next = this.getNextValue();\n        if (next) {\n            next = next === this.value ? this.getNextValue() : next;\n        }\n        if (next) {\n            this.value = next;\n            aria.status(this.value);\n        }\n    }\n    showPreviousValue() {\n        if (!this.history.has(this.value)) {\n            this.addToHistory();\n        }\n        let previous = this.getPreviousValue();\n        if (previous) {\n            previous = previous === this.value ? this.getPreviousValue() : previous;\n        }\n        if (previous) {\n            this.value = previous;\n            aria.status(this.value);\n        }\n    }\n    getCurrentValue() {\n        let currentValue = this.history.current();\n        if (!currentValue) {\n            currentValue = this.history.last();\n            this.history.next();\n        }\n        return currentValue;\n    }\n    getPreviousValue() {\n        return this.history.previous() || this.history.first();\n    }\n    getNextValue() {\n        return this.history.next() || this.history.last();\n    }\n}\n",
+      "start": 1711096857614,
+      "end": 1711096857694,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857694,
+      "end": 1711096857694,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857694,
+      "end": 1711096857694,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857694,
+      "end": 1711096857694,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857694,
+      "end": 1711096857694,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857694,
+      "end": 1711096857694,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857695,
+      "end": 1711096857695,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857695,
+      "end": 1711096857697,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857697,
+      "end": 1711096857697,
+      "order": "normal"
+    }
+  ]
+}

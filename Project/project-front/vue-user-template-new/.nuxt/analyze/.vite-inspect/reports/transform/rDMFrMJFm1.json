@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/contrib/viewportSemanticTokens/browser/viewportSemanticTokens.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nvar __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {\n    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;\n    if (typeof Reflect === \"object\" && typeof Reflect.decorate === \"function\") r = Reflect.decorate(decorators, target, key, desc);\n    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;\n    return c > 3 && r && Object.defineProperty(target, key, r), r;\n};\nvar __param = (this && this.__param) || function (paramIndex, decorator) {\n    return function (target, key) { decorator(target, key, paramIndex); }\n};\nimport { createCancelablePromise, RunOnceScheduler } from '../../../../base/common/async.js';\nimport { Disposable } from '../../../../base/common/lifecycle.js';\nimport { registerEditorContribution } from '../../../browser/editorExtensions.js';\nimport { getDocumentRangeSemanticTokens, hasDocumentRangeSemanticTokensProvider } from '../../../common/services/getSemanticTokens.js';\nimport { IModelService } from '../../../common/services/model.js';\nimport { isSemanticColoringEnabled, SEMANTIC_HIGHLIGHTING_SETTING_ID } from '../../../common/services/modelService.js';\nimport { toMultilineTokens2 } from '../../../common/services/semanticTokensProviderStyling.js';\nimport { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';\nimport { IThemeService } from '../../../../platform/theme/common/themeService.js';\nimport { ILanguageFeatureDebounceService } from '../../../common/services/languageFeatureDebounce.js';\nimport { StopWatch } from '../../../../base/common/stopwatch.js';\nimport { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';\nlet ViewportSemanticTokensContribution = class ViewportSemanticTokensContribution extends Disposable {\n    constructor(editor, _modelService, _themeService, _configurationService, languageFeatureDebounceService, languageFeaturesService) {\n        super();\n        this._modelService = _modelService;\n        this._themeService = _themeService;\n        this._configurationService = _configurationService;\n        this._editor = editor;\n        this._provider = languageFeaturesService.documentRangeSemanticTokensProvider;\n        this._debounceInformation = languageFeatureDebounceService.for(this._provider, 'DocumentRangeSemanticTokens', { min: 100, max: 500 });\n        this._tokenizeViewport = this._register(new RunOnceScheduler(() => this._tokenizeViewportNow(), 100));\n        this._outstandingRequests = [];\n        const scheduleTokenizeViewport = () => {\n            if (this._editor.hasModel()) {\n                this._tokenizeViewport.schedule(this._debounceInformation.get(this._editor.getModel()));\n            }\n        };\n        this._register(this._editor.onDidScrollChange(() => {\n            scheduleTokenizeViewport();\n        }));\n        this._register(this._editor.onDidChangeModel(() => {\n            this._cancelAll();\n            scheduleTokenizeViewport();\n        }));\n        this._register(this._editor.onDidChangeModelContent((e) => {\n            this._cancelAll();\n            scheduleTokenizeViewport();\n        }));\n        this._register(this._provider.onDidChange(() => {\n            this._cancelAll();\n            scheduleTokenizeViewport();\n        }));\n        this._register(this._configurationService.onDidChangeConfiguration(e => {\n            if (e.affectsConfiguration(SEMANTIC_HIGHLIGHTING_SETTING_ID)) {\n                this._cancelAll();\n                scheduleTokenizeViewport();\n            }\n        }));\n        this._register(this._themeService.onDidColorThemeChange(() => {\n            this._cancelAll();\n            scheduleTokenizeViewport();\n        }));\n    }\n    _cancelAll() {\n        for (const request of this._outstandingRequests) {\n            request.cancel();\n        }\n        this._outstandingRequests = [];\n    }\n    _removeOutstandingRequest(req) {\n        for (let i = 0, len = this._outstandingRequests.length; i < len; i++) {\n            if (this._outstandingRequests[i] === req) {\n                this._outstandingRequests.splice(i, 1);\n                return;\n            }\n        }\n    }\n    _tokenizeViewportNow() {\n        if (!this._editor.hasModel()) {\n            return;\n        }\n        const model = this._editor.getModel();\n        if (model.hasCompleteSemanticTokens()) {\n            return;\n        }\n        if (!isSemanticColoringEnabled(model, this._themeService, this._configurationService)) {\n            if (model.hasSomeSemanticTokens()) {\n                model.setSemanticTokens(null, false);\n            }\n            return;\n        }\n        if (!hasDocumentRangeSemanticTokensProvider(this._provider, model)) {\n            if (model.hasSomeSemanticTokens()) {\n                model.setSemanticTokens(null, false);\n            }\n            return;\n        }\n        const visibleRanges = this._editor.getVisibleRangesPlusViewportAboveBelow();\n        this._outstandingRequests = this._outstandingRequests.concat(visibleRanges.map(range => this._requestRange(model, range)));\n    }\n    _requestRange(model, range) {\n        const requestVersionId = model.getVersionId();\n        const request = createCancelablePromise(token => Promise.resolve(getDocumentRangeSemanticTokens(this._provider, model, range, token)));\n        const sw = new StopWatch(false);\n        request.then((r) => {\n            this._debounceInformation.update(model, sw.elapsed());\n            if (!r || !r.tokens || model.isDisposed() || model.getVersionId() !== requestVersionId) {\n                return;\n            }\n            const { provider, tokens: result } = r;\n            const styling = this._modelService.getSemanticTokensProviderStyling(provider);\n            model.setPartialSemanticTokens(range, toMultilineTokens2(result, styling, model.getLanguageId()));\n        }).then(() => this._removeOutstandingRequest(request), () => this._removeOutstandingRequest(request));\n        return request;\n    }\n};\nViewportSemanticTokensContribution.ID = 'editor.contrib.viewportSemanticTokens';\nViewportSemanticTokensContribution = __decorate([\n    __param(1, IModelService),\n    __param(2, IThemeService),\n    __param(3, IConfigurationService),\n    __param(4, ILanguageFeatureDebounceService),\n    __param(5, ILanguageFeaturesService)\n], ViewportSemanticTokensContribution);\nregisterEditorContribution(ViewportSemanticTokensContribution.ID, ViewportSemanticTokensContribution);\n",
+      "start": 1711096854631,
+      "end": 1711096854831,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096854831,
+      "end": 1711096854831,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096854832,
+      "end": 1711096854832,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096854832,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096854833,
+      "end": 1711096854833,
+      "order": "normal"
+    }
+  ]
+}

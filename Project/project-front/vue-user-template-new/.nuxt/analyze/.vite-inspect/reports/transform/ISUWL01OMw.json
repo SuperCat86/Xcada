@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/platform/workspace/common/workspace.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { localize } from '../../../nls.js';\nimport { TernarySearchTree } from '../../../base/common/map.js';\nimport { URI } from '../../../base/common/uri.js';\nimport { createDecorator } from '../../instantiation/common/instantiation.js';\nexport const IWorkspaceContextService = createDecorator('contextService');\nexport function isSingleFolderWorkspaceIdentifier(obj) {\n    const singleFolderIdentifier = obj;\n    return typeof (singleFolderIdentifier === null || singleFolderIdentifier === void 0 ? void 0 : singleFolderIdentifier.id) === 'string' && URI.isUri(singleFolderIdentifier.uri);\n}\nexport function toWorkspaceIdentifier(workspace) {\n    // Multi root\n    if (workspace.configuration) {\n        return {\n            id: workspace.id,\n            configPath: workspace.configuration\n        };\n    }\n    // Single folder\n    if (workspace.folders.length === 1) {\n        return {\n            id: workspace.id,\n            uri: workspace.folders[0].uri\n        };\n    }\n    // Empty workspace\n    return undefined;\n}\nexport class Workspace {\n    constructor(_id, folders, _transient, _configuration, _ignorePathCasing) {\n        this._id = _id;\n        this._transient = _transient;\n        this._configuration = _configuration;\n        this._ignorePathCasing = _ignorePathCasing;\n        this._foldersMap = TernarySearchTree.forUris(this._ignorePathCasing);\n        this.folders = folders;\n    }\n    get folders() {\n        return this._folders;\n    }\n    set folders(folders) {\n        this._folders = folders;\n        this.updateFoldersMap();\n    }\n    get id() {\n        return this._id;\n    }\n    get transient() {\n        return this._transient;\n    }\n    get configuration() {\n        return this._configuration;\n    }\n    set configuration(configuration) {\n        this._configuration = configuration;\n    }\n    getFolder(resource) {\n        if (!resource) {\n            return null;\n        }\n        return this._foldersMap.findSubstr(resource.with({\n            scheme: resource.scheme,\n            authority: resource.authority,\n            path: resource.path\n        })) || null;\n    }\n    updateFoldersMap() {\n        this._foldersMap = TernarySearchTree.forUris(this._ignorePathCasing);\n        for (const folder of this.folders) {\n            this._foldersMap.set(folder.uri, folder);\n        }\n    }\n    toJSON() {\n        return { id: this.id, folders: this.folders, transient: this.transient, configuration: this.configuration };\n    }\n}\nexport class WorkspaceFolder {\n    constructor(data, \n    /**\n     * Provides access to the original metadata for this workspace\n     * folder. This can be different from the metadata provided in\n     * this class:\n     * - raw paths can be relative\n     * - raw paths are not normalized\n     */\n    raw) {\n        this.raw = raw;\n        this.uri = data.uri;\n        this.index = data.index;\n        this.name = data.name;\n    }\n    toJSON() {\n        return { uri: this.uri, name: this.name, index: this.index };\n    }\n}\nexport const WORKSPACE_EXTENSION = 'code-workspace';\nexport const WORKSPACE_FILTER = [{ name: localize('codeWorkspace', \"Code Workspace\"), extensions: [WORKSPACE_EXTENSION] }];\n",
+      "start": 1711096856218,
+      "end": 1711096856303,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096856303,
+      "end": 1711096856303,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096856303,
+      "end": 1711096856304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096856304,
+      "end": 1711096856304,
+      "order": "normal"
+    }
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/languages/modesRegistry.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport * as nls from '../../../nls.js';\nimport { Emitter } from '../../../base/common/event.js';\nimport { LanguageConfigurationRegistry } from './languageConfigurationRegistry.js';\nimport { Registry } from '../../../platform/registry/common/platform.js';\nimport { Mimes } from '../../../base/common/mime.js';\nimport { Extensions as ConfigurationExtensions } from '../../../platform/configuration/common/configurationRegistry.js';\n// Define extension point ids\nexport const Extensions = {\n    ModesRegistry: 'editor.modesRegistry'\n};\nexport class EditorModesRegistry {\n    constructor() {\n        this._onDidChangeLanguages = new Emitter();\n        this.onDidChangeLanguages = this._onDidChangeLanguages.event;\n        this._languages = [];\n    }\n    registerLanguage(def) {\n        this._languages.push(def);\n        this._onDidChangeLanguages.fire(undefined);\n        return {\n            dispose: () => {\n                for (let i = 0, len = this._languages.length; i < len; i++) {\n                    if (this._languages[i] === def) {\n                        this._languages.splice(i, 1);\n                        return;\n                    }\n                }\n            }\n        };\n    }\n    getLanguages() {\n        return this._languages;\n    }\n}\nexport const ModesRegistry = new EditorModesRegistry();\nRegistry.add(Extensions.ModesRegistry, ModesRegistry);\nexport const PLAINTEXT_LANGUAGE_ID = 'plaintext';\nexport const PLAINTEXT_EXTENSION = '.txt';\nModesRegistry.registerLanguage({\n    id: PLAINTEXT_LANGUAGE_ID,\n    extensions: [PLAINTEXT_EXTENSION],\n    aliases: [nls.localize('plainText.alias', \"Plain Text\"), 'text'],\n    mimetypes: [Mimes.text]\n});\nLanguageConfigurationRegistry.register(PLAINTEXT_LANGUAGE_ID, {\n    brackets: [\n        ['(', ')'],\n        ['[', ']'],\n        ['{', '}'],\n    ],\n    surroundingPairs: [\n        { open: '{', close: '}' },\n        { open: '[', close: ']' },\n        { open: '(', close: ')' },\n        { open: '<', close: '>' },\n        { open: '\\\"', close: '\\\"' },\n        { open: '\\'', close: '\\'' },\n        { open: '`', close: '`' },\n    ],\n    colorizedBracketPairs: [],\n    folding: {\n        offSide: true\n    }\n}, 0);\nRegistry.as(ConfigurationExtensions.Configuration)\n    .registerDefaultConfigurations([{\n        overrides: {\n            '[plaintext]': {\n                'editor.unicodeHighlight.ambiguousCharacters': false,\n                'editor.unicodeHighlight.invisibleCharacters': false\n            }\n        }\n    }]);\n",
+      "start": 1711096855225,
+      "end": 1711096855297,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096855297,
+      "end": 1711096855297,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096855297,
+      "end": 1711096855298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096855298,
+      "end": 1711096855298,
+      "order": "normal"
+    }
+  ]
+}

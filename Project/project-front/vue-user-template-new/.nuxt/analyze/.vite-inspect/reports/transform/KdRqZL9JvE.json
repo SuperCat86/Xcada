@@ -1,0 +1,215 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/app.vue",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "<template>\n  <div>\n    <!-- 导航栏 -->    \n    <header :class=\"{ father_sticky: father_isSticky }\">\n      <header :class=\"{ son_sticky: son_isSticky }\">\n        <nav class=\"navbar\">\n          <div class=\"container\">\n            <div class=\"item\">\n              <img class=\"logo\" src=\"/img/logo.svg\" />\n              <h2 class=\"brand\">Xcada</h2>\n            </div>\n          </div>\n          <NuxtLink to=\"/\" @click=\"changSticky(false)\">首页</NuxtLink>\n          <NuxtLink to=\"/course\">学习</NuxtLink>\n          <NuxtLink to=\"/question\" @click=\"changSticky(true)\">题库</NuxtLink>\n          <NuxtLink to=\"/discuss\" @click=\"changSticky(true)\">论坛</NuxtLink>\n          <NuxtLink to=\"/about\" >关于</NuxtLink>\n          <button class=\"btn-Login-popup\" @click=\"openPopup\">登录</button>\n        </nav>\n      </header>\n    </header>\n\n    <!-- 登录弹窗 -->\n    <div class=\"wrapper\">\n      <span class=\"icon-close\">\n        <img src=\"/img/close.svg\">\n      </span>\n\n      <div class=\"form-box login\">\n        <h2>登录</h2>\n        <form action=\"#\">\n          <div class=\"input-box\">\n            <input type=\"email\" required>\n            <label>邮箱</label>\n          </div>\n          <div class=\"input-box\">\n            <input type=\"password\" required>\n            <label>密码</label>\n          </div>\n          <div class=\"remember-forget\">\n            <label><input type=\"checkbox\">记住我</label>\n            <a href=\"#\">忘记密码?</a>\n          </div>\n          <button type=\"submit\" class=\"btn\">登录</button>\n          <div class=\"login-register\">\n            <p>没有账号?<a href=\"#\" class=\"register-link\" @click=\"toggleActive(true)\">注册</a></p>\n          </div>\n        </form>\n      </div>\n\n      <!-- 注册弹窗 -->\n      <div class=\"form-box register\">\n        <h2>注册</h2>\n        <form action=\"#\">\n          <div class=\"input-box\">\n            <input type=\"text\" required>\n            <label>用户昵称</label>\n          </div>\n          <div class=\"input-box\">\n            <input type=\"email\" required>\n            <label>邮箱</label>\n          </div>\n          <div class=\"input-box\">\n            <input type=\"password\" required>\n            <label>密码</label>\n          </div>\n          <div class=\"remember-forget\">\n            <label><input type=\"checkbox\">我同意注册协议及隐私政策</label>\n          </div>\n          <button type=\"submit\" class=\"btn\">注册</button>\n          <div class=\"login-register\">\n            <p>已有账号?<a href=\"#\" class=\"login-link\" @click=\"toggleActive(false)\">登录</a></p>\n          </div>\n        </form>\n      </div>\n    </div>\n\n    <NuxtPage />\n\n  </div>\n</template>\n\n<script>\nimport \"~/assets/css/app.css\";\n\nexport default {\n  data() {\n    return {\n      son_isSticky: false, // 用于控制是否添加 sticky 类\n      father_isSticky: false\n    };\n  },\n  mounted() {\n    // 添加滚动监听器\n    window.addEventListener(\"scroll\", this.handleScroll);\n\n    const wrapper = document.querySelector('.wrapper');\n    const loginLink = document.querySelector('.login-link');\n    const registerLink = document.querySelector('.register-link');\n    const btnPopup = document.querySelector('.btn-Login-popup');\n    const iconClose = document.querySelector('.icon-close');\n\n    registerLink.addEventListener('click', () => {\n      wrapper.classList.add('active');\n    });\n\n    loginLink.addEventListener('click', () => {\n      wrapper.classList.remove('active');\n    });\n\n    btnPopup.addEventListener('click', () => {\n      this.openPopup();\n    });\n\n    iconClose.addEventListener('click', () => {\n      this.closePopup();\n    });\n\n  },\n  beforeDestroy() {\n    // 在组件销毁前移除滚动监听器，防止内存泄漏\n    window.removeEventListener(\"scroll\", this.handleScroll);\n  },\n  methods: {\n    handleScroll() {\n      // 获取 header 元素\n      const header = document.querySelector(\"header\");\n      // 根据滚动位置切换 sticky 类\n      this.son_isSticky = window.scrollY > 0;\n    },\n\n    changSticky(flag){\n      this.father_isSticky = flag;\n    },\n\n    toggleActive(isRegister) {\n      const wrapper = document.querySelector('.wrapper');\n      if (isRegister) {\n        wrapper.classList.add('active');\n      } else {\n        wrapper.classList.remove('active');\n      }\n    },\n\n    openPopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.add('active-popup');\n    },\n\n    closePopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.remove('active-popup');\n    },\n\n\n  }  \n}\n</script>\n",
+      "start": 1711096852977,
+      "end": 1711096853057,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096853057,
+      "end": 1711096853057,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "result": "\nimport \"~/assets/css/app.css\";\n\nconst _sfc_main = {\n  data() {\n    return {\n      son_isSticky: false, // 用于控制是否添加 sticky 类\n      father_isSticky: false\n    };\n  },\n  mounted() {\n    // 添加滚动监听器\n    window.addEventListener(\"scroll\", this.handleScroll);\n\n    const wrapper = document.querySelector('.wrapper');\n    const loginLink = document.querySelector('.login-link');\n    const registerLink = document.querySelector('.register-link');\n    const btnPopup = document.querySelector('.btn-Login-popup');\n    const iconClose = document.querySelector('.icon-close');\n\n    registerLink.addEventListener('click', () => {\n      wrapper.classList.add('active');\n    });\n\n    loginLink.addEventListener('click', () => {\n      wrapper.classList.remove('active');\n    });\n\n    btnPopup.addEventListener('click', () => {\n      this.openPopup();\n    });\n\n    iconClose.addEventListener('click', () => {\n      this.closePopup();\n    });\n\n  },\n  beforeDestroy() {\n    // 在组件销毁前移除滚动监听器，防止内存泄漏\n    window.removeEventListener(\"scroll\", this.handleScroll);\n  },\n  methods: {\n    handleScroll() {\n      // 获取 header 元素\n      const header = document.querySelector(\"header\");\n      // 根据滚动位置切换 sticky 类\n      this.son_isSticky = window.scrollY > 0;\n    },\n\n    changSticky(flag){\n      this.father_isSticky = flag;\n    },\n\n    toggleActive(isRegister) {\n      const wrapper = document.querySelector('.wrapper');\n      if (isRegister) {\n        wrapper.classList.add('active');\n      } else {\n        wrapper.classList.remove('active');\n      }\n    },\n\n    openPopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.add('active-popup');\n    },\n\n    closePopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.remove('active-popup');\n    },\n\n\n  }  \n}\n\nimport { createElementVNode as _createElementVNode, createTextVNode as _createTextVNode, resolveComponent as _resolveComponent, withCtx as _withCtx, createVNode as _createVNode, normalizeClass as _normalizeClass, createStaticVNode as _createStaticVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\"\nimport _imports_0 from '/img/logo.svg'\nimport _imports_1 from '/img/close.svg'\n\n\nconst _hoisted_1 = { class: \"navbar\" }\nconst _hoisted_2 = /*#__PURE__*/_createElementVNode(\"div\", { class: \"container\" }, [\n  /*#__PURE__*/_createElementVNode(\"div\", { class: \"item\" }, [\n    /*#__PURE__*/_createElementVNode(\"img\", {\n      class: \"logo\",\n      src: _imports_0\n    }),\n    /*#__PURE__*/_createElementVNode(\"h2\", { class: \"brand\" }, \"Xcada\")\n  ])\n], -1)\nconst _hoisted_3 = { class: \"wrapper\" }\nconst _hoisted_4 = /*#__PURE__*/_createElementVNode(\"span\", { class: \"icon-close\" }, [\n  /*#__PURE__*/_createElementVNode(\"img\", { src: _imports_1 })\n], -1)\nconst _hoisted_5 = { class: \"form-box login\" }\nconst _hoisted_6 = /*#__PURE__*/_createElementVNode(\"h2\", null, \"登录\", -1)\nconst _hoisted_7 = { action: \"#\" }\nconst _hoisted_8 = /*#__PURE__*/_createStaticVNode(\"<div class=\\\"input-box\\\"><input type=\\\"email\\\" required><label>邮箱</label></div><div class=\\\"input-box\\\"><input type=\\\"password\\\" required><label>密码</label></div><div class=\\\"remember-forget\\\"><label><input type=\\\"checkbox\\\">记住我</label><a href=\\\"#\\\">忘记密码?</a></div><button type=\\\"submit\\\" class=\\\"btn\\\">登录</button>\", 4)\nconst _hoisted_12 = { class: \"login-register\" }\nconst _hoisted_13 = { class: \"form-box register\" }\nconst _hoisted_14 = /*#__PURE__*/_createElementVNode(\"h2\", null, \"注册\", -1)\nconst _hoisted_15 = { action: \"#\" }\nconst _hoisted_16 = /*#__PURE__*/_createStaticVNode(\"<div class=\\\"input-box\\\"><input type=\\\"text\\\" required><label>用户昵称</label></div><div class=\\\"input-box\\\"><input type=\\\"email\\\" required><label>邮箱</label></div><div class=\\\"input-box\\\"><input type=\\\"password\\\" required><label>密码</label></div><div class=\\\"remember-forget\\\"><label><input type=\\\"checkbox\\\">我同意注册协议及隐私政策</label></div><button type=\\\"submit\\\" class=\\\"btn\\\">注册</button>\", 5)\nconst _hoisted_21 = { class: \"login-register\" }\n\nfunction _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {\n  const _component_NuxtLink = _resolveComponent(\"NuxtLink\")\n  const _component_NuxtPage = _resolveComponent(\"NuxtPage\")\n\n  return (_openBlock(), _createElementBlock(\"div\", null, [\n    _createElementVNode(\"header\", {\n      class: _normalizeClass({ father_sticky: $data.father_isSticky })\n    }, [\n      _createElementVNode(\"header\", {\n        class: _normalizeClass({ son_sticky: $data.son_isSticky })\n      }, [\n        _createElementVNode(\"nav\", _hoisted_1, [\n          _hoisted_2,\n          _createVNode(_component_NuxtLink, {\n            to: \"/\",\n            onClick: _cache[0] || (_cache[0] = $event => ($options.changSticky(false)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"首页\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, { to: \"/course\" }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"学习\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, {\n            to: \"/question\",\n            onClick: _cache[1] || (_cache[1] = $event => ($options.changSticky(true)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"题库\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, {\n            to: \"/discuss\",\n            onClick: _cache[2] || (_cache[2] = $event => ($options.changSticky(true)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"论坛\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, { to: \"/about\" }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"关于\")\n            ]),\n            _: 1\n          }),\n          _createElementVNode(\"button\", {\n            class: \"btn-Login-popup\",\n            onClick: _cache[3] || (_cache[3] = (...args) => ($options.openPopup && $options.openPopup(...args)))\n          }, \"登录\")\n        ])\n      ], 2)\n    ], 2),\n    _createElementVNode(\"div\", _hoisted_3, [\n      _hoisted_4,\n      _createElementVNode(\"div\", _hoisted_5, [\n        _hoisted_6,\n        _createElementVNode(\"form\", _hoisted_7, [\n          _hoisted_8,\n          _createElementVNode(\"div\", _hoisted_12, [\n            _createElementVNode(\"p\", null, [\n              _createTextVNode(\"没有账号?\"),\n              _createElementVNode(\"a\", {\n                href: \"#\",\n                class: \"register-link\",\n                onClick: _cache[4] || (_cache[4] = $event => ($options.toggleActive(true)))\n              }, \"注册\")\n            ])\n          ])\n        ])\n      ]),\n      _createElementVNode(\"div\", _hoisted_13, [\n        _hoisted_14,\n        _createElementVNode(\"form\", _hoisted_15, [\n          _hoisted_16,\n          _createElementVNode(\"div\", _hoisted_21, [\n            _createElementVNode(\"p\", null, [\n              _createTextVNode(\"已有账号?\"),\n              _createElementVNode(\"a\", {\n                href: \"#\",\n                class: \"login-link\",\n                onClick: _cache[5] || (_cache[5] = $event => ($options.toggleActive(false)))\n              }, \"登录\")\n            ])\n          ])\n        ])\n      ])\n    ]),\n    _createVNode(_component_NuxtPage)\n  ]))\n}\n\n\nimport _export_sfc from '\u0000plugin-vue:export-helper'\nexport default /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render]])",
+      "start": 1711096853057,
+      "end": 1711096853082,
+      "order": "normal",
+      "sourcemaps": {
+        "mappings": ""
+      }
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096853083,
+      "end": 1711096853083,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096853084,
+      "end": 1711096853084,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096853084,
+      "end": 1711096853100,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096853100,
+      "end": 1711096853100,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096853100,
+      "end": 1711096853100,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096853100,
+      "end": 1711096853100,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096853100,
+      "end": 1711096853100,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "result": "import { default as __nuxt_component_0 } from \"D:/Project/Project/project-front/vue-user-template-new/node_modules/nuxt/dist/app/components/nuxt-link\";\nimport { default as __nuxt_component_1 } from \"D:/Project/Project/project-front/vue-user-template-new/node_modules/nuxt/dist/pages/runtime/page\";\n\nimport \"~/assets/css/app.css\";\n\nconst _sfc_main = {\n  data() {\n    return {\n      son_isSticky: false, // 用于控制是否添加 sticky 类\n      father_isSticky: false\n    };\n  },\n  mounted() {\n    // 添加滚动监听器\n    window.addEventListener(\"scroll\", this.handleScroll);\n\n    const wrapper = document.querySelector('.wrapper');\n    const loginLink = document.querySelector('.login-link');\n    const registerLink = document.querySelector('.register-link');\n    const btnPopup = document.querySelector('.btn-Login-popup');\n    const iconClose = document.querySelector('.icon-close');\n\n    registerLink.addEventListener('click', () => {\n      wrapper.classList.add('active');\n    });\n\n    loginLink.addEventListener('click', () => {\n      wrapper.classList.remove('active');\n    });\n\n    btnPopup.addEventListener('click', () => {\n      this.openPopup();\n    });\n\n    iconClose.addEventListener('click', () => {\n      this.closePopup();\n    });\n\n  },\n  beforeDestroy() {\n    // 在组件销毁前移除滚动监听器，防止内存泄漏\n    window.removeEventListener(\"scroll\", this.handleScroll);\n  },\n  methods: {\n    handleScroll() {\n      // 获取 header 元素\n      const header = document.querySelector(\"header\");\n      // 根据滚动位置切换 sticky 类\n      this.son_isSticky = window.scrollY > 0;\n    },\n\n    changSticky(flag){\n      this.father_isSticky = flag;\n    },\n\n    toggleActive(isRegister) {\n      const wrapper = document.querySelector('.wrapper');\n      if (isRegister) {\n        wrapper.classList.add('active');\n      } else {\n        wrapper.classList.remove('active');\n      }\n    },\n\n    openPopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.add('active-popup');\n    },\n\n    closePopup() {\n      const wrapper = document.querySelector('.wrapper');\n      wrapper.classList.remove('active-popup');\n    },\n\n\n  }  \n}\n\nimport { createElementVNode as _createElementVNode, createTextVNode as _createTextVNode, resolveComponent as _resolveComponent, withCtx as _withCtx, createVNode as _createVNode, normalizeClass as _normalizeClass, createStaticVNode as _createStaticVNode, openBlock as _openBlock, createElementBlock as _createElementBlock } from \"vue\"\nimport _imports_0 from '/img/logo.svg'\nimport _imports_1 from '/img/close.svg'\n\n\nconst _hoisted_1 = { class: \"navbar\" }\nconst _hoisted_2 = /*#__PURE__*/_createElementVNode(\"div\", { class: \"container\" }, [\n  /*#__PURE__*/_createElementVNode(\"div\", { class: \"item\" }, [\n    /*#__PURE__*/_createElementVNode(\"img\", {\n      class: \"logo\",\n      src: _imports_0\n    }),\n    /*#__PURE__*/_createElementVNode(\"h2\", { class: \"brand\" }, \"Xcada\")\n  ])\n], -1)\nconst _hoisted_3 = { class: \"wrapper\" }\nconst _hoisted_4 = /*#__PURE__*/_createElementVNode(\"span\", { class: \"icon-close\" }, [\n  /*#__PURE__*/_createElementVNode(\"img\", { src: _imports_1 })\n], -1)\nconst _hoisted_5 = { class: \"form-box login\" }\nconst _hoisted_6 = /*#__PURE__*/_createElementVNode(\"h2\", null, \"登录\", -1)\nconst _hoisted_7 = { action: \"#\" }\nconst _hoisted_8 = /*#__PURE__*/_createStaticVNode(\"<div class=\\\"input-box\\\"><input type=\\\"email\\\" required><label>邮箱</label></div><div class=\\\"input-box\\\"><input type=\\\"password\\\" required><label>密码</label></div><div class=\\\"remember-forget\\\"><label><input type=\\\"checkbox\\\">记住我</label><a href=\\\"#\\\">忘记密码?</a></div><button type=\\\"submit\\\" class=\\\"btn\\\">登录</button>\", 4)\nconst _hoisted_12 = { class: \"login-register\" }\nconst _hoisted_13 = { class: \"form-box register\" }\nconst _hoisted_14 = /*#__PURE__*/_createElementVNode(\"h2\", null, \"注册\", -1)\nconst _hoisted_15 = { action: \"#\" }\nconst _hoisted_16 = /*#__PURE__*/_createStaticVNode(\"<div class=\\\"input-box\\\"><input type=\\\"text\\\" required><label>用户昵称</label></div><div class=\\\"input-box\\\"><input type=\\\"email\\\" required><label>邮箱</label></div><div class=\\\"input-box\\\"><input type=\\\"password\\\" required><label>密码</label></div><div class=\\\"remember-forget\\\"><label><input type=\\\"checkbox\\\">我同意注册协议及隐私政策</label></div><button type=\\\"submit\\\" class=\\\"btn\\\">注册</button>\", 5)\nconst _hoisted_21 = { class: \"login-register\" }\n\nfunction _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {\n  const _component_NuxtLink = __nuxt_component_0\n  const _component_NuxtPage = __nuxt_component_1\n\n  return (_openBlock(), _createElementBlock(\"div\", null, [\n    _createElementVNode(\"header\", {\n      class: _normalizeClass({ father_sticky: $data.father_isSticky })\n    }, [\n      _createElementVNode(\"header\", {\n        class: _normalizeClass({ son_sticky: $data.son_isSticky })\n      }, [\n        _createElementVNode(\"nav\", _hoisted_1, [\n          _hoisted_2,\n          _createVNode(_component_NuxtLink, {\n            to: \"/\",\n            onClick: _cache[0] || (_cache[0] = $event => ($options.changSticky(false)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"首页\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, { to: \"/course\" }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"学习\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, {\n            to: \"/question\",\n            onClick: _cache[1] || (_cache[1] = $event => ($options.changSticky(true)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"题库\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, {\n            to: \"/discuss\",\n            onClick: _cache[2] || (_cache[2] = $event => ($options.changSticky(true)))\n          }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"论坛\")\n            ]),\n            _: 1\n          }),\n          _createVNode(_component_NuxtLink, { to: \"/about\" }, {\n            default: _withCtx(() => [\n              _createTextVNode(\"关于\")\n            ]),\n            _: 1\n          }),\n          _createElementVNode(\"button\", {\n            class: \"btn-Login-popup\",\n            onClick: _cache[3] || (_cache[3] = (...args) => ($options.openPopup && $options.openPopup(...args)))\n          }, \"登录\")\n        ])\n      ], 2)\n    ], 2),\n    _createElementVNode(\"div\", _hoisted_3, [\n      _hoisted_4,\n      _createElementVNode(\"div\", _hoisted_5, [\n        _hoisted_6,\n        _createElementVNode(\"form\", _hoisted_7, [\n          _hoisted_8,\n          _createElementVNode(\"div\", _hoisted_12, [\n            _createElementVNode(\"p\", null, [\n              _createTextVNode(\"没有账号?\"),\n              _createElementVNode(\"a\", {\n                href: \"#\",\n                class: \"register-link\",\n                onClick: _cache[4] || (_cache[4] = $event => ($options.toggleActive(true)))\n              }, \"注册\")\n            ])\n          ])\n        ])\n      ]),\n      _createElementVNode(\"div\", _hoisted_13, [\n        _hoisted_14,\n        _createElementVNode(\"form\", _hoisted_15, [\n          _hoisted_16,\n          _createElementVNode(\"div\", _hoisted_21, [\n            _createElementVNode(\"p\", null, [\n              _createTextVNode(\"已有账号?\"),\n              _createElementVNode(\"a\", {\n                href: \"#\",\n                class: \"login-link\",\n                onClick: _cache[5] || (_cache[5] = $event => ($options.toggleActive(false)))\n              }, \"登录\")\n            ])\n          ])\n        ])\n      ])\n    ]),\n    _createVNode(_component_NuxtPage)\n  ]))\n}\n\n\nimport _export_sfc from '\u0000plugin-vue:export-helper'\nexport default /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render]])",
+      "start": 1711096853100,
+      "end": 1711096853102,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096853103,
+      "end": 1711096853103,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096853103,
+      "end": 1711096853103,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096853103,
+      "end": 1711096853103,
+      "order": "normal"
+    }
+  ]
+}

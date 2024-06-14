@@ -1,0 +1,210 @@
+{
+  "resolvedId": "D:/Project/Project/project-front/vue-user-template-new/node_modules/monaco-editor/esm/vs/editor/common/model/bracketPairsTextModelPart/fixBrackets.js",
+  "transforms": [
+    {
+      "name": "vite:load-fallback",
+      "result": "/*---------------------------------------------------------------------------------------------\n *  Copyright (c) Microsoft Corporation. All rights reserved.\n *  Licensed under the MIT License. See License.txt in the project root for license information.\n *--------------------------------------------------------------------------------------------*/\nimport { LanguageAgnosticBracketTokens } from './bracketPairsTree/brackets.js';\nimport { lengthAdd, lengthGetColumnCountIfZeroLineCount, lengthZero } from './bracketPairsTree/length.js';\nimport { parseDocument } from './bracketPairsTree/parser.js';\nimport { DenseKeyProvider } from './bracketPairsTree/smallImmutableSet.js';\nimport { TextBufferTokenizer } from './bracketPairsTree/tokenizer.js';\nexport function fixBracketsInLine(tokens, languageConfigurationService) {\n    const denseKeyProvider = new DenseKeyProvider();\n    const bracketTokens = new LanguageAgnosticBracketTokens(denseKeyProvider, (languageId) => languageConfigurationService.getLanguageConfiguration(languageId));\n    const tokenizer = new TextBufferTokenizer(new StaticTokenizerSource([tokens]), bracketTokens);\n    const node = parseDocument(tokenizer, [], undefined, true);\n    let str = '';\n    const line = tokens.getLineContent();\n    function processNode(node, offset) {\n        if (node.kind === 2 /* Pair */) {\n            processNode(node.openingBracket, offset);\n            offset = lengthAdd(offset, node.openingBracket.length);\n            if (node.child) {\n                processNode(node.child, offset);\n                offset = lengthAdd(offset, node.child.length);\n            }\n            if (node.closingBracket) {\n                processNode(node.closingBracket, offset);\n                offset = lengthAdd(offset, node.closingBracket.length);\n            }\n            else {\n                const singleLangBracketTokens = bracketTokens.getSingleLanguageBracketTokens(node.openingBracket.languageId);\n                const closingTokenText = singleLangBracketTokens.findClosingTokenText(node.openingBracket.bracketIds);\n                str += closingTokenText;\n            }\n        }\n        else if (node.kind === 3 /* UnexpectedClosingBracket */) {\n            // remove the bracket\n        }\n        else if (node.kind === 0 /* Text */ || node.kind === 1 /* Bracket */) {\n            str += line.substring(lengthGetColumnCountIfZeroLineCount(offset), lengthGetColumnCountIfZeroLineCount(lengthAdd(offset, node.length)));\n        }\n        else if (node.kind === 4 /* List */) {\n            for (const child of node.children) {\n                processNode(child, offset);\n                offset = lengthAdd(offset, child.length);\n            }\n        }\n    }\n    processNode(node, lengthZero);\n    return str;\n}\nclass StaticTokenizerSource {\n    constructor(lines) {\n        this.lines = lines;\n    }\n    getLineCount() {\n        return this.lines.length;\n    }\n    getLineLength(lineNumber) {\n        return this.lines[lineNumber - 1].getLineContent().length;\n    }\n    getLineTokens(lineNumber) {\n        return this.lines[lineNumber - 1];\n    }\n}\n",
+      "start": 1711096857658,
+      "end": 1711096857729,
+      "sourcemaps": null
+    },
+    {
+      "name": "nuxt:layer-aliasing",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:server-devonly:transform",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "pre"
+    },
+    {
+      "name": "nuxt:client-fallback-auto-id",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "pre"
+    },
+    {
+      "name": "vite:css",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:esbuild",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:json",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:vue-jsx",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:remove-plugin-metadata",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:chunk-error",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:components:imports",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "replace",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "ssr-styles",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:define",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:css-post",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:build-html",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:worker-import-meta-url",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "vite:asset-import-meta-url",
+      "start": 1711096857729,
+      "end": 1711096857729,
+      "order": "normal"
+    },
+    {
+      "name": "commonjs",
+      "start": 1711096857729,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:dynamic-import-vars",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:import-glob",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "nuxt:composable-keys",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:imports-transform",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "unctx:transform",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:pages-macros-transform",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:runtime-paths-dep",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:route-injection-plugin",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:components-loader",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "nuxt:tree-shake-composables:transform",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "post"
+    },
+    {
+      "name": "vite:build-import-analysis",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    },
+    {
+      "name": "vite:reporter",
+      "start": 1711096857730,
+      "end": 1711096857730,
+      "order": "normal"
+    }
+  ]
+}
